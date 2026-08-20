@@ -12,7 +12,7 @@
 
 ## 0.0 当前基线与版本冻结说明（Current Baseline / Revision Note）
 
-本文档的 M0–M3 已实施并归档；M4 静态门已通过（clean `ec849c62…` tarball）。**第 28.4 节 Host 项为可选项**，不是 M4 出口、后续开发或手册第 4 节之外的必需验证；未跑不得写成 passed / exact-host certified。**CI 未接入时 portable projection 晋升仍 blocked**（与 Host 是否可选无关）。本地静态证据可结束 M4；M5 可以开始决策，但不得把无 CI 的本地结果当成已晋升。
+本文档的 M0–M5 已完成。M4 静态门已通过（clean `ec849c62…` tarball）。`@kunolu/omp-sbtd@0.1.0-rc.12` 已发布到 npm `next`（SHA-256 `49edb4b7…`）。手册第 4 节已对该 tarball 全收。**第 28.4 节 Host 项为可选项** `not-run`，不得写成 passed / exact-host certified。**CI 未接入时 portable projection 晋升仍 blocked**。npm RC 发布不等于晋升。
 
 | 事实 | 当前值 |
 |---|---|
@@ -1503,7 +1503,7 @@ certified set 所有权切换完成且可回滚
 静态门通过；Host 项为 not-run 或 passed（不得用 blocked 冒充 passed）
 ```
 
-**实施状态（2026-08-20）**：静态门已通过。tarball `kunolu-omp-sbtd-0.1.0-rc.12.tgz`（clean `ec849c62…`，SHA-256 `49edb4b7…`）。28.4 Host / §29 Host-observable = `not-run`（可选）。任务 `.trellis/tasks/archive/2026-08/08-19-exact-host-certify-post-m3-rc12/` 已归档。不得表述为 exact-host certified。M5 尚未做发布决策；**无 CI，晋升 blocked**。
+**实施状态（2026-08-20）**：静态门已通过。tarball `kunolu-omp-sbtd-0.1.0-rc.12.tgz`（clean `ec849c62…`，SHA-256 `49edb4b7…`）。28.4 Host / §29 Host-observable = `not-run`（可选）。任务 `.trellis/tasks/archive/2026-08/08-19-exact-host-certify-post-m3-rc12/` 已归档。不得表述为 exact-host certified。M5 已发布该 tarball 到 `next`；**无 CI，晋升 blocked**。
 
 
 ## M5 — Release Decision
@@ -1511,7 +1511,9 @@ certified set 所有权切换完成且可回滚
 - 依据 M0–M4 **静态**证据做是否发布的决策；不要求 28.4 Host；
 - **CI 未接入则不得把本地静态结果写成已晋升**；npm RC/stable 发布门槛只在手册第 3–4 节（含第 4 节四命令），不含 28.4 Host，也不把 CI 晋升写成手册发布条件。
 - 如需修改版本号或 portable 布局，必须回到 M2，并重跑 M3 与 M4 静态门；Host 仍可选；
-- npm publish / dist-tag、Marketplace、optional MCP Integration Plugins、peer-range widening 均为 M5 之后的**独立后续决策**，不在本 P0 内承诺。
+- Marketplace、optional MCP Integration Plugins、peer-range widening 均为 M5 之后的**独立后续决策**，不在本 P0 内承诺。
+
+**实施状态（2026-08-20）**：已完成。决策为发布 RC。同一冻结 tarball 已以 `next` 发布；Registry 身份复核 passed；`latest` 仍为 `0.1.0-rc.2`。手册第 4 节全收。任务 `.trellis/tasks/08-20-m5-publish-omp-sbtd-rc12/`。不得表述为 exact-host certified 或 CI-promoted。
 
 ---
 
@@ -1561,7 +1563,7 @@ P0-D CI/Conformance（前置，非 backlog）
 - 第 28 章**静态门**在 clean worktree 上通过；
 - 28.4 Host 清单为可选项，不是本泳道出口。
 
-Marketplace、optional MCP plugins（GitNexus 等）、peer-range widening、npm publish/dist-tag 均不列入 P0 泳道出口，作为 M5 之后的独立决策跟踪。
+Marketplace、optional MCP plugins（GitNexus 等）、peer-range widening、`latest`/stable 及其他 dist-tag 均不列入 P0 泳道出口，作为 M5 之后的独立决策跟踪。本 RC `@kunolu/omp-sbtd@0.1.0-rc.12` 已发到 `next`；不得写成 CI-promoted 或 exact-host certified。
 
 ---
 
@@ -1928,16 +1930,16 @@ Security
 
 ## AP-009 Release Decision（M5）
 
-- [ ] 汇总 M0–M4 证据
+- [x] 汇总 M0–M4 证据
 - [x] 冻结版本已在 M2 确定为 `0.1.0-rc.12`；M5 不得改版本
-- [ ] npm tarball 发布与否的决策记录
+- [x] npm tarball 发布决策：发布到 `next`；Registry 身份 `passed`
 
 ## 后续独立决策（不在本 Backlog 承诺）
 
 - Marketplace 渠道（`.omp-plugin/marketplace.json` + `omp plugin marketplace add <source>`）
 - GitNexus / Playwright / Maestro optional MCP Integration Plugins
 - peer-range widening（由 omp-plugin-compatibility-decoupling-plan.md 治理）
-- npm publish / dist-tag 策略
+- `latest` / stable / 其他 dist-tag（本 RC 已在 `next`；不得 retag `latest`）
 
 ---
 
