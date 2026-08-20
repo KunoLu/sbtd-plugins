@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-MOBILE-01",
+  "category": "mobile-tool-state",
+  "prompt": "Assess a local Android validation request when the app artifact is unavailable and record the mobile tool state as blocked with recovery steps.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "mobile-e2e",
+    "routeCost": "heavy",
+    "requiredGates": ["tdd", "release-readiness"],
+    "obligations": [
+      "Inspect device and artifact prerequisites",
+      "Report blocked rather than passed"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "tool-state",
+      "description": "The unavailable mobile artifact is recorded as a typed blocker.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "recovery",
+      "description": "The result names the concrete local device or artifact recovery action.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

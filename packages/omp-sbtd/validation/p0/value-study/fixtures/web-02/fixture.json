@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-WEB-02",
+  "category": "web-e2e",
+  "prompt": "Fix a local account settings save regression and report whether the web E2E evidence is contract-backed or full-stack.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "web-e2e-regression",
+    "routeCost": "heavy",
+    "requiredGates": ["bdd", "tdd", "release-readiness"],
+    "obligations": [
+      "Cover the settings flow",
+      "Do not mislabel contract evidence"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "e2e-behavior",
+      "description": "The settings save journey has the intended observable result.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "evidence-mode",
+      "description": "The reported E2E mode truthfully describes the executed evidence.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

@@ -1,0 +1,48 @@
+# Web UI 自动化测试报告
+
+## 执行结论
+
+- 结论：{{resultStatus}}
+- 执行命令：`{{runCommand}}`
+- 执行时间：{{runTime}}
+- 基础地址：{{baseUrl}}
+
+## 生成产物
+
+- 测试用例目录：`tests/e2e/specs`
+- Page Object 目录：`tests/e2e/pages`
+- 选择器审计：`ui-selector-audit.json`
+- 覆盖率报告：`ui-test-coverage.json`
+- Playwright 报告：`tests/e2e/reports`
+
+## 覆盖率概览
+
+| 指标 | 结果 |
+| --- | --- |
+| 总体评分 | {{overallScore}} |
+| 页面覆盖率 | {{pageCoveragePercent}}% |
+| 功能覆盖率 | {{featureCoveragePercent}}% |
+| API 覆盖率 | {{apiCoveragePercent}}% |
+| 跨页面流程覆盖率 | {{crossPageFlowCoveragePercent}}% |
+| 选择器稳定性评分 | {{selectorStabilityScore}} |
+
+## 页面覆盖
+
+{{pageCoverageTable}}
+
+## 主要缺口
+
+{{coverageGaps}}
+
+## 失败分析
+
+{{failureSummary}}
+
+## 选择器建议
+
+{{selectorRecommendations}}
+
+## 仍需人工确认
+
+{{manualInputs}}
+

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "stableSet": "2026-08-11.1",
+  "promotedAt": "2026-08-11",
+  "repositories": {
+    "mattpocock-skills": {
+      "url": "https://github.com/mattpocock/skills.git",
+      "revision": "6acc160e4e0cd062dbbbd7a1b26ae92855edf07e",
+      "license": "MIT",
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "stablePath": "licenses/mattpocock-skills-LICENSE"
+        }
+      ]
+    },
+    "ui-ux-pro-max-skill": {
+      "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
+      "revision": "14ddef5c05e52d7c253b8f0129de7bcd1045ae5b",
+      "license": "MIT",
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "stablePath": "licenses/ui-ux-pro-max-skill-LICENSE"
+        }
+      ]
+    }
+  },
+  "skills": {
+    "diagnosing-bugs": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/diagnosing-bugs",
+      "stablePath": "skills/diagnosing-bugs",
+      "treeSha256": "dfeef9133561962439463cfdc61ac90e092a10016f69f42d20a589112eb2c9df"
+    },
+    "tdd": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/tdd",
+      "stablePath": "skills/tdd",
+      "treeSha256": "f7762d76e11000f502a707b08f3ef292cd13c5e752c2d3bb38a66b69ce9c82f2"
+    },
+    "grill-me": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/productivity/grill-me",
+      "stablePath": "skills/grill-me",
+      "treeSha256": "e7d8c6b656725325043d0691c14cfcfe11baa8dd3bb32686d963d4e38ecb4520"
+    },
+    "grill-with-docs": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/grill-with-docs",
+      "stablePath": "skills/grill-with-docs",
+      "treeSha256": "717f9874c97277f88ed97d723b62a95e2584e195e596bdf6cd7a17ddd6103e80"
+    },
+    "grilling": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/productivity/grilling",
+      "stablePath": "skills/grilling",
+      "treeSha256": "0e2a85f20a5f721ab35b9ed5628db478d70634db639e7ab9d5a990dd47d121d5"
+    },
+    "domain-modeling": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/domain-modeling",
+      "stablePath": "skills/domain-modeling",
+      "treeSha256": "df407341e313fde8323571b80d2da11cd35d58a362eb5f792edd67ccec30c814"
+    },
+    "codebase-design": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/codebase-design",
+      "stablePath": "skills/codebase-design",
+      "treeSha256": "6a0038980808e81c1cca62da4fd57b795df8f5f82db971ec291c4b026df19b2b"
+    },
+    "handoff": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/productivity/handoff",
+      "stablePath": "skills/handoff",
+      "treeSha256": "75b23d67b04e129fb536193e033b1fc8c3caa99f42652077556f051e92f75cfa"
+    },
+    "writing-for-agents": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/productivity/writing-for-agents",
+      "stablePath": "skills/writing-for-agents",
+      "treeSha256": "c6833cfae282543485ef511867e5798d9cdc9fb2c39a716ee7cb3ff535bedeae"
+    },
+    "to-spec": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/to-spec",
+      "stablePath": "skills/to-spec",
+      "treeSha256": "af351b6e88c6af18165deaa55c6f5615333bd06e6004fe512c5c1c3b02550ff7"
+    },
+    "to-tickets": {
+      "repository": "mattpocock-skills",
+      "sourceSubpath": "skills/engineering/to-tickets",
+      "stablePath": "skills/to-tickets",
+      "treeSha256": "a9e272d3abd4d1ce46c8969e829e8da2baf9659a461456a77ec6ca25128d58e5"
+    },
+    "ui-ux-pro-max": {
+      "repository": "ui-ux-pro-max-skill",
+      "sourceSubpath": ".claude/skills/ui-ux-pro-max",
+      "stablePath": "skills/ui-ux-pro-max",
+      "treeSha256": "387700a9b6b1a33746acb60184003eb9da08c3bdbf799b7586386e1a49e2e929"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-WEB-01",
+  "category": "web-e2e",
+  "prompt": "Repair a local web checkout flow regression and retain a formal report plus Chinese Markdown summary as evidence.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "web-e2e-regression",
+    "routeCost": "heavy",
+    "requiredGates": ["bdd", "tdd", "release-readiness"],
+    "obligations": [
+      "Exercise the user-visible flow",
+      "Preserve formal report evidence"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "e2e-behavior",
+      "description": "The checkout regression is fixed for the stated user journey.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "formal-evidence",
+      "description": "Evidence includes a truthful formal artifact and Chinese summary.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

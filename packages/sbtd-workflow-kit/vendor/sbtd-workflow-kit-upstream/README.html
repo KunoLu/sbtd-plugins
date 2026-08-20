@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SBTD Workflow 模板说明</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #151719;
+      --muted: #5b6472;
+      --line: #d7dde5;
+      --paper: #ffffff;
+      --soft: #f6f8fb;
+      --blue: #1d4ed8;
+      --green: #15803d;
+      --amber: #b45309;
+      --red: #b91c1c;
+      --teal: #0f766e;
+      --violet: #6d28d9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 32px;
+      align-items: center;
+      min-height: 78vh;
+      padding: 56px 0 44px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--teal);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: 58px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .lead {
+      margin-top: 18px;
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .hero-map {
+      padding: 0;
+    }
+
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .map-cell {
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    .map-cell strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .map-cell span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main section {
+      padding: 48px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.36fr) minmax(0, 0.64fr);
+      gap: 28px;
+      align-items: start;
+      margin-bottom: 24px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .section-body {
+      min-width: 0;
+    }
+
+    pre {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: 16px;
+    }
+
+    .panel p,
+    .panel li {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .accent-blue { border-top: 4px solid var(--blue); }
+    .accent-green { border-top: 4px solid var(--green); }
+    .accent-amber { border-top: 4px solid var(--amber); }
+    .accent-red { border-top: 4px solid var(--red); }
+    .accent-teal { border-top: 4px solid var(--teal); }
+    .accent-violet { border-top: 4px solid var(--violet); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(120px, 1fr));
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .step {
+      position: relative;
+      min-width: 120px;
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--soft);
+    }
+
+    .step b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .step span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--soft);
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    td {
+      color: var(--muted);
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef2f7;
+      color: #111827;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    pre code {
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      font-size: 13px;
+    }
+
+    .status-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-list div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-list strong {
+      color: var(--ink);
+    }
+
+    footer {
+      padding: 28px 0 40px;
+      color: var(--muted);
+      background: var(--soft);
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .section-head {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 40px;
+      }
+
+      .grid-4,
+      .grid-3,
+      .status-list {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">AI Tools Workflow</p>
+        <h1>SBTD Workflow 模板说明</h1>
+        <p class="lead">本仓库维护 Codex 全局规则、项目级规则模板、工作流 Skill、onboard 自动化和静态说明文档。当前主流程收敛为 <strong>Codex + GitNexus + Trellis + Chrome DevTools MCP + Playwright + Maestro</strong>，并通过 SBTD 把规格、行为、测试和领域语言串成一条可验证链路；API、Web 和 Mobile / Hybrid 测试都以 BDD <code>.feature</code> 作为行为 SOT，shadcn/ui 项目按需使用 <code>shadcn</code> Skill 处理组件、registry、preset 和 CLI 工作流，公开网站、落地页和文档站按需进入 bundled <code>seo-geo</code> 搜索可见性检查。Codex plugin / connector、remote plugins、ChatGPT-hosted MCP 和 <code>tool_search</code> 是 Agent 侧工具发现和授权能力，必须先确认当前会话实际暴露 callable tool。<code>rtk</code> 和 <code>caveman</code> 是上下文 / token 效率层，不是验证工具：前者压缩 terminal 输出，但报告型测试先评估缓存与文件写入风险；后者在既有长任务阈值触发后，仅对符合资格的重复中间状态自动使用任务级 <code>auto-lite</code>。</p>
+        <div class="meta-row" aria-label="核心能力">
+          <span class="pill">SDD</span>
+          <span class="pill">BDD</span>
+          <span class="pill">TDD</span>
+          <span class="pill">DDD</span>
+          <span class="pill">Web + Mobile 验证</span>
+          <span class="pill">shadcn/ui</span>
+          <span class="pill">SEO / GEO</span>
+          <span class="pill">Tool Discovery</span>
+          <span class="pill">Token 效率层</span>
+        </div>
+      </div>
+      <aside class="hero-map" aria-label="工具职责概览">
+        <div class="map-grid">
+          <div class="map-cell">
+            <strong>Trellis</strong>
+            <span>任务阶段、PRD、design、implement、check、finish。</span>
+          </div>
+          <div class="map-cell">
+            <strong>GitNexus</strong>
+            <span>索引有效时做影响分析；PDG、taint、trace 和多分支查询需显式 opt-in。</span>
+          </div>
+          <div class="map-cell">
+            <strong>Tool Discovery</strong>
+            <span>tool_search / plugin / connector 先确认 callable tool；catalog 只作为候选信号。</span>
+          </div>
+          <div class="map-cell">
+            <strong>Playwright</strong>
+            <span>CLI 负责 Web E2E 和回归，MCP 负责探索和 locator 辅助。</span>
+          </div>
+          <div class="map-cell">
+            <strong>Maestro</strong>
+            <span>负责 Android、iOS、RN、Flutter、Hybrid App E2E；flow 资产落到 maestro/flow。</span>
+          </div>
+          <div class="map-cell">
+            <strong>shadcn</strong>
+            <span>shadcn/ui 项目的组件、registry、preset、docs / diff 和 CLI 工作流。</span>
+          </div>
+          <div class="map-cell">
+            <strong>seo-geo</strong>
+            <span>bundled Skill；公开 Web 资产需要搜索可见性、schema、meta、robots / sitemap 检查时才启用。</span>
+          </div>
+          <div class="map-cell">
+            <strong>rtk / caveman</strong>
+            <span>rtk 压缩命令输出，但报告型测试先评估缓存与文件写入风险；caveman 达到既有阈值后把 <code>autoLiteEligible</code> 单调锁存，下一条普通重复状态必须使用任务级 auto-lite。</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Workflow</p>
+            <h2>当前模板主线</h2>
+          </div>
+          <p>模板以项目事实为优先级，只有在存在强证据时才启用可选工具。普通修改保持最小、可验证、可回滚；复杂任务通过 Trellis 和相关 Skill 管理阶段、文档和验证。若已确认当前目录是项目根目录且存在项目级 AGENTS.md，但没有 .trellis/，普通项目操作只提示用户执行 <code>trellis init -u your-name</code>；例外是 onboard <code>init</code> / <code>reset</code>，在 Trellis CLI 已可用且用户确认 username 和 platform flags 后可主动执行 <code>trellis init -u &lt;username&gt; ... --yes --skip-existing</code>。Trellis CLI 升级后，已有 .trellis/ 的项目先运行 <code>trellis update</code> 刷新生成脚本和 filesystem-safety guard；对 uninstall、archive、task start / set-*、Channel 名称等删除 / 移动 / 路径解析操作，不绕过 dirty-data、manifest ownership、safe-name 和 active-task pointer containment guard。升级后不要假设 <code>trellis update</code> 会改写既有 session pointer；越权任务路径按无任务处理。<code>.trellis/config.yaml</code>、<code>.trellis/workflow.md</code> 和 task artifacts 只定义共享 workflow gate，不标识运行平台。当前 host 与其 <code>.codex/**</code> 或 <code>.omp/**</code> 生成资产决定本次执行；二者共存时按当前 host 选择，纯静态文件不足时标记 unknown。仅当前 Codex host 且 <code>.codex/**</code> 集成可用时解释 <code>codex.dispatch_mode</code>：<code>auto</code> 由主会话协调 role subagent；显式 Inline 与非法值的 fail-closed fallback 也仅属于 Codex。仅当前 OMP host 且 <code>.omp/**</code> 集成可用时使用 OMP <code>task</code> worker 和生成的 agent 定义，不得套用 Codex dispatch。单个 platform role subagent 不构成 Channel 触发，Channel 仍须用户明确请求或 preflight 后确认；每项变更职责只允许一个写入执行者，用户请求的独立只读复核可并行。</p>
+        <p>如果 <code>trellis update</code> 更新 SessionStart、PreToolUse 或其他 hook 配置，先重启对应 Agent host 或 IDE，再验证新会话身份或 hook 行为；已运行进程的旧行为不能证明新配置已经加载。</p>
+        </div>
+        <div class="flow" aria-label="主流程">
+          <div class="step"><b>1. 需求</b><span>读取规则、lessons 短入口，并按需读取 index / topic。</span></div>
+          <div class="step"><b>2. SBTD</b><span>规格、行为、测试、领域语言对齐。</span></div>
+          <div class="step"><b>3. 影响</b><span>GitNexus 可用时做影响分析。</span></div>
+          <div class="step"><b>4. 实现</b><span>按项目规范和 Skill 边界改动。</span></div>
+          <div class="step"><b>5. 验证</b><span>项目测试、BDD、Web、Mobile、SEO/GEO。</span></div>
+          <div class="step"><b>6. 风险</b><span>发布就绪、Channel preflight、剩余风险。</span></div>
+          <div class="step"><b>7. 同步</b><span>仅在用户输入 sync / 同步时写入本地生效路径。</span></div>
+        </div>
+        <div class="status-list">
+          <div><strong>AGENTS</strong><br>常驻路由、触发条件、硬性安全边界和最终报告要求。</div>
+          <div><strong>Skills</strong><br>详细流程、命令参数、检查清单和专项判断按场景延迟加载。</div>
+        </div>
+        <p>P1.1 已通过 bundled <code>knowledge-base-integration</code> Skill 落地产品注册表、Workspace Mapping、Evidence Policy 决策、目标 ref / Revision Set、完整无 ID Gherkin 目录、静态 / manifest 绑定、跨仓候选、幂等 ingest / smoke、隔离 worktree、分阶段 Smoke、基础设施重试、本地 / 命令式 Runner Adapter、可信环境对齐、artifact manifest、checksums 和 metrics。从本仓库根目录校验随 Skill 提供的示例配置：</p>
+        <pre><code>python sbtd-workflow-onboard/templates/skills/knowledge-base-integration/scripts/knowledge_base_p1.py validate-config \
+  --product sbtd-workflow-onboard/templates/skills/knowledge-base-integration/references/product.example.yaml \
+  --workspace sbtd-workflow-onboard/templates/skills/knowledge-base-integration/references/workspace.local.example.yaml</code></pre>
+        <p>同一 CLI 还提供 <code>decision</code>、<code>ingest</code> 和 <code>smoke</code> 子命令；各子命令的必需参数以 <code>--help</code> 和该 Skill 的说明为准。安装后先定位该 Skill 根目录，再运行其 <code>scripts/knowledge_base_p1.py</code>。服务器只收集本轮命令新建或刷新的原生报告及同 stem 中文汇总，Mobile 等能力通过 Runner labels 调度。P1.1 只生成 <code>Evidence Publication: not-configured</code> 的待发布 bundle；Evidence Store、PR Check、自动失效、quarantine、retention 和远端 Gate 仍属于 P2。详见 <a href="docs/prd/knowledge-base-integration-prd.md">知识库集成 P1 / P2 落地方案</a>。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Installation</p>
+            <h2>安装及使用说明</h2>
+          </div>
+          <div class="section-body">
+          <p>只建议通过官方 <code>skills</code> CLI 把自包含的 <code>sbtd-workflow-onboard</code> 安装到用户级全局 Skill 目录，使同一用户下的 Codex 会话都能发现它；不建议安装到单个项目目录，也不要省略 <code>--global</code> 后把 bootstrap Skill 变成项目依赖。私有仓库使用本机 Git 已可认证的 <code>git+ssh://</code> source，不在命令、仓库、日志或报告中写凭据。该步骤只 bootstrap Onboard Skill，不执行 <code>scripts/onboard.py</code>，也不安装 Trellis、GitNexus、其余 Skills、写入项目 AGENTS 或初始化项目。已克隆仓库时，<code>install.sh</code> 和 <code>install.ps1</code> 仍是完整交互式入口。</p>
+          <pre><code>npx --yes skills@latest add \
+  KunoLu/640-skills@sbtd-workflow-onboard \
+  --global \
+  --agent codex \
+  --yes \
+  --copy</code></pre>
+          <p><code>skills@latest</code> 只表示使用 npm 上最新的 <code>skills</code> CLI；<code>KunoLu/640-skills@sbtd-workflow-onboard</code> source 没有 <code>#ref</code> 时，CLI 会读取仓库默认分支（当前是 <code>main</code>）的最新 commit，并不会自动选择最新 tag。需要固定 Skill 内容版本时，使用 <code>KunoLu/640-skills#&lt;tag&gt;@sbtd-workflow-onboard</code> 格式，把 Git tag 放在 repository shorthand 与 <code>@skill</code> filter 之间：</p>
+          <pre><code>npx --yes skills@latest add \
+  'KunoLu/640-skills#v1.0.0@sbtd-workflow-onboard' \
+  --global \
+  --agent codex \
+  --yes \
+  --copy</code></pre>
+          <p>正式 tag 应保持不可变；需要修复时发布新的 patch tag，例如 <code>v1.0.1</code>，不要移动既有 <code>v1.0.0</code>。</p>
+          <p>安装后使用 <code>npx skills list --global --agent codex</code> 检查全局 Skill。随后在 Codex 中明确调用该 Skill，并提供目标平台、一个或多个已存在的项目绝对路径和 Trellis 用户名。多个路径使用英语逗号分隔，例如 <code>/abs/project-one,/abs/project-two</code>；重复路径会规范化后只处理一次：</p>
+          <pre><code>请使用 sbtd-workflow-onboard Skill，对 /abs/project-one,/abs/project-two 执行 init 初始化。
+目标平台是 codex，Trellis 用户名是 your-name；多个项目路径以英语逗号分隔。
+先输出 plan --json，确认计划后执行 init，并逐项目汇总 AGENTS、.gitignore 和 Trellis 状态。</code></pre>
+          <p>需要手动执行底层 CLI 时，先将实际全局 Skill 路径赋给变量。以下 <code>~/.agents/skills</code> 只是常见示例，应以 <code>npx skills list --global --agent codex</code> 和 Skill 检测结果为准：</p>
+          <pre><code>SBTD_ONBOARD_DIR="$HOME/.agents/skills/sbtd-workflow-onboard"
+python "$SBTD_ONBOARD_DIR/scripts/onboard.py" plan \
+  --projects-root /abs/project-one,/abs/project-two \
+  --json
+python "$SBTD_ONBOARD_DIR/scripts/onboard.py" init \
+  --projects-root /abs/project-one,/abs/project-two \
+  --trellis-user your-name \
+  --yes</code></pre>
+          <p>后续更新或重置多个项目时，同样使用英语逗号分隔：</p>
+          <pre><code>请使用 sbtd-workflow-onboard Skill，对 /abs/project-one,/abs/project-two 执行 reset。
+目标平台是 codex，Trellis 用户名是 your-name；多个项目路径以英语逗号分隔。
+先输出 plan --json，保留已检测到的安全配置和 tier，再执行 reset 并逐项目汇总结果。</code></pre>
+          <pre><code>SBTD_ONBOARD_DIR="$HOME/.agents/skills/sbtd-workflow-onboard"
+python "$SBTD_ONBOARD_DIR/scripts/onboard.py" plan \
+  --projects-root /abs/project-one,/abs/project-two \
+  --json
+python "$SBTD_ONBOARD_DIR/scripts/onboard.py" reset \
+  --projects-root /abs/project-one,/abs/project-two \
+  --trellis-user your-name \
+  --yes</code></pre>
+          <p><code>reset</code> 仍遵守路径 containment、canonical 身份、事务 rollback、legacy migration、Trellis filesystem-safety guard 和用户确认边界，不是无条件删除重装。</p>
+          <h3>使用 <code>--init-projects</code> 只初始化项目</h3>
+          <p><code>--init-projects</code> 是根安装脚本的 project-only 模式，只处理指定项目的 AGENTS、模板 <code>.gitignore</code>、Trellis init / bootstrap、Playwright 适用性和 React Bits 条件检查；不检测、安装、更新或配置全局 Agent CLI、Trellis / GitNexus、全局 Skills、全局 AGENTS 或 MCP。它自身接收一个或多个已存在的绝对路径，多个路径同样用英语逗号分隔，并与普通模式的 <code>--projects-root</code> / <code>--action</code> 互斥。</p>
+          <pre><code>bash install.sh \
+  --platform codex \
+  --init-projects /abs/project-one,/abs/project-two \
+  --yes</code></pre>
+          <pre><code>pwsh -File .\install.ps1 `
+  -Platform codex `
+  -InitProjects "C:\work\project-one,C:\work\project-two" `
+  -Yes</code></pre>
+          <pre><code>python "$SBTD_ONBOARD_DIR/scripts/onboard.py" init-projects \
+  --projects-root /abs/project-one,/abs/project-two \
+  --trellis-user your-name \
+  --yes</code></pre>
+          <h3>交互式安装脚本</h3>
+          <p>已克隆本仓库时，可运行 <code>bash install.sh</code> 或 <code>pwsh -File .\install.ps1</code>。交互式流程会选择目标 Agent 平台和 init / reset / project-only 模式，收集一个或多个英语逗号分隔的项目路径，按模式检查或安装全局工具与 Skills，写入允许的模板，引导 MCP，并逐项目处理 <code>.gitignore</code>、Trellis、Playwright 和 React Bits 条件项，最后汇总计划、执行状态、阻断原因和验证结果。Bash 安装器会保留脚本启动时的原始交互输入流，逐项目数据读取不会劫持后续用户选择；输入流提前关闭时会明确报错退出，不会无限重复 <code>Invalid choice.</code>。</p>
+          <p>根安装器的 <code>--yes</code> / <code>-Yes</code> 会对每个 yes/no 提示回答 Yes 并跳过最终执行确认，因此默认会安装 project <code>AGENTS.md</code>，也会确认安装流程中出现的可选工具提示。该参数不会猜测无默认值的选项或文本；目标平台、普通模式 action、Trellis 用户名和 React Bits tier / registry 等仍须通过对应参数预先提供或保留交互。非交互执行必须二选一：普通模式提供 <code>--platform</code>、<code>--projects-root</code>、<code>--action init|reset</code> 和其余适用输入；project-only 提供 <code>--platform</code>、<code>--init-projects</code> 和其余适用输入；最后再加 <code>--yes</code> / <code>-Yes</code> 消除 yes/no 确认。</p>
+          <p>这里的目标 Agent 平台只选择 CLI 与 MCP adapter，不会选择全局 AGENTS 目标。除非显式传入 <code>--global-agents-path</code> / <code>-GlobalAgentsPath</code>，正常模式始终把 Codex 全局规则模板写入解析后的 <code>$CODEX_HOME/AGENTS.md</code> 或 <code>~/.codex/AGENTS.md</code>；project-only 不写任何全局 AGENTS。</p>
+          </div>
+        </div>
+        <div class="status-list">
+          <div><strong>平台与 CLI 前置门</strong><br><code>--platform codex</code>、<code>claude</code>、<code>kimi</code>、<code>oh-my-pi</code> 或 <code>omp</code>。正常 init/reset 会先执行 <code>check-agent-cli</code>，并确保 npm、全局 Trellis 与 GitNexus 可用；<code>--init-projects</code> project-only 模式只记录平台上下文，不执行任何全局检测或安装。</div>
+          <div><strong>多项目参数</strong><br><code>--projects-root /abs/one,/abs/two</code> / <code>-ProjectsRoot "C:\one,C:\two"</code> 接受英语逗号分隔的多个绝对目录。<code>--init-projects</code> / <code>-InitProjects</code> 可独立执行逐项目 AGENTS、.gitignore、Trellis、Playwright 和 React Bits 检查配置。</div>
+          <div><strong>Agent npm 映射</strong><br><code>codex → @openai/codex@latest</code><br><code>claude → @anthropic-ai/claude-code@latest</code><br><code>kimi → @moonshot-ai/kimi-code@latest</code><br><code>omp → @oh-my-pi/pi-coding-agent@latest</code>。</div>
+          <div><strong>Source Root</strong><br><code>./install.sh --source-root /absolute/path/to/sbtd-workflow-onboard</code><br><code>.\install.ps1 -SourceRoot C:\absolute\path\to\sbtd-workflow-onboard</code></div>
+          <div><strong>全局 Skill 目录</strong><br>解析优先级：显式 <code>--global-skills-dir</code> → <code>$AGENT_SKILLS_DIR</code> → 已安装 Onboard Skill 的受信父目录 → 既有平台默认目录。<code>plan --json</code> 和 <code>check --json</code> 输出 <code>globalSkillsDirSource</code> 供审计。</div>
+          <div><strong>Skills</strong><br>正常 init/reset 强制把 15 个 bundled Skills 和 14 个 external Skills 安装到全局目录，不再提供 project/none scope。机器可读 <code>catalog.json</code> 是 bundled Skill、external Skill 上游 repo/subpath/alias 和模板源路径的事实源；Schema 与运行时在执行命令前共同拒绝绝对路径 / <code>..</code> 逃逸、错误 source 类型、bundled Skill frontmatter 身份不一致、非法 kind/id/target-role 组合和不完整的 HTTPS 仓库地址。canonical <code>sbtd-workflow-onboard</code> 校验成功，且 legacy <code>kuno-workflow-onboard-skills/SKILL.md</code> 仍确认旧身份时才删除旧目录；同名文件、无效 / 不相关目录或身份不匹配会阻断 init/reset 并保留原内容，删除异常进入失败报告，不保留 alias；caveman 和 React Bits 等原有单一作用域保持不变。</div>
+          <div><strong>External stable default</strong><br><code>auto</code> 默认使用 Onboard 内置、经过 review 且由精确 revision 和 checksum 固定的 stable set，不访问 Git 或网络；<code>stable</code> 使用相同的确定性来源。只有用户显式选择 <code>upstream</code> 才整组 clone 和验证当前上游，失败时不回退。全部 Skill 先暂存验证，再用临时 rollback backup 事务替换，canonical commit 成功后才删除 legacy 目录。</div>
+          <div><strong>Trellis Init</strong><br>全局 Trellis CLI 为必需工具；每个项目分别检查 <code>.trellis/</code>、执行 <code>--yes --skip-existing</code> 初始化并检测 <code>.trellis/tasks/00-bootstrap-guidelines</code>，一个项目需要 bootstrap 不会阻止其余项目继续检查。</div>
+          <div><strong>MCP</strong><br>MCP 仍由用户选择：Codex 使用用户级配置，Claude 固定 <code>--scope user</code>，Kimi 保持 CLI 默认行为，Oh My Pi 固定写入全局 <code>~/.omp/agent/mcp.json</code>；project-only 模式完全跳过 MCP。</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">SBTD</p>
+            <h2>四个驱动开发概念</h2>
+          </div>
+          <p>SBTD 是本模板对 SDD、BDD、TDD、DDD 的组合简称。它不是新框架，而是用于约束 Codex 工作流的协作顺序：先明确意图和语言，再固化可观察行为，最后用测试推动实现和回归。</p>
+        </div>
+        <div class="grid-4">
+          <article class="panel accent-blue">
+            <h3>SDD</h3>
+            <p>Specification-Driven Development。用 PRD、design、implement、验收标准和长期规则说明要做什么、为什么做、怎么验证。</p>
+          </article>
+          <article class="panel accent-green">
+            <h3>BDD</h3>
+            <p>Behavior-Driven Development。用户可见行为默认需要持久场景，分仓或跨端链路先做上下文完整性 gate；<code>sync</code> / <code>同步</code> 保留原有可写 BDD Sync Mode。BDD / 知识库请求具有明确 <code>read</code> / <code>读取</code> 只读意图且不含变更意图时，进入 Knowledge Ingest。</p>
+          </article>
+          <article class="panel accent-amber">
+            <h3>TDD</h3>
+            <p>Test-Driven Development。适用于 bug 修复、核心逻辑、高风险改动和回归敏感路径，用红测、绿码、重构推进。</p>
+          </article>
+          <article class="panel accent-red">
+            <h3>DDD</h3>
+            <p>Domain-Driven Design。通过统一语言、bounded context、CONTEXT 和 ADR 降低业务术语和模型边界的不确定性；每次 grill-with-docs 完整结束后必须执行独立二次审核。</p>
+          </article>
+        </div>
+        <div class="status-list">
+          <div><strong>DDD Boundary Review</strong><br>无论由 Agent 自发调用还是用户主动调用，每次完整执行 grill-with-docs 后都立即调用 bundled book-ddd-distilled-modeling 并单独输出审核结果。grill-with-docs 内嵌的 external domain-modeling dependency 不能替代该二次审核；needs-clarification 先继续澄清并重审，blocked 明确阻断。未达到 confirmed 不得进入需求确认、PRD、design、Trellis task 或实现。未完整调用 grill-with-docs 时仍要说明原因；只有调用与跳过存在会改变需求、领域边界或实现决策的实质权衡时才询问，项目事实已消除歧义时直接推进，不制造重复确认门。</div>
+          <div><strong>Book Gate Plan</strong><br>进入开发任务时，先按项目客观事实将 5 个 bundled book-* Skill 标记为 required / on-demand，并记录触发依据、执行阶段和独立 Gate state。Gate state 使用 <code>planned</code> / <code>running</code> / <code>passed</code> / <code>blocked</code> / <code>not-required</code>，只允许 <code>planned</code> → <code>running</code> → <code>passed</code> / <code>blocked</code>；reviewer status 在实际运行后填写。</div>
+          <div><strong>DDIA Data Design Review</strong><br>持久化 / 共享数据、schema / migration、shared / persistent / cross-request / cross-process cache、异步 / 跨服务数据流、数据所有权、事务边界、读写路径、backfill / replay / rollback / recovery 变化时，在 design / implement 稳定和实现开始前审核，必须达到 confirmed。</div>
+          <div><strong>Legacy Change Safety Review</strong><br>修复既有行为 bug，或弱测试、行为不清、隐藏依赖、高回归风险任一命中时，在首次行为修改前审核，必须达到 characterized；安全网必须先引入生产 seam 时进入 seam-required。</div>
+          <div><strong>Refactoring Review</strong><br>修改既有生产代码时，在首次实现编辑前审核；proceed 后继续，refactor-first 则先完成最小行为保持重构并复审。legacy 为 seam-required 时只允许 safety-seam-only 模式建立测试 seam，之后返回 legacy 并重跑常规 refactoring review。</div>
+          <div><strong>Release Readiness Review</strong><br>service / API / auth / billing / notification / job / queue / scheduler / external integration / data pipeline / deployment 等生产路径变化时，在所有适用 testing-tool gate 和 project validation 后、完成或最终发布决策前审核，必须达到 ready；必需验证不可豁免，optional check 仅可由明确 accountable owner 接受为 residual risk。</div>
+          <div><strong>按需边界</strong><br>needs-*、seam-required、refactor-first 或 blocked 会阻断对应阶段，修正后必须重审；其他场景仍按需调用，不把 5 个 book-* Skill 机械地全量套入每个任务。</div>
+          <div><strong>Knowledge Ingest</strong><br>只有请求具有明确只读意图且不含新增、修改、更新或删除意图时才进入；“先读取再修改”走普通 BDD 工作流，<code>sync / 同步</code> 仍优先进入 BDD Sync Mode。每个仓库按配置的 branch、tag 或 SHA 读取，并先解析为精确 commit SHA；目标 ref 中的仓库自有 <code>.feature</code> 仍是行为 SOT，聚合目录只是可重建派生视图。</div>
+          <div><strong>只读边界</strong><br>不切换开发者活动 worktree，不创建、修改、删除、移动或格式化源 <code>.feature</code>；输出 <code>Knowledge Ingest: run / partial / blocked</code> 和 <code>Mutation: none</code>。</div>
+          <div><strong>不改变 Feature 规范</strong><br>不要求或补写 <code>feature_id</code>、<code>scenario_id</code>、新 tags、owner 字段，也不引入 Gherkin / BDD Runner。</div>
+          <div><strong>无 ID 定位</strong><br>使用 repository key、path、Feature / Rule / Scenario 名称、可选 Examples fingerprint 和 SHA 定位摄取快照；跨仓重叠或冲突只作为人工审查候选。</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Boundaries</p>
+            <h2>工具职责边界</h2>
+          </div>
+          <p>Codex <code>tool_search</code> / plugin / connector、Chrome DevTools MCP、Playwright CLI、Playwright MCP、Maestro CLI、Maestro MCP、<code>shadcn</code>、<code>web-ui-autotest-generator</code> 和 <code>seo-geo</code> 不互相替代。<code>rtk</code> 与 <code>caveman</code> 只负责压缩命令或对话输出；unit / API / Playwright / Maestro 报告型测试要先评估 <code>rtk</code> 缓存或回放是否会跳过文件写入。模板要求在最终输出中显式报告相关状态，避免把候选工具、授权能力、诊断、探索、可重复测试和搜索可见性检查混在一起。</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>工具</th>
+              <th>主责</th>
+              <th>边界</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Codex tool_search / Plugin / Connector</td>
+              <td>发现延迟加载工具、remote / local plugin、connector 和 ChatGPT-hosted MCP 能力。</td>
+              <td>Catalog 或 marketplace 展示不等于已授权 / 已可调用；安装需用户明确请求，session auth / OAuth / cookies / tokens 不写入项目。</td>
+            </tr>
+            <tr>
+              <td>Chrome DevTools MCP</td>
+              <td>真实 Chrome 中的 console、network、storage、performance trace、screenshot 诊断。</td>
+              <td>提供现场证据，不作为 CI 或 E2E 通过依据。</td>
+            </tr>
+            <tr>
+              <td>Playwright CLI</td>
+              <td>项目内 Web E2E、Web 回归和 CI gate。</td>
+              <td>需要项目级安装；缺失时先询问用户，拒绝后只可降级为诊断。</td>
+            </tr>
+            <tr>
+              <td>Playwright MCP</td>
+              <td>Agentic Web 探索、可访问性快照、locator 辅助。</td>
+              <td>不替代 <code>playwright test</code>。</td>
+            </tr>
+            <tr>
+              <td>Maestro CLI</td>
+              <td>Android、iOS、React Native、Flutter、Hybrid App E2E 和可选 Web smoke。</td>
+              <td>Web 只适合 smoke，不作为 Web 回归主责。</td>
+            </tr>
+            <tr>
+              <td>Maestro MCP</td>
+              <td>设备检查、view hierarchy、截图、flow 辅助，以及终态 Cloud per-flow run 的状态与 artifact 诊断。</td>
+              <td>依赖 Java 17+ 和 Maestro CLI；当前 Agent / IDE 的 MCP 配置需包含 <code>JAVA_HOME</code> / <code>PATH</code> env，MCP 缺失但 CLI 可用时继续 <code>maestro test</code>。</td>
+            </tr>
+            <tr>
+              <td>shadcn</td>
+              <td>shadcn/ui 项目的组件、registry、preset、CLI、docs / diff 和组件组合规则。</td>
+              <td>不替代通用 UI/UX 设计判断、<code>impeccable</code> 视觉打磨或 React Bits Free / 付费 tier 判定。</td>
+            </tr>
+            <tr>
+              <td>web-ui-autotest-generator</td>
+              <td>生成和审计 repo-resident Playwright 测试资产、选择器和覆盖率。</td>
+              <td>执行底座仍是项目内 Playwright CLI。</td>
+            </tr>
+            <tr>
+              <td>seo-geo</td>
+              <td>公开网站、落地页、文档站、产品页、营销页的 SEO/GEO、schema、meta、robots / sitemap 和 AI 搜索可见性专项检查。</td>
+              <td>不替代 Chrome DevTools MCP、Playwright CLI、项目发布检查或内容评审；不用于内部后台、API、CLI、移动 App。</td>
+            </tr>
+            <tr>
+              <td>maestro-mobile-e2e</td>
+              <td>从 BDD 场景生成和维护 repo-resident Maestro Mobile / Hybrid flow，并约束报告路径。</td>
+              <td>不替代 BDD、项目验证或 Maestro CLI。</td>
+            </tr>
+            <tr>
+              <td>knowledge-base-integration</td>
+              <td>运行产品级 Knowledge Ingest、Evidence Policy、Revision Set、完整无 ID 行为目录、幂等分阶段 smoke、Runner Adapter 和证据完整性校验。</td>
+              <td>不修改源 <code>.feature</code>，不发布 Evidence，不写 PR Check；P2 负责远端治理。</td>
+            </tr>
+            <tr>
+              <td>rtk</td>
+              <td>用户级全局 CLI，用于压缩 terminal 命令输出，降低上下文占用；缺失时先说明作用并询问是否协助安装。</td>
+              <td>不替代测试 runner；报告型 unit / API / Playwright / Maestro 命令先评估缓存与文件写入风险，必要时使用原生命令或 fallback-native。</td>
+            </tr>
+            <tr>
+              <td>caveman</td>
+              <td>用户级全局 Agent Skill，用于压缩 Agent 回复和长任务状态更新；缺失时先说明作用并询问是否协助安装。自动生命周期由全局 AGENTS 规则负责，external Skill 只负责手动表达风格、强度和退出；达到阈值后 <code>autoLiteEligible</code> 单调锁存。</td>
+              <td>保护区只覆盖当前回复，不清除 <code>autoLiteEligible</code> 或 <code>autoLiteActive</code>；只有新的主要目标重置任务级状态，配置缺失时按 auto 处理。自动模式不替代项目 Skill、BDD、TDD、验证、GitNexus、Trellis 或最终报告。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Validation</p>
+            <h2>最终验证工具栈</h2>
+          </div>
+          <p>最终验证按风险从项目原生命令开始，再叠加 BDD、Web、Mobile 和发布就绪检查。无法执行时必须说明尝试命令、失败原因、替代检查和剩余风险。</p>
+        </div>
+        <div class="grid-3">
+          <article class="panel accent-blue">
+            <h3>项目原生验证</h3>
+            <p>优先运行项目级 AGENTS、README、package scripts、Makefile 或 CI 中定义的 lint、typecheck、static analysis、unit、integration、build；覆盖 Node、Python、Go、Dart、Java、Kotlin、C++、Swift 和 Objective-C。</p>
+          </article>
+          <article class="panel accent-green">
+            <h3>行为和测试追踪</h3>
+            <p>用户可见行为检查 BDD 场景和测试追踪；跨仓链路记录 full-stack、contract-backed、mock-backed、app-mocked、smoke-only 或 blocked。</p>
+          </article>
+          <article class="panel accent-amber">
+            <h3>Web 验证</h3>
+            <p>Chrome DevTools MCP 诊断现场问题，Playwright CLI 执行可重复 Web 回归，Playwright MCP 辅助探索。</p>
+          </article>
+          <article class="panel accent-red">
+            <h3>Mobile 验证</h3>
+            <p>Java 17+ 通过后使用 Maestro CLI 执行移动 flow；需要设备级资产时由 <code>maestro-mobile-e2e</code> 从 BDD 生成 <code>maestro/flow/*.yml</code>。</p>
+          </article>
+          <article class="panel accent-teal">
+            <h3>测试资产</h3>
+            <p>只有需要把 Web UI 回归固化进仓库时，才调用 <code>web-ui-autotest-generator</code>。</p>
+          </article>
+          <article class="panel accent-green">
+            <h3>SEO / GEO</h3>
+            <p>公开 Web 资产需要搜索可见性、schema、meta、robots / sitemap 或 AI 搜索引用检查时，才调用 <code>seo-geo</code>。</p>
+          </article>
+          <article class="panel accent-violet">
+            <h3>发布风险</h3>
+            <p>生产路径、外部集成、部署敏感变更和高 reasoning 多 worker 并发进入风险评估；高风险 review 可做 Channel preflight，并记录用量风险。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Artifact Contract</p>
+            <h2>Web UI 测试资产路径</h2>
+          </div>
+          <p><code>web-ui-autotest-generator</code> 的可入库 JSON 资产默认沉淀到 <code>tests/e2e/manifest/</code>，脚本调用必须显式传入这些路径，不依赖 Skill 示例中的根目录默认值。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>Manifest</strong><br><code>tests/e2e/manifest/ui-test-manifest.json</code></div>
+          <div><strong>Selector Audit</strong><br><code>tests/e2e/manifest/ui-selector-audit.json</code></div>
+          <div><strong>Coverage</strong><br><code>tests/e2e/manifest/ui-test-coverage.json</code></div>
+          <div><strong>Repair Plan</strong><br><code>tests/e2e/manifest/ui-test-repair-plan.json</code> 是失败分析运行产物，默认忽略。</div>
+        </div>
+        <pre><code>generate_manifest.py --root . --out tests/e2e/manifest/ui-test-manifest.json --pretty
+audit_selectors.py --root . --out tests/e2e/manifest/ui-selector-audit.json --pretty
+check_coverage.py --root . --manifest tests/e2e/manifest/ui-test-manifest.json --selector-audit tests/e2e/manifest/ui-selector-audit.json --tests-dir tests/e2e --out tests/e2e/manifest/ui-test-coverage.json --pretty</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">shadcn/ui</p>
+            <h2>shadcn Skill 使用边界</h2>
+          </div>
+          <p><code>shadcn</code> 是 optional external Skill，只在 shadcn/ui 项目、组件 registry、preset 或 CLI 工作流需要时启用。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>启用条件</strong><br>项目存在 <code>components.json</code>，或用户要求初始化 / 维护 shadcn/ui，执行 <code>init/add/search/view/docs/diff/info/migrate/preset</code>，使用 preset code、registry item、第三方 / 私有 / 付费 registry 或 shadcn MCP 配置。</div>
+          <div><strong>实现顺序</strong><br>UI/UX 任务中先用 <code>ui-ux-pro-max</code> 明确产品方向、信息架构、可访问性和设计系统约束，再用 <code>shadcn</code> 处理组件来源、CLI、registry 和具体实现规则。</div>
+          <div><strong>组件规则</strong><br>添加或更新组件前先检查 <code>components.json</code>、<code>shadcn info</code>、已安装组件和项目别名；涉及组件 API 时先查 <code>shadcn docs</code>，更新已有组件先用 <code>--dry-run</code> / <code>--diff</code>。</div>
+          <div><strong>跳过条件</strong><br>非 shadcn/ui 项目且用户没有要求引入 shadcn；通用 UI 设计判断、视觉 polish、后端、测试、文档或非 React UI 栈任务；React Bits Free / 付费 tier、付费 Skill 安装或 key 可用性判定。</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">React Bits</p>
+            <h2>React Bits tier 选择边界</h2>
+          </div>
+          <p>React Bits 不是 shadcn/ui 的必装依赖。安装和 reset 默认保持 shadcn/ui only；只有检测到目标项目是 React + shadcn/ui（存在 <code>components.json</code>），且任务需要更强视觉表达、动画组件、blocks 或 landing sections 时，才询问用户是否启用 React Bits。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>默认选择</strong><br>先说明 shadcn/ui 提供常规应用组件，React Bits Free / 付费 tier 只是可选增强。</div>
+          <div><strong>确认选项</strong><br>询问用户继续 shadcn/ui only、安装 React Bits Free，或使用已有付费 Starter / Pro / Ultimate。</div>
+          <div><strong>Free</strong><br>只有在本工作流已有明确免费 source / registry / 安装命令时才安装；未配置时说明暂不可自动安装。</div>
+          <div><strong>Paid</strong><br>Starter / Pro / Ultimate 必须由用户确认，且当前环境能读取 <code>REACTBITS_LICENSE_KEY</code>；安装器固定写入项目的 <code>.agents/skills/react-bits-pro/SKILL.md</code>，已有目标直接覆盖且不保留备份，不打印、不输出、不提交 key。</div>
+          <div><strong>Reset</strong><br>保留检测到的既有 React Bits Free、Starter、Pro 或 Ultimate tier / registry，不用默认免费版覆盖。</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">SEO / GEO</p>
+            <h2>公开 Web 搜索可见性检查</h2>
+          </div>
+          <p><code>seo-geo</code> 是 bundled Skill，只在公开网站、落地页、文档站、产品页、营销页、公开博客或公开 README 页面需要搜索可见性检查时启用。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>启用条件</strong><br>用户要求 SEO、GEO、AI search visibility、schema、JSON-LD、meta tags、robots.txt、sitemap.xml、canonical、关键词研究或发布前 crawl / indexing 检查。</div>
+          <div><strong>跳过条件</strong><br>内部后台、登录后页面、API、CLI、移动 App、纯后端、测试资产、文档内部重排或只需要 Web 运行时诊断 / Playwright 回归。</div>
+          <div><strong>URL Gate</strong><br>没有公网 URL 或 preview URL 时，只做源码 / HTML 静态检查；报告 <code>SEO/GEO: static-only</code> 或 <code>blocked</code>。</div>
+          <div><strong>Credentials</strong><br>基础 audit 不要求 DataForSEO；DataForSEO login / password 只作为关键词、SERP、backlink、domain overview 增强分析的可选凭据，不能写入仓库或报告。</div>
+        </div>
+        <p>关键词量、SERP、AI 搜索可见性和平台抓取规则具有时效性，必须用当前可用来源核对。最终输出或 Trellis check summary 必须报告 <code>SEO/GEO</code>: <code>audited</code> / <code>static-only</code> / <code>blocked</code> / <code>skipped</code> / <code>not-needed</code>。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Cross Repo Testing</p>
+            <h2>跨仓测试模式和报告闭环</h2>
+          </div>
+          <p>API、Web E2E、Mobile E2E、Hybrid E2E 或发布前 smoke 进入正式验证时，先判定链路事实是否完整。mock 只能基于 contract、schema、真实响应样例、既有 fixture 或用户确认；mock-backed 不能冒充 full-stack 通过。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>测试模式</strong><br><code>full-stack</code> / <code>contract-backed</code> / <code>mock-backed</code> / <code>app-mocked</code> / <code>backend-only</code> / <code>smoke-only</code> / <code>blocked</code>。</div>
+          <div><strong>默认报告目录</strong><br>API 正式快照: <code>tests/api/reports/</code>；API 临时输出: <code>tests/api/reports/.api-current/</code>；Playwright 临时 HTML: <code>tests/e2e/reports/.playwright-html-current/</code>；Playwright 正式快照: <code>tests/e2e/reports/html/</code>；Maestro: <code>.maestro/reports/</code>；unit 需要本地证据时使用 <code>tests/unit/reports/</code>。</div>
+          <div><strong>API URI 覆盖矩阵</strong><br>API / integration Markdown 汇总必须把每条覆盖范围描述映射到具体 <code>method + URI path</code>，并记录测试脚本 / case、期望状态码或副作用、关联 feature / contract / schema；缺 URI 时标记 <code>blocked</code> 或 <code>missing-uri</code>。</div>
+          <div><strong>Playwright Report</strong><br><code>playwright-report-{feature_file_name}-{branch_slug}-{YYYY_mm_dd}-{HH_MM_SS}.html</code>；<code>branch_slug</code> 取当前分支，<code>/</code>、空格和特殊字符替换为 <code>_</code>；smoke 使用 <code>smoke</code>，多 feature 优先 suite 名，否则 <code>multi-feature</code>。</div>
+          <div><strong>rtk Gate</strong><br>unit / API / Playwright / Maestro 报告型测试先记录 <code>rtk</code>: <code>used</code> / <code>skipped-for-report</code> / <code>fallback-native</code> / <code>not-available</code> / <code>not-needed</code>；缺报、旧报、空报或 cache hit / replay 时原生命令重跑。</div>
+          <div><strong>证据版本身份</strong><br>正式报告作为 PR 或知识库证据时，使用同 report stem 的 <code>.evidence.json</code> 或聚合 envelope。先定位已安装的 <code>project-validation</code> Skill 根目录。通用报告用该根目录 <code>references/validation-evidence.schema.json</code>（v1）；v1 Schema 只检查 digest 形状，仍须重算报告 SHA-256。要证明某个 Scenario 被执行时，必须用同一根目录 <code>references/validation-evidence.v2.schema.json</code> 和 <code>scripts/validate_validation_evidence.py</code>，从 SHA-verified JUnit / Playwright JSON 中唯一匹配 passed case，要求 case 内 <code>sbtd.sourceLocatorDigest</code> 等于重算 locator。记录 repository key、原始 source ref、完整 commit SHA、worktree state、trigger、报告 checksum 和环境对齐状态。<code>branch_slug</code> 只用于文件名，不是版本身份。</div>
+          <div><strong>Evidence 来源</strong><br><code>developer-local</code>、<code>ci</code> 与 <code>knowledge-server</code> 独立展示。dirty 本地运行只能是 <code>local-only</code>；CI evidence 必须来自 clean checkout；服务器运行必须包含精确 Revision Set。提交前只记录本地 evidence 状态，创建最终提交后、发布或更新 PR Check 前，必须针对最终 PR head SHA 重新生成或复验并更新 sidecar / envelope；CI 运行本身不等于 <code>published</code>。<code>smoke-only</code> 不得冒充完整回归。v1 同 envelope 共存不能当作 BDD 覆盖。</div>
+          <div><strong>最终报告</strong><br>调试轮次可以保留多份带业务名、分支名和时间戳的本地快照；API、Playwright 和 Maestro 的正式报告 stem 必须包含 <code>branch_slug</code>，detached HEAD 使用 <code>detached-{short_sha}</code>，非 git 环境使用 <code>unknown-branch</code>。只要 Playwright 或 Maestro 产生 runner 原生报告，或 API / integration / unit runner 生成了本轮要保留的报告，无论最终是否全绿，都先生成该次运行的命名报告，再进入下一次可能清空输出的运行。正式验证范围不能由 runner 是否已经产出报告倒推决定；API stdout-only 必须捕获 <code>api-report-*-{branch_slug}-*.txt</code> / <code>.json</code> raw report，Playwright <code>--reporter=list</code> 和 Maestro stdout-only 都只能算诊断，收尾前必须补正式 reporter 或标记 blocked。<code>coverage/</code>、<code>test-results/</code>、固定 <code>junit.xml</code> 和 <code>current</code> 目录都不是正式快照。</div>
+          <div><strong>Markdown 汇总</strong><br>Playwright 的 <code>.md</code> 必须与命名 HTML 同 stem，不能用 <code>results.json</code> / <code>junit.xml</code> / 默认 <code>index.html</code> 的 stem；中文汇总记录运行 case、关联 BDD feature、总轮次、失败 case、原因、修复、定点重跑、影响范围重跑和最终全量重跑；API 汇总额外记录 URI 覆盖矩阵。</div>
+        </div>
+        <p>证据相关状态为 <code>Evidence Source</code>: <code>developer-local</code> / <code>ci</code> / <code>knowledge-server</code> / <code>not-needed</code>，<code>Source Revision</code>: <code>exact</code> / <code>dirty</code> / <code>unknown</code> / <code>not-needed</code>，<code>Environment Alignment</code>: <code>verified</code> / <code>unverified</code> / <code>mismatch</code> / <code>not-needed</code>，以及 <code>Evidence Publication</code>: <code>local-only</code> / <code>published</code> / <code>blocked</code> / <code>not-configured</code> / <code>not-needed</code>。普通本地诊断不强制生成 evidence sidecar。</p>
+        <p>失败修复后先重跑失败 case / spec / flow，再跑受影响子集，最后跑计划范围内全量验证。fail-fast 停在首个失败时，修复后必须继续跑未覆盖测试或重跑全量。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Mobile E2E Contract</p>
+            <h2>Maestro flow 和报告路径</h2>
+          </div>
+          <p>Mobile / Hybrid BDD 场景需要设备级覆盖时，使用 <code>maestro-mobile-e2e</code> 生成或维护 Maestro flow。Flow 是可入库测试资产；最终正式报告和 Markdown 汇总是本地/CI 产物。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>Flow Assets</strong><br><code>maestro/flow/&lt;english-scenario&gt;.yml</code>，文件名 lower-kebab-case，YAML <code>name</code> 使用英文业务场景名。</div>
+          <div><strong>Platform Flow</strong><br>平台差异明显时可使用 <code>maestro/flow/ios/*.yml</code> 和 <code>maestro/flow/android/*.yml</code>。</div>
+          <div><strong>Final Report</strong><br><code>.maestro/reports/maestro-report-{flow_name}-{branch_slug}-{YYYY_mm_dd}-{HH_MM_SS}.xml</code> 或 <code>.html</code>；<code>flow_name</code> 取 flow 文件名 stem，smoke flow 使用 <code>smoke</code>。</div>
+          <div><strong>Run Summary MD</strong><br><code>.maestro/reports/maestro-report-{flow_name}-{branch_slug}-{YYYY_mm_dd}-{HH_MM_SS}.md</code></div>
+        </div>
+        <p>生成或运行 flow 前确认平台、app artifact、bundleId / appId、设备 / 模拟器 / 云测、后端依赖、base URL / launch args / deep link、账号、数据、权限、稳定 selector 和系统 UI。Maestro 优先直接输出到带分支名和时间戳的报告文件；如项目 wrapper 只能输出到固定目录，使用 <code>.maestro/reports/.maestro-current/</code> 后再提升为正式快照。stdout-only Maestro run 只用于诊断或定点重跑，不能满足正式 Mobile / Hybrid E2E 报告 gate。Maestro 官方默认运行 artifacts 位于用户 home 下的 <code>~/.maestro/tests</code>，不是仓库内测试资产。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Install Gates</p>
+            <h2>检测、安装和 fallback</h2>
+          </div>
+          <p>模板不默认假设工具存在。CLI、MCP、plugin、connector 或用户级全局 Skill 缺失时，先按证据检测，再根据用户确认安装、配置或降级；降级不能冒充完整验证。<code>scripts/onboard.py</code> 只报告 MCP 状态，根安装脚本才会在用户确认后执行平台 MCP 配置。</p>
+        </div>
+        <div class="status-list">
+          <div><strong>Codex plugin / connector</strong><br>使用 <code>tool_search</code>、当前工具列表或 MCP 可见性确认 callable tool；catalog / marketplace / 版本展示只作为候选信号，session auth 材料不写入项目。</div>
+          <div><strong>Playwright CLI</strong><br>检测 <code>package.json</code>、Playwright 配置、E2E 目录和脚本。需要 Web 回归但缺失时询问是否安装到项目 devDependency。</div>
+          <div><strong>Playwright MCP</strong><br>只作为 MCP 可见性检查和探索能力；不可见时不阻塞 Playwright CLI。</div>
+          <div><strong>Java 17+</strong><br>Maestro 前先运行 <code>java --version</code>，失败再用 <code>java -version</code>。当前 JDK 满足 17+ 时优先使用当前 JDK；否则先扫描本机已有 17+ JDK。只有本机没有可用 JDK 且用户确认后，才引导安装 OpenJDK Temurin 21。</div>
+          <div><strong>Maestro CLI / MCP</strong><br>Java 通过后检查 CLI，CLI 可用后再检查 MCP。根安装脚本可把 <code>command</code>、<code>args</code>、<code>JAVA_HOME</code> 和 <code>PATH</code> 写入选定平台；MCP 缺失或 env 未配置但 CLI 可用时继续 <code>maestro test</code>。</div>
+          <div><strong>Chrome DevTools MCP</strong><br>由 Agent 或 IDE 配置提供，只负责诊断和证据收集；根安装脚本可为选定平台添加 <code>chrome-devtools-mcp</code>。</div>
+          <div><strong>Trellis Project Setup</strong><br>onboard <code>init</code> / <code>reset</code> 要先确认 Trellis CLI 可用；缺少 <code>.trellis/</code> 时使用用户确认的 <code>--trellis-user</code> 和 <code>--trellis-platform</code> 执行初始化。<code>omp</code> 与 <code>pi</code> 是独立平台标志：前者只生成 <code>--omp</code>，后者只生成 <code>--pi</code>，不得互相替换。只检查 <code>.trellis/tasks/00-bootstrap-guidelines</code>；命中时以 <code>bootstrap-required</code> 非零状态阻止误报完成，并必须继续按 <code>trellis-workflow</code> 完成 bootstrap task。</div>
+          <div><strong>External Skills source policy</strong><br>默认 <code>auto</code> 与显式 <code>stable</code> 都要求 stable manifest、checksum、frontmatter 和完整 Skill tree 验证通过，且不访问上游；只有显式 <code>upstream</code> 才访问当前上游，任何获取或验证错误都会直接失败。stable 完整性错误和目标侧 staging、权限、磁盘、commit、rollback 错误同样直接失败，不存在自动 source fallback。</div>
+          <div><strong>External Skills stable set</strong><br><code>assets/external-skills/stable/MANIFEST.json</code> 记录 stable set、精确上游 commit、subpath、tree SHA-256 和许可证/NOTICE。所有 manifest、source subpath 和 license 路径必须被声明根目录包含；拒绝绝对路径、<code>..</code> 和 symlink 逃逸。快照保持上游原样且不得手改；只有显式 <code>promote-external-skills-stable</code> 才能整组更新。</div>
+          <div><strong>External Skills transaction</strong><br>全部目标先暂存验证，再事务替换，canonical 成功后才删除 legacy。commit 失败会恢复旧目标；若恢复不完整，唯一 rollback 备份会保留并返回路径，供人工恢复。</div>
+          <div><strong>mattpocock Skills</strong><br>external Skill 使用上游 canonical 名称。<code>migrate-external-skills --scope global --yes</code> 会先对全部受管旧目录做 identity preflight，再以已选 source 事务安装所需 canonical replacement。需要 canonical replacement 的 legacy predecessor 会在成功 transaction commit 后随临时 rollback 目录删除；只有不需要 canonical install 的 legacy-only cleanup（已有有效 replacement，或无 replacement 的 <code>zoom-out</code>）才会在删除前保留 migration backup。任何身份冲突均在安装前 fail-closed。正常 <code>init</code> / <code>reset</code> 仍只做已发现 legacy 的自动迁移。</div>
+          <div><strong>web-ui-autotest-generator</strong><br>作为 bundled Skill 随模板安装，只在需要把 Web UI 回归固化为仓库内 Playwright 测试资产时调用；执行底座仍是项目内 Playwright CLI。</div>
+          <div><strong>shadcn</strong><br>作为 referenced external Skill 检查存在性；用户选择安装后从 <code>shadcn-ui/ui</code> 的 <code>skills/shadcn</code> 拉取，macOS / Linux / Windows 都走同一 Python installer 逻辑。</div>
+          <div><strong>React Bits</strong><br>tier 选择只在目标项目被检测为 React + shadcn/ui 时作为条件 manual guidance 输出；普通 onboarding 不询问、不安装 React Bits。</div>
+          <div><strong>seo-geo</strong><br>作为 bundled Skill 随模板安装；缺失且任务不以搜索可见性为主时标记 skipped，缺少 URL 时标记 static-only 或 blocked。</div>
+          <div><strong>rtk / caveman</strong><br><code>rtk</code> 缺失时询问是否安装全局 CLI；报告型测试可能因缓存 / 回放跳过文件写入，必要时直接使用原生命令。<code>caveman</code> 缺失时询问是否安装用户级全局 Skill；安装本身不启用持久模式。达到 3 次中间状态更新、5 个独立工具结果、长任务 / 上下文压力或重复自动化 / review / 验证轮次中的任一条件后，<code>autoLiteEligible</code> 单调锁存，下一条非保护区、非阻塞且无需用户决定的重复状态必须进入 <code>auto-lite</code>。自动生命周期由全局 AGENTS 规则负责，external Skill 只负责手动风格；自动模式不进入更激进等级。安装 / 权限 / 破坏性操作确认、安全风险、需求与 review gate、长期文档、失败与剩余风险、最终验证报告和最终答复保持完整输出；保护区只覆盖当前回复，不清除 <code>autoLiteEligible</code> 或 <code>autoLiteActive</code>，后续普通状态直接恢复。任务级和会话级退出保持现有优先级；只有新的主要目标重置任务级状态，<code>继续</code>、<code>确认</code>、授权、状态询问、故障恢复、context compaction 和 handoff 不重置。runtime 显式 <code>off</code> 时禁用；配置缺失时按 auto 处理。</div>
+          <div><strong>状态报告</strong><br>最终输出要列明各工具是 run、blocked、skipped、not-needed、available、installed 或对应模板状态。</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Artifacts</p>
+            <h2>工具与测试产物忽略规则</h2>
+          </div>
+          <p>项目模板默认追踪项目级 <code>AGENTS.md</code>、<code>CLAUDE.md</code>、共享 <code>.agents/skills/**</code>，以及 Trellis 为 Claude / Codex / OMP 等平台生成的 agents、commands、skills、hooks、extensions 和共享 settings；只忽略 <code>.claude/projects/</code>、<code>.claude/worktrees/</code>、<code>.claude/settings.local.json</code> 与 <code>.omp/plugins/</code> 等已确认的本地运行态或机器本地设置。本项目模板选择用无尾随斜杠的 <code>.trellis/workspace</code> 将 Trellis 生成的 <code>index.md</code>、开发者 journal / trace，以及有意配置为 symlink 的顶级 workspace 作为本地数据忽略；这有意不同于上游 Trellis 默认会 stage workspace 内容的策略，并阻止 workspace 内容自动提交。初始化时按精确非空行比较项目原 <code>.gitignore</code> 与模板：已有行保持原位且不重复，只把缺失行追加到文件末尾；重复执行必须保持文件字节不变。模板同时保留可维护测试资产，忽略本地运行态、报告、trace、video、screenshot 和一次性 repair plan。</p>
+          <p><strong>既有项目迁移：</strong>如果旧模板已经写入 <code>.claude/</code>、<code>CLAUDE.md</code>、<code>.agents/</code> 或 <code>/AGENTS.md</code>，<code>init</code> / <code>reset</code> 的“只追加缺失行”契约不会自动删除这些既有行；确认项目需要追踪对应控制文件与生成集成后，手工删除这些旧行，并用 <code>git check-ignore</code> 复核目标路径。</p>
+        </div>
+        <pre><code># ---------- Claude ----------
+# Keep Trellis-generated agents, commands, skills, hooks, and shared settings versioned.
+.claude/projects/
+.claude/worktrees/
+.claude/settings.local.json
+
+# ---------- OMP ----------
+# Keep Trellis-generated agents, commands, skills, and extensions versioned.
+.omp/plugins/
+
+# ---------- AI Tools ----------
+# Keep project AGENTS.md and shared .agents/skills versioned.
+.worktrees/
+
+# ---------- Trellis ----------
+# Ignore generated workspace data and an intentional workspace symlink.
+.trellis/workspace
+
+# ---------- Testing -----------
+# MCP / browser controller local state
+.chrome-devtools-mcp/
+.playwright-mcp/
+
+# Playwright runtime artifacts
+playwright-report/
+test-results/
+blob-report/
+
+# Web UI autotest generated run artifacts
+tests/e2e/manifest/ui-test-repair-plan.json
+tests/api/reports/
+tests/unit/reports/
+tests/e2e/reports/
+tests/e2e/**/screenshots/
+tests/e2e/**/videos/
+tests/e2e/**/traces/
+tests/e2e/**/*.trace.zip
+
+# Maestro runtime artifacts
+# Keep maestro/flow/*.yml flows versioned; ignore only local runtime output and reports.
+.maestro/cache/
+.maestro/tmp/
+.maestro/runs/
+.maestro/reports/</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Repository</p>
+            <h2>源文件和同步规则</h2>
+          </div>
+          <p>本仓库是配置摘录和模板源，不是真实业务项目。编排按产物类型分层，并保持 Onboard Skill 自包含：automation prompt 位于 <code>prompts/</code>，运行实现位于 <code>scripts/</code>，安装载荷位于 <code>templates/</code>，第三方 fallback 位于 <code>assets/</code>。普通修改只更新仓库源文件；只有用户输入 <code>sync</code> 或 <code>同步</code> 时，才同步允许列表中的全局规则和 Skill 到本地生效路径。sync 允许列表明确包含 bundled <code>web-ui-autotest-generator</code> 完整目录到 <code>/Users/lusonglin/.agent/skills/web-ui-autotest-generator/</code> 的映射。sync 在 canonical Onboard 校验成功后删除 <code>~/.agent/skills/kuno-workflow-onboard-skills/</code>，并在本机实际使用路径 <code>~/.agent/skills/</code> 上以 <code>--source auto</code> 执行 mattpocock legacy migration，删除 legacy <code>to-prd</code> / <code>to-issues</code> 并安装 canonical <code>to-spec</code> / <code>to-tickets</code>；不保留旧 Onboard alias，普通 sync 也不默认触碰 <code>~/.codex/skills/</code> 下的同名 external Skill 目录。</p>
+        </div>
+        <p><code>AGENTS.md</code> 和 <code>ENTRYPOINT.md</code> 是必须由 Git 追踪的仓库控制文件：前者保存当前仓库直接生效的补充规则，后者保存版本检查和 <code>update</code> / <code>更新</code> 使用的 authoritative baseline。新 clone 必须直接取得二者；不要把它们加入根 <code>.gitignore</code>、移出索引或只保存在单台工作站。每次仓库代码或工作流规则改动后，都评估 CHANGELOG、README 两份文件和版本化 automation prompt 是否需要同步调整；只有执行 <code>sync</code> / <code>同步</code> 时才比较版本化 prompt 与 Orca <code>SBTD Workflow Tools Version Check</code>，并仅在存在差异时同步到 live automation。<code>update</code> / <code>更新</code> 与 prompt 和 live automation 无关。</p>
+        <table>
+          <thead>
+            <tr>
+              <th>路径</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>ENTRYPOINT.md</code></td><td>由 Git 追踪的版本监控和工作流总入口，也是版本检查与更新流程的可恢复基线。</td></tr>
+            <tr><td><code>AGENTS.md</code></td><td>由 Git 追踪的仓库直接生效规则，保证新 clone 可恢复操作边界。</td></tr>
+            <tr><td><code>CHANGELOG.md</code></td><td>从 <code>v1.0.0</code> 起按 Git tag、中文、最新版本在前的顺序维护发布变更。</td></tr>
+            <tr><td><code>LICENSE</code></td><td>本仓库原创内容适用的 Apache License 2.0 完整许可文本。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/LICENSE</code> / <code>NOTICE</code></td><td>自包含 Onboard Skill 的原创内容使用与仓库根一致的 Apache License 2.0，并声明 <code>Copyright 2026 KunoLu</code>；文件随公开安装和本地同步一起分发。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/templates/skills/*/LICENSE</code> / <code>NOTICE</code></td><td>除第三方衍生的 <code>seo-geo</code> 外，其余 bundled Skill 的原创内容均使用同一 Apache License 2.0 和 <code>Copyright 2026 KunoLu</code> 声明；既有第三方来源说明继续保留。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/templates/skills/web-ui-autotest-generator/LICENSE</code> / <code>NOTICE</code></td><td>个人独立实现的 bundled <code>web-ui-autotest-generator</code> 使用与仓库根一致的 Apache License 2.0；<code>NOTICE</code> 声明 <code>Copyright 2026 KunoLu</code>，两份文件随独立安装的 Skill 一起分发。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/templates/skills/seo-geo/LICENSE</code> / <code>NOTICE</code></td><td>第三方衍生的 bundled <code>seo-geo</code> 保留 ReScienceLab/opc-skills 的 Apache License 2.0；<code>NOTICE</code> 固定上游 source、revision 和本地修改范围，<code>Copyright 2026 KunoLu</code> 仅适用于本地修改。</td></tr>
+            <tr><td><code>docs/lessons.md</code></td><td>Lessons 必读短入口；执行仓库操作前必须先读取。</td></tr>
+            <tr><td><code>docs/lessons/index.md</code></td><td>Lessons 完整索引，按 tags、适用场景和详情路径检索。</td></tr>
+            <tr><td><code>docs/lessons/topics/**</code></td><td>Lessons 完整详情，按当前任务命中后读取。</td></tr>
+            <tr><td><code>prompts/automations/sbtd-workflow-tools-version-check.md</code></td><td>Orca <code>SBTD Workflow Tools Version Check</code> 的版本化 prompt 源；每次仓库代码改动后评估是否需要调整，只有 sync 才与 live automation 比较并按需同步。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/</code></td><td>onboard Skill 完整目录；普通 sync 时同步到 <code>~/.agent/skills/sbtd-workflow-onboard/</code>。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/catalog.json</code> / <code>catalog.schema.json</code></td><td>Bundled Skill、external Skill 上游源与模板路径目录，以及对应 Draft 2020-12 结构契约。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/assets/external-skills/stable/</code></td><td>External Skills 原样 stable 镜像、来源 manifest、checksum 与第三方许可证；仅通过 promotion 流程更新。</td></tr>
+            <tr><td><code>~/.agent/skills/{diagnose,write-a-skill,writing-great-skills,to-prd,to-issues,zoom-out}</code></td><td>受管 legacy external Skill 目录；普通 sync 后由 <code>migrate-external-skills</code> 先做身份校验，再迁移或删除。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/templates/agents/</code></td><td>全局规则和项目级规则模板。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/templates/skills/</code></td><td>全局 Skill 模板目录，包含 <code>SKILL.md</code>、<code>references/</code>、<code>scripts/</code>、<code>assets/</code> 等。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/templates/project/.gitignore</code></td><td>新项目模板忽略规则。</td></tr>
+            <tr><td><code>sbtd-workflow-onboard/scripts/onboard.py</code></td><td>安装、重置、检测、Trellis init / bootstrap 检测和引导配置自动化。</td></tr>
+            <tr><td><code>README.md</code> / <code>README.html</code></td><td>工作流说明文档，与版本化 automation prompt 在相关改动后同步维护。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Maintenance</p>
+            <h2>README 与自动化 Prompt 同步规范</h2>
+          </div>
+          <p>后续任何仓库代码、<code>sbtd-workflow-onboard/</code>、模板或工作流内容更新，如果影响工作流、工具职责、安装检测、SBTD、验证策略、忽略规则、同步流程、版本检查或用户可见路径，都必须在同一轮评估 <code>README.md</code>、<code>README.html</code> 和 <code>prompts/automations/sbtd-workflow-tools-version-check.md</code> 是否需要同步调整，不受影响的文件不做无意义改写。普通修改只维护仓库文件；只有 sync / 同步才比较并按差异同步 Orca live automation。update / 更新只负责版本写回和归档，与版本化 prompt 和 live automation 无关。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>当前文档与仓库模板源对齐：SBTD 负责开发方法，Codex <code>tool_search</code> / plugin / connector 负责 Agent 侧工具发现和授权边界，Chrome DevTools MCP / Playwright / Maestro 负责分层验证，<code>shadcn</code> 只在 shadcn/ui 组件、registry、preset 和 CLI 工作流中启用，bundled <code>web-ui-autotest-generator</code> 和 <code>maestro-mobile-e2e</code> 只在需要沉淀对应 E2E 测试资产时启用，bundled <code>seo-geo</code> 只在公开 Web 搜索可见性检查时启用，<code>rtk</code> / <code>caveman</code> 只作为上下文效率层，报告型测试需先评估 <code>rtk</code> 文件写入风险。</p>
+    </div>
+  </footer>
+</body>
+</html>

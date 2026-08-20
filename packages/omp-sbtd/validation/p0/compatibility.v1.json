@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "currentRuntimeVersion": "17.3.5",
+  "pluginPackage": "@kunolu/omp-sbtd",
+  "commands": ["help", "status", "report", "onboard plan"]
+}

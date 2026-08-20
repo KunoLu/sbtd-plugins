@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="login" tests="1" failures="0">
+    <testcase classname="login.spec" name="registered user logs in" file="tests/login.spec.ts">
+      <properties>
+        <property name="sbtd.sourceLocatorDigest" value="46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9"/>
+      </properties>
+    </testcase>
+    
+  </testsuite>
+</testsuites>

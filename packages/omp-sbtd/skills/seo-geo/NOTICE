@@ -1,0 +1,31 @@
+SEO/GEO Optimization Skill
+
+Upstream source:
+    ReScienceLab/opc-skills
+    https://github.com/ReScienceLab/opc-skills
+
+Upstream revision:
+    ab75cf514281af371962c3a8449cb2a3761fd2b9
+
+Upstream path:
+    .agents/skills/seo-geo
+
+The original content in this Skill is derived from the upstream source above.
+Copyright in that original content remains with the ReScienceLab/opc-skills
+contributors. The original content is licensed under the Apache License, Version 2.0.
+The license classification in this bundle follows the LICENSE file present at
+the pinned upstream revision.
+
+Local modifications Copyright 2026 KunoLu:
+
+- Adapted the SKILL.md frontmatter for this repository's model-invoked Skill
+  discovery by folding the upstream trigger list into the description.
+- Removed trailing whitespace from the copied example, reference, and Python
+  source files identified by their in-file modification notices. These edits
+  do not change the substantive content or runtime behavior.
+- Bundled the Skill into sbtd-workflow-onboard and added the local LICENSE and
+  this NOTICE file for standalone distribution.
+
+KunoLu claims copyright only in these local modifications, not in unchanged
+upstream content. All upstream attribution and Apache License 2.0 rights and
+conditions remain in effect.

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-BUG-01",
+  "category": "existing-behavior-bug",
+  "prompt": "Fix a local date formatter that renders the day before the requested date in one timezone, preserving existing valid output.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "bugfix",
+    "routeCost": "standard",
+    "requiredGates": ["legacy-change-safety", "refactoring-pass", "tdd"],
+    "obligations": [
+      "Characterize the broken behavior",
+      "Preserve unaffected timezone output"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "bug-fix",
+      "description": "The reported timezone defect no longer occurs.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "regression-safety",
+      "description": "A focused regression distinguishes the fixed case from valid existing output.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

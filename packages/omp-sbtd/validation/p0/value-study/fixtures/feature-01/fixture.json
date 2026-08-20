@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-FEATURE-01",
+  "category": "user-visible-feature",
+  "prompt": "Add a visible empty-state message for a local task list and record the behavior in a persistent BDD scenario.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "bdd-user-visible-change",
+    "routeCost": "standard",
+    "requiredGates": ["bdd", "tdd"],
+    "obligations": [
+      "Create persistent BDD before completion",
+      "Add an observable regression check"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "visible-behavior",
+      "description": "The empty state is understandable to a user.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "bdd-trace",
+      "description": "Persistent BDD and the observable check agree with the behavior.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

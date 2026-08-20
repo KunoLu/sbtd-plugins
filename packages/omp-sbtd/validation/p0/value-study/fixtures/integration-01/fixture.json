@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-INTEGRATION-01",
+  "category": "production-integration",
+  "prompt": "Add a local integration boundary that reports a missing downstream capability as a typed blocker instead of a successful fallback.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "release-readiness",
+    "routeCost": "heavy",
+    "requiredGates": ["release-readiness", "tdd"],
+    "obligations": [
+      "Preserve ownership at the integration boundary",
+      "Emit a typed recovery path"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "integration-safety",
+      "description": "Unavailable downstream capability is reported as an explicit blocker.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "release-evidence",
+      "description": "The final result distinguishes local contract evidence from live integration evidence.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

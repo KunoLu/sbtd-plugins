@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-SESSION-02",
+  "category": "session-resume-compaction",
+  "prompt": "Harden a local Session restore path so a malformed newest record blocks with repair instructions rather than falling back to older state.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "legacy-safe-change",
+    "routeCost": "standard",
+    "requiredGates": ["legacy-change-safety", "refactoring-pass", "tdd"],
+    "obligations": [
+      "Fail closed for malformed newest state",
+      "Present a repair path"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "replay",
+      "description": "Malformed newest state cannot silently recover stale workflow facts.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "regression-safety",
+      "description": "The regression captures the repair-directed failure contract.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sbtd:workflow-onboard:catalog:schema:1",
+  "title": "SBTD Workflow Onboard Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "name", "entries"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "const": "sbtd-workflow-onboard"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "relativeContainedPath": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(?:[A-Za-z]:[\\\\/]|[\\\\/])"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(^|[\\\\/])\\.\\.([\\\\/]|$)"
+          }
+        }
+      ]
+    },
+    "externalSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "subpath", "aliases"],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^https://[^/?#\\s]+/(?:[^/?#\\s]+/)*[^/?#\\s]+/?$"
+        },
+        "subpath": {
+          "$ref": "#/$defs/relativeContainedPath"
+        },
+        "aliases": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "source", "targetRole"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(agent|project|skill):[a-z0-9][a-z0-9-]*$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "agent-template",
+            "project-template",
+            "bundled-skill",
+            "external-skill"
+          ]
+        },
+        "source": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/relativeContainedPath"
+            },
+            {
+              "$ref": "#/$defs/externalSource"
+            }
+          ]
+        },
+        "targetRole": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "agent-template"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^agent:"
+              },
+              "source": {
+                "$ref": "#/$defs/relativeContainedPath"
+              },
+              "targetRole": {
+                "enum": ["codex-global-agents", "project-agents"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "project-template"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^project:"
+              },
+              "source": {
+                "$ref": "#/$defs/relativeContainedPath"
+              },
+              "targetRole": {
+                "const": "project-gitignore"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "bundled-skill"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^skill:"
+              },
+              "source": {
+                "$ref": "#/$defs/relativeContainedPath"
+              },
+              "targetRole": {
+                "enum": ["skill", "skill:sbtd-workflow-onboard"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "external-skill"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^skill:"
+              },
+              "source": {
+                "$ref": "#/$defs/externalSource"
+              },
+              "targetRole": {
+                "const": "external-skill"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

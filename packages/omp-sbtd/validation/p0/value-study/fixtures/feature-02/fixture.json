@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-FEATURE-02",
+  "category": "user-visible-feature",
+  "prompt": "Change a local confirmation dialog so a destructive action names the affected project, with BDD coverage for the message.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "bdd-user-visible-change",
+    "routeCost": "standard",
+    "requiredGates": ["bdd", "tdd"],
+    "obligations": [
+      "State the user-visible decision",
+      "Keep the test deterministic"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "visible-behavior",
+      "description": "The confirmation names the affected project before destruction.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "bdd-trace",
+      "description": "The behavior has a persistent BDD example and matching regression evidence.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

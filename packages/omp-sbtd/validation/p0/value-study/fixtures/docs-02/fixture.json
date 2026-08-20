@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-DOCS-02",
+  "category": "docs-config",
+  "prompt": "Clarify the local test command in the fixture README without introducing a new package or external dependency.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "small-direct-change",
+    "routeCost": "light",
+    "requiredGates": [],
+    "obligations": ["Keep the task local", "Avoid dependency installation"]
+  },
+  "rubric": [
+    {
+      "id": "requested-change",
+      "description": "The command documentation is accurate and narrowly scoped.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "evidence",
+      "description": "The final response identifies local evidence without claiming a provider call.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

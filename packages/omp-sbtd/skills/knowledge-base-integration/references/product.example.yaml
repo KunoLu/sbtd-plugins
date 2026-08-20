@@ -1,0 +1,71 @@
+schema_version: 1
+product_key: smart
+display_name: Smart药局
+
+evidence_policy:
+  version: 1
+  defaults:
+    developer_local:
+      required: false
+    ci:
+      required: true
+      targets: [pull-request]
+      require_clean_worktree: true
+      require_exact_head_sha: true
+    pull_request:
+      required: true
+      targets: [pull-request]
+      require_clean_worktree: true
+      require_exact_head_sha: true
+    knowledge_server:
+      required: true
+      targets: [knowledge-base]
+      require_revision_set: true
+      require_environment_alignment: true
+    scheduled_smoke:
+      required: true
+      targets: [knowledge-base]
+
+repositories:
+  - key: smart-fuzi-web
+    remote: ssh://git.example/smart/fuzi-frontend.git
+    role: web
+    target_ref: refs/heads/staging
+    feature_roots: [features]
+    test_roots: [tests/e2e]
+    binding_manifests: [tests/e2e/manifest/ui-test-manifest.json]
+  - key: smart-backend
+    remote: ssh://git.example/smart/backend.git
+    role: backend
+    target_ref: refs/heads/staging
+    feature_roots: [features]
+    test_roots: [tests/api]
+
+smoke:
+  retry_policy:
+    infrastructure: 1
+  commands:
+    smart-fuzi-web:
+      - key: web-preflight
+        stage: preflight
+        command: [npm, run, test:e2e:doctor]
+      - key: web-smoke
+        stage: test
+        command: [npm, run, test:e2e:smoke]
+        test_type: web
+        mode: smoke-only
+        reports:
+          - path: tests/e2e/reports/html/playwright-report-smoke-*.html
+            summary_md: tests/e2e/reports/html/playwright-report-smoke-*.md
+    smart-backend:
+      - key: api-smoke
+        stage: test
+        command: [npm, run, test:api:smoke]
+        test_type: api
+        mode: smoke-only
+        reports:
+          - path: tests/api/reports/api-report-smoke-*.xml
+            summary_md: tests/api/reports/api-report-smoke-*.md
+      - key: api-cleanup
+        stage: cleanup
+        command: [npm, run, test:api:cleanup]

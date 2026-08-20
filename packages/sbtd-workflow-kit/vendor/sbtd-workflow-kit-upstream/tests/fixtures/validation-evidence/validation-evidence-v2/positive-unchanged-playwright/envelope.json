@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "runId": "run-1",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "evidenceSource": "developer-local",
+  "trigger": "manual",
+  "repository": {
+    "repositoryKey": "demo-web",
+    "sourceRef": "refs/heads/main",
+    "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "worktreeState": "dirty"
+  },
+  "sourceRevision": "dirty",
+  "environmentAlignment": "verified",
+  "e2eMode": "full-stack",
+  "mockStrategy": "none",
+  "featureSources": [],
+  "sourceLocators": [
+    {
+      "repositoryKey": "demo-web",
+      "path": "features/login.feature",
+      "feature": "login",
+      "scenario": "registered user logs in",
+      "sourceRef": "refs/heads/main",
+      "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceLocatorDigest": "46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9"
+    }
+  ],
+  "reports": [
+    {
+      "testType": "web",
+      "path": "reports/playwright.json",
+      "summaryMd": "reports/playwright.md",
+      "sha256": "216c5ce8934894ce0409481c10d5ee0a4e8a1879ac47f060e63af856f18c9a57",
+      "status": "passed",
+      "mode": "full-stack",
+      "reportFormat": "playwright-json-v1"
+    }
+  ],
+  "scenarioLinks": [
+    {
+      "sourceLocatorDigest": "46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9",
+      "reportSha256": "216c5ce8934894ce0409481c10d5ee0a4e8a1879ac47f060e63af856f18c9a57",
+      "reportFormat": "playwright-json-v1",
+      "testCaseSelector": {
+        "project": "chromium",
+        "file": "tests/login.spec.ts",
+        "titlePath": [
+          "login",
+          "registered user logs in"
+        ]
+      }
+    }
+  ],
+  "evidencePublication": "local-only",
+  "secretsRedacted": true
+}

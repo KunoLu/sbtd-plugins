@@ -1,0 +1,7 @@
+interface:
+  display_name: "Web UI Autotest Generator"
+  short_description: "从 Web 源码生成 Playwright UI 测试"
+  default_prompt: "使用 $web-ui-autotest-generator 分析这个 Web 项目，并生成可维护的 Playwright UI 测试和中文覆盖率报告。"
+
+policy:
+  allow_implicit_invocation: true

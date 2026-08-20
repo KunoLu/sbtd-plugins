@@ -1,0 +1,47 @@
+# Dependencies and build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and scratch
+*.log
+*.tmp
+.tmp/
+.cache/
+.worktrees/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Agent caches
+.agents/
+.claude/
+.codex/cache/
+.codex/tmp/
+.codex/logs/
+.codex/sessions/
+.codex/state/
+.omp/plugins/
+.gitnexus/
+.chrome-devtools-mcp/
+.playwright-mcp/
+
+# Playwright / Maestro reports
+playwright-report/
+test-results/
+blob-report/
+.maestro/cache/
+.maestro/tmp/
+.maestro/runs/
+.maestro/reports/

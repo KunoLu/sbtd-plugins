@@ -1,0 +1,23 @@
+import { expect, type Locator, type Page } from '@playwright/test';
+
+export class {{PageClassName}} {
+  constructor(private readonly page: Page) {}
+
+  async goto() {
+    await this.page.goto('{{route}}');
+    await this.expectReady();
+  }
+
+  get root(): Locator {
+    return this.page.locator('body');
+  }
+
+  async expectReady() {
+    await expect(this.root).toBeVisible();
+  }
+
+  async clickByRole(name: string) {
+    await this.page.getByRole('button', { name }).click();
+  }
+}
+

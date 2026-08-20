@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sbtd:knowledge-product:schema:1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "product_key", "repositories"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "product_key": { "type": "string", "minLength": 1 },
+    "display_name": { "type": "string" },
+    "evidence_policy": { "$ref": "#/$defs/policy" },
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["key", "remote", "role", "target_ref", "feature_roots"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "remote": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "target_ref": { "type": "string", "minLength": 1 },
+          "feature_roots": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/relativePath" } },
+          "test_roots": { "type": "array", "items": { "$ref": "#/$defs/relativePath" } },
+          "binding_manifests": { "type": "array", "items": { "$ref": "#/$defs/relativePath" } },
+          "optional": { "type": "boolean" },
+          "evidence_policy": { "$ref": "#/$defs/rules" }
+        }
+      }
+    },
+    "smoke": { "$ref": "#/$defs/smoke" }
+  },
+  "$defs": {
+    "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "boolean" },
+        "targets": { "type": "array", "uniqueItems": true, "items": { "enum": ["pull-request", "knowledge-base"] } },
+        "require_clean_worktree": { "type": "boolean" },
+        "require_exact_head_sha": { "type": "boolean" },
+        "require_revision_set": { "type": "boolean" },
+        "require_environment_alignment": { "type": "boolean" }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/rule" }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "version": { "type": "integer", "minimum": 1 },
+        "defaults": { "$ref": "#/$defs/rules" }
+      }
+    },
+    "argv": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      ]
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "infrastructure": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "summary_md"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "summary_md": { "$ref": "#/$defs/relativePath" },
+        "test_type": { "enum": ["unit", "api", "web", "mobile", "hybrid"] },
+        "mode": { "enum": ["full-stack", "contract-backed", "mock-backed", "app-mocked", "smoke-only", "backend-only", "blocked", "not-needed"] }
+      }
+    },
+    "smokeCommand": {
+      "oneOf": [
+        { "$ref": "#/$defs/argv" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command"],
+          "properties": {
+            "key": { "type": "string", "minLength": 1 },
+            "stage": { "enum": ["preflight", "prepare", "test", "cleanup"] },
+            "runner": { "type": "string", "minLength": 1 },
+            "command": { "$ref": "#/$defs/argv" },
+            "test_type": { "enum": ["unit", "api", "web", "mobile", "hybrid"] },
+            "mode": { "enum": ["full-stack", "contract-backed", "mock-backed", "app-mocked", "smoke-only", "backend-only", "blocked", "not-needed"] },
+            "required_runner_labels": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "timeout_seconds": { "type": "integer", "minimum": 1 },
+            "infrastructure_exit_codes": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "integer" }
+            },
+            "retry_policy": { "$ref": "#/$defs/retryPolicy" },
+            "reports": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/report" }
+            }
+          }
+        }
+      ]
+    },
+    "smoke": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retry_policy": { "$ref": "#/$defs/retryPolicy" },
+        "commands": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/smokeCommand" }
+          }
+        }
+      }
+    }
+  }
+}

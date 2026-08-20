@@ -1,0 +1,7 @@
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+  // Add project-specific login or storageState setup here.
+});
+
+export { expect } from '@playwright/test';

@@ -1,0 +1,482 @@
+{
+  "schemaVersion": 1,
+  "candidateCount": 13,
+  "certifiedCount": 12,
+  "results": [
+    {
+      "name": "trellis-workflow",
+      "sourceSha256": "f0259907f5ca27d4fff51dac0ab6d608b94ef80a6c3308262e92197a4efd70bc",
+      "checks": {
+        "portable": {
+          "status": "fail",
+          "reasons": [
+            "references the OMP-private .omp path",
+            "contains host-specific .codex dispatch instructions"
+          ]
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "Trellis CLI",
+        ".trellis workflow assets"
+      ],
+      "disposition": "onboard-owned"
+    },
+    {
+      "name": "project-validation",
+      "sourceSha256": "788e7d30af6fb69dd67fd23869ee068a0983a7884175288b4c47043f22ae878e",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project-native validation tools",
+        "conditional Python 3.10+",
+        "conditional jsonschema",
+        "optional rtk"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "web-ui-autotest-generator",
+      "sourceSha256": "5e20d3313a5af26bd1bece8a2f0f01e5973536620671b4d1fc6545a0145d68b8",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "Playwright",
+        "Node.js",
+        "TypeScript project tooling",
+        "Python 3.10+"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "gherkin-bdd",
+      "sourceSha256": "9b1381d5b3bfa18228e24ca220524c8025aafde362ea66febdb41cb33b444832",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project BDD or test runner",
+        "optional Knowledge Ingest",
+        "optional Maestro"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "knowledge-base-integration",
+      "sourceSha256": "ec2c0c2ac078ac91b12cac3344818d3d97694d1afe0f84ee22a7281e35c75a1b",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "Python 3.10+",
+        "PyYAML",
+        "jsonschema",
+        "configured repositories or runner adapters"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "maestro-mobile-e2e",
+      "sourceSha256": "dec4a94829ec6809310aae5ace807db38db1e37da0e081cf7526accd4225a227",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "Java 17+",
+        "Maestro CLI",
+        "device",
+        "app artifact",
+        "scenario environment"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "lessons-record",
+      "sourceSha256": "59e162cda04b74e8d707397c61489c7b24f7a4c6eaa8cff8342296ec40a9cb81",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "Trellis or repository lessons layout"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "book-refactoring-pass",
+      "sourceSha256": "3c7c25f884a91c339a6f8e3dbd01bab888a8ef01b42c68204f7a3b617478a1ae",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project tests",
+        "optional Trellis",
+        "optional GitNexus"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "book-legacy-change-safety",
+      "sourceSha256": "49be2858f499b0f2ad87f451e175311eb337109d38b4df45d4a7296f087d0525",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project safety-net tooling",
+        "optional Trellis",
+        "optional GitNexus"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "book-ddd-distilled-modeling",
+      "sourceSha256": "d3780c96d0136013966391e5ffa8bc47810e41d211a7a2a3c67ff192f11a9cc8",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project evidence",
+        "optional Trellis",
+        "optional clarification workflow"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "book-ddia-data-design",
+      "sourceSha256": "e929ed7d6d45b8c97c08c46c92921dd59fee87b6dcddc035935b1c8f5f511ac4",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project architecture and data evidence",
+        "optional migration tooling",
+        "optional Trellis",
+        "optional GitNexus"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "book-release-readiness",
+      "sourceSha256": "e0fe33579c6bbcb35448126eac6df7d14d91f8cbef79920b6f0b0ef447509cba",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "project validation",
+        "release evidence",
+        "optional browser or mobile tooling",
+        "optional Trellis"
+      ],
+      "disposition": "certified"
+    },
+    {
+      "name": "seo-geo",
+      "sourceSha256": "4e70d1cb03fd858bfcd9439d2ba90cc8a5c543daeb6866a7d9f2ad5ad1cf8281",
+      "checks": {
+        "portable": {
+          "status": "pass",
+          "reasons": []
+        },
+        "frontmatter": {
+          "status": "pass",
+          "reasons": []
+        },
+        "containment": {
+          "status": "pass",
+          "reasons": []
+        },
+        "license": {
+          "status": "pass",
+          "reasons": []
+        },
+        "reference-script": {
+          "status": "pass",
+          "reasons": []
+        },
+        "runtime-dependency": {
+          "status": "pass",
+          "reasons": []
+        }
+      },
+      "runtimeDependencies": [
+        "Python 3.10+",
+        "network access",
+        "optional DataForSEO credentials and API"
+      ],
+      "disposition": "certified"
+    }
+  ]
+}

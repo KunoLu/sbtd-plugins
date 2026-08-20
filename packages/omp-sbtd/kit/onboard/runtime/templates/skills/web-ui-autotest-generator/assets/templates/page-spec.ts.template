@@ -1,0 +1,21 @@
+import { expect, test } from '@playwright/test';
+import { {{PageClassName}} } from '../pages/{{pageObjectFile}}';
+
+test.describe('{{pageName}}', () => {
+  test('{{pageName}} - 页面正常加载', async ({ page }) => {
+    const currentPage = new {{PageClassName}}(page);
+
+    await currentPage.goto();
+
+    await expect(page).toHaveURL(/{{routePattern}}/);
+  });
+
+  test('{{pageName}} - 核心控件可见', async ({ page }) => {
+    const currentPage = new {{PageClassName}}(page);
+
+    await currentPage.goto();
+
+    {{coreAssertions}}
+  });
+});
+

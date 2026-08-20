@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sbtd:runner-result:schema:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "failure_class", "runner", "reports"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "status": { "enum": ["passed", "failed", "blocked"] },
+    "failure_class": { "enum": ["none", "assertion", "infrastructure"] },
+    "exit_code": { "type": "integer" },
+    "error": { "type": "string" },
+    "queue_latency_ms": { "type": "integer", "minimum": 0 },
+    "runner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "image_digest", "labels", "tools"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "image_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "labels": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "tools": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "reports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "summary_md", "test_type", "mode"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "summary_md": { "type": "string", "minLength": 1 },
+          "test_type": { "enum": ["unit", "api", "web", "mobile", "hybrid"] },
+          "mode": { "enum": ["full-stack", "contract-backed", "mock-backed", "app-mocked", "smoke-only", "backend-only", "blocked", "not-needed"] }
+        }
+      }
+    }
+  }
+}

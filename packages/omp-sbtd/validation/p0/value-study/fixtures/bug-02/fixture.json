@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-BUG-02",
+  "category": "existing-behavior-bug",
+  "prompt": "Fix a local parser that accepts an empty required identifier while retaining the accepted non-empty identifiers.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "bugfix",
+    "routeCost": "standard",
+    "requiredGates": ["legacy-change-safety", "refactoring-pass", "tdd"],
+    "obligations": [
+      "Demonstrate the invalid empty input",
+      "Preserve non-empty parser behavior"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "bug-fix",
+      "description": "Empty identifiers are rejected with the expected local error.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "regression-safety",
+      "description": "The regression test preserves accepted identifiers.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

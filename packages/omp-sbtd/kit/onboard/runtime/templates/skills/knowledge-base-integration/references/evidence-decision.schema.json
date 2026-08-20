@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sbtd:evidence-decision:schema:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_version", "product_key", "repository_key", "trigger", "execution_profile", "evidence_contract", "evidence_intent", "evidence_targets", "decision_source", "decision_reason", "requirements", "applied_rules", "decision_id", "decision_digest"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "policy_version": { "type": "integer", "minimum": 1 },
+    "product_key": { "type": "string", "minLength": 1 },
+    "repository_key": { "type": "string", "minLength": 1 },
+    "trigger": { "enum": ["local", "pre-pr", "pull-request", "merge", "schedule", "release", "manual"] },
+    "execution_profile": { "enum": ["developer-local", "ci", "knowledge-server"] },
+    "evidence_contract": { "enum": ["not-required", "required", "blocked"] },
+    "evidence_intent": { "enum": ["local-only", "pull-request", "knowledge-base", "pull-request-and-knowledge-base", "not-needed", "blocked"] },
+    "evidence_targets": { "type": "array", "uniqueItems": true, "items": { "enum": ["pull-request", "knowledge-base"] } },
+    "decision_source": { "$ref": "#/$defs/source" },
+    "decision_reason": { "type": "string", "minLength": 1 },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clean_worktree", "exact_head_sha", "revision_set", "environment_alignment"],
+      "properties": {
+        "clean_worktree": { "type": "boolean" },
+        "exact_head_sha": { "type": "boolean" },
+        "revision_set": { "type": "boolean" },
+        "environment_alignment": { "type": "boolean" }
+      }
+    },
+    "applied_rules": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+    "decision_id": { "type": "string", "minLength": 1 },
+    "decision_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "rule"],
+      "properties": {
+        "level": { "enum": ["central-policy", "product-policy", "repository-policy", "execution-profile", "explicit-target", "default"] },
+        "rule": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

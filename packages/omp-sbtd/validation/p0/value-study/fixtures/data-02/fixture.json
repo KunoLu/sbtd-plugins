@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-DATA-02",
+  "category": "data-schema-async",
+  "prompt": "Make a local async retry record idempotent so duplicate completion events cannot create two accepted outcomes.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "data-design-risk",
+    "routeCost": "standard",
+    "requiredGates": ["ddia-data-design", "refactoring-pass"],
+    "obligations": ["Define duplicate handling", "Keep one accepted outcome"]
+  },
+  "rubric": [
+    {
+      "id": "idempotency",
+      "description": "Duplicate completion events cannot produce duplicate accepted outcomes.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "evidence",
+      "description": "A deterministic regression covers ordering and retry behavior.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

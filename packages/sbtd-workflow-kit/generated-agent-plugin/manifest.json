@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "sbtd-workflow-kit-upstream",
+  "canonicalSourceUri": "https://github.com/KunoLu/640-skills",
+  "resolvedRevision": "4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb",
+  "sourceTreeSha256": "d1f01d6820775d9428419501b6349130b5e0706db3ecb816f2548149402d4a14",
+  "transformVersion": "agent-plugin-p0-v1",
+  "auditSha256": "0f4afcb6a946954f784ac3d146071d591af39307d179d9b4b9d45dfc024e2565",
+  "catalogSha256": "97be241df1cd768f6c54ae1e533a7294cfa7d24810af1972159e9ecb2fcf4134",
+  "generatedSha256": "e97e283c9ff205d6658ff68e4afe2f86a4a4250642b942091c1d9658913696e4",
+  "candidateCount": 13,
+  "certifiedCount": 12,
+  "certified": [
+    "project-validation",
+    "web-ui-autotest-generator",
+    "gherkin-bdd",
+    "knowledge-base-integration",
+    "maestro-mobile-e2e",
+    "lessons-record",
+    "book-refactoring-pass",
+    "book-legacy-change-safety",
+    "book-ddd-distilled-modeling",
+    "book-ddia-data-design",
+    "book-release-readiness",
+    "seo-geo"
+  ],
+  "excluded": [
+    {
+      "name": "trellis-workflow",
+      "reasons": [
+        "references the OMP-private .omp path",
+        "contains host-specific .codex dispatch instructions"
+      ]
+    }
+  ],
+  "assets": {
+    "audit.json": "0f4afcb6a946954f784ac3d146071d591af39307d179d9b4b9d45dfc024e2565",
+    "catalog.json": "97be241df1cd768f6c54ae1e533a7294cfa7d24810af1972159e9ecb2fcf4134",
+    "skills/book-ddd-distilled-modeling/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/book-ddd-distilled-modeling/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/book-ddd-distilled-modeling/SKILL.md": "c30a48442f7e666f59cfef4158d0c713014ce2b4133ef1daf4d3485a10566ff2",
+    "skills/book-ddia-data-design/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/book-ddia-data-design/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/book-ddia-data-design/SKILL.md": "deeb55787afe5c4cf0d1c2cceeec919bfd4a5b4747629303ee93b29de539b5a0",
+    "skills/book-legacy-change-safety/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/book-legacy-change-safety/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/book-legacy-change-safety/SKILL.md": "38f0b386b1083abb3eb4c8196ddaef463232beb521682b6e82e41fdcd2b84331",
+    "skills/book-refactoring-pass/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/book-refactoring-pass/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/book-refactoring-pass/SKILL.md": "20c3b245bf8bc58e86e9a353e5ad2d385eec60df65f9bfc15050697ed2ceee07",
+    "skills/book-release-readiness/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/book-release-readiness/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/book-release-readiness/SKILL.md": "cb2a2f00956004974e0487610a1510fd1addc1d145d951cb0ad95965f4e20e75",
+    "skills/gherkin-bdd/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/gherkin-bdd/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/gherkin-bdd/SKILL.md": "ab776d80e593f7efd9da32f4adcb3acc4af31fbe296dd4e4a0cb30d05c534a1e",
+    "skills/knowledge-base-integration/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/knowledge-base-integration/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/knowledge-base-integration/SKILL.md": "5fa30d0adb37db0da092d406c2d4dc49a34be69ec01ea1202639cd54cbc617df",
+    "skills/knowledge-base-integration/references/artifact-manifest.schema.json": "1bbe0f275b6d060f9f1b4eeff8fbb51236b0b2e158007aca5156715297284d2d",
+    "skills/knowledge-base-integration/references/deployment-manifest.example.yaml": "330fed17a360f027be805522140734bdef0e8196d555c44b773ff1e6b4a4fe07",
+    "skills/knowledge-base-integration/references/deployment-manifest.schema.json": "07af203f410f15149317995dc2086805fc8b76d5d12903f9d9d4a58d1f805ff9",
+    "skills/knowledge-base-integration/references/evidence-decision.schema.json": "cd98e473305ce1a965eb20d153cafac2ec518b5e6cacabbbda7b321158b84bbc",
+    "skills/knowledge-base-integration/references/metrics.schema.json": "3561d7944f845a8a0d96b7d806e9a6c3bff9fe7782c097c426d9313e3c884844",
+    "skills/knowledge-base-integration/references/product.example.yaml": "9ee5327e5750007a9fbe8ac78fd8349d3d73959c380e3c9c3320d7e9b1efd5a3",
+    "skills/knowledge-base-integration/references/product.schema.json": "0d1bf39ec348f41b711766fe36d073c95b77ff94ef1cf449562fd2cf8a5df80a",
+    "skills/knowledge-base-integration/references/revision-set.schema.json": "4bb2a82c99dbce5b5dee53c1387f3c706601e159dbab5f9ba0e831ab487c27c7",
+    "skills/knowledge-base-integration/references/runner-job.schema.json": "1cca36ee0b0090fbbb7d019352fa76c5a2417f07fb5507a549dc56e7d3081069",
+    "skills/knowledge-base-integration/references/runner-result.schema.json": "d07940b3a9ee9c558383489278029ea517ee5eb8b6a5f1a3fc0ca65b016c86be",
+    "skills/knowledge-base-integration/references/runtime-contract.md": "d49425d7ce73d495f65b6476c13c9948035e4949f23ba8eb863fd5f2667a43ac",
+    "skills/knowledge-base-integration/references/workspace.local.example.yaml": "4b905e910f4e71238834deb451fcd997c9913822a7e9ed5cb5e968f00411d5cf",
+    "skills/knowledge-base-integration/references/workspace.schema.json": "6d34838593fdc352a74055687e0d0a80f25c74626284c2f7cb98f8489710ecef",
+    "skills/knowledge-base-integration/requirements.txt": "da9e320f7afe5939befa2aee96f5ff07fe0af316bd8a64a568d5d9e9738d98bd",
+    "skills/knowledge-base-integration/scripts/knowledge_base_p1.py": "b949b8cbd1ed1d78d2cdf8636f7d513ea30d2e120860fe1294409a66fa124d7d",
+    "skills/lessons-record/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/lessons-record/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/lessons-record/SKILL.md": "7d840081571db4b4e9aabbaab00842460e667518d6306231415456e14215a688",
+    "skills/maestro-mobile-e2e/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/maestro-mobile-e2e/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/maestro-mobile-e2e/SKILL.md": "afcf14c64ed6e38e35b3270506963ec98c364532e4dd10548b8c58e81ecf6727",
+    "skills/maestro-mobile-e2e/references/ios-real-device-setup.md": "ab8b12c2c87820ec43b3235a6b756a5c3884c6484c2b5cd7988be6b09ceef96a",
+    "skills/maestro-mobile-e2e/references/lessons-index.md": "b6281cf21ae53d5a2f71fa250b9a09bafbaf47c9061283cd87fde6c3bfd591c9",
+    "skills/project-validation/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/project-validation/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/project-validation/SKILL.md": "bce7c6d911b39e629a3187ee5ec7853fa83410a6e19034536eca5ab6193b71c2",
+    "skills/project-validation/references/validation-evidence-contract.md": "cf83aad7beb22a5a202b79fda89de7cac15a441967ce3effc39d4e384bc298d6",
+    "skills/project-validation/references/validation-evidence.schema.json": "420142367974b7baf9ab3810471cfe89d19a2618370e8b37489b184497b62f0e",
+    "skills/project-validation/references/validation-evidence.v2.schema.json": "7b1d6b4b7b47f55512766eaec280e7eeb6c3e26b61541cefd24b82e19d9be8a5",
+    "skills/project-validation/requirements.txt": "9984fa6ad6d35d2468011c4c278583e9bb4983d83be6bb3f5aabcef9c99b19b7",
+    "skills/project-validation/scripts/validate_validation_evidence.py": "67d96c70522d4344b0402a514abc67367ce92ce8bea8ab312f8376a663d450ca",
+    "skills/seo-geo/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/seo-geo/NOTICE": "be9cb9e085b8ca791638a4ee50d9f72876ebdd4a570df4439b30c4fa1d4562a2",
+    "skills/seo-geo/SKILL.md": "0740f5a63f51fbb14d8e4f49e2a92b4c7082e8646ba4f5204a35314d47b97396",
+    "skills/seo-geo/examples/opc-skills-case-study.md": "ab54ba136f23234c6362487c406c26c1eeabbe8531115479d6feb223390bdd96",
+    "skills/seo-geo/references/geo-research.md": "901516a3b7964aee88297e0f52e517abef6111150ba781d27e5e9e76c08be1c8",
+    "skills/seo-geo/references/google-docs-summary.md": "214544d0b4891c1f3613727b73da23be2361d83214190b7455a058dd0c784638",
+    "skills/seo-geo/references/platform-algorithms.md": "ad2f55b54e74be411f207f2662626beea0f8770c9e92fd3f1c5d14fee3faacb6",
+    "skills/seo-geo/references/schema-templates.md": "78d7bc5270a4fdec641ce4e395e7ecf6714906d888cce8fd8dbfe6c01301b01e",
+    "skills/seo-geo/references/seo-checklist.md": "36e83bdccdaf831dd7a3fe9587b83f03f32444faa2e2b93ef75f0dda290c19cb",
+    "skills/seo-geo/references/tools-and-apis.md": "a9519882c35519e28b7668436e7cbf291185ab57a0169468d19d261bb49867ff",
+    "skills/seo-geo/scripts/autocomplete_ideas.py": "7d2ea86f48f39b7ef8d67f2128564d66583120d09d47cdc95613fe8e0d3a5b02",
+    "skills/seo-geo/scripts/backlinks.py": "d2163c09008166531680ebe2c1bf5fd799ecc654e6e2887a56c6a4f83650631a",
+    "skills/seo-geo/scripts/competitor_gap.py": "76a9783fbecd7ddd8792f3af7dcec51e3e8d27318171d7a852ea99f53453047d",
+    "skills/seo-geo/scripts/credential.py": "81a0c5ee938b71e412564c88da030cc42c4f8ef283a0ab02beaf09f31733436b",
+    "skills/seo-geo/scripts/dataforseo_api.py": "8e5918619cdee675527dae9384de26ba2242a54d31016c6867fff2fcb0acc9ef",
+    "skills/seo-geo/scripts/domain_overview.py": "4d167381a6e2111de636858d7fefe7054fcf69e70b5bc699d095566c8b825874",
+    "skills/seo-geo/scripts/keyword_research.py": "b498b35a2103ce797e945d9ff6287c056e5c6bc5bfc6cac6abba9d5c2e9b291a",
+    "skills/seo-geo/scripts/related_keywords.py": "9f6171d36c739f1929ef0e0e06029ab95e36dd66519f048443d8a97e78ef2a21",
+    "skills/seo-geo/scripts/seo_audit.py": "fa61627048a995f309bff42a1ef507ba4b52fc050ca5446cce3817151e0a2700",
+    "skills/seo-geo/scripts/serp_analysis.py": "2d2459a9027be63d988f420373ad312181178b230ab079dc407764581904acda",
+    "skills/web-ui-autotest-generator/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "skills/web-ui-autotest-generator/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+    "skills/web-ui-autotest-generator/README.md": "e676d50e4c372ea860dbc092ef18fa2d29e7f9fc201a1c49264c8eb42981eb41",
+    "skills/web-ui-autotest-generator/README.zh-CN.md": "99bc3e7758fa5ec5355a113946ed562b3a9e07584d31180faa84d9ab844c7a5d",
+    "skills/web-ui-autotest-generator/SKILL.md": "ca0362143cfcc5001d27b8be8f6d541f57bb455aa82691a137107271dd4b9820",
+    "skills/web-ui-autotest-generator/agents/openai.yaml": "3515f3e5fa1d25a856dabebe2ba4fb637713a2b05a2b960c94d15f7c85f43b4c",
+    "skills/web-ui-autotest-generator/assets/templates/auth-fixture.ts.template": "dd28e90b01a5a2e7c6286ae83064c8d6aa6b0b5ee5eb1a4a16a1b33c22586bd5",
+    "skills/web-ui-autotest-generator/assets/templates/github-actions-e2e.yml.template": "0f4b8c13ccdcd34f3c891cb4497f8d096feade72e730769ef1e68662f426fa9e",
+    "skills/web-ui-autotest-generator/assets/templates/package-scripts.json.template": "5bbe9c5947e2762916a8f5852615d84c39b7a7c989d4be49fd894c34fd08f496",
+    "skills/web-ui-autotest-generator/assets/templates/page-object.ts.template": "cddc39f08675567bf5c5f39bff9c5c8095cf9f118ace6dfc327659b96cfa9d34",
+    "skills/web-ui-autotest-generator/assets/templates/page-spec.ts.template": "1cc050db108194eff18e921955c88bc83e7bf1e276218a5e5b781e100c2f00f4",
+    "skills/web-ui-autotest-generator/assets/templates/playwright.config.ts.template": "6cb51aa56932b62fee8968af13d85ed7dedeafa0d567d23f42e7afa7f0c4b9ce",
+    "skills/web-ui-autotest-generator/assets/templates/summary.zh-CN.md.template": "87da8bf5bd2dbd1a6d537521a9c156e546b1b8fc7afbee781da0f55dc5eaad1f",
+    "skills/web-ui-autotest-generator/gitignore.template": "ffb3aaf5cb9130091af705258221159d357320f1a3436dd70a92f1ae9e4a97a8",
+    "skills/web-ui-autotest-generator/references/coverage-rubric.md": "f58bf93fb3d908d28134dce914ecde315e398a1b3c372d9b33ac1646e76b9fcb",
+    "skills/web-ui-autotest-generator/references/output-contract.md": "d71cddf09999fe464566d4a13722d261de5bf4cd878fef5b4b2c778007e32324",
+    "skills/web-ui-autotest-generator/scripts/analyze_failures.py": "3c66a51c8ea1336a29d765451ba9696b0bd1120248de7ec376950c07eb7e2545",
+    "skills/web-ui-autotest-generator/scripts/audit_selectors.py": "a3f8ec8ba61699be89f3b3a246934fb72d4e1d6e1e59efedc2d4a30bdb8688e3",
+    "skills/web-ui-autotest-generator/scripts/check_coverage.py": "9358c7670cd207bc44231931ae6180632b32cb967b7ad1a44912a7ac6e0df53b",
+    "skills/web-ui-autotest-generator/scripts/generate_manifest.py": "ee142f0cd7f33f96db5a3b7dcbf6eddf3e6ea9c07b933f33ef12e62ea2edaa17"
+  },
+  "skills": {
+    "project-validation": {
+      "sourceSha256": "788e7d30af6fb69dd67fd23869ee068a0983a7884175288b4c47043f22ae878e",
+      "projectionSha256": "562718e27f0bbcdf55a8e4e3e11c25a664326e6435bf1dd1e8ac41a5d2723cdd",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "bce7c6d911b39e629a3187ee5ec7853fa83410a6e19034536eca5ab6193b71c2",
+        "references/validation-evidence-contract.md": "cf83aad7beb22a5a202b79fda89de7cac15a441967ce3effc39d4e384bc298d6",
+        "references/validation-evidence.schema.json": "420142367974b7baf9ab3810471cfe89d19a2618370e8b37489b184497b62f0e",
+        "references/validation-evidence.v2.schema.json": "7b1d6b4b7b47f55512766eaec280e7eeb6c3e26b61541cefd24b82e19d9be8a5",
+        "requirements.txt": "9984fa6ad6d35d2468011c4c278583e9bb4983d83be6bb3f5aabcef9c99b19b7",
+        "scripts/validate_validation_evidence.py": "67d96c70522d4344b0402a514abc67367ce92ce8bea8ab312f8376a663d450ca"
+      }
+    },
+    "web-ui-autotest-generator": {
+      "sourceSha256": "5e20d3313a5af26bd1bece8a2f0f01e5973536620671b4d1fc6545a0145d68b8",
+      "projectionSha256": "234fb674b70bfd887a63426faa8948e698bd463caabdec61bb6921fa598112d2",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "README.md": "e676d50e4c372ea860dbc092ef18fa2d29e7f9fc201a1c49264c8eb42981eb41",
+        "README.zh-CN.md": "99bc3e7758fa5ec5355a113946ed562b3a9e07584d31180faa84d9ab844c7a5d",
+        "SKILL.md": "ca0362143cfcc5001d27b8be8f6d541f57bb455aa82691a137107271dd4b9820",
+        "agents/openai.yaml": "3515f3e5fa1d25a856dabebe2ba4fb637713a2b05a2b960c94d15f7c85f43b4c",
+        "assets/templates/auth-fixture.ts.template": "dd28e90b01a5a2e7c6286ae83064c8d6aa6b0b5ee5eb1a4a16a1b33c22586bd5",
+        "assets/templates/github-actions-e2e.yml.template": "0f4b8c13ccdcd34f3c891cb4497f8d096feade72e730769ef1e68662f426fa9e",
+        "assets/templates/package-scripts.json.template": "5bbe9c5947e2762916a8f5852615d84c39b7a7c989d4be49fd894c34fd08f496",
+        "assets/templates/page-object.ts.template": "cddc39f08675567bf5c5f39bff9c5c8095cf9f118ace6dfc327659b96cfa9d34",
+        "assets/templates/page-spec.ts.template": "1cc050db108194eff18e921955c88bc83e7bf1e276218a5e5b781e100c2f00f4",
+        "assets/templates/playwright.config.ts.template": "6cb51aa56932b62fee8968af13d85ed7dedeafa0d567d23f42e7afa7f0c4b9ce",
+        "assets/templates/summary.zh-CN.md.template": "87da8bf5bd2dbd1a6d537521a9c156e546b1b8fc7afbee781da0f55dc5eaad1f",
+        "gitignore.template": "ffb3aaf5cb9130091af705258221159d357320f1a3436dd70a92f1ae9e4a97a8",
+        "references/coverage-rubric.md": "f58bf93fb3d908d28134dce914ecde315e398a1b3c372d9b33ac1646e76b9fcb",
+        "references/output-contract.md": "d71cddf09999fe464566d4a13722d261de5bf4cd878fef5b4b2c778007e32324",
+        "scripts/analyze_failures.py": "3c66a51c8ea1336a29d765451ba9696b0bd1120248de7ec376950c07eb7e2545",
+        "scripts/audit_selectors.py": "a3f8ec8ba61699be89f3b3a246934fb72d4e1d6e1e59efedc2d4a30bdb8688e3",
+        "scripts/check_coverage.py": "9358c7670cd207bc44231931ae6180632b32cb967b7ad1a44912a7ac6e0df53b",
+        "scripts/generate_manifest.py": "ee142f0cd7f33f96db5a3b7dcbf6eddf3e6ea9c07b933f33ef12e62ea2edaa17"
+      }
+    },
+    "gherkin-bdd": {
+      "sourceSha256": "9b1381d5b3bfa18228e24ca220524c8025aafde362ea66febdb41cb33b444832",
+      "projectionSha256": "609b0a32db701adb69ae7364f08221e65ab8f85e77eecf0cb599f9c6f418c497",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "ab776d80e593f7efd9da32f4adcb3acc4af31fbe296dd4e4a0cb30d05c534a1e"
+      }
+    },
+    "knowledge-base-integration": {
+      "sourceSha256": "ec2c0c2ac078ac91b12cac3344818d3d97694d1afe0f84ee22a7281e35c75a1b",
+      "projectionSha256": "463ed351650c93290e8e45db4fcb02f82b708c1ec911f33b956b48c366e6fbf5",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "5fa30d0adb37db0da092d406c2d4dc49a34be69ec01ea1202639cd54cbc617df",
+        "references/artifact-manifest.schema.json": "1bbe0f275b6d060f9f1b4eeff8fbb51236b0b2e158007aca5156715297284d2d",
+        "references/deployment-manifest.example.yaml": "330fed17a360f027be805522140734bdef0e8196d555c44b773ff1e6b4a4fe07",
+        "references/deployment-manifest.schema.json": "07af203f410f15149317995dc2086805fc8b76d5d12903f9d9d4a58d1f805ff9",
+        "references/evidence-decision.schema.json": "cd98e473305ce1a965eb20d153cafac2ec518b5e6cacabbbda7b321158b84bbc",
+        "references/metrics.schema.json": "3561d7944f845a8a0d96b7d806e9a6c3bff9fe7782c097c426d9313e3c884844",
+        "references/product.example.yaml": "9ee5327e5750007a9fbe8ac78fd8349d3d73959c380e3c9c3320d7e9b1efd5a3",
+        "references/product.schema.json": "0d1bf39ec348f41b711766fe36d073c95b77ff94ef1cf449562fd2cf8a5df80a",
+        "references/revision-set.schema.json": "4bb2a82c99dbce5b5dee53c1387f3c706601e159dbab5f9ba0e831ab487c27c7",
+        "references/runner-job.schema.json": "1cca36ee0b0090fbbb7d019352fa76c5a2417f07fb5507a549dc56e7d3081069",
+        "references/runner-result.schema.json": "d07940b3a9ee9c558383489278029ea517ee5eb8b6a5f1a3fc0ca65b016c86be",
+        "references/runtime-contract.md": "d49425d7ce73d495f65b6476c13c9948035e4949f23ba8eb863fd5f2667a43ac",
+        "references/workspace.local.example.yaml": "4b905e910f4e71238834deb451fcd997c9913822a7e9ed5cb5e968f00411d5cf",
+        "references/workspace.schema.json": "6d34838593fdc352a74055687e0d0a80f25c74626284c2f7cb98f8489710ecef",
+        "requirements.txt": "da9e320f7afe5939befa2aee96f5ff07fe0af316bd8a64a568d5d9e9738d98bd",
+        "scripts/knowledge_base_p1.py": "b949b8cbd1ed1d78d2cdf8636f7d513ea30d2e120860fe1294409a66fa124d7d"
+      }
+    },
+    "maestro-mobile-e2e": {
+      "sourceSha256": "dec4a94829ec6809310aae5ace807db38db1e37da0e081cf7526accd4225a227",
+      "projectionSha256": "42d4bc6cbcc6be3ff42f4dfc880f890813cfc382919a23fff8211d406f61e906",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "afcf14c64ed6e38e35b3270506963ec98c364532e4dd10548b8c58e81ecf6727",
+        "references/ios-real-device-setup.md": "ab8b12c2c87820ec43b3235a6b756a5c3884c6484c2b5cd7988be6b09ceef96a",
+        "references/lessons-index.md": "b6281cf21ae53d5a2f71fa250b9a09bafbaf47c9061283cd87fde6c3bfd591c9"
+      }
+    },
+    "lessons-record": {
+      "sourceSha256": "59e162cda04b74e8d707397c61489c7b24f7a4c6eaa8cff8342296ec40a9cb81",
+      "projectionSha256": "3fdd5dd2f0c09177b6b40c0061ae1febe33b3b1ccdeec6893fa03c7a995f3b90",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "7d840081571db4b4e9aabbaab00842460e667518d6306231415456e14215a688"
+      }
+    },
+    "book-refactoring-pass": {
+      "sourceSha256": "3c7c25f884a91c339a6f8e3dbd01bab888a8ef01b42c68204f7a3b617478a1ae",
+      "projectionSha256": "d56d38fea155b3739dc39a7e2252c432447113e30f07be6255c562d5e54278f5",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "20c3b245bf8bc58e86e9a353e5ad2d385eec60df65f9bfc15050697ed2ceee07"
+      }
+    },
+    "book-legacy-change-safety": {
+      "sourceSha256": "49be2858f499b0f2ad87f451e175311eb337109d38b4df45d4a7296f087d0525",
+      "projectionSha256": "7176379e8f00fbc1b03a72b542c764ae92b8c07dc56483d878b475ed88ea296d",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "38f0b386b1083abb3eb4c8196ddaef463232beb521682b6e82e41fdcd2b84331"
+      }
+    },
+    "book-ddd-distilled-modeling": {
+      "sourceSha256": "d3780c96d0136013966391e5ffa8bc47810e41d211a7a2a3c67ff192f11a9cc8",
+      "projectionSha256": "1374ae605b8b21a5ed98f11896599842ed2e0a26962d560b2ee887fcf5994525",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "c30a48442f7e666f59cfef4158d0c713014ce2b4133ef1daf4d3485a10566ff2"
+      }
+    },
+    "book-ddia-data-design": {
+      "sourceSha256": "e929ed7d6d45b8c97c08c46c92921dd59fee87b6dcddc035935b1c8f5f511ac4",
+      "projectionSha256": "5fd835b0653a2a2ddc0efe3839cd4552a891efcae07f0549dba7378b1898ef80",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "deeb55787afe5c4cf0d1c2cceeec919bfd4a5b4747629303ee93b29de539b5a0"
+      }
+    },
+    "book-release-readiness": {
+      "sourceSha256": "e0fe33579c6bbcb35448126eac6df7d14d91f8cbef79920b6f0b0ef447509cba",
+      "projectionSha256": "9b8e8ea5cd73d5bd59afa4190cb2d021e397af94812d0c8d0bbf560d8d5bb342",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
+        "SKILL.md": "cb2a2f00956004974e0487610a1510fd1addc1d145d951cb0ad95965f4e20e75"
+      }
+    },
+    "seo-geo": {
+      "sourceSha256": "4e70d1cb03fd858bfcd9439d2ba90cc8a5c543daeb6866a7d9f2ad5ad1cf8281",
+      "projectionSha256": "102404669c0fac007ae7e51a2c0e7842c2fb83878f7cbe243d393eb55cf9bbdd",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "be9cb9e085b8ca791638a4ee50d9f72876ebdd4a570df4439b30c4fa1d4562a2",
+        "SKILL.md": "0740f5a63f51fbb14d8e4f49e2a92b4c7082e8646ba4f5204a35314d47b97396",
+        "examples/opc-skills-case-study.md": "ab54ba136f23234c6362487c406c26c1eeabbe8531115479d6feb223390bdd96",
+        "references/geo-research.md": "901516a3b7964aee88297e0f52e517abef6111150ba781d27e5e9e76c08be1c8",
+        "references/google-docs-summary.md": "214544d0b4891c1f3613727b73da23be2361d83214190b7455a058dd0c784638",
+        "references/platform-algorithms.md": "ad2f55b54e74be411f207f2662626beea0f8770c9e92fd3f1c5d14fee3faacb6",
+        "references/schema-templates.md": "78d7bc5270a4fdec641ce4e395e7ecf6714906d888cce8fd8dbfe6c01301b01e",
+        "references/seo-checklist.md": "36e83bdccdaf831dd7a3fe9587b83f03f32444faa2e2b93ef75f0dda290c19cb",
+        "references/tools-and-apis.md": "a9519882c35519e28b7668436e7cbf291185ab57a0169468d19d261bb49867ff",
+        "scripts/autocomplete_ideas.py": "7d2ea86f48f39b7ef8d67f2128564d66583120d09d47cdc95613fe8e0d3a5b02",
+        "scripts/backlinks.py": "d2163c09008166531680ebe2c1bf5fd799ecc654e6e2887a56c6a4f83650631a",
+        "scripts/competitor_gap.py": "76a9783fbecd7ddd8792f3af7dcec51e3e8d27318171d7a852ea99f53453047d",
+        "scripts/credential.py": "81a0c5ee938b71e412564c88da030cc42c4f8ef283a0ab02beaf09f31733436b",
+        "scripts/dataforseo_api.py": "8e5918619cdee675527dae9384de26ba2242a54d31016c6867fff2fcb0acc9ef",
+        "scripts/domain_overview.py": "4d167381a6e2111de636858d7fefe7054fcf69e70b5bc699d095566c8b825874",
+        "scripts/keyword_research.py": "b498b35a2103ce797e945d9ff6287c056e5c6bc5bfc6cac6abba9d5c2e9b291a",
+        "scripts/related_keywords.py": "9f6171d36c739f1929ef0e0e06029ab95e36dd66519f048443d8a97e78ef2a21",
+        "scripts/seo_audit.py": "fa61627048a995f309bff42a1ef507ba4b52fc050ca5446cce3817151e0a2700",
+        "scripts/serp_analysis.py": "2d2459a9027be63d988f420373ad312181178b230ab079dc407764581904acda"
+      }
+    }
+  }
+}

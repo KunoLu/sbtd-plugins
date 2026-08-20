@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "randomSeed": "kpi-p0-value-study-v1-20260726",
+  "fixtures": [
+    {
+      "id": "P0-VS-DOCS-01",
+      "category": "docs-config",
+      "path": "value-study/fixtures/docs-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-DOCS-02",
+      "category": "docs-config",
+      "path": "value-study/fixtures/docs-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-FEATURE-01",
+      "category": "user-visible-feature",
+      "path": "value-study/fixtures/feature-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-FEATURE-02",
+      "category": "user-visible-feature",
+      "path": "value-study/fixtures/feature-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-BUG-01",
+      "category": "existing-behavior-bug",
+      "path": "value-study/fixtures/bug-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-BUG-02",
+      "category": "existing-behavior-bug",
+      "path": "value-study/fixtures/bug-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-PRODUCTION-01",
+      "category": "existing-production-code",
+      "path": "value-study/fixtures/production-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-PRODUCTION-02",
+      "category": "existing-production-code",
+      "path": "value-study/fixtures/production-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-DATA-01",
+      "category": "data-schema-async",
+      "path": "value-study/fixtures/data-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-DATA-02",
+      "category": "data-schema-async",
+      "path": "value-study/fixtures/data-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-INTEGRATION-01",
+      "category": "production-integration",
+      "path": "value-study/fixtures/integration-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-INTEGRATION-02",
+      "category": "production-integration",
+      "path": "value-study/fixtures/integration-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-WEB-01",
+      "category": "web-e2e",
+      "path": "value-study/fixtures/web-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-WEB-02",
+      "category": "web-e2e",
+      "path": "value-study/fixtures/web-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-MOBILE-01",
+      "category": "mobile-tool-state",
+      "path": "value-study/fixtures/mobile-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-MOBILE-02",
+      "category": "mobile-tool-state",
+      "path": "value-study/fixtures/mobile-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-CROSS-01",
+      "category": "cross-repo-contract-only",
+      "path": "value-study/fixtures/cross-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-CROSS-02",
+      "category": "cross-repo-contract-only",
+      "path": "value-study/fixtures/cross-02/fixture.json"
+    },
+    {
+      "id": "P0-VS-SESSION-01",
+      "category": "session-resume-compaction",
+      "path": "value-study/fixtures/session-01/fixture.json"
+    },
+    {
+      "id": "P0-VS-SESSION-02",
+      "category": "session-resume-compaction",
+      "path": "value-study/fixtures/session-02/fixture.json"
+    }
+  ]
+}

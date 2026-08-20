@@ -1,0 +1,12 @@
+{
+  "candidate": {
+    "packageName": "@kpi/omp-sbtd",
+    "packageVersion": "0.1.0-rc.1",
+    "packedTarballSha256": "4e5afdddb0c0ee1bfd53cb38e898bd0ab756afaf89d38f37f38c92dffe446f70",
+    "sourceTreeSha256": "20d8a7c685e30d581a89ab28d66fac3d46e3349c15712f415a30beb58a4779b0"
+  },
+  "channel": "rc",
+  "createdAt": "2026-07-27T22:00:00.000Z",
+  "distTag": "next",
+  "schemaVersion": 1
+}

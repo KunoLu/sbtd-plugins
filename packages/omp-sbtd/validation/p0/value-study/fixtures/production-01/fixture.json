@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-PRODUCTION-01",
+  "category": "existing-production-code",
+  "prompt": "Add a narrow validation guard to existing local production code without changing unrelated command behavior.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "legacy-safe-change",
+    "routeCost": "standard",
+    "requiredGates": ["legacy-change-safety", "refactoring-pass"],
+    "obligations": [
+      "Inspect adjacent behavior",
+      "Add a focused safety-net regression"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "safe-change",
+      "description": "The intended validation guard is present without unrelated cleanup.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "safety-net",
+      "description": "The focused regression protects the changed observable boundary.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

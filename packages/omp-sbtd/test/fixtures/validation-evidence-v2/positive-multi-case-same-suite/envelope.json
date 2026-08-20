@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 2,
+  "runId": "run-1",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "evidenceSource": "developer-local",
+  "trigger": "manual",
+  "repository": {
+    "repositoryKey": "demo-web",
+    "sourceRef": "refs/heads/main",
+    "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "worktreeState": "dirty"
+  },
+  "sourceRevision": "dirty",
+  "environmentAlignment": "verified",
+  "e2eMode": "full-stack",
+  "mockStrategy": "none",
+  "featureSources": [],
+  "sourceLocators": [
+    {
+      "repositoryKey": "demo-web",
+      "path": "features/login.feature",
+      "feature": "login",
+      "scenario": "registered user logs in",
+      "sourceRef": "refs/heads/main",
+      "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceLocatorDigest": "46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9"
+    },
+    {
+      "repositoryKey": "demo-web",
+      "path": "features/logout.feature",
+      "feature": "logout",
+      "scenario": "registered user logs out",
+      "sourceRef": "refs/heads/main",
+      "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceLocatorDigest": "5c99624a6cd84eb7349a408970ccbbef2dc645926648c01ad64e9e001a3b7af5"
+    }
+  ],
+  "reports": [
+    {
+      "testType": "web",
+      "path": "reports/junit.xml",
+      "summaryMd": "reports/junit.md",
+      "sha256": "1fd175cdfb7435cab61b176835e0c57d76b937622fd2192d68afc9dd114f10c1",
+      "status": "passed",
+      "mode": "full-stack",
+      "reportFormat": "junit-xml-v1"
+    }
+  ],
+  "scenarioLinks": [
+    {
+      "sourceLocatorDigest": "46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9",
+      "reportSha256": "1fd175cdfb7435cab61b176835e0c57d76b937622fd2192d68afc9dd114f10c1",
+      "reportFormat": "junit-xml-v1",
+      "testCaseSelector": {
+        "suites": [
+          "login"
+        ],
+        "classname": "login.spec",
+        "name": "registered user logs in",
+        "file": "tests/login.spec.ts"
+      }
+    },
+    {
+      "sourceLocatorDigest": "5c99624a6cd84eb7349a408970ccbbef2dc645926648c01ad64e9e001a3b7af5",
+      "reportSha256": "1fd175cdfb7435cab61b176835e0c57d76b937622fd2192d68afc9dd114f10c1",
+      "reportFormat": "junit-xml-v1",
+      "testCaseSelector": {
+        "suites": [
+          "login"
+        ],
+        "classname": "login.spec",
+        "name": "registered user logs out",
+        "file": "tests/login.spec.ts"
+      }
+    }
+  ],
+  "evidencePublication": "local-only",
+  "secretsRedacted": true
+}

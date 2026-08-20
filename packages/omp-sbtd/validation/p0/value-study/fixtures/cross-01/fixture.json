@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-CROSS-01",
+  "category": "cross-repo-contract-only",
+  "prompt": "Update a local client contract from a versioned API schema and clearly mark the result contract-backed because the remote service is unavailable.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "trellis-managed-task",
+    "routeCost": "standard",
+    "requiredGates": ["ddd-distilled-modeling", "tdd"],
+    "obligations": [
+      "Use the supplied contract only",
+      "Do not claim a remote full-chain result"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "contract",
+      "description": "The local implementation follows the supplied versioned contract.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "evidence-mode",
+      "description": "The final result is truthfully labeled contract-backed.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "contract-only"
+}

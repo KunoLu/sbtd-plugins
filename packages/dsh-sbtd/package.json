@@ -1,0 +1,25 @@
+{
+  "name": "@kunolu/dsh-sbtd",
+  "version": "0.1.0-rc.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KunoLu/sbtd-plugins.git",
+    "directory": "packages/dsh-sbtd"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check src",
+    "test": "node --input-type=module -e \"process.exit(0)\""
+  }
+}

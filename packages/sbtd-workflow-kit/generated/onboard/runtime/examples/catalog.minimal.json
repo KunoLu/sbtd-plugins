@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "schemaVersion": 1,
+  "name": "sbtd-workflow-onboard",
+  "entries": [
+    {
+      "id": "skill:sbtd-workflow-onboard",
+      "kind": "bundled-skill",
+      "source": ".",
+      "targetRole": "skill:sbtd-workflow-onboard"
+    }
+  ]
+}

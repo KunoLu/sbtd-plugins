@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-DATA-01",
+  "category": "data-schema-async",
+  "prompt": "Add a versioned field to a local persisted record and reject an unknown future schema version with a repair path.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "data-design-risk",
+    "routeCost": "standard",
+    "requiredGates": ["ddia-data-design", "refactoring-pass"],
+    "obligations": [
+      "Define an explicit schema boundary",
+      "Fail closed for unknown versions"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "schema-safety",
+      "description": "The new field has a strict schema and unknown future versions are blocked.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "recovery",
+      "description": "The result supplies a local repair or migration path.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

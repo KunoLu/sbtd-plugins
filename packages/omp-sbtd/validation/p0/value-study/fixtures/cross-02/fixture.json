@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-CROSS-02",
+  "category": "cross-repo-contract-only",
+  "prompt": "Add a local compatibility decoder from a supplied event fixture and retain an explicit blocker for the unavailable producer repository.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "trellis-managed-task",
+    "routeCost": "standard",
+    "requiredGates": ["ddd-distilled-modeling", "tdd"],
+    "obligations": [
+      "Validate the supplied event boundary",
+      "Keep the producer limitation explicit"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "contract",
+      "description": "The decoder validates the supplied contract at its boundary.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "evidence-mode",
+      "description": "The result distinguishes contract evidence from unavailable producer evidence.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "contract-only"
+}

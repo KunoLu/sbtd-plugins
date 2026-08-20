@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kitRevision": "4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb",
+  "profiles": [
+    {
+      "id": "omp-p0-standard-v1",
+      "required": [
+        "plugin-kit-alignment",
+        "global-agents",
+        "project-root-agents",
+        "project-omp-adapter",
+        "always-on-baseline",
+        "core-gate-skills"
+      ],
+      "optional": [
+        "trellis",
+        "gitnexus",
+        "bdd-tdd",
+        "ui",
+        "web-mobile-e2e",
+        "release"
+      ]
+    }
+  ]
+}

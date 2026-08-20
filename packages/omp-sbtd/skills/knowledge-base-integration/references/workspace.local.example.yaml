@@ -1,0 +1,36 @@
+schema_version: 1
+product_key: smart
+product_root: /home/kb/Smart
+paths:
+  smart-fuzi-web: fuzi/frontend
+  smart-backend: backend
+runtime_root: /home/kb/Smart/.kb-runtime
+
+trust:
+  deployment_metadata_roots:
+    - /var/lib/sbtd/deployment-metadata
+  allowed_issuers:
+    - deployment-controller
+
+local_runner:
+  id: kb-linux-01
+  version: 1.0.0
+  image_digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+  labels: [linux, api, web, playwright]
+  tools:
+    node: 24.4.1
+    playwright: 1.53.0
+
+runners:
+  android-maestro:
+    adapter: command
+    labels: [android, java17, maestro]
+    command:
+      - runnerctl
+      - execute
+      - --job
+      - "{job_manifest}"
+      - --result
+      - "{result_manifest}"
+      - --artifact-dir
+      - "{artifact_dir}"

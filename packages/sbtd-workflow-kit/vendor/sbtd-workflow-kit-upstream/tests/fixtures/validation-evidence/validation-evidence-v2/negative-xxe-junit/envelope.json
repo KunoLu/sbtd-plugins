@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "runId": "run-1",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "evidenceSource": "developer-local",
+  "trigger": "manual",
+  "repository": {
+    "repositoryKey": "demo-web",
+    "sourceRef": "refs/heads/main",
+    "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "worktreeState": "dirty"
+  },
+  "sourceRevision": "dirty",
+  "environmentAlignment": "verified",
+  "e2eMode": "full-stack",
+  "mockStrategy": "none",
+  "featureSources": [],
+  "sourceLocators": [
+    {
+      "repositoryKey": "demo-web",
+      "path": "features/login.feature",
+      "feature": "login",
+      "scenario": "registered user logs in",
+      "sourceRef": "refs/heads/main",
+      "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceLocatorDigest": "46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9"
+    }
+  ],
+  "reports": [
+    {
+      "testType": "web",
+      "path": "reports/junit.xml",
+      "summaryMd": "reports/junit.md",
+      "sha256": "2c89eb5a84ca39050b4625a59f9d3fa948452fe1a09527006881aa9e0d7c7626",
+      "status": "passed",
+      "mode": "full-stack",
+      "reportFormat": "junit-xml-v1"
+    }
+  ],
+  "scenarioLinks": [
+    {
+      "sourceLocatorDigest": "46ffabfdb65ca1a610a8a11e7b7e3101a3ecc10eda1645b67e6138547ac8aca9",
+      "reportSha256": "2c89eb5a84ca39050b4625a59f9d3fa948452fe1a09527006881aa9e0d7c7626",
+      "reportFormat": "junit-xml-v1",
+      "testCaseSelector": {
+        "suites": [
+          "login"
+        ],
+        "classname": "login.spec",
+        "name": "registered user logs in",
+        "file": "tests/login.spec.ts"
+      }
+    }
+  ],
+  "evidencePublication": "local-only",
+  "secretsRedacted": true
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "P0-VS-MOBILE-02",
+  "category": "mobile-tool-state",
+  "prompt": "Run the local mobile preflight contract when a simulator is available but the required permission is denied, retaining the exact blocked evidence.",
+  "startingFiles": {
+    "README.md": "# P0 frozen fixture\n\nThis fixture is self-contained, credential-free, and may be copied into an isolated study workspace.\n"
+  },
+  "startingSnapshotSha256": "4439ce20a98f21b38d42fe2a30d2b2cf7791b0c47475f56671a889ea5c09978d",
+  "expected": {
+    "route": "mobile-e2e",
+    "routeCost": "heavy",
+    "requiredGates": ["tdd", "release-readiness"],
+    "obligations": [
+      "Preserve permission evidence",
+      "Do not retry a permission block as quality selection"
+    ]
+  },
+  "rubric": [
+    {
+      "id": "tool-state",
+      "description": "The denied prerequisite is classified without a false pass.",
+      "weight": 60,
+      "severe": true
+    },
+    {
+      "id": "recovery",
+      "description": "The response gives a concrete permission recovery path.",
+      "weight": 40,
+      "severe": false
+    }
+  ],
+  "cleanupBoundary": "Remove only artifacts created inside this isolated fixture copy.",
+  "permittedNetwork": "omp-owned-model-only"
+}

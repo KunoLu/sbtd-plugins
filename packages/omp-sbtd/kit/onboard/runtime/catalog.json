@@ -1,0 +1,151 @@
+{
+  "$schema": "./catalog.schema.json",
+  "schemaVersion": 1,
+  "name": "sbtd-workflow-onboard",
+  "entries": [
+    {
+      "id": "project:gitignore",
+      "kind": "project-template",
+      "source": "templates/project/gitignore.template",
+      "targetRole": "project-gitignore"
+    },
+    {
+      "id": "skill:sbtd-workflow-onboard",
+      "kind": "bundled-skill",
+      "source": ".",
+      "targetRole": "skill:sbtd-workflow-onboard"
+    },
+    {
+      "id": "skill:trellis-workflow",
+      "kind": "bundled-skill",
+      "source": "templates/skills/trellis-workflow",
+      "targetRole": "skill"
+    },
+    {
+      "id": "skill:trellis-channel",
+      "kind": "bundled-skill",
+      "source": "templates/skills/trellis-channel",
+      "targetRole": "skill"
+    },
+    {
+      "id": "skill:diagnosing-bugs",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/diagnosing-bugs",
+        "aliases": ["diagnosing-bugs"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:tdd",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/tdd",
+        "aliases": ["tdd"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:grill-me",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/productivity/grill-me",
+        "aliases": ["grill-me"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:grill-with-docs",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/grill-with-docs",
+        "aliases": ["grill-with-docs"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:grilling",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/productivity/grilling",
+        "aliases": ["grilling"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:domain-modeling",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/domain-modeling",
+        "aliases": ["domain-modeling"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:codebase-design",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/codebase-design",
+        "aliases": ["codebase-design"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:handoff",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/productivity/handoff",
+        "aliases": ["handoff"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:writing-for-agents",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/productivity/writing-for-agents",
+        "aliases": ["writing-for-agents"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:to-spec",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/to-spec",
+        "aliases": ["to-spec"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:to-tickets",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/mattpocock/skills.git",
+        "subpath": "skills/engineering/to-tickets",
+        "aliases": ["to-tickets"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:ui-ux-pro-max",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
+        "subpath": ".claude/skills/ui-ux-pro-max",
+        "aliases": ["ui-ux-pro-max", "ui-ux-pro-max-skill"]
+      },
+      "targetRole": "external-skill"
+    }
+  ]
+}

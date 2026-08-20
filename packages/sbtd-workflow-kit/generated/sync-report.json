@@ -1,0 +1,15 @@
+{
+  "added": [],
+  "changed": [],
+  "removed": [],
+  "unmapped": [],
+  "inputReadSet": {
+    "sourceTreeSha256": "d1f01d6820775d9428419501b6349130b5e0706db3ecb816f2548149402d4a14",
+    "mappingSha256": "8c65611589cb38a03fec8d7adafe094d9841263fa658d6e8fea59d0e57050ea3",
+    "overlayDigests": {
+      "AGENTS.project-omp.md": "82e1b95f6534c157cdf40dcb1540750c2e29716c5214240e0752fc0a206d9ff1"
+    },
+    "stableManifestSha256": "5d607007086b671866142ce3d0edd0a896e8c878e5566cf7ca9b1592e7c844ca"
+  },
+  "generatedSha256": "49cd8e794e1b7aab0c5e8a707d9f3cdd47003908b4ec3a6672a9e19ade0e8349"
+}

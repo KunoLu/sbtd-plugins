@@ -1,0 +1,115 @@
+# 其他临时目录和文件
+.tmp/
+.cache/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# 构建和依赖目录
+node_modules/
+dist/
+build/
+.next/
+out/
+.env.local
+.env.*.local
+
+# Python 相关
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ty_cache/
+
+# ========================
+# AI / Agent / LLM tooling
+# ========================
+
+# ---------- Claude ----------
+.claude/projects/
+.claude/worktrees/
+.claude/settings.local.json
+
+# ---------- Codex -----------
+.codex/cache/
+.codex/tmp/
+.codex/logs/
+.codex/sessions/
+.codex/state/
+.codex/hooks/*.local.*
+
+# ---------- OMP ----------
+.omp/plugins/
+
+# ---------- Trellis ----------
+.trellis/*
+.trellis/workspace
+
+!.trellis/agents/
+!.trellis/agents/**
+
+!.trellis/spec/
+!.trellis/spec/**
+!.trellis/lessons/
+!.trellis/lessons/**
+!.trellis/workflow.md
+
+!.trellis/tasks/
+!.trellis/tasks/*/
+# 需要提交归档任务、journal 或 check/implement 记录，则先注释上一行的规则，再使用下面这行规则：
+# !.trellis/tasks/**
+
+# 不需要提交归档任务、journal 或 check/implement 记录，则直接使用：
+!.trellis/tasks/*/prd.md
+!.trellis/tasks/*/design.md
+!.trellis/tasks/*/implement.md
+
+.trellis/.backup-*
+.trellis/worktrees/
+.trellis/.runtime/
+.trellis/.cache/
+.trellis/channels/
+.trellis/.template-hashes.json
+
+# ---------- Impeccable ----------
+.impeccable/live/server.json
+.impeccable/live/sessions/
+.impeccable/live/annotations/
+.impeccable/critique/
+
+# ---------- GitNexus ----------
+.gitnexus/
+
+# ---------- Testing -----------
+# MCP / browser controller local state
+.chrome-devtools-mcp/
+.playwright-mcp/
+
+# Playwright runtime artifacts
+playwright-report/
+test-results/
+blob-report/
+output/
+
+# Web UI autotest generated run artifacts
+tests/e2e/manifest/ui-test-repair-plan.json
+tests/api/reports/
+tests/unit/reports/
+tests/e2e/reports/
+tests/e2e/**/screenshots/
+tests/e2e/**/videos/
+tests/e2e/**/traces/
+tests/e2e/**/*.trace.zip
+
+# Maestro runtime artifacts
+.maestro/cache/
+.maestro/tmp/
+.maestro/runs/
+.maestro/reports/
+
+# ---------- AI Tools ----------
+.worktrees/

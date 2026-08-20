@@ -1,0 +1,22 @@
+schema_version: 1
+environment: staging
+
+repositories:
+  smart-fuzi-web: 0123456789abcdef0123456789abcdef01234567
+  smart-backend: 89abcdef0123456789abcdef0123456789abcdef
+
+runners:
+  local:
+    id: kb-linux-01
+    version: 1.0.0
+    image_digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+    labels: [linux, api, web, playwright]
+    tools:
+      node: 24.4.1
+      playwright: 1.53.0
+
+attestation:
+  issuer: deployment-controller
+  issued_at: "2026-07-17T00:00:00Z"
+  # Canonical SHA-256 of this document with manifest_digest removed.
+  manifest_digest: sha256:7a59aba7c14e1aefe04600cf0abcc63e70cbb57c70b7e4224020dd712cc96368

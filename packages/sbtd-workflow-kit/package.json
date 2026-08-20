@@ -1,0 +1,47 @@
+{
+  "name": "@kunolu/sbtd-workflow-kit",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./generated/manifest.json": "./generated/manifest.json",
+    "./generated-omp/manifest.json": "./generated-omp/manifest.json",
+    "./generated-agent-plugin/manifest.json": "./generated-agent-plugin/manifest.json",
+    "./generated-agent-plugin/catalog.json": "./generated-agent-plugin/catalog.json",
+    "./generated-agent-plugin/audit.json": "./generated-agent-plugin/audit.json"
+  },
+  "files": [
+    "dist",
+    "generated",
+    "generated-omp",
+    "generated-agent-plugin",
+    "omp-distribution-map.yaml",
+    "omp-overlays",
+    "upstream.lock.json",
+    "agents-section-map.yaml",
+    "vendor",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check src test",
+    "test": "vitest run",
+    "generate": "tsx src/generate.ts",
+    "check-generated": "tsx src/check-generated.ts",
+    "sync-upstream": "tsx src/sync-upstream.ts"
+  },
+  "dependencies": {
+    "yaml": "2.8.2",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "tsx": "4.20.6"
+  }
+}
