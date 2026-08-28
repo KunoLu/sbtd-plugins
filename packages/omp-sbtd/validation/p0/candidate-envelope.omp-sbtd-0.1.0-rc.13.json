@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "kind": "unpublished-candidate-envelope",
+  "status": "unpublished",
+  "packageName": "@kunolu/omp-sbtd",
+  "packageVersion": "0.1.0-rc.13",
+  "sourceRevision": "5f2a7951395bcaa34cad5af202c6ee0ca2179d36",
+  "sourceTreeNote": "repacked after SBOM inventory cutover for packaged compatibility.v2.json; retired sha256 2fe0ed3e1de55b246aa5fc328b6ffb6dac018aea3b04603a23bd037e469aa046 and 09482536554ef143379b8ae882a017ea3d6193289bde12f68b760a6c5a06d5f7",
+  "tarball": {
+    "fileName": "kunolu-omp-sbtd-0.1.0-rc.13.tgz",
+    "sha256": "61610988e6537c1f478af218f6a13fcb259d90374c0652ffb204d4127a22f9c7",
+    "integrity": "sha512-xMWfr6ItrXZQ0sBjoICUfygcjaAory9UiEj3tL4ifEZ+O/CK230T9YoZr+T+f0XERtrkTH51EHa3jwRUvGpTFg==",
+    "peerDependencies": {
+      "@oh-my-pi/pi-coding-agent": ">=17.3.5 <18"
+    },
+    "containsPackagedPolicy": "validation/p0/compatibility.v2.json"
+  },
+  "extractedManifestSha256": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+  "packagedPolicySha256": "7ad201d9e72eeeb6edaf7ca37d02df64c3d657f72b994f1276ef2d566d3a15bc",
+  "tarballBoundPeerRange": ">=17.3.5 <18",
+  "developmentRuntimeVersion": "17.3.5",
+  "fourCommandAcceptance": {
+    "procedure": "docs/assets/omp-plugin-host-acceptance.md section 4",
+    "ompVersion": "17.3.5",
+    "commands": ["help", "status", "report", "onboard plan"],
+    "result": "stale",
+    "reason": "Previous section-4 pass bound retired sha256 09482536…d5f7. Later packed identities 2fe0ed3e…a046 and this 61610988…f9c7 are new candidates; four-command remains stale and is not a publication Gate pass."
+  },
+  "authorizedHostEvidence": {
+    "status": "blocked",
+    "reason": "No parent-authorized harness wrapper exists; handbook section 12 (LESSON-20260812) forbids probing a session-built wrapper as authorized. The section-4 local isolated four-command acceptance is recorded above as local evidence only.",
+    "certification": "not certified; overall compatibility state starts at eligible and is never promoted by this acceptance result"
+  },
+  "publication": {
+    "published": false,
+    "registry": "https://registry.npmjs.org/",
+    "registryAvailabilityCheck": "E404 No match found for version 0.1.0-rc.13 (2026-08-24)",
+    "distTagsMoved": false,
+    "note": "This envelope tarball 61610988…f9c7 was not published and is not admitted. Registry 0.1.0-rc.13 is b0e1f133…28185 (registry-proof.omp-sbtd-0.1.0-rc.13.json). Not certified."
+  }
+}

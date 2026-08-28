@@ -1,11 +1,21 @@
 # @kunolu/omp-sbtd
 
-OMP-hosted SBTD workflow plugin. It provides `/sbtd` commands and a fixed, read-only SBTD Kit snapshot; it does not silently install global tools or modify a project during plugin installation.
+OMP-hosted SBTD workflow plugin for KPi. It provides `/sbtd` commands and a fixed, read-only SBTD Kit snapshot; it does not silently install global tools or modify a project during plugin installation.
 
 ## Requirements
 
-- Oh My Pi / OMP with `@oh-my-pi/pi-coding-agent` **17.3.5**. The package declares this exact peer dependency.
+- Published `@kunolu/omp-sbtd@0.1.0-rc.12` requires exact
+  `@oh-my-pi/pi-coding-agent` **17.3.5**.
+- Published `@kunolu/omp-sbtd@0.1.0-rc.13` (`next`) declares peer
+  `>=17.3.5 <18`; OMP 18 is out of range. Installability is not
+  certification.
+
 - An authenticated OMP provider profile for commands that need a provider.
+
+Peer range only decides *installable*. Installation and npm publication do
+not certify host compatibility: `published`, `installable`, and `certified`
+are distinct. Certified status is tracked in repository compatibility
+records, not implied by installation.
 
 Check the installed host version before installing:
 
@@ -15,22 +25,23 @@ omp --version
 
 ## Install
 
-Pin the release version for a reproducible installation:
+Pin the release version for a reproducible installation. The latest
+published RC is `0.1.0-rc.12`:
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.1.0-rc.11
+omp plugin install @kunolu/omp-sbtd@0.1.0-rc.12
 ```
 
 RC 版本始终显式安装；RC 发布不会使用 npm 的 `latest` tag：
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.1.0-rc.11
+omp plugin install @kunolu/omp-sbtd@0.1.0-rc.12
 ```
 
 OMP installs to user scope by default. To install only for the current project:
 
 ```bash
-omp plugin install --scope project @kunolu/omp-sbtd@0.1.0-rc.11
+omp plugin install --scope project @kunolu/omp-sbtd@0.1.0-rc.12
 ```
 
 Open a new OMP session after installation, then verify the plugin and command registry:
@@ -61,13 +72,13 @@ Before publishing, run the repository handbook's isolated exact-tarball
 four-command acceptance: `/sbtd help`, `/sbtd status`, `/sbtd report`, and
 `/sbtd onboard plan`. The commands must complete without a Provider request,
 approval, or unexpected write. The detailed procedure and cleanup boundary are
-in [`docs/assets/omp-plugin-host-acceptance.md`](../../docs/assets/omp-plugin-host-acceptance.md).
+in [`docs/assets/omp/omp-plugin-host-acceptance.md`](../../docs/assets/omp/omp-plugin-host-acceptance.md).
 
 The repository helper then publishes that same tarball only to `next`:
 
 ```bash
 export NPM_TOKEN='npm access token'
-docs/deploy/publish-omp-sbtd.sh /absolute/path/kunolu-omp-sbtd-0.1.0-rc.11.tgz --tag next
+docs/deploy/publish-omp-sbtd.sh /absolute/path/kunolu-omp-sbtd-<version>.tgz --tag next
 ```
 
 The helper rejects a stable version, another package, `latest` or any other
@@ -101,7 +112,7 @@ The helper resolves credentials in this order:
 The helper parses `.env` as data and never sources or executes it. It accepts the literal assignment form above; other lines are ignored. Therefore a `.env` token overrides an inherited environment token. Invoke the helper directly:
 
 ```bash
-docs/deploy/publish-omp-sbtd.sh /absolute/path/kunolu-omp-sbtd-0.1.0-rc.11.tgz --tag next
+docs/deploy/publish-omp-sbtd.sh /absolute/path/kunolu-omp-sbtd-<version>.tgz --tag next
 ```
 
 The helper never accepts a token argument, prints no token value, and passes npm an owner-only temporary userconfig containing only the literal `${NPM_TOKEN}` reference.

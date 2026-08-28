@@ -19,17 +19,17 @@ import {
   createEvidenceStore,
   createNodeProcessRunner,
   createUnavailableOmpProcessAdapter,
-  currentRuntimeVersionSchema,
   decideRelease,
   inspectPackedPluginTarball,
   loadConformanceCatalog,
   loadValueStudyCorpusBundle,
   P0ValidationError,
   preflightValueStudy,
-  resolveCurrentRuntimeVersionFromLockfile,
+  resolveDevelopmentRuntimeVersionFromLockfile,
   runCompleteValueStudy,
-  runCurrentRuntimeCompatibility,
   runIdSchema,
+  runTestedRuntimeCompatibility,
+  runtimeVersionSchema,
   scanOmpDistributionLeaks,
   validateCompatibilityManifest,
   valueStudyRubricSha256,
@@ -117,12 +117,12 @@ function requiredRunId(options: Readonly<Record<string, string>>): string {
   );
 }
 
-async function resolveCompatibilityRuntimeVersion(
+async function resolveTestedRuntimeVersion(
   options: Readonly<Record<string, string>>,
 ): Promise<string> {
   const explicit = options["runtime-version"];
   if (explicit !== undefined) return explicit;
-  return resolveCurrentRuntimeVersionFromLockfile(
+  return resolveDevelopmentRuntimeVersionFromLockfile(
     await readFile(join(workspaceRoot, "pnpm-lock.yaml"), "utf8"),
   );
 }
@@ -140,7 +140,7 @@ type CompatibilityInvocation = Readonly<{
 }>;
 
 function parseRuntimeVersion(value: string, optionName: string): string {
-  const parsed = currentRuntimeVersionSchema.safeParse(value);
+  const parsed = runtimeVersionSchema.safeParse(value);
   if (parsed.success) return parsed.data;
   throw new P0ValidationError(
     "CLI_ARGUMENT_INVALID",
@@ -206,7 +206,7 @@ async function resolveCompatibilityInvocation(
 ): Promise<CompatibilityInvocation> {
   const manifest = validateCompatibilityManifest(
     JSON.parse(
-      await readFile(join(validationRoot, "compatibility.v1.json"), "utf8"),
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
     ),
   );
   const experimentalRuntime = options["experimental-runtime"];
@@ -220,7 +220,7 @@ async function resolveCompatibilityInvocation(
       "Pass one matching exact version through both --experimental-runtime and --runtime-version.",
     );
   const testedRuntimeVersion = parseRuntimeVersion(
-    await resolveCompatibilityRuntimeVersion(options),
+    await resolveTestedRuntimeVersion(options),
     "runtime-version",
   );
   const packed = requiredOption(options, "packed");
@@ -233,7 +233,7 @@ async function resolveCompatibilityInvocation(
     return {
       manifest,
       scope: "declared",
-      declaredRuntimeVersion: manifest.currentRuntimeVersion,
+      declaredRuntimeVersion: manifest.developmentRuntimeVersion,
       testedRuntimeVersion,
       pluginPackagePath,
       pluginTarballPath,
@@ -255,11 +255,12 @@ async function resolveCompatibilityInvocation(
       },
     );
   // Both declared and experimental host certification run only against one
-  // extracted package plus its exact parent-authorized tarball.
+  // extracted package plus its exact parent-authorized tarball. The
+  // experimental scope never mutates the packaged Policy v2.
   return {
-    manifest: { ...manifest, currentRuntimeVersion: testedRuntimeVersion },
+    manifest,
     scope: "experimental",
-    declaredRuntimeVersion: manifest.currentRuntimeVersion,
+    declaredRuntimeVersion: manifest.developmentRuntimeVersion,
     testedRuntimeVersion,
     pluginPackagePath,
     pluginTarballPath,
@@ -692,7 +693,7 @@ async function runCommand(
   if (command === "check-compatibility") {
     const invocation = await resolveCompatibilityInvocation(options);
     const hostAdapter = await createAuthorizedHostCommandAdapter();
-    const report = await runCurrentRuntimeCompatibility(
+    const report = await runTestedRuntimeCompatibility(
       invocation.manifest,
       hostAdapter ?? createBlockedCompatibilityAdapter(),
       {
@@ -703,7 +704,8 @@ async function runCommand(
           "compatibility",
           requiredRunId(options),
         ),
-        currentRuntimeVersion: invocation.testedRuntimeVersion,
+        testedRuntimeVersion: invocation.testedRuntimeVersion,
+        scope: invocation.scope,
       },
     );
     return {
@@ -948,14 +950,15 @@ async function runCommand(
   const catalog = await loadConformanceCatalog(catalogPath, workspaceRoot);
   const invocation = await resolveCompatibilityInvocation(options);
   const authorizedHostAdapter = await createAuthorizedHostCommandAdapter();
-  const compatibility = await runCurrentRuntimeCompatibility(
+  const compatibility = await runTestedRuntimeCompatibility(
     invocation.manifest,
     authorizedHostAdapter ?? createBlockedCompatibilityAdapter(),
     {
       pluginPackagePath: invocation.pluginPackagePath,
       pluginTarballPath: invocation.pluginTarballPath,
       sandboxRoot: join(temporaryRoot, "compatibility", requiredRunId(options)),
-      currentRuntimeVersion: invocation.testedRuntimeVersion,
+      testedRuntimeVersion: invocation.testedRuntimeVersion,
+      scope: invocation.scope,
     },
   );
   const valueStudy = await observeValueStudy(
@@ -968,7 +971,13 @@ async function runCommand(
     report: {
       schemaVersion: 1,
       catalogEntries: catalog.entries.length,
-      compatibility,
+      compatibility: {
+        ...compatibility,
+        scope: invocation.scope,
+        declaredRuntimeVersion: invocation.declaredRuntimeVersion,
+        testedRuntimeVersion: invocation.testedRuntimeVersion,
+        pluginInput: invocation.pluginInput,
+      },
       valueStudy,
       blocker: {
         code: "EXTERNAL_P0_PREREQUISITES_REQUIRED",

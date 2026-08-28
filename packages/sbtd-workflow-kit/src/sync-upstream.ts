@@ -652,6 +652,7 @@ async function stageCandidate(
     await Promise.all([
       mkdir(stageKit, { recursive: true }),
       mkdir(stagePlugin, { recursive: true }),
+      mkdir(join(stagePlugin, "validation", "p0"), { recursive: true }),
     ]);
     await Promise.all([
       cp(
@@ -671,9 +672,18 @@ async function stageCandidate(
         recursive: true,
       }),
       cp(join(pluginRoot, "package.json"), join(stagePlugin, "package.json")),
+      cp(join(pluginRoot, "plugin.json"), join(stagePlugin, "plugin.json")),
       cp(join(pluginRoot, "README.md"), join(stagePlugin, "README.md")),
       cp(join(pluginRoot, "SECURITY.md"), join(stagePlugin, "SECURITY.md")),
       cp(join(pluginRoot, "CHANGELOG.md"), join(stagePlugin, "CHANGELOG.md")),
+      cp(join(pluginRoot, "LICENSE"), join(stagePlugin, "LICENSE")),
+      cp(join(pluginRoot, "skills"), join(stagePlugin, "skills"), {
+        recursive: true,
+      }),
+      cp(
+        join(pluginRoot, "validation", "p0", "compatibility.v2.json"),
+        join(stagePlugin, "validation", "p0", "compatibility.v2.json"),
+      ),
       cp(join(pluginRoot, "dist"), join(stagePlugin, "dist"), {
         recursive: true,
       }),

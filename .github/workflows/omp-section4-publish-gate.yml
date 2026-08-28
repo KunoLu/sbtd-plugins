@@ -1,0 +1,419 @@
+# Trusted §4 four-command publication gate for @kunolu/omp-sbtd RC tarballs
+# (docs/assets/omp-plugin-cloud-section4-and-certification-plan.md §7.1).
+#
+# Trust boundary:
+# - workflow_dispatch only, KunoLu/sbtd-plugins + refs/heads/main; anything else fails
+#   closed in the guard job.
+# - The tarball is packed exactly once inside this run from the immutable
+#   dispatched main commit SHA. Every later job consumes that one artifact
+#   and re-verifies its content SHA-256 (pluginTarballSha256). Local .tmp
+#   packs are never an input.
+# - lock-and-cache lets NPM generate the diagnostic package-lock.json (SRI
+#   integrity written by npm, never a hand-written content SHA-256) and
+#   materializes a content-addressed npm cache. The tarball content SHA-256
+#   is recorded separately, outside the lock.
+# - section4 installs the subject ONLY with the shared npm-offline-v1
+#   installer (npm ci --offline --ignore-scripts --no-audit) — never bun,
+#   never bare npm install --offline — then runs the non-interactive
+#   four-command surface through the shared command-surface cell driver
+#   against the pinned OMP 17.3.5 dist/cli.js (never the .bin/omp shim),
+#   bracketed by the pre/post SHA-256 diagnostic write-check. A Host that
+#   cannot be provisioned fails closed with a blockedReason; no step fakes a
+#   pass. This gate never claims OMP 18 compatibility.
+# - This workflow NEVER publishes npm, never moves dist-tags and never
+#   certifies. Publication stays the manual HITL handbook flow against the
+#   exact digest this gate passed.
+# - Every third-party action is pinned to a full commit SHA.
+name: omp-section4-publish-gate
+
+on:
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: omp-section4-publish-gate
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Fail closed outside trusted main dispatch
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the trusted repository, protected ref and dispatch event
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "${REPOSITORY}" != "KunoLu/sbtd-plugins" ]; then
+            echo "blocked: untrusted repository ${REPOSITORY}" >&2
+            exit 1
+          fi
+          if [ "${REF}" != "refs/heads/main" ]; then
+            echo "blocked: section4 gate only runs from trusted refs/heads/main (got ${REF})" >&2
+            exit 1
+          fi
+          if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "blocked: section4 gate is workflow_dispatch only (got ${EVENT_NAME})" >&2
+            exit 1
+          fi
+
+  pack:
+    name: Pack the RC tarball exactly once
+    needs: guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      pluginTarballSha256: ${{ steps.pack.outputs.pluginTarballSha256 }}
+    steps:
+      - name: Checkout the immutable dispatched main commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and pack exactly one tarball
+        id: pack
+        run: |
+          set -euo pipefail
+          pnpm --filter @kunolu/omp-sbtd build
+          pack_root="${GITHUB_WORKSPACE}/.omp-section4/pack"
+          mkdir -p "${pack_root}"
+          pnpm --filter @kunolu/omp-sbtd pack --pack-destination "${pack_root}"
+          count="$(find "${pack_root}" -maxdepth 1 -name '*.tgz' | wc -l)"
+          if [ "${count}" -ne 1 ]; then
+            echo "blocked: pack produced ${count} tarballs; exactly one is required" >&2
+            exit 1
+          fi
+          tarball="$(find "${pack_root}" -maxdepth 1 -name '*.tgz')"
+          digest="$(sha256sum "${tarball}" | cut -d' ' -f1)"
+          echo "pluginTarballSha256=${digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload the single packed tarball
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: omp-section4-pack
+          path: .omp-section4/pack/
+          if-no-files-found: error
+          retention-days: 5
+
+  lock-and-cache:
+    name: Generate the npm-offline-v1 diagnostic lock and cache
+    needs: pack
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the immutable dispatched main commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download the packed tarball
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: omp-section4-pack
+          path: .omp-section4/pack
+
+      - name: Generate the lock and cache with npm (network allowed here only)
+        id: lock
+        env:
+          EXPECTED_DIGEST: ${{ needs.pack.outputs.pluginTarballSha256 }}
+        run: |
+          set -euo pipefail
+          tarball="$(find "${GITHUB_WORKSPACE}/.omp-section4/pack" -maxdepth 1 -name '*.tgz')"
+          test -n "${tarball}"
+          test "$(sha256sum "${tarball}" | cut -d' ' -f1)" = "${EXPECTED_DIGEST}"
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/install-subject-plugin.ts lock-and-cache \
+            --tarball "${tarball}" \
+            --work-dir "${GITHUB_WORKSPACE}/.omp-section4/installer" | tee lock-and-cache.json
+          test "$(jq -r .status lock-and-cache.json)" = "passed"
+          test "$(jq -r .pluginTarballSha256 lock-and-cache.json)" = "${EXPECTED_DIGEST}"
+          test "$(jq -r .installerGeneration lock-and-cache.json)" = "npm-offline-v1"
+
+      - name: Upload the installer lock and cache
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: omp-section4-installer
+          path: |
+            .omp-section4/installer/package-lock.json
+            .omp-section4/installer/installer.json
+            .omp-section4/installer/cache/
+          if-no-files-found: error
+          retention-days: 5
+
+  section4:
+    name: Offline install, four-command surface and diagnostic write-check
+    needs: [pack, lock-and-cache]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the immutable dispatched main commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download the packed tarball and installer lock+cache
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: omp-section4-*
+          path: .omp-section4
+          merge-multiple: false
+
+      - name: Verify the tarball digest against the pack job
+        env:
+          EXPECTED_DIGEST: ${{ needs.pack.outputs.pluginTarballSha256 }}
+        run: |
+          set -euo pipefail
+          tarball="$(find "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-pack" -maxdepth 1 -name '*.tgz')"
+          test -n "${tarball}"
+          test "$(sha256sum "${tarball}" | cut -d' ' -f1)" = "${EXPECTED_DIGEST}"
+          test "$(jq -r .pluginTarballSha256 "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/installer.json")" = "${EXPECTED_DIGEST}"
+
+      - name: Provision the pinned OMP 17.3.5 Host
+        id: host
+        run: |
+          set -euo pipefail
+          runtime="${RUNNER_TEMP}/omp-section4-runtime"
+          mkdir -p "${runtime}"
+          printf '%s\n' '{"name":"omp-section4-host","private":true,"dependencies":{"@oh-my-pi/pi-coding-agent":"17.3.5"}}' \
+            > "${runtime}/package.json"
+          # Host provisioning only; the subject Plugin install below is offline.
+          if ! (cd "${runtime}" && npm install --ignore-scripts --no-audit --no-fund); then
+            echo "blocked: pinned OMP 17.3.5 could not be provisioned (blockedReason=OMP_RUNTIME_UNAVAILABLE); the four-command surface did not run and nothing is authorized" >&2
+            exit 1
+          fi
+          omp_bin="${runtime}/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+          if [ ! -f "${omp_bin}" ]; then
+            echo "blocked: pinned OMP 17.3.5 dist/cli.js is missing (blockedReason=OMP_RUNTIME_UNAVAILABLE); the four-command surface did not run and nothing is authorized" >&2
+            exit 1
+          fi
+          echo "ompBin=${omp_bin}" >> "${GITHUB_OUTPUT}"
+
+      - name: Install the subject offline (npm-offline-v1)
+        env:
+          EXPECTED_DIGEST: ${{ needs.pack.outputs.pluginTarballSha256 }}
+        run: |
+          set -euo pipefail
+          diag="${RUNNER_TEMP}/omp-section4-diagnostic"
+          mkdir -p "${diag}/host-run"
+          tarball="$(find "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-pack" -maxdepth 1 -name '*.tgz')"
+          if ! pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/install-subject-plugin.ts install \
+            --tarball "${tarball}" \
+            --run-dir "${diag}/plugins" \
+            --cache-dir "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/cache" \
+            --lock-file "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/package-lock.json" \
+            | tee install.json; then
+            echo "blocked: offline subject install failed (blockedReason=PLUGIN_INSTALL_FAILED); section4 fails closed" >&2
+            exit 1
+          fi
+          test "$(jq -r .status install.json)" = "passed"
+          test "$(jq -r .installerGeneration install.json)" = "npm-offline-v1"
+          test "$(jq -r .pluginTarballSha256 install.json)" = "${EXPECTED_DIGEST}"
+          test -f "$(jq -r .extensionPath install.json)"
+
+      - name: Record the pre-Host SHA-256 manifest
+        run: |
+          set -euo pipefail
+          diag="${RUNNER_TEMP}/omp-section4-diagnostic"
+          python3 - "${diag}" "${RUNNER_TEMP}/pre-host.manifest" <<'PY'
+          import hashlib, os, sys
+          from pathlib import Path
+          root = Path(sys.argv[1])
+          out = Path(sys.argv[2])
+          rows = []
+          for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+              dirnames.sort()
+              for name in sorted(filenames):
+                  path = Path(dirpath) / name
+                  rel = path.relative_to(root).as_posix()
+                  if path.is_symlink():
+                      rows.append(f"link {rel}")
+                      continue
+                  digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                  rows.append(f"file {digest} {rel}")
+          out.write_text("\n".join(sorted(rows)) + "\n")
+          PY
+          test -s "${RUNNER_TEMP}/pre-host.manifest"
+
+      - name: Run the non-interactive four-command surface
+        env:
+          SPIKE_OMP_BIN: ${{ steps.host.outputs.ompBin }}
+        run: |
+          set -euo pipefail
+          diag="${RUNNER_TEMP}/omp-section4-diagnostic"
+          tarball="$(find "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-pack" -maxdepth 1 -name '*.tgz')"
+          status=0
+          COMMAND_SURFACE_PLUGIN_TARBALL="${tarball}" \
+          COMMAND_SURFACE_RUNS_ROOT="${diag}/host-run" \
+          COMMAND_SURFACE_TARGET_VERSION="17.3.5" \
+          INSTALLER_LOCK_FILE="${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/package-lock.json" \
+          INSTALLER_CACHE_DIR="${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/cache" \
+            pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/host-event/run-command-surface-cell.ts \
+            | tee section4-cell.json || status=$?
+          if [ "${status}" -ne 0 ]; then
+            reason="$(jq -r '.blockedReason // "COMMAND_SURFACE_FAILED"' section4-cell.json 2>/dev/null || echo COMMAND_SURFACE_FAILED)"
+            echo "blocked: four-command surface did not pass (blockedReason=${reason}); section4 fails closed and nothing is authorized" >&2
+            exit 1
+          fi
+          test "$(jq -r .outcome section4-cell.json)" = "passed"
+
+      - name: Upload four-command diagnostics (always)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: omp-section4-command-surface
+          path: |
+            section4-cell.json
+            ${{ runner.temp }}/omp-section4-diagnostic/host-run/**/command-surface.json
+          if-no-files-found: ignore
+          retention-days: 5
+
+
+      - name: Diagnostic write-check against the pre-Host manifest
+        run: |
+          set -euo pipefail
+          diag="${RUNNER_TEMP}/omp-section4-diagnostic"
+          python3 - "${diag}" "${RUNNER_TEMP}/pre-host.manifest" "${RUNNER_TEMP}/post-host.manifest" <<'PY'
+          import hashlib, os, sys
+          from pathlib import Path
+          sys.path.insert(
+              0,
+              str(Path("packages/omp-sbtd/scripts/p0/host-event").resolve()),
+          )
+          from section4_write_check import is_unexpected_host_project_write
+          root = Path(sys.argv[1])
+          pre = Path(sys.argv[2]).read_text().splitlines()
+          post_path = Path(sys.argv[3])
+          allowed_new = ("host-run/",)
+          rows = []
+          for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+              dirnames.sort()
+              for name in sorted(filenames):
+                  path = Path(dirpath) / name
+                  rel = path.relative_to(root).as_posix()
+                  if path.is_symlink():
+                      rows.append(f"link {rel}")
+                      continue
+                  digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                  rows.append(f"file {digest} {rel}")
+          post = sorted(rows)
+          post_path.write_text("\n".join(post) + "\n")
+          pre_map = {}
+          for line in pre:
+              kind, rest = line.split(" ", 1)
+              if kind == "file":
+                  digest, rel = rest.split(" ", 1)
+                  pre_map[rel] = digest
+              else:
+                  pre_map[rest] = kind
+          post_rels = set()
+          for line in post:
+              kind, rest = line.split(" ", 1)
+              if kind == "file":
+                  digest, rel = rest.split(" ", 1)
+              else:
+                  digest, rel = kind, rest
+              post_rels.add(rel)
+              if rel in pre_map:
+                  if pre_map[rel] != digest:
+                      raise SystemExit(f"in-place change: {rel}")
+              elif not rel.startswith(allowed_new):
+                  raise SystemExit(f"unexpected new path: {rel}")
+          for rel in pre_map:
+              if rel not in post_rels:
+                  raise SystemExit(f"missing baseline path: {rel}")
+          # Only host-run/<runId>/project/ is the Host cwd. Kit templates
+          # under .../templates/project/ are not Host writes.
+          for line in post:
+              kind, rest = line.split(" ", 1)
+              rel = rest.split(" ", 1)[1] if kind == "file" else rest
+              if is_unexpected_host_project_write(rel):
+                  raise SystemExit(f"unexpected project write: {rel}")
+          print("section-4-write-check=passed")
+          PY
+
+  status:
+    name: Publish the omp-section4-publish-gate commit status
+    if: always()
+    needs: [guard, pack, lock-and-cache, section4]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GUARD_RESULT: ${{ needs.guard.result }}
+      PACK_RESULT: ${{ needs.pack.result }}
+      LOCK_RESULT: ${{ needs.lock-and-cache.result }}
+      SECTION4_RESULT: ${{ needs.section4.result }}
+      TARBALL_DIGEST: ${{ needs.pack.outputs.pluginTarballSha256 }}
+    steps:
+      - name: Commit the gate status for this exact commit and digest
+        run: |
+          set -euo pipefail
+          state="success"
+          for result in "${GUARD_RESULT}" "${PACK_RESULT}" "${LOCK_RESULT}" "${SECTION4_RESULT}"; do
+            if [ "${result}" != "success" ]; then
+              state="failure"
+            fi
+          done
+          short="$(printf '%s' "${TARBALL_DIGEST:-unknown}" | cut -c1-12)"
+          # The status binds the immutable commit SHA, the packed tarball
+          # digest, the pinned OMP and the installer generation; it is a gate
+          # signal only and never publishes or certifies anything.
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="${state}" \
+            -f context="omp-section4-publish-gate" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="section4 ${state}: tarball ${short} omp 17.3.5 installer npm-offline-v1" \
+            > /dev/null

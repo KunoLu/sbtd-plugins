@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  ompExtensionV1Inventory,
   type RuntimeControllerHandlers,
   registerRuntimeController,
 } from "../src/runtime/index.ts";
@@ -52,8 +53,17 @@ describe("Feature: Runtime Controller session isolation", () => {
       sessionManager: { getSessionId: () => sessionId },
     });
 
-    const pendingA = events.get("session_start")?.({}, contextFor("session-a"));
-    const pendingB = events.get("session_start")?.({}, contextFor("session-b"));
+    // The adapter edge now validates payloads fail-closed (Slice 4); the
+    // isolation contract under test is Session serialization, so the stub
+    // host delivers a schema-valid session_start payload.
+    const pendingA = events.get("session_start")?.(
+      { type: "session_start" },
+      contextFor("session-a"),
+    );
+    const pendingB = events.get("session_start")?.(
+      { type: "session_start" },
+      contextFor("session-b"),
+    );
 
     await expect(Promise.resolve()).resolves.toBeUndefined();
     expect(started).toEqual(["session-a", "session-b"]);
@@ -102,12 +112,89 @@ describe("Feature: Runtime Controller session isolation", () => {
       handlers,
     );
 
-    const pendingA = events.get("session_start")?.({}, contextA);
-    const pendingB = events.get("session_start")?.({}, contextB);
+    const pendingA = events.get("session_start")?.(
+      { type: "session_start" },
+      contextA,
+    );
+    const pendingB = events.get("session_start")?.(
+      { type: "session_start" },
+      contextB,
+    );
 
     await expect(Promise.resolve()).resolves.toBeUndefined();
     expect(started).toEqual(["a", "b"]);
     first.resolve();
     await Promise.all([pendingA, pendingB]);
+  });
+});
+
+// Slice 1 characterization kept as the registration-surface lock. Slice 4
+// now owns the versioned omp-extension-v1 inventory; these scenarios assert
+// the live seam against that inventory so required events cannot drift.
+describe("Feature: SBTD 控制引导 — host registration characterization", () => {
+  function stubHandlers(): RuntimeControllerHandlers {
+    return {
+      complete: () => [],
+      handleCommand: async () => {},
+      transitionStage: async () => "",
+      reobserve: async () => {},
+      beforeAgentStart: async () => undefined,
+      beforeToolCall: async () => undefined,
+      preserveCompaction: async () => undefined,
+      approvalResolved: async () => {},
+      toolResult: async () => {},
+      turnStart: async () => {},
+      turnEnd: async () => {},
+      sessionStop: async () => undefined,
+    };
+  }
+
+  function recordingHost(options?: { withRegisterTool?: boolean }) {
+    const commands: string[] = [];
+    const tools: string[] = [];
+    const events = new Map<string, unknown>();
+    const host = {
+      registerCommand(name: string) {
+        commands.push(name);
+      },
+      zod: z,
+      ...(options?.withRegisterTool === false
+        ? {}
+        : {
+            registerTool(tool: { name: string }) {
+              tools.push(tool.name);
+            },
+          }),
+      on(name: string, handler: unknown) {
+        events.set(name, handler);
+      },
+    };
+    return { host, commands, tools, events };
+  }
+
+  it("Scenario: Host Contract 通过时注册完整 /sbtd — characterization: 当前注册面", () => {
+    const { host, commands, tools, events } = recordingHost();
+    registerRuntimeController(host as never, {
+      ...stubHandlers(),
+      credentialDisabled: async () => {},
+    });
+    expect(commands).toEqual(["sbtd"]);
+    expect(tools).toEqual(["sbtd_workflow"]);
+    expect([...events.keys()].sort()).toEqual(
+      [...ompExtensionV1Inventory.requiredEvents, "credential_disabled"].sort(),
+    );
+  });
+
+  it("Scenario: 可选 capability 缺失时只降级相关功能 — characterization: registerTool 缺失即跳过工具注册", () => {
+    const { host, commands, tools, events } = recordingHost({
+      withRegisterTool: false,
+    });
+    registerRuntimeController(host as never, stubHandlers());
+    expect(commands).toEqual(["sbtd"]);
+    expect(tools).toEqual([]);
+    expect(events.has("credential_disabled")).toBe(false);
+    expect([...events.keys()].sort()).toEqual(
+      [...ompExtensionV1Inventory.requiredEvents].sort(),
+    );
   });
 });

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "kind": "compatibility-targets",
+  "targets": [
+    {
+      "pluginVersion": "0.1.0-rc.12",
+      "pluginTarballSha256": "49edb4b7cab68f851359179b2c27bb53be8eff5682f16285f5caf9a351c39a33",
+      "packageIntegrity": "sha512-DOFO9focJ1gU4my0bOO1m2tdYP4Mo2wT0wf6iA3y/IXN2FFml9VSx0IBNVHvieajEhgNtfDQAQXpof9DWetzPw==",
+      "pluginManifestSha256": "0385da382745fecebfcb4b894067851960ca06dcdf51fe79969ac7e998c41647",
+      "pluginPeerRange": "17.3.5"
+    },
+    {
+      "pluginVersion": "0.1.0-rc.13",
+      "pluginTarballSha256": "b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185",
+      "packageIntegrity": "sha512-YeHQly8ONkZvNczhPBRd+1re3zX1ZAQ2xPUqfzZHhLVHyX90G3Pyk6ypY+knfBK6jZ5No599YaQZxsITvr232w==",
+      "pluginManifestSha256": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+      "pluginPeerRange": ">=17.3.5 <18"
+    }
+  ]
+}

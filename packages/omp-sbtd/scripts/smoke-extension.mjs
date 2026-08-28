@@ -12,6 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import { relative, resolve } from "node:path";
 import { promisify } from "node:util";
+import { z } from "zod";
 import extension from "../dist/extension.js";
 
 const execFileAsync = promisify(execFile);
@@ -80,6 +81,8 @@ try {
     registerCommand(name, options) {
       commands.push({ name, options });
     },
+    registerTool() {},
+    zod: z,
     on(event, handler) {
       events.set(event, handler);
     },
@@ -172,7 +175,7 @@ try {
       await writeFile(resolve(directory, "SKILL.md"), `${name}\n`, "utf8");
     }),
   );
-  await events.get("session_start")({}, context);
+  await events.get("session_start")({ type: "session_start" }, context);
   await command("on", context);
   for (const capability of [
     "trellis",

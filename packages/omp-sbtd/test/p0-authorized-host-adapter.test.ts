@@ -115,7 +115,7 @@ function validResponse(request) {
       schemaVersion: 1,
       operation: "compatibility",
       result: {
-        currentRuntimeVersion: request.input.currentRuntimeVersion,
+        testedRuntimeVersion: request.input.testedRuntimeVersion,
         status: "passed",
         agentInvoked: false,
         filesystemBeforeSha256: "a".repeat(64),
@@ -534,7 +534,7 @@ describe("Feature: P0 发布一致性与证据", () => {
 
     expect(result.exitCode).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({
-      currentRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "17.3.5",
       result: {
         status: "blocked",
         blocker: { code: "OMP_HOST_UNAVAILABLE" },
@@ -591,7 +591,7 @@ describe("Feature: P0 发布一致性与证据", () => {
 
     expect(result.exitCode).toBe(0);
     expect(JSON.parse(result.stdout)).toMatchObject({
-      currentRuntimeVersion: "17.1.8",
+      testedRuntimeVersion: "17.1.8",
       compatibility: {
         scope: "experimental",
         declaredRuntimeVersion: "17.3.5",
@@ -605,7 +605,7 @@ describe("Feature: P0 发布一致性与证据", () => {
       request: {
         operation: "compatibility",
         input: {
-          currentRuntimeVersion: "17.1.8",
+          testedRuntimeVersion: "17.1.8",
           pluginPackagePath: root,
           pluginTarballPath: join(root, "plugin.tgz"),
         },
@@ -617,6 +617,50 @@ describe("Feature: P0 发布一致性与证据", () => {
       }),
     ).toBe(true);
     expect(capture.pluginTarballPath).toBe(join(root, "plugin.tgz"));
+  });
+
+  it("Scenario: all 在实验 Runtime 上保留 scope 元数据", async () => {
+    const root = await temporaryRoot();
+    const capturePath = join(root, "captured.jsonl");
+    const executable = await writeTrustedHarness(root, capturePath, "valid");
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({ name: "@kunolu/omp-sbtd", version: "0.1.0-rc.2" }),
+      "utf8",
+    );
+    await writeFile(join(root, "plugin.tgz"), "fixture tarball", "utf8");
+
+    const result = await runP0Cli(
+      [
+        "all",
+        "--run-id",
+        "experimental-all",
+        "--execution-model",
+        "execution-model",
+        "--judge-model",
+        "judge-model",
+        "--runtime-version",
+        "17.1.8",
+        "--experimental-runtime",
+        "17.1.8",
+        "--packed",
+        root,
+        "--tarball",
+        join(root, "plugin.tgz"),
+      ],
+      { ...process.env, KPI_OMP_HARNESS_PATH: executable },
+    );
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      compatibility: {
+        scope: "experimental",
+        declaredRuntimeVersion: "17.3.5",
+        testedRuntimeVersion: "17.1.8",
+        pluginInput: "packed",
+      },
+      blocker: { code: "EXTERNAL_P0_PREREQUISITES_REQUIRED" },
+    });
   });
 
   it("Scenario: 未声明 Runtime 需要显式实验授权", async () => {
@@ -646,7 +690,9 @@ describe("Feature: P0 发布一致性与证据", () => {
     );
 
     expect(result.exitCode).toBe(1);
-    expect(JSON.parse(result.stderr).code).toBe("CURRENT_RUNTIME_MISMATCH");
+    expect(JSON.parse(result.stderr).code).toBe(
+      "COMPATIBILITY_RUNTIME_OUT_OF_RANGE",
+    );
     await expect(readFile(capturePath, "utf8")).rejects.toMatchObject({
       code: "ENOENT",
     });
@@ -762,8 +808,8 @@ describe("Feature: P0 发布一致性与证据", () => {
     });
     if (adapter === undefined) throw new Error("expected authorized harness");
 
-    const compatibility = await adapter.runCurrentRuntime({
-      currentRuntimeVersion: "17.1.3",
+    const compatibility = await adapter.runTestedRuntime({
+      testedRuntimeVersion: "17.1.3",
       pluginPackagePath: "/workspace/packages/omp-sbtd",
       pluginTarballPath: "/workspace/packages/omp-sbtd.tgz",
       sandboxRoot: "/tmp/kpi-p0/17.1.3",
@@ -782,7 +828,7 @@ describe("Feature: P0 发布一致性与证据", () => {
     const judgment = await adapter.judge(createJudgeInput());
 
     expect(compatibility).toMatchObject({
-      currentRuntimeVersion: "17.1.3",
+      testedRuntimeVersion: "17.1.3",
       status: "passed",
       commandResults: {
         help: "passed",
@@ -834,7 +880,7 @@ describe("Feature: P0 发布一致性与证据", () => {
         schemaVersion: 1,
         operation: "compatibility",
         input: {
-          currentRuntimeVersion: "17.1.3",
+          testedRuntimeVersion: "17.1.3",
           pluginPackagePath: "/workspace/packages/omp-sbtd",
           pluginTarballPath: "/workspace/packages/omp-sbtd.tgz",
           sandboxRoot: "/tmp/kpi-p0/17.1.3",
@@ -880,8 +926,8 @@ describe("Feature: P0 发布一致性与证据", () => {
     if (adapter === undefined) throw new Error("expected authorized harness");
 
     await expect(
-      adapter.runCurrentRuntime({
-        currentRuntimeVersion: "17.1.3",
+      adapter.runTestedRuntime({
+        testedRuntimeVersion: "17.1.3",
         pluginPackagePath: "/workspace/packages/omp-sbtd",
         pluginTarballPath: "/workspace/packages/omp-sbtd.tgz",
         sandboxRoot: "/tmp/kpi-p0/17.1.3",
@@ -937,8 +983,8 @@ describe("Feature: P0 发布一致性与证据", () => {
     if (adapter === undefined) throw new Error("expected authorized harness");
 
     await expect(
-      adapter.runCurrentRuntime({
-        currentRuntimeVersion: "17.1.3",
+      adapter.runTestedRuntime({
+        testedRuntimeVersion: "17.1.3",
         pluginPackagePath: "/workspace/packages/omp-sbtd",
         pluginTarballPath: "/workspace/packages/omp-sbtd.tgz",
         sandboxRoot: "/tmp/kpi-p0/17.1.3",
@@ -1014,8 +1060,8 @@ describe("Feature: P0 发布一致性与证据", () => {
     });
     if (adapter === undefined) throw new Error("expected authorized harness");
 
-    const result = await adapter.runCurrentRuntime({
-      currentRuntimeVersion: "17.1.3",
+    const result = await adapter.runTestedRuntime({
+      testedRuntimeVersion: "17.1.3",
       pluginPackagePath: "/workspace/packages/omp-sbtd",
       pluginTarballPath: "/workspace/packages/omp-sbtd.tgz",
       sandboxRoot: "/tmp/kpi-p0/17.1.3",
@@ -1204,8 +1250,8 @@ describe("Feature: P0 发布一致性与证据", () => {
     if (adapter === undefined) throw new Error("expected authorized harness");
 
     await expect(
-      adapter.runCurrentRuntime({
-        currentRuntimeVersion: "17.1.3",
+      adapter.runTestedRuntime({
+        testedRuntimeVersion: "17.1.3",
         pluginPackagePath: "/workspace/packages/omp-sbtd",
         pluginTarballPath: "/workspace/packages/omp-sbtd.tgz",
         sandboxRoot: "/tmp/kpi-p0/17.1.3-slow",
@@ -1255,7 +1301,7 @@ describe("Feature: P0 发布一致性与证据", () => {
     );
     expect(compatibility.exitCode).toBe(0);
     expect(JSON.parse(compatibility.stdout)).toMatchObject({
-      currentRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "17.3.5",
       result: { status: "passed" },
     });
 
@@ -1280,7 +1326,9 @@ describe("Feature: P0 发布一致性与证据", () => {
     expect(all.exitCode).toBe(1);
     expect(JSON.parse(all.stdout)).toMatchObject({
       compatibility: {
-        currentRuntimeVersion: "17.3.5",
+        scope: "declared",
+        declaredRuntimeVersion: "17.3.5",
+        testedRuntimeVersion: "17.3.5",
         result: { status: "passed" },
       },
       valueStudy: {

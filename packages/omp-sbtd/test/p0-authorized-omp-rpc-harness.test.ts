@@ -846,7 +846,7 @@ function compatibilityRequest(root: string): unknown {
     schemaVersion: 1,
     operation: "compatibility",
     input: {
-      currentRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "17.3.5",
       pluginPackagePath: join(root, "plugin"),
       pluginTarballPath: join(root, "plugin.tgz"),
       sandboxRoot: join(root, "compatibility"),
@@ -860,7 +860,17 @@ function parsed(result: HarnessResult): HarnessResponse {
   expect(result.stderr).toBe("");
   const lines = result.stdout.trim().split("\n");
   expect(lines).toHaveLength(1);
-  return JSON.parse(lines[0] ?? "{}") as HarnessResponse;
+  const response = JSON.parse(lines[0] ?? "{}") as HarnessResponse;
+  if (response.operation === "compatibility") {
+    // Slice 2 identity contract: every compatibility response echoes the
+    // tested Runtime identity as testedRuntimeVersion, and the retired
+    // exact-current alias currentRuntimeVersion must never return.
+    expect(response.result).toMatchObject({
+      testedRuntimeVersion: "17.3.5",
+    });
+    expect(response.result).not.toHaveProperty("currentRuntimeVersion");
+  }
+  return response;
 }
 
 afterEach(async () => {
@@ -1155,7 +1165,7 @@ describe("authorized OMP public-RPC harness", () => {
           schemaVersion: 1,
           operation: "compatibility",
           input: {
-            currentRuntimeVersion: "17.3.5",
+            testedRuntimeVersion: "17.3.5",
             pluginPackagePath: join(root, "plugin"),
             pluginTarballPath: tarballPath,
             sandboxRoot: join(root, "compatibility"),

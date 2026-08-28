@@ -18,6 +18,7 @@ import {
   candidateIdentitySha256,
   candidateTechnicalCatalog,
   checkTechnicalConformance,
+  createBlockedCompatibilityAdapter,
   createEvidenceStore,
   decideRelease,
   deterministicValueStudySchedule,
@@ -25,8 +26,9 @@ import {
   loadValueStudyCorpusBundle,
   renderPluginSpdxSbom,
   replayValueStudyScore,
-  resolveCurrentRuntimeVersionFromLockfile,
+  resolveDevelopmentRuntimeVersionFromLockfile,
   runCompleteValueStudy,
+  runTestedRuntimeCompatibility,
   scoreValueStudy,
   validateCompatibilityManifest,
   validateConformanceCatalog,
@@ -96,7 +98,7 @@ function candidateEvidence(
     return {
       ...base,
       gate,
-      protocol: { currentRuntimeVersion: "17.1.3" },
+      protocol: { testedRuntimeVersion: "17.1.3" },
     };
   if (gate === "value")
     return {
@@ -522,29 +524,29 @@ describe("Feature: P0 发布一致性与证据", () => {
     }
   });
 
-  it("Scenario: 版本化兼容性清单只覆盖锁定的当前 OMP Runtime", async () => {
+  it("Scenario: peer range 与精确 dev pin 分离", async () => {
     const raw = JSON.parse(
-      await readFile(join(validationRoot, "compatibility.v1.json"), "utf8"),
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
     );
-    expect(
-      validateCompatibilityManifest(raw, "17.3.5").currentRuntimeVersion,
-    ).toBe("17.3.5");
-    expect(validateCompatibilityManifest(raw, "17.3.5").commands).toEqual([
+    const policy = validateCompatibilityManifest(raw, "17.3.5");
+    expect(policy.peerRange).toBe(">=17.3.5 <18");
+    expect(policy.developmentRuntimeVersion).toBe("17.3.5");
+    expect(policy.commands).toEqual([
       "help",
       "status",
       "report",
       "onboard plan",
     ]);
     expect(
-      resolveCurrentRuntimeVersionFromLockfile(
+      resolveDevelopmentRuntimeVersionFromLockfile(
         await readFile(join(workspaceRoot, "pnpm-lock.yaml"), "utf8"),
       ),
     ).toBe("17.3.5");
   });
 
-  it("Scenario: 兼容性清单拒绝重复、遗漏或重排的只读命令", async () => {
+  it("Scenario: peer range 与精确 dev pin 分离 — 兼容性策略拒绝重复、遗漏或重排的只读命令", async () => {
     const raw = JSON.parse(
-      await readFile(join(validationRoot, "compatibility.v1.json"), "utf8"),
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
     );
     for (const commands of [
       ["help", "help", "help", "help"],
@@ -1341,5 +1343,225 @@ describe("Feature: P0 发布一致性与证据", () => {
         value: "direct",
       },
     });
+  });
+});
+
+// Slice 1 (08-20-omp-plugin-compatibility-decoupling) characterization,
+// migrated to the live Policy v2 contract by the Slice 2 clean cutover.
+// These tests lock the current Policy v2 validator, adapter and release
+// authorization behavior.
+describe("Feature: P0 发布一致性与证据 — Policy v2 contract", () => {
+  function lockfileWithOmpPin(specifier: string, version: string): string {
+    return [
+      "lockfileVersion: '9.0'",
+      "",
+      "importers:",
+      "",
+      "  packages/omp-sbtd:",
+      "    devDependencies:",
+      "      '@oh-my-pi/pi-coding-agent':",
+      `        specifier: ${specifier}`,
+      `        version: ${version}`,
+      "",
+    ].join("\n");
+  }
+
+  it("Scenario: peer range 与精确 dev pin 分离 — characterization: 精确 pin 解析", () => {
+    expect(
+      resolveDevelopmentRuntimeVersionFromLockfile(
+        lockfileWithOmpPin("17.3.5", "17.3.5"),
+      ),
+    ).toBe("17.3.5");
+  });
+
+  it("Scenario: peer range 与精确 dev pin 分离 — characterization: range specifier fail closed", () => {
+    try {
+      resolveDevelopmentRuntimeVersionFromLockfile(
+        lockfileWithOmpPin("^17.3.5", "17.3.5"),
+      );
+      throw new Error("Expected a range specifier to fail closed.");
+    } catch (error) {
+      expect(error).toMatchObject({ code: "DEVELOPMENT_RUNTIME_UNRESOLVED" });
+    }
+  });
+
+  it("Scenario: peer range 与精确 dev pin 分离 — characterization: 缺失 importer fail closed", () => {
+    try {
+      resolveDevelopmentRuntimeVersionFromLockfile(
+        "lockfileVersion: '9.0'\n\nimporters:\n\n  packages/other:\n    {}\n",
+      );
+      throw new Error("Expected a missing Plugin importer to fail closed.");
+    } catch (error) {
+      expect(error).toMatchObject({ code: "DEVELOPMENT_RUNTIME_UNRESOLVED" });
+    }
+  });
+
+  it("Scenario: peer range 与精确 dev pin 分离 — characterization: 非语义安装版本 fail closed", () => {
+    try {
+      resolveDevelopmentRuntimeVersionFromLockfile(
+        lockfileWithOmpPin("17.3.5", "not-a-semver"),
+      );
+      throw new Error("Expected a non-semver installed version to fail.");
+    } catch (error) {
+      expect(error).toMatchObject({ code: "DEVELOPMENT_RUNTIME_UNRESOLVED" });
+    }
+  });
+
+  it("Scenario: peer range 与精确 dev pin 分离 — characterization: 策略 dev pin 与解析版本必须精确相等", async () => {
+    const raw = JSON.parse(
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
+    );
+    try {
+      validateCompatibilityManifest(raw, "17.3.6");
+      throw new Error("Expected a development-pin mismatch to fail closed.");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "DEVELOPMENT_RUNTIME_MISMATCH",
+        details: {
+          policyDevelopmentRuntimeVersion: "17.3.5",
+          expectedDevelopmentRuntimeVersion: "17.3.6",
+        },
+      });
+    }
+  });
+
+  it("Scenario: 未声明 Runtime 需要显式实验授权 — characterization: 非语义检查版本 fail closed", async () => {
+    const raw = JSON.parse(
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
+    );
+    try {
+      validateCompatibilityManifest(raw, "not-a-version");
+      throw new Error("Expected a non-semver checked version to fail closed.");
+    } catch (error) {
+      expect(error).toMatchObject({ code: "DEVELOPMENT_RUNTIME_UNRESOLVED" });
+    }
+  });
+
+  it("Scenario: peer range 与精确 dev pin 分离 — characterization: 未知字段 fail closed", async () => {
+    const raw = JSON.parse(
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
+    );
+    try {
+      validateCompatibilityManifest(
+        { ...raw, currentRuntimeVersion: "17.3.5" },
+        "17.3.5",
+      );
+      throw new Error("Expected a strict-schema policy to fail closed.");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "COMPATIBILITY_POLICY_INVALID",
+      });
+    }
+  });
+
+  it("Scenario: 不可用的当前 OMP Runtime 兼容宿主不被当作通过 — characterization: 默认阻断 adapter 形状", async () => {
+    const adapter = createBlockedCompatibilityAdapter();
+    const result = await adapter.runTestedRuntime({
+      testedRuntimeVersion: "17.3.5",
+      pluginPackagePath: "/tmp/kpi-char-plugin",
+      pluginTarballPath: "/tmp/kpi-char-plugin.tgz",
+      sandboxRoot: "/tmp/kpi-char-sandbox",
+      commands: ["help", "status", "report", "onboard plan"],
+    });
+    expect(result).toMatchObject({
+      testedRuntimeVersion: "17.3.5",
+      status: "blocked",
+      agentInvoked: false,
+      blocker: { code: "OMP_HOST_UNAVAILABLE" },
+      commandResults: {
+        help: "blocked",
+        status: "blocked",
+        report: "blocked",
+        "onboard plan": "blocked",
+      },
+    });
+  });
+
+  it("Scenario: 不可用的当前 OMP Runtime 兼容宿主不被当作通过 — characterization: adapter 身份不一致 fail closed", async () => {
+    const raw = JSON.parse(
+      await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
+    );
+    const foreignAdapter = {
+      runTestedRuntime: async () => ({
+        testedRuntimeVersion: "17.3.6",
+        status: "passed" as const,
+        agentInvoked: false as const,
+        commandResults: {
+          help: "passed" as const,
+          status: "passed" as const,
+          report: "passed" as const,
+          "onboard plan": "passed" as const,
+        },
+      }),
+    };
+    await expect(
+      runTestedRuntimeCompatibility(raw, foreignAdapter, {
+        pluginPackagePath: "/tmp/kpi-char-plugin",
+        pluginTarballPath: "/tmp/kpi-char-plugin.tgz",
+        sandboxRoot: "/tmp/kpi-char-sandbox",
+        testedRuntimeVersion: "17.3.5",
+      }),
+    ).rejects.toMatchObject({
+      code: "TESTED_RUNTIME_MISMATCH",
+      details: {
+        expectedTestedRuntimeVersion: "17.3.5",
+        actualTestedRuntimeVersion: "17.3.6",
+      },
+    });
+  });
+
+  it("Scenario: 满足四命令验收的 RC 不等待任何兼容认证 profile — characterization: 失败的兼容性证据不阻断 rc-eligible", () => {
+    const rc = releaseCandidate("0.1.0-rc.99", "a", "b");
+    const decision = decideRelease({
+      candidate: rc,
+      candidateRecord: candidateRecord(rc, "rc", "next"),
+      evidence: [
+        candidateEvidence(rc, "rc-char-technical", "technical"),
+        candidateEvidence(rc, "rc-char-package", "package"),
+        {
+          ...candidateEvidence(rc, "rc-char-compatibility", "compatibility"),
+          status: "failed" as const,
+          blockers: [
+            {
+              code: "OMP_HOST_COMMAND_FAILED",
+              reason:
+                "A read-only command did not complete in the isolated host.",
+              recovery:
+                "Rerun the isolated four-command acceptance for this exact candidate.",
+            },
+          ],
+        },
+      ],
+      attestations: [],
+      observations: [],
+    });
+    expect(decision).toMatchObject({
+      decision: "rc-eligible",
+      gateSources: {
+        technical: "direct",
+        package: "direct",
+        compatibility: "not-required",
+        value: "not-required",
+      },
+      blockers: [],
+    });
+  });
+
+  it("Scenario: 较新的阻断运行使旧批准证据不再代表当前 P0 研究就绪状态 — characterization: legacy 决定 fail closed", () => {
+    const decision = decideRelease({
+      sourceTreeSha256: "a".repeat(64),
+      technicalStatus: "passed",
+      valueGateStatus: "passed",
+      latest: {
+        runId: "run-new",
+        sourceTreeSha256: "a".repeat(64),
+        releaseDecision: "blocked",
+      },
+      approved: { runId: "run-old", sourceTreeSha256: "a".repeat(64) },
+    });
+    expect(decision.decision).toBe("blocked");
+    expect(decision.blockers.map((blocker) => blocker.code)).toEqual(
+      expect.arrayContaining(["LATEST_RUN_BLOCKED", "APPROVAL_STALE"]),
+    );
   });
 });

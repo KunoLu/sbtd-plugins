@@ -2,11 +2,72 @@ import { mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import extension from "../src/extension.ts";
 import {
   defaultSessionState,
   SBTD_STATE_CUSTOM_TYPE,
 } from "../src/state/index.ts";
+
+function fillHostEvent(
+  name: string,
+  payload: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const defaults: Record<string, Record<string, unknown>> = {
+    session_start: { type: "session_start" },
+    session_switch: { type: "session_switch" },
+    session_branch: { type: "session_branch" },
+    session_tree: { type: "session_tree", newLeafId: null, oldLeafId: null },
+    before_agent_start: { type: "before_agent_start", systemPrompt: [] },
+    "session.compacting": {
+      type: "session.compacting",
+      sessionId: "session-test",
+      messages: [],
+    },
+    tool_call: { type: "tool_call", toolCallId: "test-call", input: {} },
+    tool_approval_resolved: {
+      type: "tool_approval_resolved",
+      sessionId: "session-test",
+      toolName: "unknown",
+    },
+    tool_result: {
+      type: "tool_result",
+      toolName: "unknown",
+      input: {},
+      content: [],
+      isError: false,
+      details: null,
+    },
+    turn_start: { type: "turn_start", timestamp: 0 },
+    turn_end: { type: "turn_end", message: null, toolResults: [] },
+    session_stop: {
+      type: "session_stop",
+      messages: [],
+      turn_id: 0,
+      session_id: "session-test",
+      stop_hook_active: false,
+      signal: null,
+    },
+    credential_disabled: { type: "credential_disabled" },
+  };
+  const out: Record<string, unknown> = {
+    ...(defaults[name] ?? { type: name }),
+    type: name,
+  };
+  if (payload) {
+    for (const key of Reflect.ownKeys(payload)) {
+      const desc = Object.getOwnPropertyDescriptor(payload, key);
+      if (desc) Object.defineProperty(out, key, desc);
+    }
+  }
+  out.type = name;
+  return out;
+}
+
+const hostContract = {
+  zod: z,
+  registerTool() {},
+} as const;
 
 describe("Feature: 验证报告与 Provider 观察", () => {
   it("Scenario: 查看当前 SBTD 报告", async () => {
@@ -28,6 +89,7 @@ describe("Feature: 验证报告与 Provider 观察", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -96,6 +158,7 @@ describe("Feature: 验证报告与 Provider 观察", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -135,7 +198,7 @@ describe("Feature: 验证报告与 Provider 观察", () => {
         },
       );
       await events.get("credential_disabled")?.(
-        credentialDisabledEvent,
+        fillHostEvent("credential_disabled", credentialDisabledEvent),
         context,
       );
       const entriesAfterProviderEvent = entries.length;
@@ -199,6 +262,7 @@ describe("Feature: 验证报告与 Provider 观察", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand() {},
         on(
           name: string,
@@ -219,7 +283,9 @@ describe("Feature: 验证报告与 Provider 观察", () => {
         sessionManager: { getBranch: () => entries },
       };
       await events.get("before_agent_start")?.(
-        { prompt: "Run the Playwright web E2E regression." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Run the Playwright web E2E regression.",
+        }),
         context,
       );
       await mkdir(reports, { recursive: true });
@@ -236,7 +302,7 @@ describe("Feature: 验证报告与 Provider 观察", () => {
       ]);
 
       await events.get("session_stop")?.(
-        { turn_id: 1, stop_hook_active: false },
+        fillHostEvent("session_stop", { turn_id: 1, stop_hook_active: false }),
         context,
       );
       expect(entries).toContainEqual(
@@ -254,7 +320,7 @@ describe("Feature: 验证报告与 Provider 观察", () => {
       const chineseAt = new Date(Date.now() + 2_000);
       await utimes(markdownPath, chineseAt, chineseAt);
       await events.get("session_stop")?.(
-        { turn_id: 2, stop_hook_active: false },
+        fillHostEvent("session_stop", { turn_id: 2, stop_hook_active: false }),
         context,
       );
 

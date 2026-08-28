@@ -3,7 +3,7 @@ Feature: Certified Skill 所有权切交（M3）
   Agent Plugins 路径拥有：Onboard 不再把 certified 名拷进全局 skills 目录，
   Runtime 证据改从包内 portable set 读取，cleanup 只删除已证明的
   Onboard-managed 旧副本且可回滚，Doctor 分开报告 packaged 与
-  source-unverified 的 discovered。版本保持 0.1.0-rc.12。
+  source-unverified 的 discovered。版本保持 0.1.0-rc.13。
 
   Rule: Onboard 不再安装或再加载 certified 名
 

@@ -11,7 +11,7 @@ Feature: Hybrid Plugin M2 组包
       When 维护者运行 manifest 校验
       Then "$schema" 精确为 Agent Plugins 1.0.0 schema URL
       And "name" 为 "omp-sbtd"
-      And "version" 与 "package.json" 的 "version" 完全一致且为 "0.1.0-rc.12"
+      And "version" 与 "package.json" 的 "version" 完全一致且为 "0.1.0-rc.13"
       And description、license、keywords、homepage、repository 字段类型合法
 
     Scenario Outline: 非法 manifest 形状被校验拒绝
@@ -67,7 +67,7 @@ Feature: Hybrid Plugin M2 组包
   Rule: Plugin 作用域 pack 断言保护 tarball 形状
 
     Scenario: clean pack 的 tarball 通过 manifest/skill/containment gate
-      Given Plugin 已完成构建且版本冻结为 "0.1.0-rc.12"
+      Given Plugin 已完成构建且版本冻结为 "0.1.0-rc.13"
       When 维护者在 Plugin 作用域执行 pack 到隔离目录
       Then tarball 含 "plugin.json" 且通过 schema 1.0.0 校验
       And tarball 内 "plugin.json" 的 version 与 packed package.json 一致

@@ -8,10 +8,13 @@
       "!!packages/**/dist",
       "!!packages/**/generated",
       "!!packages/**/generated-omp",
+      "!!packages/**/generated-agent-plugin",
       "!!packages/**/vendor",
       "!!packages/omp-sbtd/kit",
+      "!!packages/omp-sbtd/skills",
       "!!packages/omp-sbtd/SBOM.spdx.json",
-      "!!packages/omp-sbtd/test/fixtures"
+      "!!packages/omp-sbtd/test/fixtures",
+      "!!packages/omp-sbtd/validation/**/evidence"
     ]
   },
   "linter": {

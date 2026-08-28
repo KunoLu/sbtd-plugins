@@ -7,13 +7,13 @@ import {
   acceptanceArtifactSha256,
   assertJudgeScoreMatchesRubric,
   blindJudgeResultSha256,
-  type CurrentRuntimeCompatibilityAdapter,
-  type CurrentRuntimeCompatibilityResult,
   compatibilityCommandsSchema,
-  currentRuntimeVersionSchema,
   type OmpProcessAdapter,
   runIdSchema,
+  runtimeVersionSchema,
   type SanitizedOmpEvent,
+  type TestedRuntimeCompatibilityAdapter,
+  type TestedRuntimeCompatibilityResult,
   valueStudyFixtureSchema,
 } from "./release-validator.ts";
 import { hasSensitiveFieldName, hasSensitiveText } from "./sanitization.ts";
@@ -77,7 +77,7 @@ const commandResultsSchema = z
   .strict();
 const compatibilityResultSchema = z
   .object({
-    currentRuntimeVersion: currentRuntimeVersionSchema,
+    testedRuntimeVersion: runtimeVersionSchema,
     status: z.enum(["passed", "failed", "blocked"]),
     agentInvoked: z.literal(false),
     acceptanceMode: z.literal("profile-isolated").optional(),
@@ -95,7 +95,7 @@ const compatibilityRequestSchema = z
     operation: z.literal("compatibility"),
     input: z
       .object({
-        currentRuntimeVersion: currentRuntimeVersionSchema,
+        testedRuntimeVersion: runtimeVersionSchema,
         pluginPackagePath: absolutePathSchema,
         pluginTarballPath: absolutePathSchema,
         sandboxRoot: absolutePathSchema,
@@ -434,11 +434,11 @@ function containsSensitiveData(value: unknown): boolean {
 }
 
 function blockedCompatibilityResult(
-  currentRuntimeVersion: CurrentRuntimeCompatibilityResult["currentRuntimeVersion"],
+  testedRuntimeVersion: TestedRuntimeCompatibilityResult["testedRuntimeVersion"],
   blocker: HostBlocker,
-): CurrentRuntimeCompatibilityResult {
+): TestedRuntimeCompatibilityResult {
   return {
-    currentRuntimeVersion,
+    testedRuntimeVersion,
     status: "blocked",
     agentInvoked: false,
     blocker,
@@ -612,7 +612,7 @@ async function runHostCommand(
   return promise;
 }
 
-export type AuthorizedHostCommandAdapter = CurrentRuntimeCompatibilityAdapter &
+export type AuthorizedHostCommandAdapter = TestedRuntimeCompatibilityAdapter &
   OmpProcessAdapter;
 
 /**
@@ -625,7 +625,7 @@ export type AuthorizedHostCommandAdapter = CurrentRuntimeCompatibilityAdapter &
  * `KPI_OMP_PLUGIN_TARBALL`; no other caller environment value is forwarded.
  */
 class HostCommandAdapter
-  implements CurrentRuntimeCompatibilityAdapter, OmpProcessAdapter
+  implements TestedRuntimeCompatibilityAdapter, OmpProcessAdapter
 {
   constructor(
     private readonly executable: string,
@@ -635,11 +635,9 @@ class HostCommandAdapter
     >,
   ) {}
 
-  async runCurrentRuntime(
-    input: Parameters<
-      CurrentRuntimeCompatibilityAdapter["runCurrentRuntime"]
-    >[0],
-  ): Promise<CurrentRuntimeCompatibilityResult> {
+  async runTestedRuntime(
+    input: Parameters<TestedRuntimeCompatibilityAdapter["runTestedRuntime"]>[0],
+  ): Promise<TestedRuntimeCompatibilityResult> {
     const request = compatibilityRequestSchema.safeParse({
       schemaVersion: 1,
       operation: "compatibility",
@@ -647,7 +645,7 @@ class HostCommandAdapter
     });
     if (!request.success)
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         protocolBlocker(
           "OMP_HOST_COMMAND_REQUEST_INVALID",
           "KPi could not construct a bounded compatibility request for the authorized host.",
@@ -664,16 +662,16 @@ class HostCommandAdapter
     );
     if (response.kind === "blocked")
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         response.blocker,
       );
     const result = response.value.result;
-    if (result.currentRuntimeVersion !== input.currentRuntimeVersion)
+    if (result.testedRuntimeVersion !== input.testedRuntimeVersion)
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         protocolBlocker(
           "OMP_HOST_COMMAND_RESPONSE_INVALID",
-          "The authorized OMP host response did not match the requested current Runtime identity.",
+          "The authorized OMP host response did not match the requested tested Runtime identity.",
         ),
       );
     const hasProfileIsolatedFields =
@@ -692,7 +690,7 @@ class HostCommandAdapter
         !hasProfileIsolatedFields)
     )
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         protocolBlocker(
           "OMP_HOST_COMMAND_RESPONSE_INVALID",
           "The authorized OMP host did not return compatibility evidence consistent with its profile-isolation mode.",
@@ -700,7 +698,7 @@ class HostCommandAdapter
       );
     if (result.status === "blocked" && result.blocker === undefined)
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         protocolBlocker(
           "OMP_HOST_COMMAND_RESPONSE_INVALID",
           "The authorized OMP host blocked compatibility without a typed blocker.",
@@ -714,7 +712,7 @@ class HostCommandAdapter
         ))
     )
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         protocolBlocker(
           "OMP_HOST_COMMAND_RESPONSE_INVALID",
           "The authorized OMP host returned a contradictory compatibility pass result.",
@@ -728,7 +726,7 @@ class HostCommandAdapter
         result.filesystemBeforeSha256 !== result.filesystemAfterSha256)
     )
       return blockedCompatibilityResult(
-        input.currentRuntimeVersion,
+        input.testedRuntimeVersion,
         protocolBlocker(
           "OMP_HOST_COMMAND_RESPONSE_INVALID",
           "The authorized OMP host did not provide complete zero-write compatibility proof.",

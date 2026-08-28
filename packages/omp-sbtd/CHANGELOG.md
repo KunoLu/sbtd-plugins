@@ -3,10 +3,38 @@
 All notable changes to `@kunolu/omp-sbtd` are documented here. The format
 follows Keep a Changelog; versions are release candidates until promotion.
 
+## [0.1.0-rc.13] - 2026-08-27
+
+Widened-peer RC published to npm `next` after cloud §4 run `33052112414`.
+Registry SHA-256 `b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185`.
+Not `certified`. The candidate envelope tarball `61610988…f9c7` is a
+different pre-publication pack and is not the Registry identity.
+
+
+
+### Changed
+
+- The peer dependency on `@oh-my-pi/pi-coding-agent` is widened from exact
+  `17.3.5` to the range `>=17.3.5 <18`. The development dependency and the
+  lockfile-installed OMP stay exact `17.3.5`; OMP 18 remains out of range.
+- Compatibility Policy v2 (`validation/p0/compatibility.v2.json`) is the
+  packaged installability contract and is listed in `package.json` `files`.
+  Target catalog, ledger, and evidence stay repository-side and are not packed.
+  The v1 exact-current policy file and semantics are removed.
+- Compatibility certification (`published` / `installable` / `certified`)
+  stays decoupled from npm publication: the release validator derives the
+  overall compatibility state from trusted profile evidence only, and that
+  state never authorizes or blocks publication.
+
 ## [0.1.0-rc.12] - 2026-08-18
 
-Hybrid Plugin M2 package assembly candidate. Not published; M3 ownership
-cutover, M4 exact-host conformance, and M5 release decisions remain pending.
+Hybrid Plugin M2 package assembly candidate. Published to npm under the
+`next` dist-tag on 2026-08-20 after the handbook §4 isolated exact-tarball
+four-command acceptance; the Registry tarball SHA-256 is
+`49edb4b7cab68f851359179b2c27bb53be8eff5682f16285f5caf9a351c39a33`. Its peer
+dependency stays exact `17.3.5` and its identity remains immutable; its
+compatibility certification state starts at `eligible` and the four-command
+result is retained only as a Command Surface baseline.
 
 ### Added
 

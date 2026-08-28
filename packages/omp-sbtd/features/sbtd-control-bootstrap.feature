@@ -362,3 +362,45 @@ Feature: SBTD 控制引导
       When Plugin 重新检查 Trellis task 与必需 workflow/spec 文件
       Then 只有 task 已完成或归档且必需文件存在时项目状态才为 "ready"
       And 安装器写入或 contract-backed 测试结果不能单独证明真实 bootstrap 已完成
+
+  Rule: Host Contract 决定 /sbtd 注册的完整性与降级边界
+
+    Scenario: Host Contract 通过时注册完整 /sbtd
+      Given OMP Host 提供 "omp-extension-v1" 清单中的全部必需 capability 与必需事件
+      When Plugin 完成宿主注册
+      Then "/sbtd" 命令、全部必需事件订阅与声明的 Tool 都完成注册
+      And Plugin 进入可用的 ready 状态
+
+    Scenario: 必需 capability 缺失时 fail closed
+      Given OMP Host 缺少 "omp-extension-v1" 清单中的一个必需 capability 或必需事件
+      When Plugin 尝试宿主注册
+      Then 注册 fail closed 并给出结构化原因代码
+      And Plugin 不进入 ready 状态
+      And 部分注册成功不得留下误导性的可用状态
+
+    Scenario: 可选 capability 缺失时只降级相关功能
+      Given OMP Host 只缺少 "omp-extension-v1" 清单中的可选 capability 或可选事件
+      When Plugin 完成宿主注册
+      Then 只有依赖该可选能力的功能被降级
+      And 其余命令与事件订阅保持可用
+      And 该结果被记录为带完整原因代码的 "passed-with-diagnostics"
+
+  Rule: 宿主事件不被伪造解释且跨边界不复用
+
+    Scenario: malformed event 不得被解释成批准或完成
+      Given Plugin 收到未知类型或载荷畸形的宿主事件
+      When Plugin 处理该事件
+      Then 该事件被拒绝且 fail closed
+      And 不得被解释为 tool approval、tool result 完成或任何状态推进
+
+    Scenario: tool approval 与 tool result 不跨 Session、turn、risk class 或 target 复用
+      Given 一个 tool approval 或 tool result 已绑定到精确的 Session、turn、risk class 与 target
+      When 另一个 Session、turn、risk class 或 target 出现相同标识的请求
+      Then Plugin 拒绝复用既有的 approval 或 result
+      And 每个审批与结果只被一次性精确消费
+
+    Scenario: compaction 与 Session 切换保持状态隔离
+      Given 当前 Session 经历 compaction 或切换到另一个 Session
+      When Plugin 处理后续事件
+      Then compaction 只保留允许的 Session 状态摘要
+      And 一个 Session 的瞬态状态、approval 与 result 不泄漏到另一个 Session

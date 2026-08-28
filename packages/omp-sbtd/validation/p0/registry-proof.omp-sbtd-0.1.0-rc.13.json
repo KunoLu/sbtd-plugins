@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "registry-admission-proof",
+  "packageName": "@kunolu/omp-sbtd",
+  "registry": "https://registry.npmjs.org/",
+  "pluginVersion": "0.1.0-rc.13",
+  "pluginTarballSha256": "b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185",
+  "packageIntegrity": "sha512-YeHQly8ONkZvNczhPBRd+1re3zX1ZAQ2xPUqfzZHhLVHyX90G3Pyk6ypY+knfBK6jZ5No599YaQZxsITvr232w==",
+  "distShasum": "a737acf23cb9cedf748d64e2b5b3e80bd1cc47ab",
+  "pluginManifestSha256": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+  "pluginPeerRange": ">=17.3.5 <18",
+  "developmentRuntimeVersion": "17.3.5",
+  "section4RunId": "33052112414",
+  "sourceRevision": "ae5a413d80adf7b293c3f26435830d285cd02334",
+  "distTagNext": "0.1.0-rc.13",
+  "candidateEnvelopeTarballSha256": "61610988e6537c1f478af218f6a13fcb259d90374c0652ffb204d4127a22f9c7",
+  "note": "The candidate envelope tarball is a different pre-publication pack and is not admitted. This proof is the Registry identity. Not certified."
+}

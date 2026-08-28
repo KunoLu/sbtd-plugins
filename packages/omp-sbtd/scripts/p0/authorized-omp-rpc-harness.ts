@@ -27,8 +27,8 @@ import {
   assertJudgeScoreMatchesRubric,
   blindJudgeResultSha256,
   compatibilityCommandsSchema,
-  currentRuntimeVersionSchema,
   runIdSchema,
+  runtimeVersionSchema,
   valueStudyFixtureSchema,
   valueStudyFixtureSha256,
 } from "./release-validator.ts";
@@ -161,7 +161,7 @@ const requestSchema = z.discriminatedUnion("operation", [
       operation: z.literal("compatibility"),
       input: z
         .object({
-          currentRuntimeVersion: currentRuntimeVersionSchema,
+          testedRuntimeVersion: runtimeVersionSchema,
           pluginPackagePath: absolutePathSchema,
           pluginTarballPath: absolutePathSchema,
           sandboxRoot: absolutePathSchema,
@@ -2320,11 +2320,11 @@ async function compatibility(
     const compatibilityAgentDirectory =
       await resolveCompatibilityAgentDirectory();
     const config = await harnessConfig(true);
-    if (config.runtimeVersion !== request.input.currentRuntimeVersion)
+    if (config.runtimeVersion !== request.input.testedRuntimeVersion)
       failure(
         "OMP_HARNESS_IDENTITY_MISMATCH",
-        "The compatibility request current Runtime identity does not match the explicit authorized Runtime identity.",
-        "Run one checked current-Runtime request through a matching authorized harness configuration.",
+        "The compatibility request tested Runtime identity does not match the explicit authorized Runtime identity.",
+        "Run one checked tested-Runtime request through a matching authorized harness configuration.",
       );
     const requestedPlugin = await realpath(
       request.input.pluginPackagePath,
@@ -2390,7 +2390,7 @@ async function compatibility(
       schemaVersion: 1,
       operation: "compatibility",
       result: {
-        currentRuntimeVersion: request.input.currentRuntimeVersion,
+        testedRuntimeVersion: request.input.testedRuntimeVersion,
         status: "passed",
         agentInvoked: false,
         filesystemBeforeSha256: before,
@@ -2412,7 +2412,7 @@ async function compatibility(
     };
   } catch (error) {
     return blockedCompatibility(
-      request.input.currentRuntimeVersion,
+      request.input.testedRuntimeVersion,
       asBlocker(error),
     );
   }
@@ -2431,14 +2431,14 @@ async function snapshotState(path: string): Promise<string> {
 }
 
 function blockedCompatibility(
-  currentRuntimeVersion: string,
+  testedRuntimeVersion: string,
   blocker: Blocker,
 ): unknown {
   return {
     schemaVersion: 1,
     operation: "compatibility",
     result: {
-      currentRuntimeVersion,
+      testedRuntimeVersion,
       status: "blocked",
       agentInvoked: false,
       blocker,

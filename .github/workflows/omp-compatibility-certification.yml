@@ -1,0 +1,483 @@
+# Trusted compatibility certification for published @kunolu/omp-sbtd targets.
+#
+# Trust boundary (packages/omp-sbtd/validation/p0/compatibility-trust-policy.v1.json):
+# - Runs only for KunoLu/sbtd-plugins on the protected refs/heads/main ref, triggered by
+#   workflow_dispatch or schedule; anything else fails closed in the guard job.
+# - Only the certify job holds signing permissions (id-token/attestations)
+#   behind the protected environment `omp-compatibility-certification`; the
+#   PR-creation job holds only a job-scoped GITHUB_TOKEN and can push solely to
+#   the automation branch, never to main (branch protection, HITL).
+# - An empty published-target catalog or a matrix with zero in-range cells is
+#   `blocked` and fails the prepare job; the workflow never passes on an
+#   empty/unavailable matrix.
+# - Every cell runs the three profiles (runtime capability probe, four-command
+#   surface, Host Event suite) inside isolated real OMP Hosts spawned as the
+#   package dist/cli.js (never the .bin/omp shim); only digests, booleans and
+#   stable reason codes become evidence.
+# - Each unique subject tarball digest first passes through the lock-and-cache
+#   job, which lets NPM generate the diagnostic package-lock.json (npm-written
+#   SRI, never a hand-written content SHA-256) and materializes a
+#   content-addressed npm cache with the SAME installer script as the §4
+#   publish gate. Cells install the subject ONLY with npm ci --offline
+#   (npm-offline-v1) from that staged lock+cache — never online, never bun.
+# - The bun-based Host provisioner refuses OMP majors >= 18
+#   (COMPATIBILITY_CELL_RUNTIME_UNSUPPORTED_MAJOR); this workflow never
+#   claims OMP 18 compatibility.
+# - The ledger changes only when a cell assessment was signed by
+#   actions/attest-build-provenance and re-appends cleanly in collect; a
+#   duplicate-only rerun produces no update artifact and no PR.
+# - No job ever fakes a passed or certified result; no job publishes npm or
+#   moves dist-tags.
+# - Every third-party action is pinned to a full commit SHA.
+name: omp-compatibility-certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      newRuntime:
+        description: >-
+          Optional exact stable in-range OMP Runtime to add as a new-runtime
+          certification cell (for example 17.9.2). Prereleases are not
+          accepted into the public certification matrix.
+        required: false
+        type: string
+  schedule:
+    - cron: "23 4 * * *"
+
+permissions: {}
+
+concurrency:
+  group: omp-compatibility-certification
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Fail closed outside trusted main
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the trusted repository, protected ref and allowlisted event
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "${REPOSITORY}" != "KunoLu/sbtd-plugins" ]; then
+            echo "blocked: untrusted repository ${REPOSITORY}" >&2
+            exit 1
+          fi
+          if [ "${REF}" != "refs/heads/main" ]; then
+            echo "blocked: certification only runs from trusted refs/heads/main (got ${REF})" >&2
+            exit 1
+          fi
+          case "${EVENT_NAME}" in
+            workflow_dispatch|schedule) ;;
+            *)
+              echo "blocked: event ${EVENT_NAME} is not allowlisted by compatibility-trust-policy.v1.json" >&2
+              exit 1
+              ;;
+          esac
+
+  prepare:
+    name: Admit published targets and plan the matrix
+    needs: guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      cells: ${{ steps.plan.outputs.cells }}
+      hasCells: ${{ steps.plan.outputs.hasCells }}
+      digests: ${{ steps.plan.outputs.digests }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate the committed compatibility ledger
+        run: pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/compatibility-matrix.ts validate
+
+      - name: Admit every published catalog target with Registry byte verification
+        run: |
+          set -euo pipefail
+          STAGE_ROOT="${GITHUB_WORKSPACE}/.omp-cert/stage"
+          CATALOG="${GITHUB_WORKSPACE}/packages/omp-sbtd/validation/p0/compatibility-targets.v1.json"
+          # Fail closed: the committed catalog must exist, hold a targets
+          # array and name at least one published version.
+          test -f "${CATALOG}"
+          test "$(jq -r '(.targets | type) == "array" and (.targets | length) > 0' "${CATALOG}")" = "true"
+          # Admit every published target in the committed catalog so each
+          # matrix digest resolves to a staged subject in lock-and-cache.
+          # Sequential admits accumulate through loadStagedOrCommitted; an
+          # already-committed version is a duplicate-noop that still stages
+          # its Registry-verified tarball under transport/registry/<version>/.
+          # --stage-root is workspace-absolute: `pnpm --filter exec` runs with
+          # cwd packages/omp-sbtd, so a relative .omp-cert path would miss the
+          # uploaded/downloaded artifacts at the repository root.
+          while IFS= read -r version; do
+            pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/run-three-profile-certification.ts admit \
+              --stage-root "${STAGE_ROOT}" \
+              --plugin-version "${version}" | tee admission-output.json
+            test "$(jq -r .status admission-output.json)" = "passed"
+          done < <(jq -r '.targets[].pluginVersion' "${CATALOG}")
+
+      - name: Plan minimum/latest/new-runtime cells
+        id: plan
+        env:
+          NEW_RUNTIME: ${{ inputs.newRuntime }}
+        run: |
+          set -euo pipefail
+          latest="$(npm view @oh-my-pi/pi-coding-agent versions --json \
+            | jq -r '[.[] | select(test("^17\\.[0-9]+\\.[0-9]+$"))] | sort_by(split(".") | map(tonumber)) | last')"
+          args=(--stage-root "${GITHUB_WORKSPACE}/.omp-cert/stage" --minimum 17.3.5 --latest "${latest}" \
+            --cells-out "${RUNNER_TEMP}/cells.json")
+          if [ -n "${NEW_RUNTIME}" ]; then
+            args+=(--new-runtime "${NEW_RUNTIME}")
+          fi
+          # The runner exits nonzero when the catalog is empty (blocked) or no
+          # in-range cell exists; an empty/unavailable matrix never passes.
+          # --stage-root is workspace-absolute: `pnpm --filter exec` runs with
+          # cwd packages/omp-sbtd, so a relative .omp-cert path would miss the
+          # uploaded/downloaded artifacts at the repository root.
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/run-three-profile-certification.ts plan \
+            "${args[@]}" | tee matrix-report.json
+          test "$(jq -r .status matrix-report.json)" = "ready"
+          echo "cells=$(jq -c . "${RUNNER_TEMP}/cells.json")" >> "${GITHUB_OUTPUT}"
+          echo "hasCells=$(jq 'length > 0' "${RUNNER_TEMP}/cells.json")" >> "${GITHUB_OUTPUT}"
+          echo "digests=$(jq -c '[.[].pluginTarballSha256] | unique' "${RUNNER_TEMP}/cells.json")" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload the admission stage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: omp-compatibility-admission
+          path: .omp-cert/stage/
+          if-no-files-found: error
+          retention-days: 5
+
+  lock-and-cache:
+    name: Generate the npm-offline-v1 lock and cache per subject digest
+    needs: prepare
+    if: needs.prepare.outputs.hasCells == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        digest: ${{ fromJSON(needs.prepare.outputs.digests) }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download the admission stage
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: omp-compatibility-admission
+          path: .omp-cert/stage
+
+      - name: Generate the lock and cache for this subject digest
+        id: lock
+        env:
+          DIGEST: ${{ matrix.digest }}
+        run: |
+          set -euo pipefail
+          stage="${GITHUB_WORKSPACE}/.omp-cert/stage"
+          catalog="${stage}/packages/omp-sbtd/validation/p0/compatibility-targets.v1.json"
+          # Exactly one published version may carry this digest.
+          test "$(jq -r --arg digest "${DIGEST}" '[.targets[] | select(.pluginTarballSha256 == $digest) | .pluginVersion] | unique | length' "${catalog}")" = "1"
+          version="$(jq -r --arg digest "${DIGEST}" '[.targets[] | select(.pluginTarballSha256 == $digest) | .pluginVersion] | unique | .[0]' "${catalog}")"
+          tarball="${stage}/transport/registry/${version}/plugin.tgz"
+          test -f "${tarball}"
+          # The staged tarball bytes must equal the matrix digest; the digest
+          # keys the lock+cache artifact and the later cell install.
+          test "$(sha256sum "${tarball}" | cut -d' ' -f1)" = "${DIGEST}"
+          # Same installer script as the §4 publish gate's job 2: npm writes
+          # the diagnostic lock (SRI) and materializes the offline cache.
+          work="${GITHUB_WORKSPACE}/.omp-cert/installer/${DIGEST}"
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/install-subject-plugin.ts lock-and-cache \
+            --tarball "${tarball}" --work-dir "${work}" | tee lock-and-cache.json
+          test "$(jq -r .status lock-and-cache.json)" = "passed"
+          test "$(jq -r .pluginTarballSha256 lock-and-cache.json)" = "${DIGEST}"
+          test "$(jq -r .installerGeneration lock-and-cache.json)" = "npm-offline-v1"
+          echo "artifactName=omp-installer-lock-cache-$(printf '%s' "${DIGEST}" | cut -c1-12)" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload the installer lock and cache for this digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.lock.outputs.artifactName }}
+          path: |
+            .omp-cert/installer/${{ matrix.digest }}/package-lock.json
+            .omp-cert/installer/${{ matrix.digest }}/installer.json
+            .omp-cert/installer/${{ matrix.digest }}/cache/
+          if-no-files-found: error
+          retention-days: 5
+
+  certify:
+    name: Three-profile cell certification and attestation
+    needs: [prepare, lock-and-cache]
+    if: needs.prepare.outputs.hasCells == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: omp-compatibility-certification
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: ${{ fromJSON(needs.prepare.outputs.cells) }}
+    steps:
+      - name: Fail closed without the provisioned certification environment
+        env:
+          PROVISIONED: ${{ vars.OMP_COMPATIBILITY_CERTIFICATION_PROVISIONED }}
+        run: |
+          if [ "${PROVISIONED}" != "true" ]; then
+            echo "blocked: protected environment 'omp-compatibility-certification' is not provisioned (implementation HITL); no profile ran, nothing was attested, ledger and support matrix are unchanged" >&2
+            exit 1
+          fi
+
+      - name: Checkout trusted main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download the admission stage
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: omp-compatibility-admission
+          path: .omp-cert/stage
+
+      - name: Download the installer lock+cache artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: omp-installer-lock-cache-*
+          path: .omp-cert/installer-artifacts
+          merge-multiple: false
+
+      - name: Stage the cell subject's npm-offline-v1 lock and cache
+        env:
+          CELL_JSON: ${{ toJSON(matrix.cell) }}
+        run: |
+          set -euo pipefail
+          digest="$(jq -r .pluginTarballSha256 <<<"${CELL_JSON}")"
+          short="$(printf '%s' "${digest}" | cut -c1-12)"
+          src="${GITHUB_WORKSPACE}/.omp-cert/installer-artifacts/omp-installer-lock-cache-${short}"
+          # Fail closed: without this digest's staged lock+cache the cell
+          # cannot install the subject offline, so it must not run at all.
+          test -f "${src}/package-lock.json"
+          test -d "${src}/cache"
+          test "$(jq -r .pluginTarballSha256 "${src}/installer.json")" = "${digest}"
+          dest="${GITHUB_WORKSPACE}/.omp-cert/stage/transport/installer/${digest}"
+          mkdir -p "${dest}"
+          cp "${src}/package-lock.json" "${dest}/package-lock.json"
+          cp -R "${src}/cache" "${dest}/cache"
+
+      - name: Run the isolated three-profile cell
+        id: cell
+        env:
+          CELL_JSON: ${{ toJSON(matrix.cell) }}
+        run: |
+          set -euo pipefail
+          cell_key="$(jq -r '"\(.pluginTarballSha256[0:12])-omp-\(.ompVersion)"' <<<"${CELL_JSON}")"
+          echo "cellKey=${cell_key}" >> "${GITHUB_OUTPUT}"
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/run-three-profile-certification.ts run-cell \
+            --stage-root "${GITHUB_WORKSPACE}/.omp-cert/stage" \
+            --cell "${CELL_JSON}" \
+            --runs-root "${RUNNER_TEMP}/omp-cert-runs" | tee cell-run.json
+
+      - name: Attest the cell subjects
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: .omp-cert/stage/transport/cells/${{ steps.cell.outputs.cellKey }}/subjects/*
+
+      - name: Finalize and append the cell assessment
+        env:
+          CELL_JSON: ${{ toJSON(matrix.cell) }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/run-three-profile-certification.ts finalize-cell \
+            --stage-root "${GITHUB_WORKSPACE}/.omp-cert/stage" \
+            --cell "${CELL_JSON}" \
+            --bundle "${BUNDLE_PATH}" | tee cell-final.json
+          test "$(jq -r .status cell-final.json)" = "passed"
+
+      - name: Upload the cell stage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: omp-compatibility-cell-${{ steps.cell.outputs.cellKey }}
+          path: .omp-cert/stage/
+          if-no-files-found: error
+          retention-days: 5
+
+  collect:
+    name: Merge attested cells and emit the ledger update
+    needs: [prepare, certify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      ledgerChanged: ${{ steps.collect.outputs.ledgerChanged }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download the admission and cell stages
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: omp-compatibility-*
+          path: .omp-cert/stages
+          merge-multiple: false
+
+      - name: Re-append every attested cell against the committed ledger
+        id: collect
+        run: |
+          set -euo pipefail
+          args=(--out "${GITHUB_WORKSPACE}/.omp-cert/out")
+          if [ -d "${GITHUB_WORKSPACE}/.omp-cert/stages/omp-compatibility-admission" ]; then
+            args+=(--admission-stage "${GITHUB_WORKSPACE}/.omp-cert/stages/omp-compatibility-admission")
+          fi
+          for stage in "${GITHUB_WORKSPACE}"/.omp-cert/stages/omp-compatibility-cell-*/; do
+            [ -d "${stage}" ] || continue
+            args+=(--cell-stage "${stage}")
+          done
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/run-three-profile-certification.ts collect \
+            "${args[@]}" | tee collect-output.json
+          test "$(jq -r .status collect-output.json)" = "passed"
+          echo "ledgerChanged=$(jq -r .ledgerChanged collect-output.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload the attested ledger update artifact
+        if: steps.collect.outputs.ledgerChanged == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: omp-compatibility-ledger-update
+          path: .omp-cert/out/ledger-update/
+          if-no-files-found: error
+          retention-days: 5
+
+  create-ledger-pr:
+    name: Open the controlled ledger bot PR
+    needs: collect
+    if: needs.collect.outputs.ledgerChanged == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fail closed outside trusted main
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [ "${REPOSITORY}" != "KunoLu/sbtd-plugins" ] || [ "${REF}" != "refs/heads/main" ]; then
+            echo "blocked: ledger bot PRs are only created from trusted main runs" >&2
+            exit 1
+          fi
+
+      - name: Checkout trusted main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+
+      - name: Download the attested ledger update artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: omp-compatibility-ledger-update
+          path: ledger-update
+
+      - name: Apply the attested ledger update
+        run: |
+          set -euo pipefail
+          # The update artifact contains only the merged catalog, ledger and
+          # content-addressed evidence produced by the collect job. This job
+          # never computes evidence itself and never pushes to main.
+          test -d ledger-update
+          cp -R ledger-update/. packages/omp-sbtd/validation/p0/
+
+      - name: Push only the automation branch and open the bot PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          branch="omp-compatibility/${RUN_ID}"
+          git checkout -b "${branch}"
+          git add packages/omp-sbtd/validation/p0/
+          # Local Actions bot identity; without it `git commit` fails with an
+          # empty ident on the ubuntu-latest runner image.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(compatibility): trusted ledger update from run ${RUN_ID}"
+          # Only the automation branch is pushed; this token cannot satisfy the
+          # main branch-protection rules (HITL) and is never granted here.
+          git push origin "${branch}"
+          gh pr create \
+            --base main \
+            --head "${branch}" \
+            --title "omp-compatibility ledger update (run ${RUN_ID})" \
+            --body "Trusted certification run ${RUN_ID} on refs/heads/main. Merge requires the omp-compatibility-ledger-validate status from the dedicated Status App plus release-owner approval."

@@ -1,5 +1,6 @@
 Feature: P0 一致性研究与不可变证据
   发布负责人可以在不调用 Provider 或读取凭据的前提下，复核 P0 的技术一致性、不可变证据和研究决策；这些内部结果不授权 npm RC 或 stable 发布。
+  npm RC 发布的唯一兼容性 Gate 是精确候选 tarball 的隔离四命令验收；Runtime Capability、Command Surface 与 Host Event Surface 三个兼容认证 profile 只派生独立的公开兼容状态，不参与 npm 授权；"published"、"installable" 与 "certified" 是互不相同的概念。
 
   Rule: 每个 P0-E11 要求都保持可单独追踪
 
@@ -49,7 +50,7 @@ Feature: P0 一致性研究与不可变证据
     Scenario: 未声明 Runtime 需要显式实验授权
       Given 兼容性清单仍声明 OMP Runtime "17.3.5"
       When 发布负责人仅以检查 Runtime "17.1.8" 运行兼容性命令
-      Then 命令以非零状态和结构化 "CURRENT_RUNTIME_MISMATCH" 错误失败
+      Then 命令以非零状态和结构化 "COMPATIBILITY_RUNTIME_OUT_OF_RANGE" 错误失败
       And 受控宿主不会收到兼容性请求
 
     Scenario Outline: 实验 Runtime 参数错误时兼容性命令失败关闭
@@ -309,3 +310,210 @@ Feature: P0 一致性研究与不可变证据
       When 发布校验器决定该稳定候选状态
       Then 决定为 "blocked"
       And 报告要求对该精确稳定候选重新运行缺少的 Gate
+
+  Rule: 精确 tarball 四命令是所有 RC 的唯一 npm 发布兼容性 Gate
+
+    Scenario: 满足四命令验收的 RC 不等待任何兼容认证 profile
+      Given 发布负责人持有一个冻结的精确 RC 候选 tarball
+      And Runtime Capability、Command Surface 或 Host Event Surface profile 尚未执行、被阻断或失败
+      When 受信 omp-section4-publish-gate workflow 在 refs/heads/main 对该精确 tarball 的 SHA-256 digest 完成 "/sbtd help"、"/sbtd status"、"/sbtd report" 与 "/sbtd onboard plan" 四命令验收
+      Then 该 tarball 满足唯一的 npm RC publication compatibility Gate
+      And 任何兼容认证 profile 结果都不是发布授权输入
+      And 缺失、阻断或失败的 profile 结果不得阻止该 RC 的发布授权
+      And 本机 TUI 四命令仅为可选对照，不单独授权发布
+
+    Scenario: 本机 TUI 或认证 Command Surface CI 不能替代受信发布 Gate
+      Given 发布负责人持有一个冻结的精确 RC 候选 tarball
+      When 该精确 tarball 只有本机 TUI 四命令对照结果或认证 Command Surface CI 运行结果
+      Then 该 tarball 不满足 npm RC publication compatibility Gate
+      And 发布授权只接受受信 omp-section4-publish-gate 对该 digest 的通过
+
+    Scenario: 已发布的 in-range target 没有受信 profile 通过时从 eligible 开始
+      Given 一个已发布 Plugin target 的精确身份已写入仓库 target 目录
+      And 该 target 的 tarball-bound peer range 覆盖目标 OMP Runtime
+      And 尚无任何受信任的兼容认证 profile 通过
+      When 派生该 target 对目标 Runtime 的公开兼容状态
+      Then 状态为 "eligible"
+      And 认证缺失或失败不得触发自动 unpublish、重新发布或 dist-tag 移动
+
+    Scenario: 已发布 rc.12 的既有四命令结果不被自动提升为 certified
+      Given 已发布的 "@kunolu/omp-sbtd@0.1.0-rc.12" 具有精确的 "17.3.5" peer 与既有四命令验收结果
+      When 派生或公开该 target 的兼容认证状态
+      Then 该四命令结果只作为 Command Surface 基线保留
+      And rc.12 不得被标记为 "certified"
+      And rc.12 的 tarball、版本、peer 与历史证据保持不可变
+
+  Rule: 兼容认证身份由不可变 target 与 tarball-bound peer range 决定
+
+    Scenario: peer range 与精确 dev pin 分离
+      Given 一个声明 peer range ">=17.3.5 <18" 与精确开发依赖 "17.3.5" 的候选兼容性策略
+      When 发布校验器验证该兼容性策略
+      Then peer range 只决定 installable 资格
+      And 精确 dev pin 只决定开发与验收基线
+      And 两者不得合并为一个精确当前 Runtime 身份
+
+    Scenario: 精确 dev pin 必须位于 peer range 内
+      Given 一个候选兼容性策略的精确 dev pin 不在其声明的 peer range 内
+      When 发布校验器验证该兼容性策略
+      Then 校验 fail closed
+      And 报告指出 dev pin 与 peer range 的不一致
+
+    Scenario: OMP 18 被 tarball-bound peer range 拒绝
+      Given 已发布 rc.12 的 peer 精确为 "17.3.5"
+      And 未来首个 widened-peer 候选 tarball 的 peer range 为 ">=17.3.5 <18"
+      When 目标 Runtime 为 OMP "18.0.0"
+      Then 两个 tarball 对该 Runtime 的派生状态都为 "out-of-range"
+      And 不运行任何兼容认证 profile
+      And "out-of-range" 由该精确 tarball 绑定的历史 peer range 派生，而不是由当前 Compatibility Policy 重新解释
+
+    Scenario: ledger entry 绑定精确身份与证据
+      Given 一条兼容认证评估准备写入 append-only ledger
+      When 校验器检查该 entry
+      Then entry 必须绑定精确 Plugin 版本、package integrity、tarball SHA-256、manifest SHA-256 与 tarball-bound peer range
+      And entry 必须绑定实际加载的 OMP artifact 身份与内容寻址证据集
+      And 缺少任一绑定的 entry 被拒绝且不改变既有公开状态
+
+  Rule: 公开兼容状态由受信证据按固定优先级唯一派生
+
+    Scenario: overall state 按固定优先级唯一派生
+      Given 同一 target 与 Runtime 组合存在多个可适用的候选状态
+      When 派生公开 overall state
+      Then 结果按 "out-of-range"、"revoked"、"incompatible"、"certified"、"partially-verified"、"eligible" 的固定优先级唯一确定
+      And 调用方不能直接提交权威 overall state
+
+    Scenario: 只有部分 profile 通过时派生 partially-verified
+      Given 一个 in-range target 的 Command Surface profile 已通过且证据受信
+      And Host Event Surface profile 未通过或缺失必需事件
+      When 派生公开兼容状态
+      Then 状态为 "partially-verified"
+      And 不得派生为 "certified"
+
+    Scenario: Host Event Surface 未通过时四命令结果不能派生 certified
+      Given 一个 in-range target 的精确 tarball 四命令验收已通过
+      And Host Event Surface 未通过全部 12 个必需 Host 事件
+      When 派生公开兼容状态
+      Then 状态不得为 "certified"
+      And 四命令通过只证明 Command Surface profile
+
+    Scenario: 未受信 provenance 不能派生 certified
+      Given 一个 target 的三个 profile 结果全部显示通过
+      And 评估的 provenance 或 attestation 无法被版本化 trust policy 验证
+      When 派生公开兼容状态
+      Then 状态不得为 "certified"
+      And 该评估不得写入公开 ledger 或改变 support matrix
+
+  Rule: 认证历史只可追加且独立于 npm 发布
+
+    Scenario: append-only revocation 撤销认证但保留历史
+      Given 一个 target 的当前派生状态为 "certified"
+      When 受信任 CI 签发一条 append-only revocation
+      Then 当前状态派生为 "revoked"
+      And 历史认证与撤销记录保持可审计
+      And 恢复 "certified" 需要追加一条全新的完整认证 successor
+
+    Scenario: ledger 更新不得触发 pack、publish 或 dist-tag 变更
+      Given 一条受信任的认证评估或 revocation 已追加到 ledger
+      When 派生或更新公开 support matrix
+      Then Plugin 版本、tarball、SBOM 与 target 身份保持不变
+      And 不执行 npm pack、npm publish 或 dist-tag 移动
+
+    Scenario: 新 OMP 17.x 认证通过不改变既有 Plugin 身份
+      Given 一个新的 in-range OMP 17.x Runtime 对已发布 Plugin tarball 的三个 profile 认证全部通过且受信
+      When 该认证被追加并派生公开状态
+      Then 该 target 与 Runtime 组合可派生为 "certified"
+      And 已发布 Plugin 的版本与 tarball SHA-256 保持不变
+      And 不发布新的 Plugin 版本
+
+    Scenario: 受信 ledger 更新在配置提交身份后以 bot PR 提交
+      Given 受信任的 KunoLu/KPi refs/heads/main 认证运行产生了 ledger 更新
+      And create-ledger-pr job 已在仓库本地配置 "github-actions[bot]" 的 user.name 与 user.email
+      When 该 job 提交 ledger 更新
+      Then git commit 不因空 ident 失败
+      And 只推送 "omp-compatibility/<run_id>" 自动化分支并打开一个 bot PR
+      And 不执行 npm pack、npm publish、dist-tag 移动或对 main 的推送
+
+    Scenario: ledger 校验器密码学验证认证主体文件而不是 bundle JSON 本身
+      Given 一个 bot PR 新增了 ledger entry 及其内容寻址 attestation bundle
+      And 该 entry 的每个 subjectDigests 对应的主体字节已按 "validation/p0/evidence/<sha256>" 内容寻址提交
+      When 受信 ledger 校验器验证该 PR 新增的 attestation bundle
+      Then 每个主体文件逐一以 "gh attestation verify --bundle <bundle> <subject-file>" 验证
+      And 签名者证书 SAN 必须精确等于受信调用方工作流 "omp-compatibility-certification.yml@refs/heads/main"
+      And 仅把 bundle JSON 当作 subject 验证不足以通过校验
+      And 超过 Contents API base64 上限的主体以 raw Accept 头取回精确字节且 sha256 必须等于 ledger 摘要
+      And 任一主体字节缺失或验证失败时 fail closed 且不写入成功状态
+
+  Rule: 精确已发布版本的 npm view 输出恰好解析为一个已发布版本
+
+    Scenario: 单字段 npm view 的裸字符串或单元素数组都解析为恰好一个已发布版本
+      Given 发布校验器对一个精确已发布版本执行 npm view 单字段 "--json" 查询
+      When npm 10 返回裸 JSON 字符串或 npm 12 返回单元素 JSON 数组
+      Then 两种输出都映射到所查询的字段名
+      And 该查询被认定为恰好解析到一个已发布版本
+
+    Scenario: 多版本或空 npm view 数组失败关闭且不写入公开 ledger
+      Given npm view "--json" 返回空数组或多元素数组
+      When 发布校验器解析该 Registry 输出
+      Then 命令以结构化 "COMPATIBILITY_ADMISSION_UNAVAILABLE" 错误失败关闭
+      And 不写入 target 目录、公开 ledger 或 support matrix
+
+    Scenario: cell ompVersion 拒绝 dist-tag 与 range
+      Given 一条认证 cell JSON 的 ompVersion 为 "latest" 或 ">=17.3.5"
+      When 认证 runner 解析该 cell
+      Then 解析失败关闭
+      And 不查询 Registry、不写入 target 目录、公开 ledger 或 support matrix
+
+  Rule: 非账本生产 PR 的 required status 不得变成宽旁路
+
+    Scenario: 兼容性账本自动化分支不能由非账本路径写入成功状态
+      Given 一个以 "omp-compatibility/" 开头的自动化分支上的开放 PR
+      And 该 PR 以 main 为基线且 head SHA 与预期不可变 SHA 一致
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then 该路径不得由 Status App 写入 context "omp-compatibility-ledger-validate" 的 success
+      And 账本校验器的既有身份规则保持有效
+
+    Scenario: 控制面文件变更不能由非账本路径写入成功状态
+      Given 一个普通生产分支上的开放 PR，基线为 main，head SHA 与预期不可变 SHA 一致
+      And 该 PR 变更包含工作流、兼容性账本、target 目录、trust policy、compatibility 清单或 evidence 树中的任一路径
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then Status App 不得对该 head 写入 success
+
+    Scenario: 从控制面路径改名到普通路径不能由非账本路径写入成功状态
+      Given 一个普通生产分支上的开放 PR，基线为 main，head SHA 与预期不可变 SHA 一致
+      And 该 PR 将工作流、兼容性账本、target 目录、trust policy、compatibility 清单或 evidence 树中的某一路径改名为普通生产路径
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then Status App 不得对该 head 写入 success
+
+    Scenario: 空变更列表不能由非账本路径写入成功状态
+      Given 一个普通生产分支上的开放 PR，基线为 main，head SHA 与预期不可变 SHA 一致
+      And 该 PR 的文件列表为空
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then Status App 不得对该 head 写入 success
+
+    Scenario: allowlist 内的 linux-probe 检查未成功时不得写入成功状态
+      Given 一个普通生产分支上的开放 PR，基线为 main，head SHA 与预期不可变 SHA 一致
+      And 该 PR 不包含控制面路径且文件列表非空
+      And 名为 "Frozen-tarball Host Event live cell on ubuntu-latest" 的 GitHub Actions 检查在该 head 上缺席、进行中、已取消、已跳过或失败
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then Status App 不得对该 head 写入 success
+
+    Scenario: 无关的 GitHub Actions 成功不能替代 allowlist 检查
+      Given 一个普通生产分支上的开放 PR，基线为 main，head SHA 与预期不可变 SHA 一致
+      And 该 PR 不包含控制面路径且文件列表非空
+      And 该 head 上另有一条名称不同的 GitHub Actions 检查为 success
+      And allowlist 内的 linux-probe 检查未在该 head 上成功
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then Status App 不得对该 head 写入 success
+
+    Scenario: 普通生产 PR 在 exact head 与 allowlist 全成功时由 Status App 写入成功状态
+      Given 一个普通生产分支上的开放 PR，基线为 main，head SHA 与预期不可变 SHA 一致
+      And 该 PR 不包含控制面路径且文件列表非空
+      And 该 head 上 allowlist 内的 linux-probe 检查由 GitHub Actions 在 omp-runtime-linux-probe 工作流中结论为 success
+      When 发布负责人从受信 main 调度非账本 required-status 路径
+      Then Status App 对该 exact head 写入 context "omp-compatibility-ledger-validate" 的 success
+      And 不 checkout 或执行 PR head
+
+    Scenario: 最终写入前 head SHA 变化则不得写入成功状态
+      Given 一个普通生产分支上的开放 PR 在调度时 head SHA 与预期不可变 SHA 一致
+      And 该 PR 原本满足非账本路径的分类与 allowlist 前提
+      When 最终写入成功状态前该 PR 的 head SHA 已经变化
+      Then Status App 不得对旧 SHA 或新 SHA 写入 success

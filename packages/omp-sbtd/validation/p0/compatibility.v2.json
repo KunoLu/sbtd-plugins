@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "pluginPackage": "@kunolu/omp-sbtd",
+  "peerRange": ">=17.3.5 <18",
+  "developmentRuntimeVersion": "17.3.5",
+  "contractProfile": "omp-extension-v1",
+  "requiredEvidenceProfiles": [
+    "omp-runtime-capabilities-v1",
+    "omp-command-surface-v1",
+    "omp-host-events-v1"
+  ],
+  "commands": ["help", "status", "report", "onboard plan"]
+}

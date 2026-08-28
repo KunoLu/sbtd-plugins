@@ -70,7 +70,7 @@
 7. **GitNexus / Playwright MCP / Maestro MCP 等保持显式 opt-in；后续需要 portable MCP 时拆成独立 Integration Plugin。**
 8. **第三方 Required External Skills 暂不重新打包，仍由 Onboard 管理。**
 9. **Agent Plugins 只负责 portable capability packaging，不负责 SBTD Runtime enforcement。**
-10. **OMP 精确 `17.3.5` 作为迁移目标与验证基线。** peer range 放宽是独立的认证/晋升决策，仅由 `docs/assets/omp-plugin-compatibility-decoupling-plan.md` 治理，不属于本迁移范围。
+10. **OMP 精确 `17.3.5` 作为迁移目标与验证基线。** peer range 放宽是独立的认证/晋升决策，仅由 `docs/assets/omp/omp-plugin-compatibility-decoupling-plan.md` 治理，不属于本迁移范围。
 11. **P0 分发渠道为 npm immutable tarball**；Marketplace 是 optional post-P0 决策。
 12. **CI/Conformance 是 portable projection 发布的前置条件**，不再是晚期 backlog 项。
 
@@ -1313,7 +1313,7 @@ Agent Plugins 改造后必须证明工作流行为没有改变。
 |---|---|
 | `≠ 17.3.5` | 不满足 peer 约束；迁移后 artifact 不承诺可用，Runtime 启动时提示版本不匹配 |
 | `17.3.5`（exact） | 迁移目标与验证基线，Agent Plugins 1.0.0 路径在此版本上认证 |
-| 其他版本（含更宽 range） | **不属于本迁移**；range 放宽是独立的认证/晋升决策，仅由 `docs/assets/omp-plugin-compatibility-decoupling-plan.md` 治理 |
+| 其他版本（含更宽 range） | **不属于本迁移**；range 放宽是独立的认证/晋升决策，仅由 `docs/assets/omp/omp-plugin-compatibility-decoupling-plan.md` 治理 |
 
 P0 不建议为了兼容旧 OMP 长期维护两份 Skills。
 
@@ -1495,7 +1495,7 @@ certified set 所有权切换完成且可回滚
 - 必需：第 28.1–28.3 与 28.4 静态门（manifest / version / certifiedCount+digest / containment / SBOM）；
 - 可选：第 28.4 Host 项与第 29 节 Host-observable 项。未跑记 `not-run`，不得记 passed，也不得因此阻断 M4 出口或后续开发；
 - 不得把未跑的 Host 写成 exact-host certified；
-- CI 未接入时 **portable projection 晋升**保持 blocked（M5 决策可开始）。晋升 ≠ npm RC 发布；RC/stable 能否 `npm publish` 只看 `docs/assets/omp-plugin-host-acceptance.md` 第 3–4 节。
+- CI 未接入时 **portable projection 晋升**保持 blocked（M5 决策可开始）。晋升 ≠ npm RC 发布；RC/stable 能否 `npm publish` 只看 `docs/assets/omp/omp-plugin-host-acceptance.md` 第 3–4 节。
 
 退出条件：
 
@@ -1971,6 +1971,6 @@ Security
 - Agent Plugins 1.0.0 MCP Schema  
   `https://agent-plugins.org/schemas/1.0.0/mcp.schema.json`
 - OMP 17.3.5（exact）Agent Plugins discovery
-- OMP plugin peer-range 解耦治理：`docs/assets/omp-plugin-compatibility-decoupling-plan.md`
+- OMP plugin peer-range 解耦治理：`docs/assets/omp/omp-plugin-compatibility-decoupling-plan.md`
 - KPi PRD / ROADMAP v0.7
 - SBTD Workflow / `640-skills`（pin revision `4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb`）

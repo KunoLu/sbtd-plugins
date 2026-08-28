@@ -202,6 +202,12 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
       cp(join(pluginRoot, "src"), join(copyPlugin, "src"), {
         recursive: true,
       }),
+      mkdir(join(copyPlugin, "validation/p0"), { recursive: true }).then(() =>
+        cp(
+          join(pluginRoot, "validation/p0/compatibility.v2.json"),
+          join(copyPlugin, "validation/p0/compatibility.v2.json"),
+        ),
+      ),
     ]);
 
     // Rebuild a source-faithful dist from the real sources: copy exactly the
@@ -299,6 +305,12 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
       cp(join(pluginRoot, "kit"), join(stagePlugin, "kit"), {
         recursive: true,
       }),
+      mkdir(join(stagePlugin, "validation/p0"), { recursive: true }).then(() =>
+        cp(
+          join(pluginRoot, "validation/p0/compatibility.v2.json"),
+          join(stagePlugin, "validation/p0/compatibility.v2.json"),
+        ),
+      ),
     ]);
 
     await expect(

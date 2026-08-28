@@ -23,6 +23,66 @@ import {
 } from "../src/state/index.ts";
 import { classifyTask } from "../src/workflow/index.ts";
 
+function fillHostEvent(
+  name: string,
+  payload: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const defaults: Record<string, Record<string, unknown>> = {
+    session_start: { type: "session_start" },
+    session_switch: { type: "session_switch" },
+    session_branch: { type: "session_branch" },
+    session_tree: { type: "session_tree", newLeafId: null, oldLeafId: null },
+    before_agent_start: { type: "before_agent_start", systemPrompt: [] },
+    "session.compacting": {
+      type: "session.compacting",
+      sessionId: "session-test",
+      messages: [],
+    },
+    tool_call: { type: "tool_call", toolCallId: "test-call", input: {} },
+    tool_approval_resolved: {
+      type: "tool_approval_resolved",
+      sessionId: "session-test",
+      toolName: "unknown",
+    },
+    tool_result: {
+      type: "tool_result",
+      toolName: "unknown",
+      input: {},
+      content: [],
+      isError: false,
+      details: null,
+    },
+    turn_start: { type: "turn_start", timestamp: 0 },
+    turn_end: { type: "turn_end", message: null, toolResults: [] },
+    session_stop: {
+      type: "session_stop",
+      messages: [],
+      turn_id: 0,
+      session_id: "session-test",
+      stop_hook_active: false,
+      signal: null,
+    },
+    credential_disabled: { type: "credential_disabled" },
+  };
+  const out: Record<string, unknown> = {
+    ...(defaults[name] ?? { type: name }),
+    type: name,
+  };
+  if (payload) {
+    for (const key of Reflect.ownKeys(payload)) {
+      const desc = Object.getOwnPropertyDescriptor(payload, key);
+      if (desc) Object.defineProperty(out, key, desc);
+    }
+  }
+  out.type = name;
+  return out;
+}
+
+const hostContract = {
+  zod: z,
+  registerTool() {},
+} as const;
+
 const fixtureRoot = resolve(
   import.meta.dirname,
   "fixtures",
@@ -41,6 +101,7 @@ describe("Feature: SBTD 控制引导", () => {
     const events: string[] = [];
     let appends = 0;
     extension({
+      ...hostContract,
       registerCommand(
         name: string,
         options: {
@@ -120,6 +181,7 @@ describe("Feature: SBTD 控制引导", () => {
       vi.setSystemTime(new Date("2026-07-25T00:00:00.000Z"));
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -348,6 +410,7 @@ describe("Feature: SBTD 控制引导", () => {
       vi.setSystemTime(new Date("2026-07-25T00:00:00.000Z"));
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -452,6 +515,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -545,6 +609,7 @@ describe("Feature: SBTD 控制引导", () => {
       },
     });
     extension({
+      ...hostContract,
       registerCommand() {},
       zod: z,
       registerTool(tool: (typeof tools)[number]) {
@@ -647,6 +712,7 @@ describe("Feature: SBTD 控制引导", () => {
       ) => Promise<{ readonly content: readonly { readonly text: string }[] }>;
     }> = [];
     extension({
+      ...hostContract,
       registerCommand() {},
       zod: z,
       registerTool(tool: (typeof tools)[number]) {
@@ -698,6 +764,7 @@ describe("Feature: SBTD 控制引导", () => {
       },
     ];
     extension({
+      ...hostContract,
       registerCommand() {},
       on(
         name: string,
@@ -715,10 +782,10 @@ describe("Feature: SBTD 控制引导", () => {
 
     await expect(
       events.get("before_agent_start")?.(
-        {
+        fillHostEvent("before_agent_start", {
           prompt: "Fix an existing production bug.",
           systemPrompt: ["Host system contract"],
-        },
+        }),
         ctx,
       ),
     ).resolves.toEqual({
@@ -742,7 +809,10 @@ describe("Feature: SBTD 控制引导", () => {
       },
     });
     await expect(
-      events.get("session.compacting")?.({}, ctx),
+      events.get("session.compacting")?.(
+        fillHostEvent("session.compacting", {}),
+        ctx,
+      ),
     ).resolves.toMatchObject({
       preserveData: {
         [SBTD_STATE_CUSTOM_TYPE]: {
@@ -753,24 +823,30 @@ describe("Feature: SBTD 控制引导", () => {
     });
     await expect(
       events.get("tool_call")?.(
-        { toolName: "write", input: { path: "features/bug-fix.feature" } },
+        fillHostEvent("tool_call", {
+          toolName: "write",
+          input: { path: "features/bug-fix.feature" },
+        }),
         ctx,
       ),
     ).resolves.toBeUndefined();
     await expect(
       events.get("tool_call")?.(
-        { toolName: "write", input: { path: "test/legacy-safety.test.ts" } },
+        fillHostEvent("tool_call", {
+          toolName: "write",
+          input: { path: "test/legacy-safety.test.ts" },
+        }),
         ctx,
       ),
     ).resolves.toBeUndefined();
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolName: "edit",
           input: {
             patch: "[src/service.ts#ABCD]\n+content [features/not-a-path]",
           },
-        },
+        }),
         ctx,
       ),
     ).resolves.toEqual(
@@ -781,7 +857,10 @@ describe("Feature: SBTD 控制引导", () => {
     );
     await expect(
       events.get("tool_call")?.(
-        { toolName: "bash", input: { command: "trellis init -u test" } },
+        fillHostEvent("tool_call", {
+          toolName: "bash",
+          input: { command: "trellis init -u test" },
+        }),
         ctx,
       ),
     ).resolves.toEqual(
@@ -851,6 +930,7 @@ describe("Feature: SBTD 控制引导", () => {
     };
     try {
       extension({
+        ...hostContract,
         registerCommand() {},
         on(
           name: string,
@@ -865,12 +945,17 @@ describe("Feature: SBTD 控制引导", () => {
       } as never);
       const ctx = { cwd: root, sessionManager: { getBranch: () => entries } };
       await events.get("before_agent_start")?.(
-        { prompt: "Add a user-visible UI change." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Add a user-visible UI change.",
+        }),
         ctx,
       );
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           ctx,
         ),
       ).resolves.toMatchObject({
@@ -885,7 +970,10 @@ describe("Feature: SBTD 控制引导", () => {
       );
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 2, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 2,
+            stop_hook_active: false,
+          }),
           ctx,
         ),
       ).resolves.toMatchObject({
@@ -902,7 +990,10 @@ describe("Feature: SBTD 控制引导", () => {
       );
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 3, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 3,
+            stop_hook_active: false,
+          }),
           ctx,
         ),
       ).resolves.toBeUndefined();
@@ -958,6 +1049,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       await mkdir(resolve(root, "src"));
       extension({
+        ...hostContract,
         registerCommand() {},
         on(
           name: string,
@@ -978,7 +1070,9 @@ describe("Feature: SBTD 控制引导", () => {
         },
       } as never);
       await events.get("before_agent_start")?.(
-        { prompt: "Update module behavior." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Update module behavior.",
+        }),
         { cwd: root, sessionManager: { getBranch: () => entries } },
       );
 
@@ -1037,6 +1131,7 @@ describe("Feature: SBTD 控制引导", () => {
         ),
       ]);
       extension({
+        ...hostContract,
         registerCommand() {},
         on(
           name: string,
@@ -1056,12 +1151,17 @@ describe("Feature: SBTD 控制引导", () => {
         sessionManager: { getBranch: () => entries },
       };
       await events.get("before_agent_start")?.(
-        { prompt: "Run the Playwright web E2E regression." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Run the Playwright web E2E regression.",
+        }),
         context,
       );
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           context,
         ),
       ).resolves.toMatchObject({
@@ -1077,7 +1177,10 @@ describe("Feature: SBTD 控制引导", () => {
       ]);
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           context,
         ),
       ).resolves.toMatchObject({
@@ -1090,7 +1193,10 @@ describe("Feature: SBTD 控制引导", () => {
       );
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           context,
         ),
       ).resolves.toMatchObject({
@@ -1105,7 +1211,10 @@ describe("Feature: SBTD 控制引导", () => {
 
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           context,
         ),
       ).resolves.toBeUndefined();
@@ -1141,6 +1250,7 @@ describe("Feature: SBTD 控制引导", () => {
     const sessionCEntries = structuredClone(sessionAEntries);
     try {
       extension({
+        ...hostContract,
         registerCommand() {},
         on(
           name: string,
@@ -1162,28 +1272,38 @@ describe("Feature: SBTD 控制引导", () => {
       const sessionC = contextFor("session-c", sessionCEntries);
 
       await events.get("before_agent_start")?.(
-        { prompt: "Add a user-visible UI change." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Add a user-visible UI change.",
+        }),
         sessionA,
       );
       await events.get("before_agent_start")?.(
-        { prompt: "Add a user-visible UI change." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Add a user-visible UI change.",
+        }),
         sessionB,
       );
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           sessionA,
         ),
       ).resolves.toMatchObject({ decision: "block" });
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: true },
+          fillHostEvent("session_stop", { turn_id: 1, stop_hook_active: true }),
           sessionB,
         ),
       ).resolves.toMatchObject({ decision: "block" });
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           sessionC,
         ),
       ).resolves.toBeUndefined();
@@ -1213,6 +1333,7 @@ describe("Feature: SBTD 控制引导", () => {
       },
     ];
     extension({
+      ...hostContract,
       registerCommand() {},
       on(
         name: string,
@@ -1231,28 +1352,38 @@ describe("Feature: SBTD 控制引导", () => {
       input: { command: "pnpm add example-package" },
     };
     await expect(
-      events.get("tool_call")?.(install, ctx),
+      events.get("tool_call")?.(fillHostEvent("tool_call", install), ctx),
     ).resolves.toMatchObject({
       block: true,
       reason: expect.stringContaining("install-requires-approval"),
     });
     await events.get("tool_approval_resolved")?.(
-      { toolCallId: "install-1", approved: true },
+      fillHostEvent("tool_approval_resolved", {
+        toolCallId: "install-1",
+        approved: true,
+      }),
       ctx,
     );
     await expect(
-      events.get("tool_call")?.(install, ctx),
+      events.get("tool_call")?.(fillHostEvent("tool_call", install), ctx),
     ).resolves.toBeUndefined();
-    await events.get("tool_result")?.({ toolCallId: "install-1" }, ctx);
+    await events.get("tool_result")?.(
+      fillHostEvent("tool_result", { toolCallId: "install-1" }),
+      ctx,
+    );
     await expect(
-      events.get("tool_call")?.(install, ctx),
+      events.get("tool_call")?.(fillHostEvent("tool_call", install), ctx),
     ).resolves.toMatchObject({
       block: true,
       reason: expect.stringContaining("install-requires-approval"),
     });
     await expect(
       events.get("tool_call")?.(
-        { toolCallId: "secret-1", toolName: "read", input: { path: ".env" } },
+        fillHostEvent("tool_call", {
+          toolCallId: "secret-1",
+          toolName: "read",
+          input: { path: ".env" },
+        }),
         ctx,
       ),
     ).resolves.toMatchObject({
@@ -1295,6 +1426,7 @@ describe("Feature: SBTD 控制引导", () => {
       sessionManager: { getBranch: () => entries },
     };
     extension({
+      ...hostContract,
       registerCommand(
         _name: string,
         options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1312,12 +1444,20 @@ describe("Feature: SBTD 控制引导", () => {
       },
     } as never);
 
-    await events.get("turn_start")?.({ turnIndex: 1 }, ctx);
-    await events.get("before_agent_start")?.(
-      { prompt: "Fix an existing production bug." },
+    await events.get("turn_start")?.(
+      fillHostEvent("turn_start", { turnIndex: 1 }),
       ctx,
     );
-    await events.get("turn_end")?.({ turnIndex: 1 }, ctx);
+    await events.get("before_agent_start")?.(
+      fillHostEvent("before_agent_start", {
+        prompt: "Fix an existing production bug.",
+      }),
+      ctx,
+    );
+    await events.get("turn_end")?.(
+      fillHostEvent("turn_end", { turnIndex: 1 }),
+      ctx,
+    );
     const entriesBeforeRecovery = entries.length;
 
     await commands[0]?.options.handler("route auto", ctx);
@@ -1333,6 +1473,7 @@ describe("Feature: SBTD 控制引导", () => {
     const entries: unknown[] = [];
     const notices: string[] = [];
     extension({
+      ...hostContract,
       registerCommand(
         _name: string,
         options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1376,6 +1517,7 @@ describe("Feature: SBTD 控制引导", () => {
     ];
     const notices: string[] = [];
     extension({
+      ...hostContract,
       registerCommand(
         _name: string,
         options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1441,6 +1583,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1459,7 +1602,9 @@ describe("Feature: SBTD 控制引导", () => {
       } as never);
 
       await events.get("before_agent_start")?.(
-        { prompt: "Fix an existing production bug." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Fix an existing production bug.",
+        }),
         ctx,
       );
       expect(entries.at(-1)).toMatchObject({
@@ -1488,6 +1633,7 @@ describe("Feature: SBTD 控制引导", () => {
     const entries: unknown[] = [];
     const notices: string[] = [];
     extension({
+      ...hostContract,
       registerCommand() {},
       on(
         name: string,
@@ -1500,22 +1646,19 @@ describe("Feature: SBTD 控制引导", () => {
       },
     } as never);
 
-    await events.get("session_start")?.(
-      {},
-      {
-        cwd: undefined,
-        ui: {
-          notify(message: string) {
-            notices.push(message);
-          },
-        },
-        sessionManager: {
-          getBranch() {
-            return entries;
-          },
+    await events.get("session_start")?.(fillHostEvent("session_start", {}), {
+      cwd: undefined,
+      ui: {
+        notify(message: string) {
+          notices.push(message);
         },
       },
-    );
+      sessionManager: {
+        getBranch() {
+          return entries;
+        },
+      },
+    });
 
     expect(entries.at(-1)).toMatchObject({
       data: {
@@ -1567,6 +1710,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand() {},
         on(
           name: string,
@@ -1579,14 +1723,11 @@ describe("Feature: SBTD 控制引导", () => {
         },
       } as never);
 
-      await events.get("session_start")?.(
-        {},
-        {
-          cwd: root,
-          ui: { notify() {} },
-          sessionManager: { getBranch: () => entries },
-        },
-      );
+      await events.get("session_start")?.(fillHostEvent("session_start", {}), {
+        cwd: root,
+        ui: { notify() {} },
+        sessionManager: { getBranch: () => entries },
+      });
 
       expect(entries.at(-1)).toMatchObject({
         customType: SBTD_STATE_CUSTOM_TYPE,
@@ -1612,6 +1753,7 @@ describe("Feature: SBTD 控制引导", () => {
     let appends = 0;
     const notices: string[] = [];
     extension({
+      ...hostContract,
       registerCommand(
         _name: string,
         options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1652,6 +1794,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1733,6 +1876,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1796,6 +1940,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1850,6 +1995,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -1934,6 +2080,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2078,6 +2225,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2126,6 +2274,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2192,6 +2341,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2253,6 +2403,7 @@ describe("Feature: SBTD 控制引导", () => {
     try {
       process.env.PI_CODING_AGENT_DIR = agentDirectory;
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2328,6 +2479,7 @@ describe("Feature: SBTD 控制引导", () => {
         "utf8",
       );
       extension({
+        ...hostContract,
         registerCommand(
           _name: string,
           options: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2432,6 +2584,7 @@ describe("Feature: SBTD 运行时工作流与门禁 - Release Readiness Gate evi
       (event: unknown, ctx: unknown) => Promise<unknown>
     >();
     extension({
+      ...hostContract,
       registerCommand(
         _name: string,
         spec: { handler: (args: string, ctx: unknown) => Promise<void> },
@@ -2630,15 +2783,18 @@ describe("Feature: SBTD 运行时工作流与门禁 - Release Readiness Gate evi
       expect(releaseGateOf(entries)?.reviewerStatus).toBe("ready");
       await expect(
         setup.events.get("tool_call")?.(
-          {
+          fillHostEvent("tool_call", {
             toolCallId: "write-1",
             toolName: "write",
             input: { path: "src/app.ts", content: "export {}\n" },
-          },
+          }),
           ctx,
         ),
       ).resolves.toBeUndefined();
-      await setup.events.get("tool_result")?.({ toolCallId: "write-1" }, ctx);
+      await setup.events.get("tool_result")?.(
+        fillHostEvent("tool_result", { toolCallId: "write-1" }),
+        ctx,
+      );
       const latest = entries.at(-1);
       expect(
         latest &&

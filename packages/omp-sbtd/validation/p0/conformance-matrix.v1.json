@@ -1206,7 +1206,7 @@
       "evidence": [
         {
           "kind": "file",
-          "path": "plugins/omp-sbtd/validation/p0/compatibility.v1.json",
+          "path": "plugins/omp-sbtd/validation/p0/compatibility.v2.json",
           "mode": "blocked"
         }
       ],

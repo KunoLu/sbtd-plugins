@@ -1,0 +1,241 @@
+# Trusted Status App path for ordinary (non-ledger) production PRs.
+#
+# Sibling of omp-compatibility-ledger-validate.yml. Writes the same required
+# context `omp-compatibility-ledger-validate` from app_id=4712184.
+# Never checkouts or executes the PR head. Absence of ledger filenames is not
+# sufficient for success.
+name: omp-compatibility-nonledger-validate
+
+on:
+  workflow_dispatch:
+    inputs:
+      prNumber:
+        description: Ordinary production PR number
+        required: true
+        type: string
+      expectedHeadSha:
+        description: Expected immutable PR head SHA (full 40-hex)
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: omp-compatibility-nonledger-validate-pr-${{ inputs.prNumber }}
+  cancel-in-progress: false
+
+jobs:
+  identity-and-classify:
+    name: Verify ordinary PR identity and classify (read-only)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      actions: read
+    outputs:
+      headSha: ${{ steps.evaluate.outputs.headSha }}
+    steps:
+      - name: Fail closed outside trusted main
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "${REPOSITORY}" != "KunoLu/sbtd-plugins" ] || [ "${REF}" != "refs/heads/main" ] || [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "blocked: the non-ledger validator only runs as a manual dispatch from trusted refs/heads/main in KunoLu/sbtd-plugins" >&2
+            exit 1
+          fi
+
+      - name: Checkout trusted main classifier
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Evaluate identity, classification, and allowlisted checks
+        id: evaluate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expectedHeadSha }}
+        run: |
+          set -euo pipefail
+          bash packages/omp-sbtd/scripts/p0/collect-nonledger-pr-input.sh \
+            "${PR_NUMBER}" "${EXPECTED_HEAD_SHA}" > "${RUNNER_TEMP}/evaluate.json"
+          HEAD_SHA="$(jq -r .headSha "${RUNNER_TEMP}/evaluate.json")"
+          set +e
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/classify-nonledger-pr.ts \
+            < "${RUNNER_TEMP}/evaluate.json" > "${RUNNER_TEMP}/decision.json"
+          status=$?
+          set -e
+          decision="$(jq -r .decision "${RUNNER_TEMP}/decision.json")"
+          echo "headSha=${HEAD_SHA}" >> "${GITHUB_OUTPUT}"
+          if [ "${decision}" = "reject-identity" ]; then
+            echo "blocked: non-ledger identity failed; no Status App write" >&2
+            exit 1
+          fi
+          if [ "${status}" -ne 0 ] && [ "${decision}" = "allow-success" ]; then
+            echo "blocked: classifier exit disagreed with allow-success" >&2
+            exit 1
+          fi
+
+  status-pending:
+    name: Write pending status (Status App only)
+    needs: identity-and-classify
+    runs-on: ubuntu-latest
+    environment: omp-compatibility-ledger-status
+    permissions:
+      contents: read
+    steps:
+      - name: Fail closed without Status App credentials
+        env:
+          STATUS_APP_ID: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          STATUS_APP_PRIVATE_KEY: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${STATUS_APP_ID:-}" ] || [ -z "${STATUS_APP_PRIVATE_KEY:-}" ]; then
+            echo "blocked: Status App credentials are not provisioned in environment 'omp-compatibility-ledger-status'; no status was written and merge stays blocked" >&2
+            exit 1
+          fi
+
+      - name: Mint the Status App installation token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          private-key: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+
+      - name: Write pending to the validated immutable head SHA
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ needs.identity-and-classify.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -X POST \
+            -f state=pending \
+            -f context=omp-compatibility-ledger-validate \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Non-ledger required-status check in progress"
+
+  prerequisites:
+    name: Re-evaluate allowlisted checks on exact head
+    needs: [identity-and-classify, status-pending]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      actions: read
+    steps:
+      - name: Checkout trusted main classifier
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Re-read PR and require allow-success
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expectedHeadSha }}
+        run: |
+          set -euo pipefail
+          bash packages/omp-sbtd/scripts/p0/collect-nonledger-pr-input.sh \
+            "${PR_NUMBER}" "${EXPECTED_HEAD_SHA}" reread > "${RUNNER_TEMP}/evaluate.json"
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/classify-nonledger-pr.ts \
+            < "${RUNNER_TEMP}/evaluate.json"
+
+  status-final:
+    name: Write the final status (Status App only)
+    needs: [identity-and-classify, prerequisites]
+    if: always() && needs.identity-and-classify.result == 'success'
+    runs-on: ubuntu-latest
+    environment: omp-compatibility-ledger-status
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Fail closed without Status App credentials
+        env:
+          STATUS_APP_ID: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          STATUS_APP_PRIVATE_KEY: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${STATUS_APP_ID:-}" ] || [ -z "${STATUS_APP_PRIVATE_KEY:-}" ]; then
+            echo "blocked: Status App credentials are not provisioned; pending/missing status keeps merge blocked" >&2
+            exit 1
+          fi
+
+      - name: Mint the Status App installation token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          private-key: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+
+      - name: Re-read the PR head before any success
+        id: reread
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expectedHeadSha }}
+        run: |
+          set -euo pipefail
+          fresh="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" | jq -r .head.sha)"
+          if [ "${fresh}" != "${EXPECTED_HEAD_SHA}" ]; then
+            echo "headChanged=true" >> "${GITHUB_OUTPUT}"
+            echo "blocked: PR head moved from ${EXPECTED_HEAD_SHA} to ${fresh}" >&2
+          else
+            echo "headChanged=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Write failure for a known validation or head failure
+        if: needs.prerequisites.result != 'success' || steps.reread.outputs.headChanged == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ needs.identity-and-classify.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -X POST \
+            -f state=failure \
+            -f context=omp-compatibility-ledger-validate \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Non-ledger required-status check failed or the PR head changed"
+          exit 1
+
+      - name: Write success only for an unchanged validated head
+        if: needs.prerequisites.result == 'success' && steps.reread.outputs.headChanged == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ needs.identity-and-classify.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -X POST \
+            -f state=success \
+            -f context=omp-compatibility-ledger-validate \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Non-ledger required status: allowlisted checks passed"

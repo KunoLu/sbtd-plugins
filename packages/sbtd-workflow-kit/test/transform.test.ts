@@ -57,6 +57,8 @@ async function promotionFixture(): Promise<{
   await Promise.all([
     mkdir(kitRoot, { recursive: true }),
     mkdir(join(pluginRoot, "scripts"), { recursive: true }),
+    mkdir(join(pluginRoot, "skills"), { recursive: true }),
+    mkdir(join(pluginRoot, "validation", "p0"), { recursive: true }),
   ]);
   await Promise.all([
     cp(join(packageRoot, "vendor"), join(kitRoot, "vendor"), {
@@ -105,6 +107,14 @@ async function promotionFixture(): Promise<{
       join(pluginPackageRoot, "scripts", "embed-kit.mjs"),
       join(pluginRoot, "scripts", "embed-kit.mjs"),
     ),
+    cp(join(pluginPackageRoot, "plugin.json"), join(pluginRoot, "plugin.json")),
+    cp(join(pluginPackageRoot, "skills"), join(pluginRoot, "skills"), {
+      recursive: true,
+    }),
+    cp(
+      join(pluginPackageRoot, "validation", "p0", "compatibility.v2.json"),
+      join(pluginRoot, "validation", "p0", "compatibility.v2.json"),
+    ),
     cp(join(packageRoot, "vendor", "sbtd-workflow-kit-upstream"), sourceRoot, {
       recursive: true,
     }),
@@ -126,12 +136,15 @@ async function promotionFixture(): Promise<{
           files: [
             "dist",
             "kit",
+            "plugin.json",
+            "skills",
             "LICENSE",
             "README.md",
             "SECURITY.md",
             "CHANGELOG.md",
             "SBOM.spdx.json",
             "THIRD_PARTY_NOTICES.md",
+            "validation/p0/compatibility.v2.json",
           ],
         },
         null,
@@ -647,7 +660,7 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     });
   });
 
-  it("Scenario: 生成 Kit 以 Apache-2.0 标识并保留上游许可证通知", async () => {
+  it("Scenario: 生成 Kit 以 KPi GPLv3 标识并保留上游许可证通知", async () => {
     const root = await fixture();
     const output = join(root, "generated");
 

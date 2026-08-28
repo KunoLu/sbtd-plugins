@@ -1,0 +1,68 @@
+{
+  "name": "@kunolu/omp-sbtd",
+  "version": "0.1.0-rc.13",
+  "description": "KPi SBTD runtime gates for Oh My Pi: deterministic workflow routing, book gates, tool-risk guards, and validation evidence observation.",
+  "keywords": [
+    "oh-my-pi",
+    "omp",
+    "sbtd",
+    "kpi",
+    "workflow-gates",
+    "bdd",
+    "validation-evidence"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KunoLu/KPi.git",
+    "directory": "plugins/omp-sbtd"
+  },
+  "bugs": "https://github.com/KunoLu/KPi/issues",
+  "homepage": "https://github.com/KunoLu/KPi",
+  "author": "KunoLu",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "main": "./dist/extension.js",
+  "types": "./dist/extension.d.ts",
+  "files": [
+    "dist",
+    "kit",
+    "plugin.json",
+    "skills",
+    "kit/onboard/runtime/templates/project/gitignore.template",
+    "kit/onboard/runtime/templates/skills/web-ui-autotest-generator/gitignore.template",
+    "LICENSE",
+    "SBOM.spdx.json",
+    "THIRD_PARTY_NOTICES.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "validation/p0/compatibility.v2.json"
+  ],
+  "peerDependencies": {
+    "@oh-my-pi/pi-coding-agent": ">=17.3.5 <18"
+  },
+  "dependencies": {
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "@oh-my-pi/pi-coding-agent": "17.3.5",
+    "tsx": "4.20.6",
+    "@kunolu/sbtd-workflow-kit": "0.1.0"
+  },
+  "omp": {
+    "extensions": [
+      "./dist/extension.js"
+    ]
+  },
+  "pi": {
+    "extensions": [
+      "./dist/extension.js"
+    ]
+  },
+  "scripts": {
+    "build": "pnpm --filter @kunolu/sbtd-workflow-kit check-generated && node scripts/embed-kit.mjs && node scripts/embed-agent-skills.mjs && node scripts/clean-dist.mjs && tsc -p tsconfig.json && tsx scripts/p0/write-sbom.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check src test scripts",
+    "smoke": "node scripts/smoke-extension.mjs",
+    "test": "vitest run --no-file-parallelism --maxWorkers=1 --testTimeout=30000"
+  }
+}

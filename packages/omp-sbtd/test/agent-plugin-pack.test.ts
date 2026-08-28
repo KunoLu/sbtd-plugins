@@ -59,6 +59,26 @@ async function packedPaths(root: string, base = root): Promise<string[]> {
   return paths.sort();
 }
 
+const OMP_RUNTIME_PACKAGE = "@oh-my-pi/pi-coding-agent";
+
+function dependencySpec(
+  manifest: unknown,
+  section: "peerDependencies" | "devDependencies",
+): unknown {
+  if (!manifest || typeof manifest !== "object" || !(section in manifest)) {
+    return undefined;
+  }
+  const entries: unknown = manifest[section];
+  if (
+    !entries ||
+    typeof entries !== "object" ||
+    !(OMP_RUNTIME_PACKAGE in entries)
+  ) {
+    return undefined;
+  }
+  return entries[OMP_RUNTIME_PACKAGE];
+}
+
 describe("Feature: Hybrid Plugin M2 组包", () => {
   it("Scenario: clean pack 的 tarball 通过 manifest/skill/containment gate", async () => {
     const packageRoot = await packPlugin();
@@ -68,13 +88,23 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       readFile(join(packageRoot, "package.json"), "utf8"),
     ]);
     const manifest: unknown = JSON.parse(manifestText);
-    const packedPackage = JSON.parse(packedPackageText) as {
-      version: unknown;
-    };
-    expect(packedPackage.version).toBe("0.1.0-rc.12");
+    const packedPackage: unknown = JSON.parse(packedPackageText);
+    const packedVersion =
+      packedPackage &&
+      typeof packedPackage === "object" &&
+      "version" in packedPackage
+        ? packedPackage.version
+        : undefined;
+    expect(packedVersion).toBe("0.1.0-rc.13");
+    // Tarball-bound identity: the packed manifest must carry the widened
+    // peer range and the exact development pin (Slice 3 candidate contract).
+    expect(dependencySpec(packedPackage, "peerDependencies")).toBe(
+      ">=17.3.5 <18",
+    );
+    expect(dependencySpec(packedPackage, "devDependencies")).toBe("17.3.5");
     expect(() =>
       validatePluginManifest(manifest, {
-        expectedVersion: packedPackage.version as string,
+        expectedVersion: packedVersion as string,
       }),
     ).not.toThrow();
 
@@ -95,6 +125,36 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
     }
 
     const entries = await packedPaths(packageRoot);
+    const policyText = await readFile(
+      join(packageRoot, "validation/p0/compatibility.v2.json"),
+      "utf8",
+    );
+    const policy: unknown = JSON.parse(policyText);
+    expect(policy).toMatchObject({
+      schemaVersion: 2,
+      peerRange: ">=17.3.5 <18",
+      developmentRuntimeVersion: "17.3.5",
+    });
+    expect(policy).not.toHaveProperty("currentRuntimeVersion");
+    expect(policy).not.toHaveProperty("latestRuntimeVersion");
+    expect(policy).not.toHaveProperty("testedVersions");
+    expect(entries).toContain("validation/p0/compatibility.v2.json");
+    const sbom = JSON.parse(
+      await readFile(join(packageRoot, "SBOM.spdx.json"), "utf8"),
+    ) as { files: Array<{ fileName: string }> };
+    expect(sbom.files.map((file) => file.fileName)).toContain(
+      "./validation/p0/compatibility.v2.json",
+    );
+    expect(
+      packedPackage &&
+        typeof packedPackage === "object" &&
+        "files" in packedPackage &&
+        Array.isArray(packedPackage.files) &&
+        packedPackage.files.includes("validation/p0/compatibility.v2.json"),
+    ).toBe(true);
+    expect(
+      entries.some((entry) => entry.startsWith("validation/p0/evidence/")),
+    ).toBe(false);
     for (const prefix of ["commands/", "hooks/", "tools/", "runtime/"]) {
       expect(
         entries.some((entry) => entry.startsWith(prefix)),

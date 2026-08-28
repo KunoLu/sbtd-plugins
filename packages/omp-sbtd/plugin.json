@@ -1,9 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "omp-sbtd",
-  "version": "0.1.0-rc.12",
-  "description":
-    "SBTD workflow capabilities for coding agents, with an OMP runtime control plane.",
+  "version": "0.1.0-rc.13",
+  "description": "SBTD workflow capabilities for coding agents, with an OMP runtime control plane.",
   "license": "Apache-2.0",
   "keywords": [
     "oh-my-pi",

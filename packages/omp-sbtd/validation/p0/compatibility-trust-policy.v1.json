@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "compatibility-trust-policy",
+  "attestation": {
+    "format": "github-artifact-attestation-v1",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "repository": "KunoLu/sbtd-plugins",
+    "workflowRefs": [
+      ".github/workflows/omp-compatibility-certification.yml@refs/heads/main"
+    ],
+    "sourceRefs": ["refs/heads/main"],
+    "events": ["workflow_dispatch", "schedule"],
+    "requiredSubjects": [
+      "pluginTarball",
+      "pluginManifest",
+      "ompArtifact",
+      "commandSet",
+      "hostEventScenarioSet"
+    ]
+  },
+  "statusPublisher": {
+    "context": "omp-compatibility-ledger-validate",
+    "environment": "omp-compatibility-ledger-status",
+    "credential": "dedicated Status GitHub App private key stored only in the named protected environment; this policy pins identity rules and contains no secrets, App IDs, or installation IDs"
+  }
+}

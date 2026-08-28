@@ -36,9 +36,9 @@ KPi 代码复核后确认需要进入实施范围的八项 Finding：
 2. `/Users/lusonglin/Downloads/NeoX_omp-sbtd_0.1.0-rc.6_code_review.md`
    第 11 节复核结论；
 3. 当前 Trellis 任务的 `prd.md`、`design.md`、`implement.md`；
-4. `docs/assets/sbtd-workflow-onboard-to-omp-plugin-sync.md` 中已经验证的同步、
+4. `docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md` 中已经验证的同步、
    promotion、所有权和回滚规则；
-5. `docs/assets/omp-plugin-host-acceptance.md` 中的 Plugin host acceptance 约束。
+5. `docs/assets/omp/omp-plugin-host-acceptance.md` 中的 Plugin host acceptance 约束。
 
 完成这八项只代表修复本计划范围内的问题，不代表原始 NeoX 公司推广 verdict
 自动变为通过。
@@ -447,7 +447,7 @@ commit SHA，不使用 dirty worktree 或可移动 tag 名作为 promotion ident
 ## 8. 阶段 B：将上游变更 promotion 到 KPi
 
 详细安全规则继续以
-`docs/assets/sbtd-workflow-onboard-to-omp-plugin-sync.md` 为准；本节记录本任务的
+`docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md` 为准；本节记录本任务的
 特定步骤。
 
 ### B0. 前置条件

@@ -12,7 +12,7 @@ function validManifest(): Record<string, unknown> {
   return {
     $schema: AGENT_PLUGINS_SCHEMA_URL,
     name: "omp-sbtd",
-    version: "0.1.0-rc.12",
+    version: "0.1.0-rc.13",
     description:
       "SBTD workflow capabilities for coding agents, with an OMP runtime control plane.",
     license: "Apache-2.0",
@@ -26,6 +26,26 @@ function validManifest(): Record<string, unknown> {
   };
 }
 
+const OMP_RUNTIME_PACKAGE = "@oh-my-pi/pi-coding-agent";
+
+function dependencySpec(
+  manifest: unknown,
+  section: "peerDependencies" | "devDependencies",
+): unknown {
+  if (!manifest || typeof manifest !== "object" || !(section in manifest)) {
+    return undefined;
+  }
+  const entries: unknown = manifest[section];
+  if (
+    !entries ||
+    typeof entries !== "object" ||
+    !(OMP_RUNTIME_PACKAGE in entries)
+  ) {
+    return undefined;
+  }
+  return entries[OMP_RUNTIME_PACKAGE];
+}
+
 describe("Feature: Hybrid Plugin M2 组包", () => {
   it("Scenario: 根 manifest 通过 schema 1.0.0 校验且版本与 package.json 一致", async () => {
     const [manifest, packageManifest] = await Promise.all([
@@ -37,13 +57,19 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       ),
     ]);
     const packageVersion = (packageManifest as { version: unknown }).version;
-    expect(packageVersion).toBe("0.1.0-rc.12");
+    expect(packageVersion).toBe("0.1.0-rc.13");
+    // Candidate identity: the widened tarball-bound peer range with the exact
+    // development pin retained (Slice 3 contract; rc.12 stays exact-peer).
+    expect(dependencySpec(packageManifest, "peerDependencies")).toBe(
+      ">=17.3.5 <18",
+    );
+    expect(dependencySpec(packageManifest, "devDependencies")).toBe("17.3.5");
     expect(() =>
       validatePluginManifest(manifest, {
         expectedVersion: packageVersion as string,
       }),
     ).not.toThrow();
-    expect((manifest as { version: unknown }).version).toBe("0.1.0-rc.12");
+    expect((manifest as { version: unknown }).version).toBe("0.1.0-rc.13");
   });
 
   const invalidShapes: ReadonlyArray<{
@@ -108,7 +134,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       const manifest = validManifest();
       mutate(manifest);
       expect(() =>
-        validatePluginManifest(manifest, { expectedVersion: "0.1.0-rc.12" }),
+        validatePluginManifest(manifest, { expectedVersion: "0.1.0-rc.13" }),
       ).toThrow(reason);
     });
   }

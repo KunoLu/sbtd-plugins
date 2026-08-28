@@ -173,7 +173,11 @@ describe("Feature: P0 发布一致性与证据", () => {
     expect(metadata.plugin.name).toBe("@kunolu/omp-sbtd");
     expect(metadata.kit.name).toBe("@kunolu/sbtd-workflow-kit");
     expect(metadata.plugin.files).toEqual(
-      expect.arrayContaining(["plugin.json", "skills"]),
+      expect.arrayContaining([
+        "plugin.json",
+        "skills",
+        "validation/p0/compatibility.v2.json",
+      ]),
     );
     expect(pluginLicense).toBe(rootLicense);
     expect(kitLicense).toBe(rootLicense);

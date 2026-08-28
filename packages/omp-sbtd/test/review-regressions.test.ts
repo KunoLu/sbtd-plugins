@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import extension from "../src/extension.ts";
 import { createBookGatePlan } from "../src/gates/index.ts";
 import {
@@ -10,6 +11,66 @@ import {
   SBTD_STATE_CUSTOM_TYPE,
 } from "../src/state/index.ts";
 import { classifyTask } from "../src/workflow/index.ts";
+
+function fillHostEvent(
+  name: string,
+  payload: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const defaults: Record<string, Record<string, unknown>> = {
+    session_start: { type: "session_start" },
+    session_switch: { type: "session_switch" },
+    session_branch: { type: "session_branch" },
+    session_tree: { type: "session_tree", newLeafId: null, oldLeafId: null },
+    before_agent_start: { type: "before_agent_start", systemPrompt: [] },
+    "session.compacting": {
+      type: "session.compacting",
+      sessionId: "session-test",
+      messages: [],
+    },
+    tool_call: { type: "tool_call", toolCallId: "test-call", input: {} },
+    tool_approval_resolved: {
+      type: "tool_approval_resolved",
+      sessionId: "session-test",
+      toolName: "unknown",
+    },
+    tool_result: {
+      type: "tool_result",
+      toolName: "unknown",
+      input: {},
+      content: [],
+      isError: false,
+      details: null,
+    },
+    turn_start: { type: "turn_start", timestamp: 0 },
+    turn_end: { type: "turn_end", message: null, toolResults: [] },
+    session_stop: {
+      type: "session_stop",
+      messages: [],
+      turn_id: 0,
+      session_id: "session-test",
+      stop_hook_active: false,
+      signal: null,
+    },
+    credential_disabled: { type: "credential_disabled" },
+  };
+  const out: Record<string, unknown> = {
+    ...(defaults[name] ?? { type: name }),
+    type: name,
+  };
+  if (payload) {
+    for (const key of Reflect.ownKeys(payload)) {
+      const desc = Object.getOwnPropertyDescriptor(payload, key);
+      if (desc) Object.defineProperty(out, key, desc);
+    }
+  }
+  out.type = name;
+  return out;
+}
+
+const hostContract = {
+  zod: z,
+  registerTool() {},
+} as const;
 
 const managedState = () => ({
   ...defaultSessionState("2026-07-25T00:00:00.000Z"),
@@ -28,6 +89,7 @@ function registerExtension(entries: unknown[]) {
     (event: unknown, ctx: unknown) => Promise<unknown>
   >();
   extension({
+    ...hostContract,
     registerCommand() {},
     on(
       name: string,
@@ -64,7 +126,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
     await expect(
       events.get("tool_call")?.(
-        { toolName: "write", input: { path: "src/changed.ts" } },
+        fillHostEvent("tool_call", {
+          toolName: "write",
+          input: { path: "src/changed.ts" },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -85,7 +150,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
     await expect(
       events.get("tool_call")?.(
-        { toolName: "bash", input: { command: "bash -c 'cat .env'" } },
+        fillHostEvent("tool_call", {
+          toolName: "bash",
+          input: { command: "bash -c 'cat .env'" },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -94,10 +162,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
     });
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolName: "bash",
           input: { command: "corepack pnpm add example-package" },
-        },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -118,16 +186,18 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
         sessionManager: { getBranch: () => entries },
       };
       await events.get("before_agent_start")?.(
-        { prompt: "Fix an existing production bug." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Fix an existing production bug.",
+        }),
         context,
       );
 
       await expect(
         events.get("tool_call")?.(
-          {
+          fillHostEvent("tool_call", {
             toolName: "write",
             input: { path: resolve(root, "features", "bug-fix.feature") },
-          },
+          }),
           context,
         ),
       ).resolves.toBeUndefined();
@@ -151,14 +221,19 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
         sessionManager: { getBranch: () => entries },
       };
       await events.get("before_agent_start")?.(
-        { prompt: "Fix an existing production bug." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Fix an existing production bug.",
+        }),
         context,
       );
       context.cwd = undefined;
 
       await expect(
         events.get("tool_call")?.(
-          { toolName: "write", input: { path: "features/bug-fix.feature" } },
+          fillHostEvent("tool_call", {
+            toolName: "write",
+            input: { path: "features/bug-fix.feature" },
+          }),
           context,
         ),
       ).resolves.toBeUndefined();
@@ -179,7 +254,9 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
         sessionManager: { getBranch: () => entries },
       };
       await events.get("before_agent_start")?.(
-        { prompt: "Run the Playwright web E2E regression." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Run the Playwright web E2E regression.",
+        }),
         context,
       );
       const reports = resolve(root, "tests", "e2e", "reports", "html");
@@ -194,7 +271,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           context,
         ),
       ).resolves.toMatchObject({
@@ -218,7 +298,9 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
         sessionManager: { getBranch: () => entries },
       };
       await events.get("before_agent_start")?.(
-        { prompt: "Add a user-visible UI change." },
+        fillHostEvent("before_agent_start", {
+          prompt: "Add a user-visible UI change.",
+        }),
         context,
       );
       await mkdir(resolve(root, "features", "ui-change.feature"), {
@@ -227,7 +309,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
       await expect(
         events.get("session_stop")?.(
-          { turn_id: 1, stop_hook_active: false },
+          fillHostEvent("session_stop", {
+            turn_id: 1,
+            stop_hook_active: false,
+          }),
           context,
         ),
       ).resolves.toMatchObject({
@@ -255,16 +340,19 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
     };
 
     await events.get("tool_approval_resolved")?.(
-      { toolCallId: "install-1", approved: true },
+      fillHostEvent("tool_approval_resolved", {
+        toolCallId: "install-1",
+        approved: true,
+      }),
       contextA,
     );
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolCallId: "install-1",
           toolName: "bash",
           input: { command: "npm install example-package" },
-        },
+        }),
         contextB,
       ),
     ).resolves.toMatchObject({
@@ -370,30 +458,43 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
     };
 
     await expect(
-      events.get("tool_call")?.(secretCall, context),
+      events.get("tool_call")?.(
+        fillHostEvent("tool_call", secretCall),
+        context,
+      ),
     ).resolves.toMatchObject({
       block: true,
       reason: expect.stringContaining("secret-read-guard"),
     });
     await events.get("tool_approval_resolved")?.(
-      { toolCallId: "call-secret-1", toolName: "read", approved: true },
+      fillHostEvent("tool_approval_resolved", {
+        toolCallId: "call-secret-1",
+        toolName: "read",
+        approved: true,
+      }),
       context,
     );
     await expect(
-      events.get("tool_call")?.(secretCall, context),
+      events.get("tool_call")?.(
+        fillHostEvent("tool_call", secretCall),
+        context,
+      ),
     ).resolves.toBeUndefined();
     await events.get("tool_result")?.(
-      {
+      fillHostEvent("tool_result", {
         toolCallId: "call-secret-1",
         input: { path: ".env" },
         content: [],
         isError: false,
-      },
+      }),
       context,
     );
     // One-shot: the exact same call is blocked again after the result.
     await expect(
-      events.get("tool_call")?.(secretCall, context),
+      events.get("tool_call")?.(
+        fillHostEvent("tool_call", secretCall),
+        context,
+      ),
     ).resolves.toMatchObject({
       block: true,
       reason: expect.stringContaining("secret-read-guard"),
@@ -415,21 +516,28 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
       input: { path: ".env" },
     };
     await expect(
-      events.get("tool_call")?.(secretCall, context),
+      events.get("tool_call")?.(
+        fillHostEvent("tool_call", secretCall),
+        context,
+      ),
     ).resolves.toMatchObject({ block: true });
     await events.get("tool_approval_resolved")?.(
-      { toolCallId: "call-cross-1", toolName: "read", approved: true },
+      fillHostEvent("tool_approval_resolved", {
+        toolCallId: "call-cross-1",
+        toolName: "read",
+        approved: true,
+      }),
       context,
     );
     // Reusing the approval for a dependency install stays blocked and evicts
     // the mismatched descriptor.
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolCallId: "call-cross-1",
           toolName: "bash",
           input: { command: "npm install example-package" },
-        },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -437,7 +545,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
       reason: expect.stringContaining("install-requires-approval"),
     });
     await expect(
-      events.get("tool_call")?.(secretCall, context),
+      events.get("tool_call")?.(
+        fillHostEvent("tool_call", secretCall),
+        context,
+      ),
     ).resolves.toMatchObject({ block: true });
   });
 
@@ -453,26 +564,30 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolCallId: "call-install-1",
           toolName: "bash",
           input: { command: "npm install example-package" },
-        },
+        }),
         context,
       ),
     ).resolves.toMatchObject({ block: true });
     await events.get("tool_approval_resolved")?.(
-      { toolCallId: "call-install-1", toolName: "bash", approved: true },
+      fillHostEvent("tool_approval_resolved", {
+        toolCallId: "call-install-1",
+        toolName: "bash",
+        approved: true,
+      }),
       context,
     );
     // Changed target after approval: fingerprint mismatch stays blocked.
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolCallId: "call-install-1",
           toolName: "bash",
           input: { command: "npm install other-package" },
-        },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -482,25 +597,29 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolCallId: "call-denied-1",
           toolName: "bash",
           input: { command: "brew install wget" },
-        },
+        }),
         context,
       ),
     ).resolves.toMatchObject({ block: true });
     await events.get("tool_approval_resolved")?.(
-      { toolCallId: "call-denied-1", toolName: "bash", approved: false },
+      fillHostEvent("tool_approval_resolved", {
+        toolCallId: "call-denied-1",
+        toolName: "bash",
+        approved: false,
+      }),
       context,
     );
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolCallId: "call-denied-1",
           toolName: "bash",
           input: { command: "brew install wget" },
-        },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -533,7 +652,7 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
       { toolName: "mcp__gitnexus__debug", input: { query: "auth flow" } },
     ])
       await expect(
-        events.get("tool_call")?.(event, context),
+        events.get("tool_call")?.(fillHostEvent("tool_call", event), context),
       ).resolves.toBeUndefined();
   });
 
@@ -555,7 +674,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
 
     await expect(
       events.get("tool_call")?.(
-        { toolName: "mcp__unknown__custom", input: { path: "src/app.ts" } },
+        fillHostEvent("tool_call", {
+          toolName: "mcp__unknown__custom",
+          input: { path: "src/app.ts" },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -564,7 +686,10 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
     });
     await expect(
       events.get("tool_call")?.(
-        { toolName: "read", input: { path: "ssh://deploy-host/app/logs" } },
+        fillHostEvent("tool_call", {
+          toolName: "read",
+          input: { path: "ssh://deploy-host/app/logs" },
+        }),
         context,
       ),
     ).resolves.toMatchObject({
@@ -591,17 +716,17 @@ describe("Feature: SBTD 运行时工作流与门禁", () => {
     ])
       await expect(
         events.get("tool_call")?.(
-          { toolName: "read", input: { path } },
+          fillHostEvent("tool_call", { toolName: "read", input: { path } }),
           context,
         ),
       ).resolves.toBeUndefined();
     // Mention-style search over a quoted pattern is not a secret read.
     await expect(
       events.get("tool_call")?.(
-        {
+        fillHostEvent("tool_call", {
           toolName: "bash",
           input: { command: "grep '.env' src/config.ts" },
-        },
+        }),
         context,
       ),
     ).resolves.toBeUndefined();

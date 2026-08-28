@@ -245,7 +245,7 @@ const npmPackageNameSchema = z
 const packageVersionSchema = z
   .string()
   .regex(SEMVER_PATTERN, "invalid semantic package version");
-export const currentRuntimeVersionSchema = packageVersionSchema;
+export const runtimeVersionSchema = packageVersionSchema;
 const distTagSchema = z
   .string()
   .min(1)
@@ -287,7 +287,7 @@ const candidateEvidenceBaseSchema = z
   .strict();
 const compatibilityProtocolSchema = z
   .object({
-    currentRuntimeVersion: currentRuntimeVersionSchema,
+    testedRuntimeVersion: runtimeVersionSchema,
   })
   .strict();
 const valueProtocolSchema = z
@@ -324,7 +324,7 @@ export const candidateObservationSchema = z
     schemaVersion: z.literal(1),
     observationId: runIdSchema,
     candidate: candidateIdentitySchema,
-    runtimeVersion: currentRuntimeVersionSchema,
+    runtimeVersion: runtimeVersionSchema,
     outcome: z.enum(["passed", "failed", "blocked"]),
     blocker: blockerSchema.optional(),
     environment: candidateObservationEnvironmentSchema.optional(),
@@ -1396,24 +1396,146 @@ export const compatibilityCommandsSchema = z.tuple([
   z.literal("onboard plan"),
 ]);
 
+const PEER_RANGE_COMPARATOR_PATTERN =
+  /^(>=|>|<=|<|=)?(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?$/;
+const PEER_RANGE_COMPARATOR_LIMIT = 8;
+
+interface StableRuntimeVersion {
+  readonly major: number;
+  readonly minor: number;
+  readonly patch: number;
+}
+
+function parseStableRuntimeVersion(
+  version: string,
+): StableRuntimeVersion | undefined {
+  const parsed = SEMVER_PATTERN.exec(version);
+  if (parsed === null || parsed[4] !== undefined) return undefined;
+  return {
+    major: Number(parsed[1]),
+    minor: Number(parsed[2]),
+    patch: Number(parsed[3]),
+  };
+}
+
+function compareStableRuntimeVersions(
+  left: StableRuntimeVersion,
+  right: StableRuntimeVersion,
+): number {
+  if (left.major !== right.major) return left.major - right.major;
+  if (left.minor !== right.minor) return left.minor - right.minor;
+  return left.patch - right.patch;
+}
+
+type PeerRangeOperator = ">=" | ">" | "<=" | "<" | "=";
+
+interface PeerRangeComparator {
+  readonly operator: PeerRangeOperator;
+  readonly version: StableRuntimeVersion;
+}
+
+function parsePeerRange(range: string): readonly PeerRangeComparator[] {
+  const comparators = range
+    .trim()
+    .split(/\s+/u)
+    .map((part): PeerRangeComparator | undefined => {
+      const parsed = PEER_RANGE_COMPARATOR_PATTERN.exec(part);
+      if (parsed === null) return undefined;
+      // Bounds are exact versions; omitted minor/patch components default
+      // to zero, so "<18" means "<18.0.0".
+      return {
+        operator: (parsed[1] ?? "=") as PeerRangeOperator,
+        version: {
+          major: Number(parsed[2]),
+          minor: Number(parsed[3] ?? "0"),
+          patch: Number(parsed[4] ?? "0"),
+        },
+      };
+    });
+  if (
+    comparators.length === 0 ||
+    comparators.length > PEER_RANGE_COMPARATOR_LIMIT ||
+    comparators.some((comparator) => comparator === undefined)
+  )
+    return [];
+  return comparators as readonly PeerRangeComparator[];
+}
+
+export const compatibilityPeerRangeSchema = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine(
+    (range) => parsePeerRange(range).length > 0,
+    "expected a space-separated exact-version comparator peer range",
+  );
+
+function isStableRuntimeWithinPeerRange(
+  version: StableRuntimeVersion,
+  peerRange: string,
+): boolean {
+  return parsePeerRange(peerRange).every((comparator) => {
+    const order = compareStableRuntimeVersions(version, comparator.version);
+    switch (comparator.operator) {
+      case ">=":
+        return order >= 0;
+      case ">":
+        return order > 0;
+      case "<=":
+        return order <= 0;
+      case "<":
+        return order < 0;
+      case "=":
+        return order === 0;
+      default:
+        return false;
+    }
+  });
+}
+
+/**
+ * Pure range-membership check for one exact stable Runtime version against a
+ * peer range string (for example a tarball-bound historical target range).
+ * Returns false for malformed ranges and non-stable versions; callers that
+ * need fail-closed diagnostics use assertRuntimeWithinPeerRange instead.
+ */
+export function isExactRuntimeWithinPeerRange(
+  peerRange: string,
+  runtimeVersion: string,
+): boolean {
+  if (!compatibilityPeerRangeSchema.safeParse(peerRange).success) return false;
+  const version = parseStableRuntimeVersion(runtimeVersion);
+  if (version === undefined) return false;
+  return isStableRuntimeWithinPeerRange(version, peerRange);
+}
+
 export const compatibilityManifestSchema = z
   .object({
-    schemaVersion: z.literal(1),
-    currentRuntimeVersion: currentRuntimeVersionSchema,
+    schemaVersion: z.literal(2),
+    peerRange: compatibilityPeerRangeSchema,
+    developmentRuntimeVersion: runtimeVersionSchema,
     pluginPackage: z.literal("@kunolu/omp-sbtd"),
     commands: compatibilityCommandsSchema,
+    contractProfile: z.literal("omp-extension-v1").optional(),
+    requiredEvidenceProfiles: z
+      .tuple([
+        z.literal("omp-runtime-capabilities-v1"),
+        z.literal("omp-command-surface-v1"),
+        z.literal("omp-host-events-v1"),
+      ])
+      .optional(),
   })
   .strict();
 export type CompatibilityManifest = z.infer<typeof compatibilityManifestSchema>;
 
-export function resolveCurrentRuntimeVersionFromLockfile(
+export function resolveDevelopmentRuntimeVersionFromLockfile(
   lockfile: string,
 ): string {
   const importerMarker = "  packages/omp-sbtd:\n";
   const importerStart = lockfile.indexOf(importerMarker);
   if (importerStart === -1)
     throw new P0ValidationError(
-      "CURRENT_RUNTIME_UNRESOLVED",
+      "DEVELOPMENT_RUNTIME_UNRESOLVED",
       "The workspace lockfile does not contain the Plugin importer.",
       "Regenerate the lockfile with the installed @oh-my-pi/pi-coding-agent dependency.",
     );
@@ -1427,13 +1549,13 @@ export function resolveCurrentRuntimeVersionFromLockfile(
     );
   if (dependency === null)
     throw new P0ValidationError(
-      "CURRENT_RUNTIME_UNRESOLVED",
+      "DEVELOPMENT_RUNTIME_UNRESOLVED",
       "The Plugin importer does not pin one installed OMP Runtime version.",
       "Pin @oh-my-pi/pi-coding-agent to one exact version in the workspace lockfile.",
     );
   const specifier = dependency[1]?.trim();
   const version = dependency[2]?.trim();
-  const parsed = currentRuntimeVersionSchema.safeParse(version);
+  const parsed = runtimeVersionSchema.safeParse(version);
   if (
     specifier === undefined ||
     version === undefined ||
@@ -1441,7 +1563,7 @@ export function resolveCurrentRuntimeVersionFromLockfile(
     specifier !== parsed.data
   )
     throw new P0ValidationError(
-      "CURRENT_RUNTIME_UNRESOLVED",
+      "DEVELOPMENT_RUNTIME_UNRESOLVED",
       "The lockfile OMP Runtime specifier and installed version are not one matching exact semantic version.",
       "Restore one exact @oh-my-pi/pi-coding-agent lockfile pin before compatibility validation.",
     );
@@ -1450,42 +1572,178 @@ export function resolveCurrentRuntimeVersionFromLockfile(
 
 export function validateCompatibilityManifest(
   input: unknown,
-  expectedCurrentRuntimeVersion?: string,
+  expectedDevelopmentRuntimeVersion?: string,
 ): CompatibilityManifest {
   const parsed = compatibilityManifestSchema.safeParse(input);
   if (!parsed.success)
     throw new P0ValidationError(
-      "CURRENT_RUNTIME_COMPATIBILITY_INVALID",
-      "The OMP compatibility manifest must name one current Runtime version and the exact required read-only commands.",
-      "Restore one exact currentRuntimeVersion and the exact required read-only commands.",
+      "COMPATIBILITY_POLICY_INVALID",
+      "The OMP compatibility policy must declare a stable peer range, an exact development Runtime pin, and the exact required read-only commands.",
+      "Restore the Policy v2 peer range, exact developmentRuntimeVersion, and the exact required read-only commands.",
       { issues: parsed.error.issues.map((issue) => issue.message) },
     );
-  if (expectedCurrentRuntimeVersion !== undefined) {
-    const expected = currentRuntimeVersionSchema.safeParse(
-      expectedCurrentRuntimeVersion,
+  const developmentPin = parseStableRuntimeVersion(
+    parsed.data.developmentRuntimeVersion,
+  );
+  if (
+    developmentPin === undefined ||
+    !isStableRuntimeWithinPeerRange(developmentPin, parsed.data.peerRange)
+  )
+    throw new P0ValidationError(
+      "COMPATIBILITY_DEV_PIN_OUT_OF_RANGE",
+      "The compatibility policy development Runtime pin is outside its declared peer range.",
+      "Move the exact developmentRuntimeVersion inside the declared peer range before running compatibility.",
+      {
+        peerRange: parsed.data.peerRange,
+        developmentRuntimeVersion: parsed.data.developmentRuntimeVersion,
+      },
+    );
+  if (expectedDevelopmentRuntimeVersion !== undefined) {
+    const expected = runtimeVersionSchema.safeParse(
+      expectedDevelopmentRuntimeVersion,
     );
     if (!expected.success)
       throw new P0ValidationError(
-        "CURRENT_RUNTIME_UNRESOLVED",
-        "The requested current Runtime identity is not a semantic version.",
-        "Resolve the exact installed Runtime version from the lockfile or pass a checked semantic version.",
+        "DEVELOPMENT_RUNTIME_UNRESOLVED",
+        "The expected development Runtime identity is not a semantic version.",
+        "Resolve the exact installed development Runtime version from the lockfile or pass a checked semantic version.",
       );
-    if (parsed.data.currentRuntimeVersion !== expected.data)
+    if (parsed.data.developmentRuntimeVersion !== expected.data)
       throw new P0ValidationError(
-        "CURRENT_RUNTIME_MISMATCH",
-        "Compatibility manifest Runtime identity does not match the resolved current Runtime.",
-        "Regenerate the manifest for the checked Runtime identity before running compatibility.",
+        "DEVELOPMENT_RUNTIME_MISMATCH",
+        "Compatibility policy development Runtime identity does not match the resolved development Runtime.",
+        "Regenerate the policy for the checked development Runtime identity before running compatibility.",
         {
-          manifestRuntimeVersion: parsed.data.currentRuntimeVersion,
-          currentRuntimeVersion: expected.data,
+          policyDevelopmentRuntimeVersion:
+            parsed.data.developmentRuntimeVersion,
+          expectedDevelopmentRuntimeVersion: expected.data,
         },
       );
   }
   return parsed.data;
 }
 
-export interface CurrentRuntimeCompatibilityResult {
-  readonly currentRuntimeVersion: string;
+export function assertRuntimeWithinPeerRange(
+  manifestInput: unknown,
+  runtimeVersion: string,
+): void {
+  const manifest = validateCompatibilityManifest(manifestInput);
+  const version = parseStableRuntimeVersion(runtimeVersion);
+  if (version === undefined)
+    throw new P0ValidationError(
+      "COMPATIBILITY_RUNTIME_OUT_OF_RANGE",
+      "The tested OMP Runtime is not an exact stable semantic version.",
+      "Run compatibility against an exact stable OMP Runtime; a prerelease Runtime requires the explicit experimental path.",
+      { testedRuntimeVersion: runtimeVersion },
+    );
+  if (!isStableRuntimeWithinPeerRange(version, manifest.peerRange))
+    throw new P0ValidationError(
+      "COMPATIBILITY_RUNTIME_OUT_OF_RANGE",
+      "The tested OMP Runtime is outside the tarball-bound peer range.",
+      "Use an in-range OMP Runtime or the explicit experimental path; out-of-range Runtimes never run compatibility profiles.",
+      {
+        testedRuntimeVersion: runtimeVersion,
+        peerRange: manifest.peerRange,
+      },
+    );
+}
+
+const compatibilityProfileOutcomeSchema = z.enum([
+  "passed",
+  "passed-with-diagnostics",
+  "failed",
+  "blocked",
+  "not-run",
+]);
+export type CompatibilityProfileOutcome = z.infer<
+  typeof compatibilityProfileOutcomeSchema
+>;
+const compatibilityProfileAssessmentSchema = z
+  .object({
+    outcome: compatibilityProfileOutcomeSchema,
+    provenanceTrusted: z.boolean(),
+  })
+  .strict();
+export type CompatibilityProfileAssessment = z.infer<
+  typeof compatibilityProfileAssessmentSchema
+>;
+const compatibilityOverallStateInputSchema = z
+  .object({
+    runtimeInRange: z.boolean(),
+    revoked: z.boolean().optional(),
+    profiles: z
+      .object({
+        runtimeCapability: compatibilityProfileAssessmentSchema.optional(),
+        commandSurface: compatibilityProfileAssessmentSchema.optional(),
+        hostEventSurface: compatibilityProfileAssessmentSchema.optional(),
+      })
+      .strict(),
+  })
+  .strict();
+export type CompatibilityOverallState =
+  | "out-of-range"
+  | "revoked"
+  | "incompatible"
+  | "certified"
+  | "partially-verified"
+  | "eligible";
+
+/**
+ * Derives the public compatibility overall state from profile evidence with
+ * the fixed priority out-of-range → revoked → incompatible → certified →
+ * partially-verified → eligible. Callers never submit an overall state.
+ * "passed-with-diagnostics" counts as a pass (plan §6.2/§6.3). This pure
+ * derivation is a certification view only: npm RC publication authorization
+ * consumes only the isolated exact-tarball four-command acceptance and
+ * MUST NOT read this outcome.
+ */
+export function deriveCompatibilityOverallState(
+  input: unknown,
+): CompatibilityOverallState {
+  const parsed = compatibilityOverallStateInputSchema.safeParse(input);
+  if (!parsed.success)
+    throw new P0ValidationError(
+      "COMPATIBILITY_ASSESSMENT_INVALID",
+      "The compatibility overall-state derivation input is malformed.",
+      "Submit runtimeInRange, optional revoked, and per-profile outcome/provenanceTrusted assessments; callers never submit an overall state.",
+      { issues: parsed.error.issues.map((issue) => issue.message) },
+    );
+  if (!parsed.data.runtimeInRange) return "out-of-range";
+  if (parsed.data.revoked === true) return "revoked";
+  const assessments = [
+    parsed.data.profiles.runtimeCapability,
+    parsed.data.profiles.commandSurface,
+    parsed.data.profiles.hostEventSurface,
+  ];
+  const recorded = assessments.filter(
+    (assessment): assessment is CompatibilityProfileAssessment =>
+      assessment !== undefined,
+  );
+  if (recorded.some((assessment) => assessment.outcome === "failed"))
+    return "incompatible";
+  if (
+    assessments.every(
+      (assessment) =>
+        assessment !== undefined &&
+        (assessment.outcome === "passed" ||
+          assessment.outcome === "passed-with-diagnostics") &&
+        assessment.provenanceTrusted,
+    )
+  )
+    return "certified";
+  if (
+    recorded.some(
+      (assessment) =>
+        assessment.outcome === "passed" ||
+        assessment.outcome === "passed-with-diagnostics",
+    )
+  )
+    return "partially-verified";
+  return "eligible";
+}
+
+export interface TestedRuntimeCompatibilityResult {
+  readonly testedRuntimeVersion: string;
   readonly status: "passed" | "failed" | "blocked";
   readonly agentInvoked: false;
   readonly acceptanceMode?: "profile-isolated";
@@ -1502,24 +1760,24 @@ export interface CurrentRuntimeCompatibilityResult {
   >;
 }
 
-export interface CurrentRuntimeCompatibilityAdapter {
-  readonly runCurrentRuntime: (
+export interface TestedRuntimeCompatibilityAdapter {
+  readonly runTestedRuntime: (
     input: Readonly<{
-      currentRuntimeVersion: string;
+      testedRuntimeVersion: string;
       pluginPackagePath: string;
       pluginTarballPath: string;
       sandboxRoot: string;
       commands: CompatibilityManifest["commands"];
     }>,
-  ) => Promise<CurrentRuntimeCompatibilityResult>;
+  ) => Promise<TestedRuntimeCompatibilityResult>;
 }
 
 export function createBlockedCompatibilityAdapter(
-  recovery = "Provide an isolated OMP host harness for the resolved current Runtime and rerun compatibility.",
-): CurrentRuntimeCompatibilityAdapter {
+  recovery = "Provide an isolated OMP host harness for the tested OMP Runtime and rerun compatibility.",
+): TestedRuntimeCompatibilityAdapter {
   return {
-    runCurrentRuntime: async ({ currentRuntimeVersion }) => ({
-      currentRuntimeVersion,
+    runTestedRuntime: async ({ testedRuntimeVersion }) => ({
+      testedRuntimeVersion,
       status: "blocked",
       agentInvoked: false,
       blocker: {
@@ -1537,46 +1795,57 @@ export function createBlockedCompatibilityAdapter(
   };
 }
 
-export async function runCurrentRuntimeCompatibility(
+export async function runTestedRuntimeCompatibility(
   manifestInput: unknown,
-  adapter: CurrentRuntimeCompatibilityAdapter,
+  adapter: TestedRuntimeCompatibilityAdapter,
   options: Readonly<{
     pluginPackagePath: string;
     pluginTarballPath: string;
     sandboxRoot: string;
-    currentRuntimeVersion: string;
+    testedRuntimeVersion: string;
+    scope?: "declared" | "experimental";
   }>,
 ): Promise<
   Readonly<{
     schemaVersion: 1;
-    currentRuntimeVersion: string;
-    result: CurrentRuntimeCompatibilityResult;
+    testedRuntimeVersion: string;
+    result: TestedRuntimeCompatibilityResult;
   }>
 > {
-  const manifest = validateCompatibilityManifest(
-    manifestInput,
-    options.currentRuntimeVersion,
-  );
-  const result = await adapter.runCurrentRuntime({
-    currentRuntimeVersion: manifest.currentRuntimeVersion,
+  const manifest = validateCompatibilityManifest(manifestInput);
+  const tested = runtimeVersionSchema.safeParse(options.testedRuntimeVersion);
+  if (!tested.success)
+    throw new P0ValidationError(
+      "TESTED_RUNTIME_UNRESOLVED",
+      "The tested OMP Runtime identity is not a semantic version.",
+      "Pass one exact tested OMP Runtime semantic version through --runtime-version.",
+    );
+  // The declared scope accepts only stable in-range tested Runtimes. The
+  // explicit experimental scope is the only path that may test an
+  // out-of-range or prerelease Runtime, and its result never extends the
+  // declared support statement.
+  if (options.scope !== "experimental")
+    assertRuntimeWithinPeerRange(manifest, tested.data);
+  const result = await adapter.runTestedRuntime({
+    testedRuntimeVersion: tested.data,
     pluginPackagePath: options.pluginPackagePath,
     pluginTarballPath: options.pluginTarballPath,
-    sandboxRoot: join(options.sandboxRoot, manifest.currentRuntimeVersion),
+    sandboxRoot: join(options.sandboxRoot, tested.data),
     commands: manifest.commands,
   });
-  if (result.currentRuntimeVersion !== manifest.currentRuntimeVersion)
+  if (result.testedRuntimeVersion !== tested.data)
     throw new P0ValidationError(
-      "CURRENT_RUNTIME_MISMATCH",
+      "TESTED_RUNTIME_MISMATCH",
       "Compatibility adapter returned evidence for a different Runtime identity.",
-      "Rerun the isolated compatibility check against the resolved current Runtime.",
+      "Rerun the isolated compatibility check against the tested OMP Runtime.",
       {
-        expectedRuntimeVersion: manifest.currentRuntimeVersion,
-        actualRuntimeVersion: result.currentRuntimeVersion,
+        expectedTestedRuntimeVersion: tested.data,
+        actualTestedRuntimeVersion: result.testedRuntimeVersion,
       },
     );
   return {
     schemaVersion: 1,
-    currentRuntimeVersion: manifest.currentRuntimeVersion,
+    testedRuntimeVersion: tested.data,
     result,
   };
 }
@@ -5102,6 +5371,7 @@ async function inventoryDeclaredPackageContent(
     "SECURITY.md",
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
+    "validation/p0/compatibility.v2.json",
   ];
   const inventory: SbomFile[] = [];
   for (const declaredPath of declaredPaths) {
@@ -5805,7 +6075,7 @@ export async function verifyPluginReleaseArtifacts(
   if (pluginLicense !== rootLicense || kitLicense !== rootLicense)
     throw new P0ValidationError(
       "LICENSE_MISMATCH",
-      "Root, Plugin, and Kit Apache-2.0 license files must be byte-identical.",
+      "Root, Plugin, and Kit GPLv3 license files must be byte-identical.",
       "Regenerate package license artifacts from the repository root license.",
     );
   if (

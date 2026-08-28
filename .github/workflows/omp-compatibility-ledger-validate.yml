@@ -1,0 +1,443 @@
+# Trusted validator for compatibility ledger bot PRs.
+#
+# Trust boundary (packages/omp-sbtd/validation/p0/compatibility-trust-policy.v1.json):
+# - Release owner dispatches manually from refs/heads/main with the PR number,
+#   the expected immutable head SHA and the trusted certification run ID.
+# - The validator jobs hold a read-only GITHUB_TOKEN (contents + pull-requests
+#   read). PR content is read exclusively through the GitHub API as untrusted
+#   data; the PR head is NEVER checked out or executed.
+# - Commit statuses are written only by the dedicated Status GitHub App whose
+#   private key exists solely in the protected main-only environment
+#   `omp-compatibility-ledger-status` (implementation HITL). The App token is
+#   minted and used only inside the pending/final status steps; PR parsing and
+#   validation steps never receive it.
+# - Without the App credentials the status jobs fail closed: no status is
+#   written and merge stays blocked. Cancellation likewise leaves pending or
+#   missing, both of which block merge.
+# - Per-PR runs are serialized without cancel-in-progress; the final status
+#   step re-reads the PR head and writes success only for an unchanged head.
+# - Every third-party action is pinned to a full commit SHA.
+name: omp-compatibility-ledger-validate
+
+on:
+  workflow_dispatch:
+    inputs:
+      prNumber:
+        description: Compatibility ledger bot PR number
+        required: true
+        type: string
+      expectedHeadSha:
+        description: Expected immutable PR head SHA (full 40-hex)
+        required: true
+        type: string
+      certificationRunId:
+        description: Trusted main omp-compatibility-certification run ID
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: omp-compatibility-ledger-validate-pr-${{ inputs.prNumber }}
+  cancel-in-progress: false
+
+jobs:
+  identity-check:
+    name: Verify bot PR identity (read-only)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      headSha: ${{ steps.pr.outputs.headSha }}
+      sourceRevision: ${{ steps.run.outputs.sourceRevision }}
+    steps:
+      - name: Fail closed outside trusted main
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "${REPOSITORY}" != "KunoLu/sbtd-plugins" ] || [ "${REF}" != "refs/heads/main" ] || [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "blocked: the ledger validator only runs as a manual dispatch from trusted refs/heads/main in KunoLu/sbtd-plugins" >&2
+            exit 1
+          fi
+
+      - name: Read PR metadata through the API (never checkout the PR head)
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expectedHeadSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" > "${RUNNER_TEMP}/pr.json"
+          state="$(jq -r .state "${RUNNER_TEMP}/pr.json")"
+          headRepo="$(jq -r .head.repo.full_name "${RUNNER_TEMP}/pr.json")"
+          headRef="$(jq -r .head.ref "${RUNNER_TEMP}/pr.json")"
+          headSha="$(jq -r .head.sha "${RUNNER_TEMP}/pr.json")"
+          baseRef="$(jq -r .base.ref "${RUNNER_TEMP}/pr.json")"
+          if [ "${state}" != "open" ] \
+            || [ "${headRepo}" != "KunoLu/sbtd-plugins" ] \
+            || [ "${baseRef}" != "main" ] \
+            || [[ "${headRef}" != omp-compatibility/* ]] \
+            || [ "${headSha}" != "${EXPECTED_HEAD_SHA}" ]; then
+            echo "blocked: PR ${PR_NUMBER} failed identity checks (open state, same-repository automation branch, base main, exact immutable head SHA)" >&2
+            exit 1
+          fi
+          echo "headSha=${headSha}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify the trusted certification run provenance
+        id: run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID_INPUT: ${{ inputs.certificationRunId }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID_INPUT}" > "${RUNNER_TEMP}/run.json"
+          path="$(jq -r .path "${RUNNER_TEMP}/run.json")"
+          branch="$(jq -r .head_branch "${RUNNER_TEMP}/run.json")"
+          event="$(jq -r .event "${RUNNER_TEMP}/run.json")"
+          revision="$(jq -r .head_sha "${RUNNER_TEMP}/run.json")"
+          if [ "${path}" != ".github/workflows/omp-compatibility-certification.yml" ] \
+            || [ "${branch}" != "main" ] \
+            || { [ "${event}" != "workflow_dispatch" ] && [ "${event}" != "schedule" ]; } \
+            || [[ ! "${revision}" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "blocked: certification run ${RUN_ID_INPUT} is not a trusted main certification run" >&2
+            exit 1
+          fi
+          echo "sourceRevision=${revision}" >> "${GITHUB_OUTPUT}"
+
+  status-pending:
+    name: Write pending status (Status App only)
+    needs: identity-check
+    runs-on: ubuntu-latest
+    environment: omp-compatibility-ledger-status
+    permissions:
+      contents: read
+    steps:
+      - name: Fail closed without Status App credentials
+        env:
+          STATUS_APP_ID: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          STATUS_APP_PRIVATE_KEY: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${STATUS_APP_ID:-}" ] || [ -z "${STATUS_APP_PRIVATE_KEY:-}" ]; then
+            echo "blocked: Status App credentials are not provisioned in environment 'omp-compatibility-ledger-status' (implementation HITL); no status was written and merge stays blocked" >&2
+            exit 1
+          fi
+
+      - name: Mint the Status App installation token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          private-key: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+
+      - name: Write pending to the validated immutable head SHA
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ needs.identity-check.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -X POST \
+            -f state=pending \
+            -f context=omp-compatibility-ledger-validate \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Compatibility ledger validation in progress"
+
+  content-validate:
+    name: Validate ledger content (read-only, never executes PR head)
+    needs: [identity-check, status-pending]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout trusted main validator code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify allowed paths and collect added evidence via the API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" --paginate \
+            | jq -c '.[] | {filename, status}' > "${RUNNER_TEMP}/pr-files.jsonl"
+          : > "${RUNNER_TEMP}/pr-added-evidence.txt"
+          while IFS= read -r file; do
+            name="$(jq -r .filename <<<"${file}")"
+            status="$(jq -r .status <<<"${file}")"
+            case "${name}" in
+              packages/omp-sbtd/validation/p0/evidence/*)
+                [ "${status}" = "added" ] || { echo "blocked: evidence files are append-only additions (${name})" >&2; exit 1; }
+                echo "${name}" >> "${RUNNER_TEMP}/pr-added-evidence.txt"
+                ;;
+              packages/omp-sbtd/validation/p0/compatibility-targets.v1.json|packages/omp-sbtd/validation/p0/compatibility-ledger.v1.json)
+                [ "${status}" = "modified" ] || { echo "blocked: catalog/ledger changes must be append modifications (${name})" >&2; exit 1; }
+                ;;
+              *)
+                echo "blocked: path ${name} is outside the generated evidence/target/ledger scope" >&2
+                exit 1
+                ;;
+            esac
+          done < "${RUNNER_TEMP}/pr-files.jsonl"
+
+      - name: Validate PR-head ledger data as untrusted data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ needs.identity-check.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          stage="${RUNNER_TEMP}/pr-head-tree"
+          data_root="${RUNNER_TEMP}/pr-head-data"
+          mkdir -p "${stage}/packages/omp-sbtd/validation/p0/evidence" "${data_root}"
+          for name in compatibility-targets.v1.json compatibility-ledger.v1.json compatibility-trust-policy.v1.json; do
+            path="packages/omp-sbtd/validation/p0/${name}"
+            gh api "repos/${GITHUB_REPOSITORY}/contents/${path}?ref=${HEAD_SHA}" \
+              | jq -r .content | base64 -d > "${data_root}/${name}"
+            gh api "repos/${GITHUB_REPOSITORY}/contents/${path}?ref=refs/heads/main" \
+              | jq -r .content | base64 -d > "${RUNNER_TEMP}/base-${name}"
+          done
+          # Append-only proof: the main versions must be exact prefixes of the
+          # PR-head catalog and ledger (no rewrite, reorder or deletion).
+          for name in compatibility-targets.v1.json compatibility-ledger.v1.json; do
+            key="targets"
+            [ "${name}" = "compatibility-ledger.v1.json" ] && key="entries"
+            jq -n --argjson base "$(cat "${RUNNER_TEMP}/base-${name}")" \
+                  --argjson head "$(cat "${data_root}/${name}")" \
+                  --arg key "${key}" '
+                  ($head[$key] | length) >= ($base[$key] | length)
+                  and ($head[$key][0:($base[$key] | length)] == $base[$key])
+                ' | grep -qx true || {
+              echo "blocked: ${name} is not an append-only extension of main" >&2
+              exit 1
+            }
+          done
+          # Stage EVERY attestation bundle and evidence file referenced by the
+          # PR-head ledger (read through the API as data; the PR head is never
+          # checked out or executed). Historical locators already referenced
+          # by main's ledger prefix are inherited history; locators newly
+          # referenced by this PR must arrive as added files in this PR.
+          jq -r '
+            [.entries[].provenance.attestationBundleLocator]
+            + [.entries[] | select(.entryType == "assessment") | .profiles[] | .evidenceLocator // empty]
+            | unique | .[]
+          ' "${data_root}/compatibility-ledger.v1.json" > "${RUNNER_TEMP}/head-locators.txt"
+          jq -r '
+            [.entries[].provenance.attestationBundleLocator]
+            + [.entries[] | select(.entryType == "assessment") | .profiles[] | .evidenceLocator // empty]
+            | unique | .[]
+          ' "${RUNNER_TEMP}/base-compatibility-ledger.v1.json" > "${RUNNER_TEMP}/main-locators.txt"
+          while IFS= read -r locator; do
+            [ -n "${locator}" ] || continue
+            case "${locator}" in
+              packages/omp-sbtd/*) repo_path="${locator}" ;;
+              *) repo_path="packages/omp-sbtd/${locator}" ;;
+            esac
+            mkdir -p "${stage}/$(dirname "${repo_path}")"
+            gh api "repos/${GITHUB_REPOSITORY}/contents/${repo_path}?ref=${HEAD_SHA}" \
+              | jq -r .content | base64 -d > "${stage}/${repo_path}" || {
+              echo "blocked: referenced evidence ${repo_path} is unreadable at the PR head" >&2
+              exit 1
+            }
+            if ! grep -Fqx "${locator}" "${RUNNER_TEMP}/main-locators.txt" \
+              && ! grep -Fqx "${repo_path}" "${RUNNER_TEMP}/main-locators.txt"; then
+              grep -Fqx "${repo_path}" "${RUNNER_TEMP}/pr-added-evidence.txt" || {
+                echo "blocked: newly referenced evidence ${repo_path} is not an added file of this PR" >&2
+                exit 1
+              }
+            fi
+          done < "${RUNNER_TEMP}/head-locators.txt"
+          # Full validation of the PR-head data (schema, RFC 8785 digests,
+          # successor chain, field-level trust, attestation bundle existence
+          # and digest, in-toto subject equality, evidence digest binding).
+          # PR content is only ever parsed as data here.
+          pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/compatibility-matrix.ts validate \
+            --data-root "${data_root}" --workspace-root "${stage}"
+
+      - name: Cryptographically verify new attestation bundles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ needs.identity-check.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          stage="${RUNNER_TEMP}/pr-head-tree"
+          data_root="${RUNNER_TEMP}/pr-head-data"
+          evidence_prefix="packages/omp-sbtd/validation/p0/evidence"
+          # The bundle JSON is never the subject: certification attests the
+          # subject FILES (transport/cells/<cell>/subjects/*), so each new
+          # entry's subjectDigests must resolve to committed bytes that are
+          # verified one file at a time with --bundle. The content validation
+          # above already proved the bundle's in-toto subject multiset equals
+          # each entry's subjectDigests, so covering subjectDigests covers
+          # every attested subject.
+          #
+          # Signer constraint: the trusted caller workflow's exact certificate
+          # SAN, confirmed against a real committed bundle (PR #12):
+          #   URI:https://github.com/KunoLu/sbtd-plugins/.github/workflows/omp-compatibility-certification.yml@refs/heads/main
+          # gh's --signer-workflow is only a substring match (truncated values
+          # still verify), so the fail-closed pin is the exact --cert-identity.
+          signer_san="https://github.com/KunoLu/sbtd-plugins/.github/workflows/omp-compatibility-certification.yml@refs/heads/main"
+          # Only bundles newly referenced by this PR are verified here;
+          # bundles already referenced on main were verified by the trusted
+          # run that introduced them. An empty set is vacuously safe: no
+          # certification can have been appended without a committed bundle.
+          jq -r '.entries[].provenance.attestationBundleLocator' \
+            "${data_root}/compatibility-ledger.v1.json" | sort -u \
+            > "${RUNNER_TEMP}/head-bundle-locators.txt"
+          while IFS= read -r locator; do
+            [ -n "${locator}" ] || continue
+            case "${locator}" in
+              packages/omp-sbtd/*) repo_path="${locator}" ;;
+              *) repo_path="packages/omp-sbtd/${locator}" ;;
+            esac
+            if grep -Fqx "${locator}" "${RUNNER_TEMP}/main-locators.txt" \
+              || grep -Fqx "${repo_path}" "${RUNNER_TEMP}/main-locators.txt"; then
+              continue
+            fi
+            bundle_path="${stage}/${repo_path}"
+            [ -f "${bundle_path}" ] || {
+              echo "blocked: attestation bundle ${repo_path} referenced by the ledger is not readable at the PR head" >&2
+              exit 1
+            }
+            digests="$(jq -r --arg loc "${locator}" '
+              [.entries[] | select(.provenance.attestationBundleLocator == $loc)
+                | .provenance.subjectDigests | to_entries[].value]
+              | unique | .[]
+            ' "${data_root}/compatibility-ledger.v1.json")"
+            [ -n "${digests}" ] || {
+              echo "blocked: ledger entries referencing ${repo_path} carry no subject digests" >&2
+              exit 1
+            }
+            for digest in ${digests}; do
+              [[ "${digest}" =~ ^[a-f0-9]{64}$ ]] || {
+                echo "blocked: malformed subject digest '${digest}' in the PR-head ledger" >&2
+                exit 1
+              }
+              # Subject bytes are content-addressed: the raw blob at
+              # evidence/<digest>, or the profile evidence already committed
+              # at evidence/<digest>.json when the digest matches.
+              subject_file="${stage}/${evidence_prefix}/${digest}"
+              if [ ! -f "${subject_file}" ]; then
+                mkdir -p "${stage}/${evidence_prefix}"
+                # Fetch the RAW subject bytes, never the JSON `.content`
+                # field: the Contents API base64 payload is empty for
+                # blobs over 1MiB (`encoding: none`; observed for the
+                # 12MiB ompArtifact subject in run 32970755965), which
+                # would silently verify zero bytes. The raw-media Accept
+                # header returns exact bytes at any size; HTTP errors and
+                # empty bodies fail closed, and the downloaded file must
+                # hash back to the ledger digest before verification.
+                if gh api -H "Accept: application/vnd.github.raw" \
+                    "repos/${GITHUB_REPOSITORY}/contents/${evidence_prefix}/${digest}?ref=${HEAD_SHA}" \
+                    > "${subject_file}" 2>/dev/null \
+                  && [ -s "${subject_file}" ]; then
+                  actual_digest="$(sha256sum "${subject_file}" | cut -d' ' -f1)"
+                  if [ "${actual_digest}" != "${digest}" ]; then
+                    echo "blocked: attested subject ${digest} for bundle ${repo_path} fetched bytes hashing to ${actual_digest}" >&2
+                    exit 1
+                  fi
+                elif [ -f "${subject_file}.json" ]; then
+                  rm -f "${subject_file}"
+                  subject_file="${subject_file}.json"
+                else
+                  echo "blocked: attested subject ${digest} for bundle ${repo_path} is missing from the PR head evidence" >&2
+                  exit 1
+                fi
+              fi
+              gh attestation verify "${subject_file}" \
+                --bundle "${bundle_path}" \
+                --repo KunoLu/sbtd-plugins \
+                --cert-identity "${signer_san}" || {
+                echo "blocked: attested subject ${digest} of bundle ${repo_path} failed cryptographic verification" >&2
+                exit 1
+              }
+            done
+          done < "${RUNNER_TEMP}/head-bundle-locators.txt"
+
+  status-final:
+    name: Write the final status (Status App only)
+    needs: [identity-check, status-pending, content-validate]
+    if: always() && needs.identity-check.result == 'success' && (needs.status-pending.result == 'success' || needs.status-pending.result == 'failure')
+    runs-on: ubuntu-latest
+    environment: omp-compatibility-ledger-status
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Fail closed without Status App credentials
+        env:
+          STATUS_APP_ID: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          STATUS_APP_PRIVATE_KEY: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "${STATUS_APP_ID:-}" ] || [ -z "${STATUS_APP_PRIVATE_KEY:-}" ]; then
+            echo "blocked: Status App credentials are not provisioned in environment 'omp-compatibility-ledger-status' (implementation HITL); pending/missing status keeps merge blocked" >&2
+            exit 1
+          fi
+
+      - name: Mint the Status App installation token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.OMP_COMPATIBILITY_STATUS_APP_ID }}
+          private-key: ${{ secrets.OMP_COMPATIBILITY_STATUS_APP_PRIVATE_KEY }}
+
+      - name: Re-read the PR head before any success
+        id: reread
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.prNumber }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expectedHeadSha }}
+        run: |
+          set -euo pipefail
+          fresh="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" | jq -r .head.sha)"
+          if [ "${fresh}" != "${EXPECTED_HEAD_SHA}" ]; then
+            echo "headChanged=true" >> "${GITHUB_OUTPUT}"
+            echo "blocked: PR head moved from ${EXPECTED_HEAD_SHA} to ${fresh}; the old-SHA status is invalid and a new manual run is required" >&2
+          else
+            echo "headChanged=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Write failure for a known validation or head failure
+        if: needs.content-validate.result != 'success' || steps.reread.outputs.headChanged == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ needs.identity-check.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -X POST \
+            -f state=failure \
+            -f context=omp-compatibility-ledger-validate \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Compatibility ledger validation failed or the PR head changed"
+          exit 1
+
+      - name: Write success only for an unchanged validated head
+        if: needs.content-validate.result == 'success' && steps.reread.outputs.headChanged == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ needs.identity-check.outputs.headSha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -X POST \
+            -f state=success \
+            -f context=omp-compatibility-ledger-validate \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Compatibility ledger validated against trusted provenance"
