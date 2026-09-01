@@ -1,8 +1,8 @@
-<!-- KPi overlay: project-omp policy; version=p0-v2 -->
+<!-- sbtd-plugins overlay: project-omp policy; version=p0-v3 -->
 
-## KPi OMP Trellis Phase Routing
+## sbtd-plugins OMP Trellis Phase Routing
 
-KPi owns the OMP task-worker route. A worker follows the active Trellis phase and may not activate a different dispatch model by inheriting upstream text. The upstream dispatch model is not an OMP runtime policy.
+sbtd-plugins owns the OMP task-worker route. A worker follows the active Trellis phase and may not activate a different dispatch model by inheriting upstream text. The upstream dispatch model is not an OMP runtime policy.
 
 - Use OMP task workers only for the explicit active task and its declared phase.
 - Keep planning, implementation, validation, and completion gates distinct; do not treat dispatch configuration as permission to skip a gate.
@@ -22,7 +22,7 @@ Only start the Channel runtime after the user explicitly requests it or confirms
 
 Channel reviewers are read-only by default. The sole OMP task worker retains write ownership; Channel must not publish, install a Plugin, mutate user configuration, or replace a local validation controller.
 
-## KPi Runtime Marker Contract
+## sbtd-plugins Runtime Marker Contract
 
 The Plugin supplies a per-major-turn `sbtd-runtime` machine contract. It contains the Kit revision, Runtime Mode, Policy Profile, Environment Mode, Effective Control State, Route, and Stage. Project Facts imported above remain authoritative.
 
