@@ -9,7 +9,7 @@ allowed-tools: read grep glob bash
 metadata:
   sbtd.category: validation
   sbtd.portable: "true"
-  sbtd.source-revision: 4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb
+  sbtd.source-revision: f8aa0d7225a26c5e00b81d2f1b05121108e63630
 compatibility: Requires the target repository's native validation tools. Python
   3.10+ and jsonschema are required for validation-evidence schema checks; rtk
   is optional.

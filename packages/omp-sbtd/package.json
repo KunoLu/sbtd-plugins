@@ -1,6 +1,6 @@
 {
   "name": "@kunolu/omp-sbtd",
-  "version": "0.1.0-rc.13",
+  "version": "0.1.0-rc.14",
   "description": "KPi SBTD runtime gates for Oh My Pi: deterministic workflow routing, book gates, tool-risk guards, and validation evidence observation.",
   "keywords": [
     "oh-my-pi",

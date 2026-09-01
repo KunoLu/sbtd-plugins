@@ -250,6 +250,46 @@
         "aliases": ["shadcn"]
       },
       "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:ponytail",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/DietrichGebert/ponytail.git",
+        "subpath": "skills/ponytail",
+        "aliases": ["ponytail"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:ponytail-review",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/DietrichGebert/ponytail.git",
+        "subpath": "skills/ponytail-review",
+        "aliases": ["ponytail-review"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:ponytail-audit",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/DietrichGebert/ponytail.git",
+        "subpath": "skills/ponytail-audit",
+        "aliases": ["ponytail-audit"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:ponytail-debt",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/DietrichGebert/ponytail.git",
+        "subpath": "skills/ponytail-debt",
+        "aliases": ["ponytail-debt"]
+      },
+      "targetRole": "external-skill"
     }
   ]
 }

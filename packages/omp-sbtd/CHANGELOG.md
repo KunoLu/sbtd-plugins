@@ -3,6 +3,14 @@
 All notable changes to `@kunolu/omp-sbtd` are documented here. The format
 follows Keep a Changelog; versions are release candidates until promotion.
 
+## [0.1.0-rc.14] - 2026-09-01
+
+### Changed
+
+- Synced embedded Kit from `640-skills` `v1.0.13` (`f8aa0d7225a26c5e00b81d2f1b05121108e63630`) via workflow-only `sync-upstream`.
+- Updated OMP distribution map for new stable assets (ponytail, ui-ux-pro-max) and AGENTS section map for upstream renames.
+- Retargeted `docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md` from KPi to sbtd-plugins package paths.
+
 ## [0.1.0-rc.13] - 2026-08-27
 
 Widened-peer RC published to npm `next` after cloud §4 run `33052112414`.

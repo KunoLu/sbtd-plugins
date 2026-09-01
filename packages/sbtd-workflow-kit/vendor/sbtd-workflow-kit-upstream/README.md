@@ -52,6 +52,8 @@ npx skills list --global --agent codex
 
 这一步只安装自包含的 `sbtd-workflow-onboard` Skill，不会自动执行 `scripts/onboard.py`，也不会安装 Trellis、GitNexus、其余 bundled / external Skills、写入项目 AGENTS 或初始化项目。私有仓库应使用本机 Git 已可认证的 `git+ssh://` source，不要在命令、仓库、日志或报告中写入凭据。
 
+流程判定图：[npx skills 全局安装 Onboard Skill](docs/assets/npx-skills-global-onboard-install.md)。
+
 ### 2. 使用 Onboard Skill 执行 `init`
 
 安装成功后，在 Codex 中明确调用该 Skill，并提供目标平台、一个或多个项目绝对路径和 Trellis 用户名。多个项目路径使用英语逗号 `,` 分隔，例如 `/abs/project-one,/abs/project-two`；每个路径必须已存在且是目录，重复路径会规范化后只处理一次。
@@ -67,13 +69,17 @@ Skill 会定位自身的全局安装目录并运行对应脚本。需要手动�
 ```bash
 SBTD_ONBOARD_DIR="$HOME/.agents/skills/sbtd-workflow-onboard"
 python "$SBTD_ONBOARD_DIR/scripts/onboard.py" plan \
+  --platform codex \
   --projects-root /abs/project-one,/abs/project-two \
   --json
 python "$SBTD_ONBOARD_DIR/scripts/onboard.py" init \
+  --platform codex \
   --projects-root /abs/project-one,/abs/project-two \
   --trellis-user your-name \
   --yes
 ```
+
+流程判定图：[Onboard Skill 执行 init](docs/assets/onboard-skill-init.md)。
 
 ### 3. 使用 Onboard Skill 执行 `reset`
 
@@ -90,15 +96,19 @@ python "$SBTD_ONBOARD_DIR/scripts/onboard.py" init \
 ```bash
 SBTD_ONBOARD_DIR="$HOME/.agents/skills/sbtd-workflow-onboard"
 python "$SBTD_ONBOARD_DIR/scripts/onboard.py" plan \
+  --platform codex \
   --projects-root /abs/project-one,/abs/project-two \
   --json
 python "$SBTD_ONBOARD_DIR/scripts/onboard.py" reset \
+  --platform codex \
   --projects-root /abs/project-one,/abs/project-two \
   --trellis-user your-name \
   --yes
 ```
 
 `reset` 不是无条件删除重装：它仍遵守路径 containment、canonical 身份、事务 rollback、legacy migration、Trellis filesystem-safety guard 和用户确认边界。
+
+流程判定图：[Onboard Skill 执行 reset](docs/assets/onboard-skill-reset.md)。
 
 ### 4. 使用 `--init-projects` 只初始化项目
 
@@ -134,10 +144,13 @@ pwsh -File .\install.ps1 `
 
 ```bash
 python "$SBTD_ONBOARD_DIR/scripts/onboard.py" init-projects \
+  --platform codex \
   --projects-root /abs/project-one,/abs/project-two \
   --trellis-user your-name \
   --yes
 ```
+
+流程判定图：[--init-projects 只初始化项目](docs/assets/onboard-init-projects.md)。
 
 ### 5. 使用安装脚本进行交互式安装
 
@@ -151,9 +164,10 @@ bash install.sh
 pwsh -File .\install.ps1
 ```
 
-交互式流程会先选择普通 `init`、`reset` 或 project-only 初始化。普通 `init` / `reset` 会选择目标 Agent 平台并检查对应 CLI / npm，收集一个或多个以英语逗号分隔的项目绝对路径，按需检查或安装全局 Trellis、GitNexus、bundled / external Skills，写入允许的全局和项目模板并引导 MCP 配置；project-only 只记录平台上下文并跳过所有全局检测、安装和配置。两种模式都会逐项目处理 `.gitignore`、Trellis init / bootstrap、Playwright 和 React Bits 条件项，最后输出计划、执行状态、阻断原因和验证汇总。Bash 安装器会保留脚本启动时的原始交互输入流，逐项目数据读取不会劫持后续用户选择；输入流提前关闭时会明确报错退出，不会无限重复 `Invalid choice.`。
+交互式流程会先选择普通 `init`、`reset` 或 project-only 初始化。普通 `init` / `reset` 会选择目标 Agent 平台并检查对应 CLI / npm，收集一个或多个以英语逗号分隔的项目绝对路径，按需检查或安装全局 Trellis、GitNexus、bundled / external Skills，写入允许的全局和项目模板并引导 MCP 配置；`init` 对已合法的 bundled / required external Skill 壳跳过，`reset` 无备份覆盖全部 bundled Skills 并从 stable 强制重装全部 required external Skills；project-only 只记录平台上下文并跳过所有全局检测、安装和配置。两种模式都会逐项目处理 `.gitignore`、Trellis init / bootstrap、Playwright 和 React Bits 条件项，最后输出计划、执行状态、阻断原因和验证汇总。Bash 安装器会保留脚本启动时的原始交互输入流，逐项目数据读取不会劫持后续用户选择；输入流提前关闭时会明确报错退出，不会无限重复 `Invalid choice.`。
 
-这里的目标 Agent 平台只选择 CLI 与 MCP adapter，不会选择全局 AGENTS 目标。除非显式传入 `--global-agents-path` / `-GlobalAgentsPath`，正常模式始终把 Codex 全局规则模板写入解析后的 `$CODEX_HOME/AGENTS.md` 或 `~/.codex/AGENTS.md`；project-only 不写任何全局 AGENTS。
+
+这里的目标 Agent 平台只选择 CLI 与 MCP adapter，不会选择全局 AGENTS 目标。除非显式传入 `--global-agents-path` / `-GlobalAgentsPath`，正常模式始终把 Codex 全局规则模板写入解析后的 `$CODEX_HOME/AGENTS.md` 或 `~/.codex/AGENTS.md`。若用户主目录已存在 `.omp` 目录（POSIX `~/.omp`，Windows `%USERPROFILE%\.omp`），`init` / `reset` 会把同一模板备份后覆盖写入 `~/.omp/agent/AGENTS.md`；不存在则跳过且不创建 `.omp`。`--global-agents-path` 只覆盖 Codex 目标，不取消 OMP 附加写入。project-only 不写任何全局 AGENTS。
 
 根安装器的 `--yes` / `-Yes` 会对每个 yes/no 提示回答 Yes 并跳过最终执行确认，因此默认会安装 project `AGENTS.md`，也会确认安装流程中出现的可选工具提示。该参数不会猜测无默认值的选项或文本；目标平台、普通模式 action、Trellis 用户名和 React Bits tier / registry 等仍须通过对应参数预先提供或保留交互。非交互执行必须二选一：普通模式提供 `--platform`、`--projects-root`、`--action init|reset` 和其余适用输入；project-only 提供 `--platform`、`--init-projects` 和其余适用输入；最后再加 `--yes` / `-Yes` 消除 yes/no 确认。
 
@@ -164,7 +178,7 @@ pwsh -File .\install.ps1
 | 路径 | 用途 |
 |---|---|
 | `ENTRYPOINT.md` | 由 Git 追踪的版本监控配置和工作流总入口，也是版本检查与 `update` / `更新` 的可恢复基线。 |
-| `AGENTS.md` | 由 Git 追踪的本仓库直接生效补充规则，保证新 clone 可立即恢复仓库操作边界。 |
+| `AGENTS.md` | 本机可选的仓库补充规则；根 `.gitignore` 忽略，不进入远程 `main`。新 clone 不包含该文件，缺失时不得作为操作前置条件。 |
 | `README.md` | 当前工作流的详细说明文档。 |
 | `README.html` | 当前工作流的静态 HTML 说明页。 |
 | `CHANGELOG.md` | 从 `v1.0.0` 起按 Git tag、中文、最新版本在前的顺序维护发布变更。 |
@@ -179,6 +193,7 @@ pwsh -File .\install.ps1
 | `docs/lessons/index.md` | Lessons 完整索引，按 tags、适用场景和详情路径检索。 |
 | `docs/lessons/topics/**` | Lessons 完整详情，按当前任务命中后读取。 |
 | `docs/prd/knowledge-base-integration-prd.md` | P1 / P1.1 已实现能力与 P2 Evidence Store / PR Gate 实施方案。 |
+| `docs/assets/npx-skills-global-onboard-install.md` 等 5 份流程判定图 | Onboard 安装 / init / reset / init-projects 与 SBTD 工作路径 mermaid；从「安装及使用说明」和「工作流主线」跳转。 |
 | `prompts/automations/sbtd-workflow-tools-version-check.md` | Orca `SBTD Workflow Tools Version Check` 的版本化 prompt 源；每次仓库代码改动后评估是否需要调整，只有执行 `sync` 时才与 live automation 比较并按需同步。 |
 | `sbtd-workflow-onboard/` | onboard Skill 目录；普通 `sync` 时会作为完整 Skill 同步到 `/Users/lusonglin/.agent/skills/sbtd-workflow-onboard/`。 |
 | `sbtd-workflow-onboard/catalog.json` / `catalog.schema.json` | Bundled Skill、external Skill 上游源与模板源路径目录，以及对应 Draft 2020-12 结构契约。 |
@@ -192,9 +207,9 @@ pwsh -File .\install.ps1
 
 仓库编排按产物类型分层和自包含 Skill 目录：版本化自动化 prompt 位于 `prompts/`，Onboard 运行实现位于 `scripts/`，可安装载荷保留在 `templates/`，第三方 fallback 保留在 `assets/`。`templates/` 不提升到 Onboard 根目录，因为它明确区分“安装器实现”和“将被复制到目标位置的模板载荷”。
 
-`AGENTS.md` 和 `ENTRYPOINT.md` 是必须由 Git 追踪的仓库控制文件：前者保存当前仓库直接生效的补充规则，后者保存版本检查和 `update` / `更新` 使用的 authoritative baseline。新 clone 必须直接取得二者；不要把它们加入 `.gitignore`、移出索引或只保存在单台工作站。
+`ENTRYPOINT.md` 必须由 Git 追踪，保存版本检查和 `update` / `更新` 使用的 authoritative baseline；新 clone 必须直接取得它。根 `AGENTS.md` 是本机可选补充规则，已加入根 `.gitignore` 并从 Git 索引移除，不进入远程 `main`；新 clone 不包含该文件，工作树缺失时继续使用已追踪规则，不得把它的存在当作 Gate。
 
-普通修改任务只更新本仓库内的源文件。每次仓库代码或工作流规则改动后，都必须评估 `CHANGELOG.md`、`README.md`、`README.html` 和版本化 automation prompt 是否需要同步调整。只有用户明确输入 `sync` 或 `同步` 时，才把允许列表中的全局规则和 Skill 同步到本地生效路径；sync 允许列表明确包含 bundled `web-ui-autotest-generator` 完整目录到 `/Users/lusonglin/.agent/skills/web-ui-autotest-generator/` 的映射。随后比较版本化 prompt 与 Orca `SBTD Workflow Tools Version Check` 的完整内容，仅在存在差异时同步到 live automation 并报告结果。`update` / `更新` 只处理版本写回和归档，与版本化 prompt 和 live automation 无关；`AGENTS.project.md` 不在普通 sync 范围内。
+普通修改任务只更新本仓库内的源文件。每次仓库代码或工作流规则改动后，都必须评估 `CHANGELOG.md`、`README.md`、`README.html` 和版本化 automation prompt 是否需要同步调整。只有用户明确输入 `sync` 或 `同步` 时，才把允许列表中的全局规则和 Skill 同步到本地生效路径；sync 允许列表明确包含 bundled `web-ui-autotest-generator` 完整目录到 `/Users/lusonglin/.agent/skills/web-ui-autotest-generator/` 的映射。required Ponytail Skills（`ponytail`、`ponytail-review`、`ponytail-audit`、`ponytail-debt`）不得作为同步表 `cp` / `rsync` 行；sync 在复制 Onboard 后必须用已同步的 `scripts/onboard.py install-external-skills --skills ponytail,ponytail-review,ponytail-audit,ponytail-debt --scope global --source auto --global-skills-dir /Users/lusonglin/.agent/skills --yes` 从 stable mirror 安装，并确认 4 个 `SKILL.md` 存在。随后比较版本化 prompt 与 Orca `SBTD Workflow Tools Version Check` 的完整内容，仅在存在差异时同步到 live automation 并报告结果。`update` / `更新` 只处理版本写回和归档，与版本化 prompt 和 live automation 无关；`AGENTS.project.md` 不在普通 sync 范围内。
 
 ## 工作流主线
 
@@ -210,16 +225,18 @@ pwsh -File .\install.ps1
   -> 最终报告状态、跳过原因、剩余风险
 ```
 
+全路径判定图：[SBTD 支持的工作路径](docs/assets/sbtd-workflow-paths.md)。
+
 关键边界：
 
 - Trellis 负责复杂任务生命周期、任务产物和阶段门禁，不强制用于所有小任务。
-- 如果已确认当前目录是项目根目录，且存在项目级 `AGENTS.md`，但根目录没有 `.trellis/`，Agent 必须提示项目尚未执行 `trellis init`；普通项目操作默认不代用户执行。例外是 `sbtd-workflow-onboard` 的 `init` / `reset`：在 Trellis CLI 已可用、用户确认 username 和可选 platform flags 后，onboard 流程可以主动运行 `trellis init -u <username> ... --yes --skip-existing`。
-  Trellis 平台标志显式且相互独立：`omp` 只生成 `trellis init --omp`，`pi` 只生成 `--pi`，onboard 不得在两者之间替换。
+- 如果已确认当前目录是项目根目录，且存在项目级 `AGENTS.md`，但根目录没有 `.trellis/`，Agent 必须提示项目尚未执行 `trellis init`；普通项目操作默认不代用户执行。例外是 `sbtd-workflow-onboard` 的 `init` / `reset`：在 Trellis CLI 已可用、用户确认 username 后，onboard 使用 `--platform` 的精确 Trellis flag（`codex` / `claude` / `kimi`）或显式 `--trellis-platform` 运行 `trellis init -u <username> ... --yes --skip-existing`。空 flag 不会交给 `trellis init --yes`（否则 Trellis 会默认安装 Claude 和 Cursor）。`oh-my-pi` 必须显式给出 `omp` 和/或 `pi`。
+  Trellis 平台标志相互独立：`omp` 只生成 `trellis init --omp`，`pi` 只生成 `--pi`，onboard 不得在两者之间替换。
 - Trellis CLI 升级后，已有 `.trellis/` 的项目先运行 `trellis update` 刷新生成脚本和 filesystem-safety guard；如果更新涉及 SessionStart、PreToolUse 或其他 hook 配置，先重启对应 Agent host / IDE，再验证新会话身份或 hook 行为。对 uninstall、archive、task start / set-*、Channel 名称等删除 / 移动 / 路径解析操作，不绕过 dirty-data、manifest ownership、safe-name 和 active-task pointer containment guard。升级后不要假设 `trellis update` 会改写既有 session pointer；越权任务路径按无任务处理。
 - `.trellis/config.yaml`、`.trellis/workflow.md` 和 task artifacts 只定义共享 workflow gate，不标识运行平台。当前 host 与其专属生成资产决定本次执行：Codex 使用 `.codex/**`，OMP 使用 `.omp/**`；二者共存时按当前 host 选择，纯静态文件不足时标记 unknown。仅当前 host 为 Codex 且 `.codex/**` 集成可用时解释 `codex.dispatch_mode`：`auto` 由主会话协调并按职责调度 role subagent，显式 Inline 与非法显式值的 fail-closed fallback 也仅属于 Codex。仅当前 host 为 OMP 且 `.omp/**` 集成可用时使用 OMP `task` worker 和生成的 agent 定义，不得套用 Codex dispatch。单个 platform role subagent 不构成 Channel 触发，Channel 仍须用户明确请求或 preflight 后确认；每项变更职责只允许一个写入执行者，用户请求的独立只读复核可并行。
-- Codex remote plugins、connectors 和延迟加载工具以当前会话的 `tool_search`、工具列表或 MCP 可见性检查为准；候选 catalog 不等于已授权或已可调用。
+- Codex remote plugins、connectors 和延迟加载工具以当前会话的 `tool_search`、工具列表或 MCP 可见性检查为准；候选 catalog 不等于已授权或已可调用。项目级 marketplace 无效不得否定其余有效 plugin；可选 MCP 首轮工具缺失可能只是启动宽限期。
 - GitNexus 只有在 MCP 可用且项目索引有效时使用，作为影响分析和变更检测辅助。
-- GitNexus 的 PDG、taint、trace、多分支索引和不同 MCP transport 属于显式 opt-in 能力；使用时必须记录模式 / 分支并回到源码与测试复核。
+- GitNexus 的 PDG、taint、trace、多分支索引和不同 MCP transport 属于显式 opt-in 能力；使用时必须记录模式 / 分支并回到源码与测试复核。CLI 升级若改变 receiver / import / interface 解析，必须重新 `gitnexus analyze` 后再依赖索引。MCP allowlist 未覆盖时 GitNexus MCP 对该仓库不可用，不得当作 MCP 可读；fail-closed 只读时不走 MCP 写入；二者都不跳过 CLI 重新 analyze。
 - Skill 按场景调用，不替代项目规范、Trellis 产物、测试或人工判断。
 - AGENTS 模板只承载常驻上下文必须知道的路由、触发条件、硬性安全边界和最终报告要求；详细流程、命令参数、检查清单和专项判断优先放入对应 Skill 延迟加载。
 - Web 和 Mobile 验证工具分工明确，不把诊断、探索和可重复测试混为一谈。
@@ -576,7 +593,7 @@ API、Web E2E、Mobile E2E、Hybrid E2E 或发布前 smoke 进入正式验证时
 
 ## 模板 `.gitignore` 工具与测试产物策略
 
-项目模板默认追踪项目级 `AGENTS.md`、`CLAUDE.md`、共享 `.agents/skills/**`，以及 Trellis 为 Claude / Codex / OMP 等平台生成的 agents、commands、skills、hooks、extensions 和共享 settings；只忽略 `.claude/projects/`、`.claude/worktrees/`、`.claude/settings.local.json` 与 `.omp/plugins/` 等已确认的本地运行态或机器本地设置。本项目模板选择用无尾随斜杠的 `.trellis/workspace` 将 Trellis 生成的 `index.md`、开发者 journal / trace，以及有意配置为 symlink 的顶级 workspace 作为本地数据忽略；这有意不同于上游 Trellis 默认会 stage workspace 内容的策略，并阻止 workspace 内容自动提交。初始化时按精确非空行比较项目原 `.gitignore` 与模板：已有行保持原位且不重复，只把缺失行追加到文件末尾；重复执行必须保持文件字节不变。模板同时忽略本地运行态和报告产物，保留可维护测试资产。当前相关片段如下：
+项目模板默认追踪项目级 `AGENTS.md`、`CLAUDE.md`、共享 `.agents/skills/**`，以及 Trellis 为 Claude / Codex / OMP 等平台生成的 agents、commands、skills、hooks、extensions 和共享 settings；只忽略 `.claude/projects/`、`.claude/worktrees/`、`.claude/settings.local.json` 与 `.omp/plugins/` 等已确认的本地运行态或机器本地设置。本项目模板用无尾随斜杠的 `.trellis/*` 覆盖 `.trellis` 下所有直接子项，因此 Trellis 生成的 workspace `index.md`、开发者 journal / trace，以及有意配置为 symlink 的顶级 workspace 都作为本地数据被忽略（无尾随斜杠同时匹配目录与指向目录的 symlink），再由 `!` 规则逐项放回需要追踪的 spec / agents / lessons / task 产物；这有意不同于上游 Trellis 默认会 stage workspace 内容的策略，并阻止 workspace 内容自动提交。初始化时按精确非空行比较项目原 `.gitignore` 与模板：已有行保持原位且不重复，只把缺失行追加到文件末尾；重复执行必须保持文件字节不变。写入后若目标是 Git worktree，Onboard 用 `git check-ignore` 验证 `.trellis/spec` / agents / lessons / task 产物确实可追踪，workspace / runtime 确实被忽略；既有 `.trellis/` 等宽泛父目录排除会给出具体来源行并使操作失败，不能以“模板文本已存在”冒充语义有效。模板同时忽略本地运行态和报告产物，报告默认本地留存而非 Git 入库。当前相关片段如下：
 
 既有项目迁移：如果旧模板已经写入 `.claude/`、`CLAUDE.md`、`.agents/` 或 `/AGENTS.md`，`init` / `reset` 的“只追加缺失行”契约不会自动删除这些既有行；确认项目需要追踪对应控制文件与生成集成后，手工删除这些旧行，并用 `git check-ignore` 复核目标路径。
 
@@ -597,8 +614,9 @@ API、Web E2E、Mobile E2E、Hybrid E2E 或发布前 smoke 进入正式验证时
 .worktrees/
 
 # ---------- Trellis ----------
-# Ignore generated workspace data and an intentional workspace symlink.
-.trellis/workspace
+# Ignore every direct child, including generated workspace data and an
+# intentional workspace symlink; re-include tracked spec / agents / tasks.
+.trellis/*
 # ---------- Testing -----------
 # MCP / browser controller local state
 .chrome-devtools-mcp/
@@ -635,10 +653,12 @@ tests/e2e/**/*.trace.zip
 
 - 根安装器在用户选择或传入目标 Agent 平台后、询问 `init` / `reset` 和项目路径前，立即检测对应 CLI：`codex`、`claude`、`kimi` 或 `omp`。已通过 `<command> --version` 则继续；缺失或验证失败时先确保 npm 可用，再用 npm 全局安装官方 `@latest` 包并复验命令。
 - 全局 Agent 规则，以及一个或多个项目根目录下的项目级 Agent 模板和 `.gitignore`。
-- 15 个 bundled Skills 和 14 个 external Skills 强制安装到全局 Skill 目录，不再提供 project/none scope 选择；`catalog.json` 是 bundled Skill、external Skill 上游 repo/subpath/alias 和模板源路径的事实源，两个根安装器从 `check` 的 `group=referenced` 获取 external canonical 清单，不再各自维护重复数组。Catalog Schema 与运行时会在执行命令前同时拒绝绝对路径 / `..` 逃逸、错误 source 文件类型、bundled Skill frontmatter 身份不一致、非法 kind/id/target-role 组合和不完整的 HTTPS 仓库地址。
+- 15 个 bundled Skills 和 18 个 required external Skills 始终以全局 Skill 目录为目标，不再提供 project/none scope 选择。`init` 对已合法的 Skill 壳（普通目录、普通 `SKILL.md`、frontmatter `name` 匹配）跳过；缺失或身份无效才安装。`reset` 无备份覆盖全部 bundled Skills，并从当前 stable snapshot 强制重装全部 required external Skills。`catalog.json` 是 bundled Skill、external Skill 上游 repo/subpath/alias 和模板源路径的事实源，两个根安装器从 `check` 的 `group=referenced` 获取 external canonical 清单，不再各自维护重复数组。Catalog Schema 与运行时会在执行命令前同时拒绝绝对路径 / `..` 逃逸、错误 source 文件类型、bundled Skill frontmatter 身份不一致、非法 kind/id/target-role 组合和不完整的 HTTPS 仓库地址。
+
 - Trellis CLI 和 GitNexus CLI 强制全局安装，不再提供项目内 CLI 安装；`.trellis/` 与 `.gitnexus/` 状态仍属于各项目。
 - `init` / `reset` 对每个项目根目录独立检查 `.trellis/`，执行 `trellis init -u`，并检查 `.trellis/tasks/00-bootstrap-guidelines`；一个项目需要 bootstrap 不会阻止其余项目继续检查。
 - `--init-projects` / `-InitProjects` 提供独立的 project-only 模式，只执行逐项目 AGENTS、`.gitignore`、Trellis、Playwright 和 React Bits 检查配置，不检测或安装任何全局 Agent CLI、runtime、tool、Skill 或 MCP。
+- `AGENTS.project.md` 只保存 project-only fallback、项目路径和项目级硬边界；正常 `init` / `reset` 由全局 AGENTS + Skills 激活完整路由，public bootstrap / `init-projects` 不单独激活 book-derived 门禁。全局 AGENTS 维护客观触发和 Gate lifecycle，各 reviewer `SKILL.md` 独占状态、输出 schema、修正回路与 stop condition；`trellis-workflow` 只额外保留在全局路由不可见时可自举的最小 objective-trigger fallback，不复制 reviewer 状态。
 - GitNexus MCP 手动配置检查；检测到本机 `gitnexus` CLI 路径时，输出并供安装脚本使用 `command = "<detected-gitnexus-path>"`、`args = ["mcp"]` 的配置。
 - Chrome DevTools MCP 手动配置检查。
 - Playwright MCP 手动配置检查。
@@ -650,6 +670,8 @@ tests/e2e/**/*.trace.zip
 - mattpocock external Skill 使用上游 canonical 名称。`migrate-external-skills --scope global --yes` 会先对全部受管旧目录做 identity preflight，再以已选 source 事务安装所需 canonical replacement。需要 canonical replacement 的 legacy predecessor 会在成功 transaction commit 后随临时 rollback 目录删除；只有不需要 canonical install 的 legacy-only cleanup（已有有效 replacement，或无 replacement 的 `zoom-out`）才会在删除前保留 migration backup。任何身份冲突均在安装前 fail-closed。正常 `init` / `reset` 仍只做已发现 legacy 的自动迁移。
 - bundled Onboard rename migration 在 canonical `sbtd-workflow-onboard/SKILL.md` 校验成功，且 legacy `kuno-workflow-onboard-skills/SKILL.md` 的 frontmatter 仍确认旧身份时才删除旧目录；同名文件、无效 / 不相关目录或身份不匹配会在任何 target 变更前阻断 `init` / `reset` 并保留原内容，删除异常会进入失败报告；`plan` 会报告迁移目标或 identity conflict，`init-projects` 不检查或修改全局 Skill 目录。
 - `shadcn`、`ui-ux-pro-max`、`impeccable` 等 referenced external Skill 的存在性检查。
+- `ponytail`、`ponytail-review`、`ponytail-audit`、`ponytail-debt` 与其他 external Skills 同为 required：缺失或损坏时不询问、直接从 stable set 补装或修复，失败即阻断。SBTD 统一使用 Onboard stable skill-only provider；`check --json` 输出 `ponytailProvider`，检测到 Codex / OMP 官方 Ponytail plugin 已启用时报告 `provider=conflict`，`check` 失败且 `init` / `reset` 在写 stable copies 前阻断，根安装器同样停止。OMP 只在 `~/.omp` 已存在时执行 `omp plugin list`；缺失目录报告 `not-configured`，不得由只读检查创建。plugin 已安装但禁用只报告不阻断，CLI 不可用报告 `unknown` 而不伪造状态。Onboard 不安装、启用、禁用、信任或卸载官方 plugin；`ponytail-gain` / `ponytail-help` 只属于官方 plugin，不由 Onboard 管理。
+- 全局 `AGENTS.md` 模板包含 Code Readability canonical 规则：正确性、安全、运行时特性、明确需求和项目约定优先，可读性与可维护性高于源码行数、文件数和最小 diff。编码任务在适用开发门禁通过后、首次实现编辑前主动调用 `ponytail`；非平凡生产 diff 通过定点 smoke 后、最终 `project-validation` 前主动调用 `ponytail-review`，findings 必须经 Code Readability 裁决，随后执行 Code Readability Review；`ponytail-audit` 与 `ponytail-debt` 只按客观触发条件调用。`project-validation` 不承载可读性规则。
 - React Bits tier 选择对每个 React + shadcn/ui 项目独立判断；仍保持项目级、可选并保留 license/registry 前置条件。
 - `caveman` 用户级全局交互压缩 Skill 的存在性检查和安装引导。
 
@@ -692,6 +714,6 @@ bash install.sh --platform codex --init-projects /abs/project-one,/abs/project-t
 .\install.ps1 -Platform codex -InitProjects "C:\work\one,C:\work\two"
 ```
 
-`caveman`、RTK、Java 和 Maestro 保持原来的条件确认规则；`caveman` 安装本身不会立即启用持久压缩对话模式。同一主要目标达到 3 次中间状态更新、5 个独立工具结果、长任务 / 上下文压力或重复自动化 / review / 验证轮次中的任一条件时，`autoLiteEligible` 单调锁存，下一条普通重复状态必须进入 `auto-lite`；保护区只覆盖当前回复，只有新的主要目标重置。任务级和会话级退出、手动模式与重新启用语义继承全局状态机。15 个 bundled Skills 和 14 个 external Skills 在正常 `init` / `reset` 中作为必需全局能力处理：缺失 external Skills 默认从 Onboard 内置、经过 review 和 checksum 固定的 stable set 安装，不访问上游；只有显式 `--source upstream` 才获取并验证当前上游，任何失败都直接报错。bundled Skills 写入全局目录，两类 Skill 均不再询问 project scope。`sbtd-workflow-onboard` canonical Skill 写入且 frontmatter 校验通过后，旧 `kuno-workflow-onboard-skills` 目录会被删除，不保留 alias 或兼容副本。stable 自身完整性错误，以及目标侧 staging、权限、磁盘、commit 或 rollback 错误都直接失败，不存在自动 source fallback。已有 bundled 目标会被覆盖且不备份；External Skill 显式替换采用临时事务 rollback，完整恢复后删除临时备份，恢复不完整时保留并返回 rollback 路径；已有且验证有效的 canonical external Skill 不会在每次 init/reset 中重复安装，legacy migration 只处理旧名称。
+`caveman`、RTK、Java 和 Maestro 保持原来的条件确认规则；`caveman` 安装本身不会立即启用持久压缩对话模式。同一主要目标达到 3 次中间状态更新、5 个独立工具结果、长任务 / 上下文压力或重复自动化 / review / 验证轮次中的任一条件时，`autoLiteEligible` 单调锁存，下一条普通重复状态必须进入 `auto-lite`；保护区只覆盖当前回复，只有新的主要目标重置。任务级和会话级退出、手动模式与重新启用语义继承全局状态机。15 个 bundled Skills 和 18 个 required external Skills 在正常 `init` / `reset` 中作为必需全局能力处理：缺失 external Skills 默认从 Onboard 内置、经过 review 和 checksum 固定的 stable set 安装，不访问上游；只有显式 `--source upstream` 才获取并验证当前上游，任何失败都直接报错。bundled Skills 写入全局目录，两类 Skill 均不再询问 project scope。`sbtd-workflow-onboard` canonical Skill 写入且 frontmatter 校验通过后，旧 `kuno-workflow-onboard-skills` 目录会被删除，不保留 alias 或兼容副本。stable 自身完整性错误，以及目标侧 staging、权限、磁盘、commit 或 rollback 错误都直接失败，不存在自动 source fallback。`init` 对已合法 bundled / required external Skill 壳跳过；`reset` 无备份覆盖全部 bundled Skills，并从当前 stable snapshot 强制重装全部 required external Skills。External Skill 显式替换采用临时事务 rollback，完整恢复后删除临时备份，恢复不完整时保留并返回 rollback 路径；legacy migration 只处理旧名称。
 
-逐项目 `init` / `reset` / `init-projects` 完成模板写入后会继续做 Trellis setup：每个缺少 `.trellis/` 的 root 都执行同一 username/platform 配置的 `trellis init -u <username> ... --yes --skip-existing`，随后分别检查 `.trellis/tasks/00-bootstrap-guidelines`。汇总状态按 `failed > blocked > needs-user > bootstrap-required > success > skipped` 处理；命中的每个项目都必须按 `trellis-workflow` 完成 bootstrap guideline 后才算 onboarding 完成。
+逐项目 `init` / `reset` / `init-projects` 完成模板写入后会继续做 Trellis setup：每个缺少 `.trellis/` 的 root 都执行同一 username 和已解析平台 flags 的 `trellis init -u <username> --<flag> ... --yes --skip-existing`；`--platform codex|claude|kimi` 在未给 `--trellis-platform` 时提供默认 flag，`plan --json` 的 `trellisInit.command` 会写出完整命令。随后分别检查 `.trellis/tasks/00-bootstrap-guidelines`。汇总状态按 `failed > blocked > needs-user > bootstrap-required > success > skipped` 处理；命中的每个项目都必须按 `trellis-workflow` 完成 bootstrap guideline 后才算 onboarding 完成。

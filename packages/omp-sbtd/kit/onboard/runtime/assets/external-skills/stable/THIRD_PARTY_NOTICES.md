@@ -12,3 +12,4 @@ refreshes the manifest digests and third-party notices.
 |---|---|---|
 | `mattpocock/skills` | MIT | `licenses/mattpocock-skills-LICENSE` |
 | `nextlevelbuilder/ui-ux-pro-max-skill` | MIT | `licenses/ui-ux-pro-max-skill-LICENSE` |
+| `DietrichGebert/ponytail` | MIT | `licenses/ponytail-LICENSE` |

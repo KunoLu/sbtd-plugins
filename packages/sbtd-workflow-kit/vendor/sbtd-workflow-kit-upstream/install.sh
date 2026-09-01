@@ -34,7 +34,8 @@ Options:
   --platform <codex|claude|kimi|oh-my-pi|omp>
       Target Agent CLI and MCP platform. "omp" is an alias for "oh-my-pi".
       This option does not change the Codex global AGENTS.md target; override
-      that separately with --global-agents-path.
+      that separately with --global-agents-path. If ~/.omp already exists,
+      init/reset also overwrite ~/.omp/agent/AGENTS.md.
       The installer verifies this CLI immediately, bootstraps npm when needed,
       and installs the official npm package globally at @latest when missing.
   --source-root <path>
@@ -59,7 +60,8 @@ Options:
       Developer username for trellis init -u when the project has no .trellis/.
   --trellis-platform <name[,name...]>
       Trellis init platform flag without leading dashes. May be repeated.
-      Examples: codex, claude, cursor, opencode, gemini, omp, pi. OMP and Pi are separate flags.
+      Examples: codex, claude, kimi, cursor, omp, pi. Replaces the Agent
+      platform default. OMP and Pi are separate flags.
   --skip-trellis-init
       Skip post-install trellis init for project roots without .trellis/.
   --skip-trellis-bootstrap
@@ -329,6 +331,9 @@ run_cmd_in_dir() {
 
 onboard_common_args() {
   local args=()
+  if [[ -n "$PLATFORM" ]]; then
+    args+=(--platform "$PLATFORM")
+  fi
   if [[ -n "$PROJECTS_ROOT" ]]; then
     args+=(--projects-root "$PROJECTS_ROOT")
   fi
@@ -382,7 +387,14 @@ refresh_check_json() {
   read_common_args
   args=(${COMMON_ARGS_OUT[@]+"${COMMON_ARGS_OUT[@]}"})
   CHECK_JSON="$(mktemp "${TMPDIR:-/tmp}/sbtd-onboard-check.XXXXXX")"
-  "$PYTHON_BIN" "$SOURCE_ROOT/scripts/onboard.py" check ${args[@]+"${args[@]}"} --json > "$CHECK_JSON"
+  # check exits 4 on a Ponytail provider conflict while still printing valid
+  # JSON; assert_ponytail_provider_clear turns that state into a clear error.
+  # Any other non-zero exit is a real check failure and must abort.
+  local rc=0
+  "$PYTHON_BIN" "$SOURCE_ROOT/scripts/onboard.py" check ${args[@]+"${args[@]}"} --json > "$CHECK_JSON" || rc=$?
+  if [[ "$rc" -ne 0 && "$rc" -ne 4 ]]; then
+    return "$rc"
+  fi
 }
 
 refresh_agent_cli_json() {
@@ -555,7 +567,12 @@ print_check() {
   local args=()
   read_common_args
   args=(${COMMON_ARGS_OUT[@]+"${COMMON_ARGS_OUT[@]}"})
-  run_onboard check ${args[@]+"${args[@]}"}
+  local rc=0
+  run_onboard check ${args[@]+"${args[@]}"} || rc=$?
+  # Exit 4 means a Ponytail provider conflict; the follow-up assert reports it.
+  if [[ "$rc" -ne 0 && "$rc" -ne 4 ]]; then
+    return "$rc"
+  fi
 }
 
 json_python() {
@@ -601,6 +618,8 @@ elif mode == "missing-external-skills":
         if item.get("group") == "referenced" and not item.get("installed")
     ]
     print(",".join(missing))
+elif mode == "ponytail-provider":
+    print(data.get("ponytailProvider", {}).get("provider", "unknown"))
 elif mode == "mcp-command":
     config = find_manual_check(args[0]).get("mcpServerConfig") or {}
     print(config.get("command") or "")
@@ -881,8 +900,17 @@ resolve_trellis_project_setup_inputs() {
 
   if (( ${#TRELLIS_PLATFORMS[@]} == 0 )); then
     local raw_platforms
-    raw_platforms="$(prompt_text 'Trellis platform flags, comma-separated without --, or blank for none' '')"
+    local prompt='Trellis platform flags, comma-separated without --. Blank uses the Agent platform default for codex, claude, or kimi; Oh My Pi requires omp and/or pi'
+    raw_platforms="$(prompt_text "$prompt" '')"
     split_trellis_platforms "$raw_platforms"
+  fi
+}
+
+assert_ponytail_provider_clear() {
+  local provider
+  provider="$(json_python ponytail-provider)"
+  if [[ "$provider" == "conflict" ]]; then
+    die "Ponytail provider conflict: the official Ponytail plugin is enabled. Disable or remove that plugin, then rerun the installer; Onboard installs and manages the vendored stable Ponytail Skills."
   fi
 }
 
@@ -892,6 +920,7 @@ install_missing_runtime_and_skills() {
   printf '\n'
   print_check
   refresh_check_json
+  assert_ponytail_provider_clear
 
   if [[ "$(json_python tool-installed rtk)" != "true" ]]; then
     local wrong verification

@@ -8,7 +8,7 @@ allowed-tools: read grep glob bash
 metadata:
   sbtd.category: knowledge
   sbtd.portable: "true"
-  sbtd.source-revision: 4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb
+  sbtd.source-revision: f8aa0d7225a26c5e00b81d2f1b05121108e63630
 compatibility: Requires Python 3.10+, PyYAML, jsonschema, and configured
   repositories or runner adapters.
 ---

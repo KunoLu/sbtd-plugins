@@ -88,6 +88,9 @@ Codex 可能通过本地插件、remote plugins、connectors、MCP 或 `tool_sea
 - ChatGPT-hosted MCP、OAuth、session authentication、connector token、cookies 和账号状态只能通过当前 Agent / connector 的受控工具使用；不要复制、打印、持久化或写入仓库、日志、截图、报告和 MCP 配置示例。
 - Codex 可能通过系统代理处理认证和 API 流量；除非用户明确要求，不要替用户改操作系统代理、PAC、WPAD 或企业网络配置。网络失败时按可见错误诊断，并区分 runtime 代理行为和项目代码问题。
 - 不要因为上游支持新的 remote plugin、connector、MCP transport 或 session auth 能力，就静默改写项目配置、用户级 MCP 配置、CI 配置或 hooks。
+- 项目级 plugin / marketplace 配置会并入 catalog；某个 project marketplace 无效时，不得据此把其余有效 plugin 判定为不可用。
+- 可选 MCP 服务器的工具发现可能受启动宽限期约束；首轮工具列表缺少某个已配置 optional MCP 不等于该 server 未安装，应再做一次可见性检查后再判定 missing。不要静默改写 `mcp_optional_startup_grace` 或 MCP server 配置。
+- Codex extension 可能在 MCP tool result 到达模型前检查或替换结果；不要把 MCP 原始响应当作模型一定看到的内容，也不要因 extension 存在就静默改写 MCP 配置。
 
 ### Trellis
 
@@ -132,7 +135,9 @@ trellis init -u your-name
 - 不要默认读取完整 `.trellis/lessons/**`；先通过 `.trellis/lessons/index.md`、tags、错误信息或当前任务主题按需检索，再读取命中的 topic / archive 文件。
 - 如果存在当前任务产物，优先读取 `prd.md`、`design.md`、`implement.md`。
 - 升级 Trellis CLI 后，如果项目已有 `.trellis/`，先运行 `trellis update` 刷新生成脚本和 filesystem-safety guard；如果更新涉及 SessionStart、PreToolUse 或其他 hook 配置，在验证新会话身份或 hook 行为前重启对应 Agent host / IDE。
-- 对 `trellis uninstall`、`task.py archive`、`task.py start`、`task.py set-branch` / `set-scope` / `set-meta`、subtask 以及 `trellis channel create/spawn/rm` 等会删除、移动或按名称解析路径的操作，不要用环境变量、手工路径、`..` 或仓库外绝对路径绕过 Trellis 的 dirty-data、manifest ownership、safe-name 和 active-task pointer containment guard；guard 拒绝或把越权 pointer 降级为无任务时，先报告原因并让用户确认备份、清理或重试方案。升级后不要假设 `trellis update` 会改写既有 session pointer；若任务上下文指向项目外路径，按无任务处理，不要继续读取该路径。
+- 对 `trellis uninstall`、`trellis ablate` / `trellis restore`、`task.py archive`、`task.py rename`、`task.py start`、`task.py set-branch` / `set-scope` / `set-meta`、subtask 以及 `trellis channel create/spawn/rm` 等会删除、移动、整仓移除或按名称解析路径的操作，不要用环境变量、手工路径、`..` 或仓库外绝对路径绕过 Trellis 的 dirty-data、manifest ownership、safe-name 和 active-task pointer containment guard；guard 拒绝或把越权 pointer 降级为无任务时，先报告原因并让用户确认备份、清理或重试方案。升级后不要假设 `trellis update` 会改写既有 session pointer；若任务上下文指向项目外路径，按无任务处理，不要继续读取该路径。
+- 当 per-turn breadcrumb 为 `[workflow-state:task_error]` 时，不要创建或激活另一个任务；先检查并修复现有 `task.json`（必须是带非空 `status` 的合法 JSON 对象），无法安全判断 status 时先询问用户。
+- 对 sub-agent-dispatch 平台，空的或仅 seed 的 `implement.jsonl` / `check.jsonl` 会使 `task.py validate` 失败、`task.py start` 拒绝；只有用户明确要求空上下文启动时才使用 `--allow-empty-context`。
 
 ### GitNexus
 
@@ -172,6 +177,13 @@ GitNexus 通过全局安装的 `gitnexus-mcp` 提供能力，不作为 Skill 管
 - 如果需要移除 GitNexus 集成，优先使用 `gitnexus uninstall` 的 dry-run 查看将删除的 MCP 配置、Skill 和 hooks；只有用户明确确认后才加 `--force`，并复核配置 diff。
 - 可选 tree-sitter grammar 缺失、跳过或回退构建不一定代表 `gitnexus analyze` 失败；若输出提示 optional grammar、prebuild / toolchain fallback 或 `GITNEXUS_SKIP_OPTIONAL_GRAMMARS`，把相关语言覆盖作为风险记录，并结合实际源码和查询结果复核。
 - 大仓库分析中出现 skipped large files、内存墙、FTS 损坏或 repair 提示时，把这些作为索引完整性风险；需要时运行 GitNexus 提供的修复或重建命令后再依赖结果。
+- GitNexus CLI 的 Node 运行时下限以当前官方 npm `engines.node` / release 为准；native load 或 analyze 失败时先核对本机 Node 是否满足该下限，再判断索引损坏。
+- CLI 升级若改变 receiver / import / interface 解析或图边语义，既有索引不会自动带上新边；升级后先按项目约定重新 `gitnexus analyze`，再依赖 MCP 结果。
+- 不要配置或依赖已移除且原本非功能的 group matching 旋钮：`matching.bm25_threshold`、`matching.embedding_threshold`、`detect.embedding_fallback`、`gitnexus group sync --skip-embeddings`、MCP `group_sync` 的 `skipEmbeddings`。
+- GitNexus MCP 的 repository allowlist 与 fail-closed 只读是两类限制：当前仓库不在 allowlist 内时，GitNexus MCP 对该仓库不可用，不要调用 MCP 读或写工具，也不要把 MCP 结果当作可读证据；fail-closed 只读时不要走 MCP 写入路径。二者都不得跳过 CLI `gitnexus analyze` 或项目约定的索引刷新。`uninstall --force` 仍须用户明确确认。
+- 不要默认使用 `gitnexus analyze --self-commit`；除非用户明确要求 GitNexus 提交 AGENTS.md / CLAUDE.md 等 agent guide 变更。
+- Codex plugin marketplace、GitNexus hooks 或 `.agents/skills/` 中由 GitNexus 镜像出的 Skill 副本，不等于全局 `gitnexus-mcp` 已可用；不要把这些副本提交为项目 canonical Skill，除非项目明确设计要追踪它们。
+- `impact` / `context` 若标记 incomplete 或因 output budget 截断，不得把空结果解释为“无依赖 / 无调用方”。
 
 如果 GitNexus MCP 不可用或项目未建立索引：
 
@@ -294,20 +306,16 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 
 - 无论是 Agent 自发调用还是用户主动调用，每次完整执行 `grill-with-docs` 结束后，必须立即调用 `book-ddd-distilled-modeling` 做独立的二次边界审核；调用来源和 Agent 是否认为需求已足够清晰都不构成跳过理由。
 - `grill-with-docs` 内嵌的 external `domain-modeling` dependency 已运行也不得替代这次后置审核。前者负责访谈中的主动建模和长期术语沉淀，后者必须重新读取本次澄清结果与项目事实，检查统一语言、bounded context、业务不变量、子域归属、术语混用和未决冲突。
-- 二次审核必须向用户输出独立的 `DDD Boundary Review`，状态只能是 `confirmed` / `needs-clarification` / `blocked`，并列出统一语言、bounded context、业务不变量、子域判断、对 `grill-with-docs` 结果的修正以及未决问题；不得只说“已审核”或把结果隐含在需求摘要中。
-- 状态为 `needs-clarification` 时，必须回到下一轮前置条件已满足的澄清 frontier，解决发现后重新运行 `book-ddd-distilled-modeling`；Skill 不可用、不可读取或证据不足时输出 `blocked` 和原因。未达到 `confirmed` 不得进入需求确认、PRD、design、Trellis task 或实现。
+- 二次审核必须向用户输出独立的 `DDD Boundary Review`，并覆盖对本次 `grill-with-docs` 结果的修正；不得只说“已审核”或把结果隐含在需求摘要中。审核状态枚举、输出字段、重跑回路和 stop condition 以 `book-ddd-distilled-modeling/SKILL.md` 为唯一事实源，本文件不复制。
+- 本门禁只固定时序：审核未达到该 Skill 定义的通过状态前，不得进入需求确认、PRD、design、Trellis task 或实现；Skill 不可用、不可读取或证据不足时按该 Skill 的阻断状态处理，不得跳过。
 - 如果没有调用 `grill-with-docs`，仍按任务自身的业务术语、领域规则和模型歧义判断是否独立调用 `book-ddd-distilled-modeling`；本后置门禁不把所有普通任务强制改为 DDD 流程。
 
 ### book-derived 开发阶段强制门禁
 
-- 进入开发任务时，必须先输出任务级 `Book Gate Plan`，逐项记录 5 个 bundled book-derived Skill 是 `required` 还是 `on-demand`、命中的客观事实、计划执行阶段和独立 Gate state。Gate state 只能是 `planned` / `running` / `passed` / `blocked` / `not-required`，合法转换为 `planned` → `running` → `passed` / `blocked`；未选中的 `on-demand` 项为 `not-required`。具体 reviewer status 只在 Skill 实际运行后记录，不能用未来终态填充计划。命中强制触发条件后不得以主观判断降级为按需；只有任务范围或项目证据变化使触发事实消失时才能更新计划，并说明依据。
-- `book-ddia-data-design`：开发任务修改持久化或共享数据、schema / migration、shared / persistent / cross-request / cross-process cache、queue / event / stream / job、ETL / analytics、跨服务数据流、data ownership、source of truth、事务边界、读写路径、backfill / replay / recovery 中任一项时，必须在 design / implement 产物稳定和实现开始前调用，输出 `DDIA Data Design Review`，状态只能是 `confirmed` / `needs-design-change` / `blocked`。
-- `book-legacy-change-safety`：开发任务修复既有行为 bug，或修改的既有代码存在弱 / 缺失测试、行为不清、隐藏依赖或高回归风险任一项时，必须在首次行为修改前调用，输出 `Legacy Change Safety Review`，状态只能是 `characterized` / `needs-safety-net` / `seam-required` / `blocked`。
-- `book-refactoring-pass`：开发任务将修改既有生产代码时，无论 Agent 预判是否需要重构，都必须在首次实现编辑前调用，输出 `Refactoring Review`，状态只能是 `proceed` / `refactor-first` / `blocked`。`proceed` 可以明确结论为无需重构，不得为了通过门禁制造重构。
-- `book-release-readiness`：开发任务修改生产路径中的 service、API、auth、billing、notification、background job、queue、scheduler、external integration、data pipeline 或 deployment behavior 任一项时，必须在所有适用 testing-tool gate 和 project validation 完成后、声明任务完成或进入最终发布决策前调用，输出 `Release Readiness Review`，状态只能是 `ready` / `needs-mitigation` / `blocked`。必需验证未完成只能为 `blocked`；只有 optional check 可由明确 accountable owner 接受为 residual risk。
-- 如果 `Legacy Change Safety Review` 为 `seam-required`，允许先运行 `Refactoring Review` 的 `safety-seam-only` 模式，只实施建立 safety net 所需的最小行为保持 seam 并验证等价性；随后回到 legacy review，建立安全网并达到 `characterized`，再重新运行常规 `Refactoring Review`。除此例外，同时为 `required` 时仍先 legacy 后 refactoring，不得在未锁定行为时开展普通重构。
-- 任一审核为 `needs-*`、`seam-required` 或 `refactor-first` 时，Gate state 保持 `running`，先完成对应修正 / safety net / 受控 seam / 最小重构 / mitigation，再重新运行同一 Skill；通过状态映射为 `passed`，reviewer `blocked` 映射为 Gate state `blocked`。未达到各自通过状态不得越过对应阶段。
-- 强制门禁命中时不得直接跳过；Skill 缺失、不可读取或证据不足必须报告 `blocked`，该规则优先于“Skill 不可用时”的普通按需处理。未命中强制触发条件的其他场景仍保持按需调用，可因用户明确要求或次要风险额外调用，不把 5 个 Skill 机械地全量串联到每个任务。
+- 进入开发任务时先输出任务级 `Book Gate Plan`：逐项记录 5 个 bundled book-derived Skill 的 `required` / `on-demand`、客观触发事实、执行阶段和 Gate state。Gate state 仅为 `planned` / `running` / `passed` / `blocked` / `not-required`，正常转换是 `planned` → `running` → `passed` / `blocked`；未选中的 on-demand 项为 `not-required`，不得预填 reviewer 终态。
+- 下方 Skill 路由表是客观触发条件的唯一常驻事实源；各 `book-*/SKILL.md` 独占 reviewer 状态、输出 schema、修正回路和 stop condition。本文件只额外固定跨 Skill 的时序，例如上一节“grill-with-docs 后置 DDD 边界审核”规定该审核何时必须运行、必须先通过才能进入哪些阶段，reviewer 契约本身仍属对应 Skill。命中触发条件后不得主观降级；未命中时保持 on-demand。
+- 同时命中 legacy / refactoring 时，顺序和 `seam-required` 的受控例外以两份 reviewer Skill 为准；未通过 reviewer 不得进入行为修改。Release readiness 仍在适用 testing-tool gate 与 `project-validation` 后运行。
+- 强制门禁命中但 Skill 缺失、不可读取或证据不足时，Gate state 为 `blocked`；普通 on-demand Skill 缺失才允许按“Skill 不可用时”降级。
 
 
 
@@ -323,8 +331,8 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 | `book-refactoring-pass` | 行为保持型重构检查 | 修改既有生产代码时在首次实现编辑前强制调用；legacy 为 `seam-required` 时可先以 `safety-seam-only` 模式建立安全网所需 seam；其他结构摩擦或 review 场景按需调用 |
 | `book-legacy-change-safety` | 遗留 / 弱测试代码安全修改 | 修复既有行为 bug，或弱测试、行为不清、隐藏依赖、高回归风险任一命中时，在首次行为修改前强制调用；其他场景按需调用 |
 | `book-ddd-distilled-modeling` | 轻量领域建模、统一语言和 bounded context 二次审核 | 每次完整执行 `grill-with-docs` 后强制调用；未调用 `grill-with-docs` 时，需求涉及业务术语、领域规则、上下文边界或模型歧义则在 PRD / design 前调用 |
-| `book-ddia-data-design` | 数据密集型设计风险检查 | 持久化 / 共享数据、schema、migration、shared / persistent / cross-request / cross-process cache、异步或跨服务数据流、数据所有权等客观触发项命中时，在设计稳定前强制调用；其他场景按需调用 |
-| `book-release-readiness` | 生产就绪与发布风险检查 | service / API / job / queue / integration / deployment 等生产路径触发项命中时，在所有适用 testing-tool gate 和 project validation 后、完成或发布前强制调用；其他场景按需调用 |
+| `book-ddia-data-design` | 数据密集型设计风险检查 | 持久化 / 共享数据、schema / migration、shared / persistent / cross-request / cross-process cache、queue / event / stream / job、ETL / analytics、跨服务数据流、API 所有权、数据所有权、source of truth、事务边界、读写路径、backfill / replay / rollback / recovery 任一命中时，在设计稳定前强制调用；其他场景按需调用 |
+| `book-release-readiness` | 生产就绪与发布风险检查 | service / API / auth / billing / notification / background job / queue / scheduler / 外部集成 / data pipeline / deployment / rollout / migration / runtime 运维行为变更任一命中时，在所有适用 testing-tool gate 和 project validation 后、完成或发布前强制调用；其他场景按需调用 |
 | `diagnosing-bugs` | 诊断 bug、测试失败、运行时错误、性能回归、日志异常、线上问题或数据不一致 | 问题根因不清或需要系统化排障时 |
 | `tdd` | 测试先行、回归测试、复杂逻辑验证、高风险修改 | 需要用测试固化行为再实现时；依赖 `codebase-design` |
 | `grill-me` | 通用需求澄清、方案质询、计划压力测试 | 用户希望先打磨计划、决策或设计时；依赖 `grilling` |
@@ -341,6 +349,10 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 | `shadcn` | shadcn/ui 项目组件、registry、preset、CLI 和组件组合规则 | 项目存在 `components.json`、使用 / 初始化 shadcn/ui，或需要 `shadcn init/add/search/view/docs/diff/info/migrate/preset`、registry 组件、preset、Base / Radix 差异、表单 / 图标 / chat primitives 等 shadcn 规则时 |
 | `web-ui-autotest-generator` | Web UI Playwright 测试资产生成、选择器审计和覆盖率报告 | 用户明确要求生成 Web UI 自动化测试，或测试阶段发现关键 Web UI 回归路径需要固化为仓库内可维护测试资产时 |
 | `seo-geo` | 公开网站 / 落地页 / 文档站 SEO 与 GEO 可见性专项检查 | 用户明确要求 SEO、GEO、AI search visibility、schema、meta tags、robots / sitemap 或公开 Web 发布前搜索可见性检查时；仅在 Skill 可用时 |
+| `ponytail` | 编码任务的最小正确实现选择（YAGNI、复用优先、stdlib 优先） | 所有编码任务在需求、设计和适用开发门禁确定后、首次实现编辑前主动调用 |
+| `ponytail-review` | 非平凡生产代码 diff 的过度设计 / 赘余审查 | 完整 diff 形成且定点 smoke 通过后、最终 `project-validation` 前主动调用；findings 必须经 Code Readability 裁决 |
+| `ponytail-audit` | 全仓只读 over-engineering / bloat 候选清单 | 用户明确要求全仓审计、验收明确包含全仓整改或跨模块架构整改需要只读候选清单时 |
+| `ponytail-debt` | `ponytail:` marker 台账收集 | 新增 / 修改或触及 `ponytail:` marker，或用户明确要求列出 shortcuts 台账时；默认不落盘 |
 | `React Bits tier / Pro Skill` | React / shadcn UI 项目中选择 React Bits Free 或付费 components、blocks、landing page sections | 目标项目已确认 React + shadcn/ui 后，用户明确需要 React Bits；Free 和付费 Starter / Pro / Ultimate 都需确认，付费还需 registry、项目内 Skill 和可读取 license key |
 
 ### 自定义 Skills 使用边界
@@ -355,11 +367,6 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 - `gherkin-bdd`：所有用户可见行为默认需要持久 BDD 场景。覆盖 UI、API、CLI、导出文件、通知、权限结果、错误响应、状态变化和外部集成可观察行为。新项目或无既有约定时默认使用 `.feature` 文件；已有 `.feature`、BDD runner 或项目级规则时沿用项目路径。前后端分仓、跨服务、Mobile + API 或 Hybrid 链路必须先确认 contract、环境、账号、数据、设备和选择器事实；缺关键事实时标记 blocked 或 `@todo`，不要把猜测写成 source of truth。既有项目采用 `no new uncovered behavior`：新增行为先写场景，修改既有行为时补齐 / 更新相关场景，用户可见 bug 修复先写正确行为场景再写失败回归测试。当主动使用 `gherkin-bdd` 且用户请求包含 `sync` 或 `同步` 时，进入 BDD Sync Mode：全量扫描当前工作树（含未提交内容）和项目 `features/`，判断 `.feature` 是否与最新代码行为一致；多仓 / 前后端分离时先确认其他仓库是否有更新，有更新则必须收集路径并一起扫描，无更新则记录确认后只按当前仓库同步；报告更新、新建、删除、未变和候选删除的 feature 文件。该同步功能保持可写行为审计语义不变。仅包含 BDD / 知识读取语境的 `read` 或 `读取`、且不包含 `sync` / `同步` 时，进入只读 Knowledge Ingest：按配置目标 ref 解析精确 commit SHA，读取仓库自有 `.feature` 并生成可重建聚合视图；不得切换活动工作树、修改源仓、要求或补写 Feature / Scenario ID、自动合并跨仓行为，最终报告 `Knowledge Ingest` 和 `Mutation: none`。纯内部重构、依赖 / 工具配置、机械格式化、无语义 UI polish 或 typo 可跳过，但最终输出要说明原因。BDD 不替代 PRD、DDD、TDD、项目验证、Playwright、Maestro 或人工评审；PRD 说明意图，DDD 稳定语言，BDD 固化可观察行为，TDD 将场景转为红测和绿码。
 - `knowledge-base-integration`：执行 P1.1 只读摄取和服务器 Smoke。读取产品注册表与服务器 Workspace Mapping，固定每仓库目标 ref 的完整 SHA，生成 Revision Set、完整无 ID Gherkin 目录、静态 / manifest 绑定和冲突候选；正式运行先生成不可变 Evidence Decision。Smoke 使用 `preflight / prepare / test / cleanup` 阶段，通过本地或命令式 Runner Adapter 执行仓库原生命令，并校验本轮报告、同 stem 中文汇总、artifact manifest、checksums、runner attestation 和环境对齐。重复逻辑运行按幂等键复用，显式重跑增加 attempt；P1 Evidence Publication 固定为 `not-configured`，远端发布和 PR Gate 留给 P2。
 - `agent-rules-books` 派生 Skill 通常作为按需专项审查视角，不替代项目规范、Trellis task artifacts、`.trellis/spec`、GitNexus、`tdd`、项目测试、`project-validation`、Playwright、Maestro 或人工评审。上述 5 个客观开发门禁命中时转为强制调用；未命中时才按当前主风险选择最相关的 1-2 个，不要把 5 个当作所有任务的固定 checklist。默认只纳入 `book-refactoring-pass`、`book-legacy-change-safety`、`book-ddd-distilled-modeling`、`book-ddia-data-design`、`book-release-readiness`，不默认纳入 APoSD、Clean Architecture、PoEAA 等项目风格更强的扩展。
-- `book-refactoring-pass`：修改既有生产代码时在首次实现编辑前强制输出 `Refactoring Review`；若 legacy review 为 `seam-required`，可先以 `safety-seam-only` 模式建立最小测试 seam，完成 legacy characterization 后必须重跑常规 refactoring review。未修改既有生产代码时，仅在结构阻碍、行为变化与 cleanup 混杂或 review 需要时按需调用。输出限定为当前行为边界、最小重构步骤、安全网和验证命令，不推动任务外重写。
-- `book-legacy-change-safety`：修复既有行为 bug，或既有代码存在弱 / 缺失测试、行为不清、隐藏依赖、高回归风险任一项时，在首次行为修改前强制输出 `Legacy Change Safety Review`。安全网必须先有生产 seam 时输出 `seam-required`，进入受控 seam 回路；其他遗留风险场景按需调用。优先配合 `diagnosing-bugs`、`tdd` 和 GitNexus 影响分析锁定行为后再修改。
-- `book-ddd-distilled-modeling`：每次完整执行 `grill-with-docs` 后都必须作为独立二次审核立即调用，不受调用来源或主观歧义判断影响，且 `domain-modeling` 不得替代；输出 `DDD Boundary Review` 并达到 `confirmed` 后才能继续。未调用 `grill-with-docs` 的任务仍仅在涉及业务术语、领域规则、bounded context、上下文边界或模型歧义时独立使用。不要把一次性领域推断直接写入长期 context 或 `.trellis/spec`。
-- `book-ddia-data-design`：持久化 / 共享数据、schema / migration、shared / persistent / cross-request / cross-process cache、queue / event / stream / job、ETL / analytics、跨服务数据流、data ownership、source of truth、事务边界、读写路径、backfill / replay / recovery 任一项变化时，在设计稳定和实现开始前强制输出 `DDIA Data Design Review`。其他数据风险场景按需调用。重点检查一致性、幂等、乱序、重试、回放、迁移 / 回滚、观测和修复路径。
-- `book-release-readiness`：service、API、auth、billing、notification、background job、queue、scheduler、external integration、data pipeline 或 deployment behavior 任一生产路径发生变化时，在所有适用 testing-tool gate 和 project validation 后、完成或最终发布决策前强制输出 `Release Readiness Review`。必需验证缺失只能 `blocked`，optional check 只有明确 accountable owner 接受后才能作为 residual risk；其他发布风险场景按需调用。
 - `trellis-channel` 可以被项目级规则主动用于高风险代码 review / 验证覆盖 preflight，但 preflight 不等于启动 Channel runtime。除非用户已明确要求 Channel，或在 preflight 后明确确认，否则不得静默 spawn worker。
 - `React Bits tier / Pro Skill`：普通安装和 reset 默认保持 shadcn/ui only，不询问也不安装 React Bits。只有在目标项目已确认是 React + shadcn/ui、项目根目录存在 `components.json`，且前端 UI 任务明确需要 React Bits 风格组件、blocks 或 landing page sections 时，才询问用户选择 shadcn/ui only、React Bits Free 或付费 Starter / Pro / Ultimate。React Bits Free 只有在免费 source / registry 已明确配置且用户确认后才安装；付费 tier 必须确认 registry / `REACTBITS_LICENSE_KEY` / 项目内 React Bits Pro Skill 均可用，且不得读取、输出、提交 license key。reset 时保留检测到的既有 tier 和 registry，未经确认不使用默认免费版覆盖。
 - 如果使用 `impeccable` 生成或维护项目上下文，默认将 `PRODUCT.md` 和 `DESIGN.md` 放在项目根目录的 `docs/` 下，即 `docs/PRODUCT.md` 和 `docs/DESIGN.md`；不要在项目根目录创建重复副本。`.impeccable/design.json` sidecar 仍按 `impeccable` 默认保留在项目根目录 `.impeccable/` 下。
@@ -407,6 +414,53 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 - 不创建不必要的 parent / child task。
 - 不把一次性任务计划写入长期项目规范。
 - 不让未受 `.trellis/workflow.md`、task artifacts 和生成 role guard 管理的 Codex sub-agent dispatcher 替代项目工作流；有效 Trellis 调度模式内的 role subagent 仍遵循该工作流。
+
+---
+
+## 代码可读性
+
+正确性、安全、运行时特性、明确需求和项目约定优先。可读性与可维护性优先于减少源码行数、文件数或 diff 体积。
+
+1. 每个函数或模块应有一个内聚职责。不要仅为了让函数更短而拆开内聚逻辑。
+
+2. 当具名辅助函数（helper）能实质降低认知负担、捕获可复用概念、或建立已验证的接缝（seam）时，再抽取它。避免只是把代码挪到别处的浅层包装（shallow wrappers）。
+
+3. 当守卫子句（guard clauses）和提前返回能让主路径更清晰时，优先使用。当结构化清理、对称性或错误聚合更易跟随理解时，不要强行使用它们。
+
+4. 避免巧妙、过度紧凑或依赖运算符优先级的表达式。
+
+5. 当具名中间变量能揭示复杂条件或转换的含义时，引入它们。不要仅为增加行数给平凡值命名。
+
+6. 领域代码使用领域意图命名；基础设施代码使用具体角色命名。
+
+7. 避免 `data`、`info`、`tmp`、`result`、`handle`、`process`、`doSomething` 这类含糊名称，除非在极窄范围内含义已经明确无歧义。
+
+8. 当真实接缝（seam）能改善局部性、可测试性或变更隔离时，把领域决策与 I/O、数据库、HTTP、缓存和日志分开。不要为单一平凡路径引入假想的端口（ports）、适配器（adapters）或服务层（service layers）。
+
+9. 注释应解释理由、不变量、约束、协议要求或非显而易见的权衡。不要复述代码。
+
+10. 仅当抽象能实质改善可读性、集中不变量、消除有意义的重复、隔离易变依赖、或建立已验证的接缝（seam）时，才引入抽象。
+
+11. 在套用通用建议之前，先遵循现有项目的命名、模块、错误处理和结构约定。
+
+12. 最终验证前，专门从可读性角度复核所有已修改的手写代码和测试。不要修改第三方打包或生成代码（vendor / generated code）。
+
+当存在多种正确实现时，选择新维护者能最快理解并安全修改的方案，且不得恶化运行时行为或违反项目约定。
+
+### Ponytail 与代码可读性审查
+
+- `ponytail` 的最小化偏好受本节约束：删繁不能以密集表达式、模糊命名、浅层包装（shallow wrappers）或移除真实接缝（seam）为代价。
+- `ponytail-review` 的每个删除 / 内联 / 合并发现项必须按本节裁决；接受后重跑受影响验证。
+- Code Readability Review 在最终验证前覆盖本轮修改的手写生产代码和测试，不修改第三方打包或生成代码（vendor / generated code）；需要大范围行为保持重构时回到 `book-refactoring-pass`，不在收尾阶段静默扩大任务。
+
+```text
+Code Readability Review
+Scope: modified hand-written production code and tests
+Findings: none | <concrete locations and issues>
+Ponytail conflicts resolved: none | <accepted/rejected finding and reason>
+Changes applied: none | <task-scoped readability edits>
+Revalidation required: yes | no
+```
 
 ---
 

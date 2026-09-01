@@ -2,8 +2,109 @@
 
 本文件按 Git tag 记录用户可见变更，最新版本位于最上方。未发布章节在创建对应 tag 后补充发布日期。
 
-## v1.0.7（未发布）
 
+## v1.0.13（2026-09-01）
+
+### 修复
+
+- `check --json` 在用户尚无 `~/.omp` 时不再执行 `omp plugin list`，避免只读检查创建 `.omp`；已配置 OMP 时仍完整检测官方 Ponytail plugin 冲突。
+- 项目 `.gitignore` 增量合并后使用原生 `git check-ignore` 验证 Trellis 必须追踪 / 必须忽略路径；既有 `.trellis/` 等宽泛父目录排除会给出具体来源行并阻断，而非文本齐全却语义失效的假绿。探针按 NUL 分隔字段读取 git 给出的判定模式，`!.en[v:]` 这类含冒号模式的反向包含不会被反读成“已忽略”。
+- `init` / `reset` / `init-projects` 等写入模式的 `--json` 现在只向 stdout 输出单个 JSON 文档。此前会先输出计划文档、再输出 Trellis 报告文档，并夹杂 `Backups:`、`Verification passed.` 等散文，`json.loads` 在每次成功运行上都会失败；计划字段仍留在根层，`mode` 与 `plan` / `check` 位置一致。
+- 项目 `.gitignore` 模板补上裸 `.env`。此前只忽略 `.env.local` 和 `.env.*.local`，最常见的 `.env` 反而可被提交。
+- External Skill 目录校验和不再把本地生成的 `__pycache__`、`*.pyc` 和工具缓存计入指纹。此前在仓库根运行一次 pytest 会在受管 stable 快照内写入字节码缓存，使后续安装与 promotion 报告校验和不匹配；干净快照的既有 pin 不受影响。
+- book 门禁路由行补回被改写丢掉的触发词。`book-ddia-data-design` 的三处路由此前都漏掉规范中的 API 所有权，`book-release-readiness` 把「deployment / rollout / migration / runtime 运维行为」压缩成只剩 deployment，Trellis fallback 还把 background job 写成 job；只命中被丢掉那一段的改动会静默跳过强制 reviewer。全局路由表、project-only fallback 与 Trellis fallback 现在逐条覆盖各 `book-*/SKILL.md` 自己列出的触发词。
+- `onboard.py` 每次 `run()` 开始时重置 `UNVERIFIED_CHECKS`。此前该模块级列表跨调用累积，同进程内连续运行多个模式时，后一次会报告自己从未跳过的检查。
+- External Skill 目录的拷贝、指纹与比对现在对 `*.pyc` / `*.pyo` 采用一致的排除语义：只排除文件，不排除同名目录。此前名为 `pkg.pyc` 的目录会被拷贝阶段整棵丢弃，其中的文件却仍计入 `treeSha256`，导致拷贝结果与校验和互相矛盾。
+
+### 变更
+
+- 对齐 GitNexus 升级后必须用 CLI 重新 analyze 的索引语义。MCP repository allowlist 未覆盖时 GitNexus MCP 对该仓库不可用，不得当作 MCP 可读；fail-closed 只读不走 MCP 写入；二者均不阻止 CLI 刷新。同时对齐已移除的非功能 group matching 旋钮、`--self-commit` 与 Codex plugin marketplace 不能替代全局 `gitnexus-mcp` 的使用边界。
+- 对齐 Codex 可选 MCP 启动宽限期、项目级 plugin catalog 合并，以及 extension 可在模型前检查或替换 MCP tool result 的可用性判断。
+- `AGENTS.project.md` 收敛为 project-only fallback、项目路径和硬性边界，删除全局工具 / reviewer 状态的重复副本；正常 `init` / `reset` 与 project-only 的激活边界现在明确区分。
+- book-derived 门禁改为单一事实源：全局 AGENTS 维护客观触发与 Gate lifecycle，各 `book-*/SKILL.md` 独占 reviewer 状态、输出 schema、修正回路和 stop condition；Trellis 负责编排，并保留全局路由不可见时可自举的最小 objective-trigger fallback。
+- 精简项目 `.gitignore` 中已被 `.trellis/*` 覆盖的运行时重复行，并移除同样冗余的 `.trellis/workspace` 条目；目录 / symlink 语义改由无尾随斜杠的 `.trellis/*` 本身提供，workspace 目录、workspace 内容与顶级 workspace symlink 的忽略结果不变。报告目录仍保持本地忽略，不要求提交 Git。
+- 项目 `.gitignore` 的 `output/` 收窄为 `/output/`，只忽略仓库根的构建输出目录；同名嵌套源码目录（例如 `src/output/`）不再被连带忽略。
+
+### 验证
+
+- 新增 `git check-ignore` 语义探针测试、`check --json` 不创建 `~/.omp` 的回归测试，以及 External Skill 目录指纹忽略字节码 / 工具缓存的回归测试；契约测试同步断言 book 门禁的单一事实源归属，并按各 `book-*/SKILL.md` 的规范 bullet 数量逐 token 校验三处路由行的触发词覆盖，新增规范触发词时未同步路由会直接失败。每个 token 只在承载该 gate 谓词的那一行内计命中，因此 `API`、`queue`、`migration` 这类短词不会被文件其他位置的无关提及满足；此前按 bullet 取单个代表短语的写法漏检 `queue / event / stream / job`、`ETL / analytics` 与 `data pipeline`，删掉这三段不会失败。
+- 新增含冒号反向包含模式（`!.en[v:]`）必须判定为“未忽略”的回归测试，以及 `init-projects --json` 成功路径解析为单个 JSON 文档的回归测试；两者均以重新引入原缺陷的方式确认会失败。
+- 收紧既有断言的判定力：宽泛父目录排除的失败信息按 `文件:行号:模式` 断言具体来源记录，不再用 `.trellis/` 子串（模板自身追加的反向包含行同样含该子串，会放过丢失来源的信息）；`git` 完全不在 PATH 时的降级单独覆盖，与既有 exit 128 桩分属 `run_project_command` 的两条分支；External Skill 缓存回归测试改为枚举全部 6 项排除（`__pycache__`、`.pytest_cache`、`.ruff_cache`、`.mypy_cache`、`*.pyc`、`*.pyo`）并断言拷贝与指纹丢弃同一集合，同时覆盖名为 `pkg.pyc` 的目录必须保留——该拷贝 / 指纹一致性此前无回归测试；reviewer `Status:` 枚举归属改为按成员集合精确比对并禁止委托文档出现任何枚举形声明，此前的子串断言在枚举新增状态或委托文档抄录截断前缀时均不会失败。
+- book 门禁 lifecycle 的跨文档断言拆为逐文档独立子测试。此前全部集中在一条断言链上，首个失败即中止，一份文档漂移会掩盖同批其余文档的状态；现在每份文档、每项主题单独判定并单独报告。
+
+## v1.0.12（2026-08-28）
+
+### 变更
+
+- 对齐 Trellis 的空 jsonl 启动门禁：sub-agent-dispatch 平台上 `task.py validate` 对零条 curated 的 `implement.jsonl` / `check.jsonl` 失败，`task.py start` 默认拒绝，只有用户明确要求空上下文启动时才使用 `--allow-empty-context`。
+- 对齐 Trellis 的路径变更与整仓移除命令：`task.py rename`、`trellis ablate` / `trellis restore` 纳入 filesystem-safety 与用户确认边界；`[workflow-state:task_error]` 时先修复现有 `task.json`，不得另建任务。
+- 对齐 Trellis 的 OMP `prompt_injection.skip_keyword`：生成的 OMP extension 与 Python per-turn hook 使用同一配置关键词跳过当轮 workflow-state 注入，跳过不等于关闭 Trellis 规则。
+
+## v1.0.11（2026-08-27）
+
+### 修复
+
+- `init` / `reset` / `init-projects` 不再把空平台列表交给 `trellis init --yes`（Trellis 会因此默认安装 Claude 和 Cursor）。`--platform codex|claude|kimi` 在未给 `--trellis-platform` 时作为默认 Trellis flag；显式 `--trellis-platform` 覆盖该默认。`oh-my-pi` 仍必须显式给出 `omp` 和/或 `pi`。
+- `plan --json` 增加 `trellisInit`，写出将要执行的完整 `trellis init` 命令。
+- Trellis 平台 allowlist 对齐 CLI 0.6.15：补上 `kimi`、`grok`、`snow`、`dsh`。
+
+### 验证
+
+- 新增 `test_init_projects_defaults_codex_from_agent_platform`、`test_init_projects_rejects_empty_trellis_flags`、`test_plan_json_includes_resolved_trellis_init_command` 与版本化 `TRELLIS_INIT_PLATFORMS` 契约测试；不解析本机 `trellis init --help`。
+
+
+## v1.0.10（2026-08-27）
+
+
+### 变更
+
+- `init` 对已合法的 bundled / required external Skill 壳（普通目录、普通 `SKILL.md`、frontmatter `name` 匹配）跳过，不再无备份覆盖。
+- `init` 安装缺失 required external Skill 时不再经 dependency closure 覆盖已合法依赖；公开 `install-external-skills --skills` 仍展开依赖。
+- `reset` 仍无备份覆盖全部 bundled Skills，并从当前 stable snapshot 强制重装全部 required external Skills。
+- `plan --json` 对 Skill 目录操作输出 `plannedActionOnInit` / `plannedActionOnReset`。
+- 全局和项目 `AGENTS.md` 仍备份后覆盖；项目 `.gitignore` 仍只追加模板缺行；`init-projects` 仍不写全局 Skills。
+
+### 验证
+
+- 新增 / 强化 `test_init_skips_valid_bundled_and_external_skill_shells`、`test_reset_overwrites_valid_bundled_and_external_skills` 与 `plan` 的 Skill 写入动作断言。
+
+
+
+## v1.0.9（2026-08-27）
+
+### 变更
+
+- `sync` / `同步` 在复制 Onboard 后必须用已同步 `onboard.py install-external-skills --skills ponytail,ponytail-review,ponytail-audit,ponytail-debt --scope global --source auto` 从 stable mirror 安装 required Ponytail Skills，并校验 4 个 `SKILL.md`；不得把 `assets/external-skills/stable/skills/ponytail*` 加为同步表拷贝行。
+- 正常 `init` / `reset` 与本仓库 `sync`：若用户主目录已存在 `.omp`（POSIX `~/.omp`，Windows `%USERPROFILE%\.omp`），把同一 `AGENTS.global.md` 备份后覆盖写入 `~/.omp/agent/AGENTS.md`；目录不存在则跳过且不创建 `.omp`。`--global-agents-path` 只覆盖 Codex 目标。
+- `--global-agents-path` 指向 `~/.omp/agent/AGENTS.md` 时，`init` / `reset` 只保留一条写入操作，避免对同一文件做两次备份移动。
+- External Skills stable set 升级为 `2026-08-27.1`：通过 `promote-external-skills-stable` 从上游 HEAD 刷新 mattpocock/skills、impeccable、ui-ux-pro-max-skill、shadcn-ui 与 ponytail 五个 repository 的原样快照、tree digest 和许可证文件。
+- `init` / `reset` 对解析后相同路径的 `file` 操作只保留一条并只备份一次，覆盖 `--global-agents-path` 与项目 `AGENTS.md` 撞上 OMP/Codex 目标的情况。版本检查 prompt 的 OMP AGENTS 校验不再依赖被忽略的根 `AGENTS.md`。
+
+### 验证
+
+- 全量 Python unittest `180` 项全部通过（`python3 -m unittest discover -p 'test_*.py'`，97.278s）：`test_workflow_contracts` 37、`test_onboard_multi_projects` 34、`test_onboard_ponytail_integration` 29、`test_onboard_external_skills` 24、`test_install_sh_agent_cli_flow` 24、`test_knowledge_base_p1` 18、`test_validation_evidence_v2` 9、`test_onboard_agent_cli` 5。
+- 本轮新增 OMP AGENTS 路径覆盖已包含在上述 `test_onboard_multi_projects` / `test_workflow_contracts` 中：无 `.omp` 跳过、存在则覆盖写入、`--global-agents-path` 同目标去重、项目根撞 OMP agent 目录只写一次并只备份一次、Windows `USERPROFILE` stub、fresh-clone prompt 不依赖根 `AGENTS.md`。
+
+
+## v1.0.8（2026-08-26）
+
+### 新增
+
+- Ponytail 4 个核心 Skills（`ponytail`、`ponytail-review`、`ponytail-audit`、`ponytail-debt`）作为 required external Skills 接入：正常 `check` / `init` / `reset` 检查全部 18 个 required external Skills，缺失或损坏时不询问、直接从 vendored stable set 补装或修复，失败即阻断；stable set 升级为 `2026-08-26.1`，固定 Ponytail `v4.9.0` 上游 commit、MIT license、tree SHA-256 与第三方声明。
+- `promote-external-skills-stable` 支持首次注册 manifest 中尚不存在的新 repository：新增 `--repo`、`--license` 与可重复 `--license-file SOURCE=STABLE_PATH`，从 catalog 选择与 `--repo` 精确匹配的 external entries 生成 candidate tree；既有 repository 只允许 `--repo` 一致性复核并拒绝 license 参数，杜绝静默改写元数据。
+- `check --json` 新增 `ponytailProvider` 只读检测：Codex / OMP 官方 Ponytail plugin 已启用时报告 `provider=conflict`，`check` 失败且 `init` / `reset` 在写 stable copies 前阻断，根安装器同样停止；plugin 已安装但禁用只报告不阻断，CLI 不可用报告 `unknown`。Onboard 不执行任何 plugin 安装、启用、禁用、信任或卸载。
+- 全局 `AGENTS.md` 模板新增 `Code Readability` canonical 规则：正确性、安全、运行时特性、明确需求和项目约定优先，可读性与可维护性高于源码行数、文件数和最小 diff；`AGENTS.project.md` 增加最小 fallback，`trellis-workflow` 明确 ponytail → 定点 smoke → ponytail-review → Code Readability Review → 最终 `project-validation` 的主动调用顺序。
+
+### 变更
+
+- 将全局 `AGENTS.md` 模板的 `Code Readability` 章节改为中文标题「代码可读性」，正文与英文版语义对齐；check summary 仍使用 `Code Readability Review` 协议字段。
+
+### 验证
+
+- 全量 Python unittest 160 项全部通过，其中 Ponytail 集成测试 18 项覆盖 catalog/stable manifest、promotion 首次注册与拒绝路径、provider 检测矩阵和 workflow 文档契约。
+- 隔离 HOME smoke 8 个场景全部通过：Ponytail 缺失 / 完整 / 部分缺失 / 损坏修复、官方 plugin enabled 冲突阻断（check 与 init 均失败且零写入）、plugin disabled 放行、CLI 不可用报告 `unknown`、reset 前后 Ponytail config 文件字节一致。
+
+## v1.0.7（2026-08-20）
 
 ### 新增
 
@@ -43,14 +144,12 @@
 - External Skill 安装改为 stable-first：默认 `auto` 与显式 `stable` 都从 Onboard 内经过 review、精确 revision 和 checksum 固定的 stable set 离线安装；只有显式 `--source upstream` 才直接获取当前上游，失败时不自动回退。
 - 将 14 个受管 external Skills 提升到 stable set `2026-08-03.1`：固定 promotion 时的 mattpocock/skills、impeccable、ui-ux-pro-max-skill 与 shadcn-ui 上游 revision；通过 promotion 流程刷新 tree digest 和许可证文件。
 - 项目模板选择以无尾随斜杠的 `.trellis/workspace` 忽略目录或顶级 symlink 及其所有内容，包括 workspace `index.md`、开发者 journal 与 trace；这有意不同于上游 Trellis 默认会 stage workspace 内容的策略。
-
 - 对齐 Trellis 的 Codex hook 上下文恢复路径：bundled `trellis-workflow` 现在要求升级后保留单一 context prelude，并在注入标记不完整时依赖受管的 saved `SubagentStart` 恢复，而非手工粘贴任务数据或放宽注入上限。
 - 明确 Trellis 的平台调度边界：共享 `.trellis/**` 只定义 workflow gate，不标识运行平台；当前 host 与 `.codex/**` 或 `.omp/**` 生成资产决定执行机制，二者共存时不得由静态审查强行选择。`codex.dispatch_mode`、Inline 与其 fail-closed fallback 仅属于 Codex；当前 OMP host 使用 OMP `task` worker 和 agent 定义。Channel 保持显式确认的持久协作 runtime；同一变更职责只能有一个写入执行者，用户请求的独立只读复核可以并行。
 - 版本检查新增 stable-tag 配置、workflow、migration manifest 与平台集成的强制证据门；Trellis v0.6.10 的 `SubagentStart` 修复不再被误述为首次启用 Codex subagent。
 - 移除 `sync` / `update` 流程禁止 Agent 提交和推送的限制；在用户明确指示时，Agent 可以提交并推送已验证的仓库变更。
 - `grill-with-docs` 状态透明度不再无条件制造重复确认门：仍必须说明调用状态与原因，但只有调用与跳过存在会改变需求、领域边界或实现决策的实质权衡时才询问用户。
 - 版本检查自动化的允许扫描、影响分析和验证范围扩展到根安装器、项目 `.gitignore` 模板与契约测试，并明确无人值守任务不得通过交互提问升级为 `update`、`sync`、commit 或 push。
-
 
 ### 文档
 
@@ -76,8 +175,8 @@
 - 对齐 Trellis 的 Pi shared-skills 迁移边界：当项目仍有 legacy `.pi/skills/` 时，bundled `trellis-workflow` 现在要求使用 `trellis update --migrate` 完成受管重命名，避免手工移动造成双重发现或破坏迁移安全检查。
 - 对齐 Maestro MCP 的 Cloud 诊断能力：全局规则模板和 `maestro-mobile-e2e` 现在明确在 Cloud upload 终态后可读取 per-flow run 的状态与 artifacts；README 两种格式同步说明该能力只用于诊断，不替代 Maestro CLI 的正式 E2E 执行与报告。
 - 对齐 Trellis 的受管更新边界：bundled `trellis-workflow` 和 `trellis-channel` 现在明确子代理上下文注入的默认字节上限、单次跳过关键词、受限的 linked-worktree 信任目录，以及 Codex 子代理模型设置在更新后的保留与复核要求，避免通过无限上下文或宽泛路径信任绕过安全边界。
-
 - 更新 Playwright MCP 的 Onboard 安装引导：当所选 Playwright 发行版提供内置 MCP server 时优先使用 `npx playwright mcp`，否则继续要求选择兼容的专用 server；保留 MCP 可见性确认与项目级 Playwright CLI 不可替代的边界。
+
 ## v1.0.4（2026-07-19）
 
 ### 修复
@@ -157,3 +256,4 @@
 
 - 增加 catalog、安装事务、legacy migration、多项目初始化、Agent CLI、Knowledge Base 和仓库工作流契约测试。
 - 发布前全量 Python 测试共 88 项通过，并完成 README HTML 桌面端和移动端 Chromium smoke 验证。
+

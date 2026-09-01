@@ -824,6 +824,88 @@ class ExternalSkillInstallTests(unittest.TestCase):
 
         stable_loader.assert_not_called()
 
+    def test_tree_digest_ignores_locally_generated_bytecode_caches(self) -> None:
+        """A local pytest run must not change a pinned Skill's checksum.
+
+        Every exclusion the digest declares is exercised, not a sample of them:
+        an untested entry can be dropped from either the digest or the copy
+        filter without a test noticing. The copy filter is asserted against the
+        same fixture, because the two lists are only useful while they agree --
+        a cache file the copy keeps but the digest ignores reaches an installed
+        Skill without moving `treeSha256`, which is the drift these exclusions
+        exist to prevent.
+        """
+
+        onboard = self.load_onboard_module()
+        self.assertEqual(
+            set(onboard.EXTERNAL_TREE_DIGEST_EXCLUDED_DIRS)
+            | set(onboard.EXTERNAL_TREE_DIGEST_EXCLUDED_SUFFIXES),
+            {"__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".pyc", ".pyo"},
+            "this test enumerates the exclusions below; a new one needs a fixture here.",
+        )
+
+        skill_root = self.root / "digest-skill"
+        (skill_root / "scripts" / "tests").mkdir(parents=True)
+        (skill_root / "SKILL.md").write_text("# skill\n", encoding="utf-8")
+        (skill_root / "scripts" / "core.py").write_text("VALUE = 1\n", encoding="utf-8")
+        # A directory may legitimately be named like a bytecode file. It is real
+        # content, so it is pinned here and must survive both filters.
+        (skill_root / "scripts" / "pkg.pyc").mkdir()
+        (skill_root / "scripts" / "pkg.pyc" / "module.py").write_text(
+            "KEPT = True\n", encoding="utf-8"
+        )
+
+        pinned_digest = onboard.external_tree_sha256(skill_root)
+
+        cache_files = []
+        for cache_dir in (
+            "scripts/__pycache__",
+            "scripts/tests/__pycache__",
+            ".pytest_cache",
+            ".ruff_cache",
+            ".mypy_cache",
+        ):
+            target = skill_root / cache_dir
+            target.mkdir(parents=True, exist_ok=True)
+            entry = target / "core.cpython-313.pyc"
+            entry.write_bytes(b"\x00compiled")
+            cache_files.append(entry.relative_to(skill_root))
+        for stray in ("scripts/stray.pyc", "scripts/stray.pyo"):
+            entry = skill_root / stray
+            entry.write_bytes(b"\x00compiled")
+            cache_files.append(entry.relative_to(skill_root))
+
+        self.assertEqual(
+            onboard.external_tree_sha256(skill_root),
+            pinned_digest,
+            "bytecode and tool caches must not affect the external Skill tree digest.",
+        )
+
+        copied = self.root / "digest-skill-copy"
+        shutil.copytree(skill_root, copied, ignore=onboard.external_copy_ignore())
+        for relative in cache_files:
+            with self.subTest(dropped=relative.as_posix()):
+                self.assertFalse(
+                    (copied / relative).exists(),
+                    "a cache entry the digest ignores must not reach a copy.",
+                )
+        self.assertTrue(
+            (copied / "scripts" / "pkg.pyc" / "module.py").is_file(),
+            "a directory named like bytecode holds real content and must be copied.",
+        )
+        self.assertEqual(
+            onboard.external_tree_sha256(copied),
+            pinned_digest,
+            "the copy filter and the digest must drop exactly the same entries.",
+        )
+
+        (skill_root / "scripts" / "core.py").write_text("VALUE = 2\n", encoding="utf-8")
+        self.assertNotEqual(
+            onboard.external_tree_sha256(skill_root),
+            pinned_digest,
+            "real source changes must still change the external Skill tree digest.",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

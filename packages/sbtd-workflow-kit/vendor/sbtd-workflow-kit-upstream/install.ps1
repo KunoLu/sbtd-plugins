@@ -41,7 +41,8 @@ Options:
   -Platform <codex|claude|kimi|oh-my-pi|omp>
       Target Agent CLI and MCP platform. "omp" is an alias for "oh-my-pi".
       This option does not change the Codex global AGENTS.md target; override
-      that separately with -GlobalAgentsPath.
+      that separately with -GlobalAgentsPath. If ~/.omp already exists,
+      init/reset also overwrite ~/.omp/agent/AGENTS.md.
       The installer verifies this CLI immediately, bootstraps npm when needed,
       and installs the official npm package globally at @latest when missing.
   -SourceRoot <path>
@@ -65,7 +66,8 @@ Options:
       Developer username for trellis init -u when the project has no .trellis/.
   -TrellisPlatform <name[,name...]>
       Trellis init platform flag without leading dashes. May be repeated.
-      Examples: codex, claude, cursor, opencode, gemini, omp, pi. OMP and Pi are separate flags.
+      Examples: codex, claude, kimi, cursor, omp, pi. Replaces the Agent
+      platform default. OMP and Pi are separate flags.
   -SkipTrellisInit
       Skip post-install trellis init for project roots without .trellis/.
   -SkipTrellisBootstrap
@@ -293,6 +295,7 @@ function Get-OnboardPy {
 
 function Get-CommonArgs {
   $args = @()
+  if ($Platform) { $args += @("--platform", $Platform) }
   if ($ProjectsRoot) { $args += @("--projects-root", $ProjectsRoot) }
   if ($SkipProjectAgents) { $args += "--skip-project-agents" }
   if ($GlobalAgentsPath) { $args += @("--global-agents-path", $GlobalAgentsPath) }
@@ -309,13 +312,19 @@ function Get-CommonArgs {
 function Invoke-Onboard {
   param(
     [string]$Mode,
-    [string[]]$Extra = @()
+    [string[]]$Extra = @(),
+    [switch]$AllowProviderConflict
   )
   $arguments = $PythonPrefix + @((Get-OnboardPy), $Mode) + $Extra
   if ($Mode -eq "check" -or $Mode -eq "check-projects" -or $Mode -eq "check-agent-cli" -or $Mode -eq "plan") {
     Write-Host ("+ " + (@($PythonExe) + $arguments -join " "))
     & $PythonExe @arguments
-    if ($LASTEXITCODE -ne 0) {
+    # Exit 4 from check means a Ponytail provider conflict; only the preflight
+    # path tolerates it because Assert-PonytailProviderClear runs immediately
+    # after and reports the conflict with guidance. Every other check path
+    # (including the final verification) must treat exit 4 as a failure.
+    $tolerated = $AllowProviderConflict -and $Mode -eq "check" -and $LASTEXITCODE -eq 4
+    if ($LASTEXITCODE -ne 0 -and -not $tolerated) {
       throw "Command failed with exit code $LASTEXITCODE`: $($arguments -join ' ')"
     }
   }
@@ -407,7 +416,8 @@ function Ensure-TargetAgentCli {
 }
 
 function Show-Check {
-  Invoke-Onboard "check" (Get-CommonArgs)
+  param([switch]$AllowProviderConflict)
+  Invoke-Onboard "check" (Get-CommonArgs) -AllowProviderConflict:$AllowProviderConflict
 }
 
 function Tool-ByName {
@@ -514,11 +524,22 @@ function Resolve-InteractiveInputs {
   }
 }
 
+function Assert-PonytailProviderClear {
+  $provider = ""
+  if ($script:Check -and $script:Check.ponytailProvider) {
+    $provider = [string]$script:Check.ponytailProvider.provider
+  }
+  if ($provider -eq "conflict") {
+    throw "Ponytail provider conflict: the official Ponytail plugin is enabled. Disable or remove that plugin, then rerun the installer; Onboard installs and manages the vendored stable Ponytail Skills."
+  }
+}
+
 function Install-MissingRuntimeAndSkills {
   Write-Host ""
   Write-Colored "Preflight check" Cyan
-  Show-Check
+  Show-Check -AllowProviderConflict
   Update-Check
+  Assert-PonytailProviderClear
 
   if (-not (Tool-Installed "rtk")) {
     $rtk = Tool-ByName "rtk"
@@ -600,7 +621,7 @@ function Resolve-TrellisProjectSetupInputs {
   }
 
   if ($script:TrellisPlatform.Count -eq 0) {
-    $rawPlatforms = Prompt-Text "Trellis platform flags, comma-separated without --, or blank for none"
+    $rawPlatforms = Prompt-Text "Trellis platform flags, comma-separated without --. Blank uses the Agent platform default for codex, claude, or kimi; Oh My Pi requires omp and/or pi"
     $script:TrellisPlatform = @(Split-TrellisPlatforms $rawPlatforms)
   }
 }

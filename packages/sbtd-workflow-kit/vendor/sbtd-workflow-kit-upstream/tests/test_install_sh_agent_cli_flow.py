@@ -291,7 +291,7 @@ class BashInstallerAgentCliFlowTests(unittest.TestCase):
         self.assertLess(modes.index("check-agent-cli"), modes.index("check"))
         self.assertIn("reset", modes)
 
-    def test_non_codex_platform_is_not_forwarded_to_onboarding_operations(
+    def test_agent_platform_is_forwarded_to_onboarding_operations(
         self,
     ) -> None:
         (self.state_dir / "npm").touch()
@@ -305,7 +305,9 @@ class BashInstallerAgentCliFlowTests(unittest.TestCase):
             for arguments in self.invocation_args()
             if arguments.split()[1] == "init"
         )
-        self.assertNotIn("--platform", init_invocation.split())
+        args = init_invocation.split()
+        self.assertIn("--platform", args)
+        self.assertEqual(args[args.index("--platform") + 1], "claude")
 
     def test_init_projects_skips_all_global_checks_and_installers(self) -> None:
         completed = self.run_installer(projects_only=True)
@@ -638,6 +640,49 @@ class PowerShellInstallerAgentCliFlowTests(unittest.TestCase):
         self.assertIn("Answer yes to every yes/no prompt.", usage)
         self.assertIn("if ($Yes)", prompt)
         self.assertIn("return $true", prompt)
+
+    def test_powershell_blocks_on_ponytail_provider_conflict(self) -> None:
+        source = INSTALL_PS1.read_text(encoding="utf-8")
+
+        assert_fn = source.split("function Assert-PonytailProviderClear", 1)[1].split(
+            "function Install-MissingRuntimeAndSkills",
+            1,
+        )[0]
+        self.assertIn("$script:Check.ponytailProvider.provider", assert_fn)
+        self.assertIn('$provider -eq "conflict"', assert_fn)
+        self.assertIn("Ponytail provider conflict", assert_fn)
+
+        preflight = source.split("function Install-MissingRuntimeAndSkills", 1)[1]
+        self.assertLess(preflight.index("Update-Check"), preflight.index("Assert-PonytailProviderClear"))
+        self.assertLess(
+            preflight.index("Assert-PonytailProviderClear"),
+            preflight.index("install-external-skills"),
+        )
+
+        invoke_onboard = source.split("function Invoke-Onboard", 1)[1].split(
+            "function Update-Check",
+            1,
+        )[0]
+        self.assertIn("[switch]$AllowProviderConflict", invoke_onboard)
+        self.assertIn(
+            '$tolerated = $AllowProviderConflict -and $Mode -eq "check" -and $LASTEXITCODE -eq 4',
+            invoke_onboard,
+        )
+        show_check = source.split("function Show-Check", 1)[1].split(
+            "function Get-OnboardPy",
+            1,
+        )[0] if "function Show-Check" in source else ""
+        preflight = source.split("function Install-MissingRuntimeAndSkills", 1)[1]
+        self.assertIn("Show-Check -AllowProviderConflict", preflight)
+
+        # The edited regions must keep balanced braces/parens/brackets.
+        for region_name, region in (
+            ("Assert-PonytailProviderClear", assert_fn),
+            ("Invoke-Onboard", invoke_onboard),
+        ):
+            with self.subTest(region=region_name):
+                for opener, closer in (("{", "}"), ("(", ")"), ("[", "]")):
+                    self.assertEqual(region.count(opener), region.count(closer))
 
 
 

@@ -31,21 +31,25 @@
 - 交互式 Bash installer 在重定向循环、pipeline 或 process substitution 内提示用户时，必须从脚本启动时保留的专用 stdin fd 读取并处理 EOF；不能让项目数据流劫持 prompt 后无限输出 `Invalid choice.`。
 - 第三方 CLI 生成项目文件时必须显式指定并复验最终路径、覆盖和备份语义；模板增量合并按配置原子条目求差集，并用连续执行两次的测试证明幂等。
 - Shell 脚本同时支持 `NO_COLOR` 等标准环境约定和对应 CLI flag 时，外部环境输入与内部解析状态必须使用不同变量名，并用真实 TTY/PTY 覆盖默认和禁用分支。
-- 根 `.gitignore` 的当前 canonical 内容严格为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/` 四行；仓库启动必需的 `AGENTS.md` 和 authoritative `ENTRYPOINT.md` 必须由 Git 追踪，或具备受版本控制且可在任何 Gate 前执行的 bootstrap，不能同时设为 ignored / untracked 和全操作前置条件。
+- 根 `.gitignore` 的当前 canonical 内容严格为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/`、`AGENTS.md` 五行。authoritative `ENTRYPOINT.md` 必须由 Git 追踪。根 `AGENTS.md` 是本机可选文件，不进入远程 `main`，不得作为全操作前置条件；契约测试不得读取被忽略的本地副本去证明 fresh-clone 可恢复。
 - 通过 Skills CLI 生成的 `.claude/skills`、`.agents/skills` 等项目级 alias 只有在 target 存在且属于当前 canonical 仓库设计时才能追踪；用户级全局安装产生的项目内 alias 或 broken symlink 必须删除。
 - External Skill installer 的 manifest、source subpath 和 license 路径必须受声明根目录约束；canonical 必须完整校验；事务恢复不完整时不得删除唯一 rollback 备份，必须保留并报告路径。
 - 编写一次性验证脚本前，先对照本入口和命中的 topic，避免重复使用已记录的问题写法；Markdown 解析优先按标题层级和表头语义，不要按裸 `---` 或脆弱正则切割。
 - 校验脚本必须按目标文件职责断言，先确认实际 schema；不要用同一 expected 列表无差别扫描所有文件。
+- 读取结果含分页、elision 或 `Showing lines` footer 时不得做整文件 / fuzzy 写回；大文件编辑后立即检查行数、语法、diff stat 和 footer。
+- 第三方 CLI 的 `list` / `--help` / provider probe 也可能创建配置或 cache；check / preflight 必须先证明无副作用，或在既有配置根 / 隔离 HOME 中运行并验证未新增路径。
 - Web UI 测试资产和 Playwright 报告路径必须有参数和验证门；Playwright 正式报告以命名 HTML 为主轴，`results.json` / `junit.xml` / 默认 `index.html` 不能决定最终 Markdown stem。
 - Playwright HTML reporter 的 `outputFolder` 必须和正式命名报告快照目录分离；默认 runner 临时目录用 `tests/e2e/reports/.playwright-html-current/`，正式快照进入 `tests/e2e/reports/html/`。
 - API / Web E2E / Mobile E2E / Hybrid E2E 正式验证不能只停在 stdout-only、terminal-only 或诊断 reporter；Playwright `--reporter=list`、API 自定义脚本终端输出、Maestro stdout-only 都必须补正式 reporter、捕获 raw report 或标记 blocked。
 - 新增或修改用户可见 BDD `.feature` 场景时，首个 `.feature` 默认中文场景文案 + 英文 Gherkin 关键词，并在写入前和验证阶段确认语言规则。
+- OMP / Claude 的 GitNexus `Transport closed` 要先跑真实 MCP handshake：缺 `lbugjs.node` 时跑该安装目录的 LadybugDB `install.js`；`~/.claude.json` 还要把 command 钉成 nvm 绝对 `node`，避免干净 PATH 下 `#!/usr/bin/env node` 直接退出。
+- Onboard `init` 不得把空平台列表交给 `trellis init --yes`（Trellis 会默认装 Claude+Cursor）；`--platform codex|claude|kimi` 在未给 `--trellis-platform` 时作为默认 Trellis flag，`oh-my-pi` 必须显式 `omp`/`pi`。
 
 ## Topic 路由
 
 | topic | read_when | detail |
 |---|---|---|
-| repository-workflow | 版本检查、同步、配置摘录仓库定位、AGENTS / ENTRYPOINT / README 规则、GitHub release 依据、合并远程分支或展示型任务 | `docs/lessons/topics/repository-workflow.md` |
+| repository-workflow | 版本检查、同步、配置摘录仓库定位、AGENTS / ENTRYPOINT / README 规则、GitHub release 依据、合并远程分支或展示型任务、OMP / Claude GitNexus MCP、`Transport closed`、Onboard Trellis init 平台 | `docs/lessons/topics/repository-workflow.md` |
 | validation-scripts | 一次性校验脚本、Markdown 解析、shell quoting、Node / Python 脚本、动态导入、结构化断言、schema 检查 | `docs/lessons/topics/validation-scripts.md` |
 | bdd-e2e-reports | BDD 语言、Web UI 测试资产、Playwright / Maestro 报告、E2E 报告与测试状态解耦 | `docs/lessons/topics/bdd-e2e-reports.md` |
 

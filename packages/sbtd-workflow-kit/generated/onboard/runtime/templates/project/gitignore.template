@@ -12,6 +12,7 @@ dist/
 build/
 .next/
 out/
+.env
 .env.local
 .env.*.local
 
@@ -46,8 +47,10 @@ venv/
 .omp/plugins/
 
 # ---------- Trellis ----------
+# 无尾随斜杠：同时匹配目录与指向目录的 symlink，包含有意配置为 symlink 的 workspace
+#（有意不同于上游 Trellis 默认会 stage workspace 内容，见 README）
 .trellis/*
-.trellis/workspace
+# `.trellis/*` 已覆盖 .trellis 下所有直接子项（含 workspace），不要再逐项重复列出
 
 !.trellis/agents/
 !.trellis/agents/**
@@ -68,13 +71,6 @@ venv/
 !.trellis/tasks/*/design.md
 !.trellis/tasks/*/implement.md
 
-.trellis/.backup-*
-.trellis/worktrees/
-.trellis/.runtime/
-.trellis/.cache/
-.trellis/channels/
-.trellis/.template-hashes.json
-
 # ---------- Impeccable ----------
 .impeccable/live/server.json
 .impeccable/live/sessions/
@@ -93,7 +89,7 @@ venv/
 playwright-report/
 test-results/
 blob-report/
-output/
+/output/
 
 # Web UI autotest generated run artifacts
 tests/e2e/manifest/ui-test-repair-plan.json

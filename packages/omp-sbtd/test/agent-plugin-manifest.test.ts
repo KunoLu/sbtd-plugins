@@ -12,7 +12,7 @@ function validManifest(): Record<string, unknown> {
   return {
     $schema: AGENT_PLUGINS_SCHEMA_URL,
     name: "omp-sbtd",
-    version: "0.1.0-rc.13",
+    version: "0.1.0-rc.14",
     description:
       "SBTD workflow capabilities for coding agents, with an OMP runtime control plane.",
     license: "Apache-2.0",
@@ -57,7 +57,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       ),
     ]);
     const packageVersion = (packageManifest as { version: unknown }).version;
-    expect(packageVersion).toBe("0.1.0-rc.13");
+    expect(packageVersion).toBe("0.1.0-rc.14");
     // Candidate identity: the widened tarball-bound peer range with the exact
     // development pin retained (Slice 3 contract; rc.12 stays exact-peer).
     expect(dependencySpec(packageManifest, "peerDependencies")).toBe(
@@ -69,7 +69,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
         expectedVersion: packageVersion as string,
       }),
     ).not.toThrow();
-    expect((manifest as { version: unknown }).version).toBe("0.1.0-rc.13");
+    expect((manifest as { version: unknown }).version).toBe("0.1.0-rc.14");
   });
 
   const invalidShapes: ReadonlyArray<{
@@ -134,7 +134,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       const manifest = validManifest();
       mutate(manifest);
       expect(() =>
-        validatePluginManifest(manifest, { expectedVersion: "0.1.0-rc.13" }),
+        validatePluginManifest(manifest, { expectedVersion: "0.1.0-rc.14" }),
       ).toThrow(reason);
     });
   }
