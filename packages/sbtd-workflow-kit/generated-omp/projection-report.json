@@ -2170,9 +2170,9 @@
   ],
   "policySha256": "83b9cf75025b858f10dfb6687ee18f6035c2d34f02e8d5bafa2ebe8cb54a0d85",
   "decisionsSha256": "5cbb7731399f20cdd0163f2c9306f4e965f2df95c11de6143a611170c1d9a094",
-  "canonicalManifestSha256": "ef765f4b2e6c040e057cfe17085e4fa76be558e4d7455020f6a61c71ee31a768",
+  "canonicalManifestSha256": "195300dd96a98060396556b0c2c7fdd3d0a5e28b41016890ef2da26c3a6ac120",
   "retainedProvenanceManifestSha256": "017bfad63bbf316a1c742051f0a3939ea64cdcb6530a1b177d5b5fb4feb204f9",
-  "generatedSha256": "406dc865dbf30a5e99bbabc1aa74cc531152cc28e5601b53bbc232c3646333e5",
+  "generatedSha256": "1dccef74b53454a862a0568dd8e119049e8278d15c4c6af40f9c0be77601c040",
   "forbiddenTokenScan": {
     "scannedPaths": 192,
     "scannedFiles": 192,

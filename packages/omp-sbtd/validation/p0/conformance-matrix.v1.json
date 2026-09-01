@@ -12,7 +12,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 仅内部文档或配置变更保持轻量 Route",
           "command": [
             "pnpm",
@@ -38,13 +38,13 @@
       "evidence": [
         {
           "kind": "feature",
-          "path": "plugins/omp-sbtd/features/runtime-workflow-gates.feature",
+          "path": "packages/omp-sbtd/features/runtime-workflow-gates.feature",
           "title": "Scenario: 无关 .feature 修改不满足 BDD 交付",
           "mode": "contract-backed"
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 用户可见变更需要 BDD 并选择对应 Route",
           "command": [
             "pnpm",
@@ -70,7 +70,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 既有缺陷优先选择 Bugfix，同时触发 Legacy、TDD 和 Refactoring",
           "command": [
             "pnpm",
@@ -96,7 +96,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 技术文档与生产代码并列变更保留语义 Route 与门禁",
           "command": [
             "pnpm",
@@ -122,7 +122,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 持久数据与生产路径按风险优先选择 Route",
           "command": [
             "pnpm",
@@ -148,7 +148,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 持久数据与生产路径按风险优先选择 Route",
           "command": [
             "pnpm",
@@ -171,7 +171,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: %s 选择明确的专项 Route",
           "command": [
             "pnpm",
@@ -186,7 +186,7 @@
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/report-command.test.ts",
+          "path": "packages/omp-sbtd/test/report-command.test.ts",
           "title": "Scenario: 同 Stem 的新鲜正式报告与中文 Markdown 可作为报告证据",
           "command": [
             "pnpm",
@@ -212,7 +212,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: %s 选择明确的专项 Route",
           "command": [
             "pnpm",
@@ -227,7 +227,7 @@
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: 缺失 Route 专属能力仍会阻断",
           "command": [
             "pnpm",
@@ -253,7 +253,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/workflow.test.ts",
+          "path": "packages/omp-sbtd/test/workflow.test.ts",
           "title": "Scenario: 观察到的活跃 Trellis Task 选择托管 Route",
           "command": [
             "pnpm",
@@ -279,13 +279,13 @@
       "evidence": [
         {
           "kind": "feature",
-          "path": "plugins/omp-sbtd/features/runtime-workflow-gates.feature",
+          "path": "packages/omp-sbtd/features/runtime-workflow-gates.feature",
           "title": "Scenario: Compaction 保存工作流状态摘要",
           "mode": "contract-backed"
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: Compaction 状态摘要成为最新可恢复的 Session 状态",
           "command": [
             "pnpm",
@@ -311,7 +311,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/onboard.test.ts",
+          "path": "packages/omp-sbtd/test/onboard.test.ts",
           "title": "Scenario: Project-only Apply 保留全局 Managed Asset 的 provenance",
           "command": [
             "pnpm",
@@ -337,13 +337,13 @@
       "evidence": [
         {
           "kind": "feature",
-          "path": "plugins/omp-sbtd/features/validation-report-provider.feature",
+          "path": "packages/omp-sbtd/features/validation-report-provider.feature",
           "title": "Scenario: Provider 不可用时保留显式阻断",
           "mode": "contract-backed"
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/report.test.ts",
+          "path": "packages/omp-sbtd/test/report.test.ts",
           "title": "Scenario: Provider 不可用时保留显式阻断",
           "command": [
             "pnpm",
@@ -369,7 +369,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: OMP Adapter 通过根项目事实导入成为有效入口",
           "command": [
             "pnpm",
@@ -395,7 +395,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: 缺失选定 Profile 基线进入 Onboard Preflight",
           "command": [
             "pnpm",
@@ -421,7 +421,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: 缺失根项目事实时 OMP Adapter 导入不被视为有效",
           "command": [
             "pnpm",
@@ -447,7 +447,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: 缺失根项目事实时 OMP Adapter 导入不被视为有效",
           "command": [
             "pnpm",
@@ -473,7 +473,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/accepted-skip.test.ts",
+          "path": "packages/omp-sbtd/test/accepted-skip.test.ts",
           "title": "Scenario: 仅精确 active Optional AcceptedSkip 使环境降级",
           "command": [
             "pnpm",
@@ -499,13 +499,13 @@
       "evidence": [
         {
           "kind": "feature",
-          "path": "plugins/omp-sbtd/features/sbtd-control-bootstrap.feature",
+          "path": "packages/omp-sbtd/features/sbtd-control-bootstrap.feature",
           "title": "Scenario: 关闭自动控制但保留基础约束",
           "mode": "contract-backed"
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 关闭自动控制但保留基础约束",
           "command": [
             "pnpm",
@@ -531,7 +531,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: Route 与 Policy 命令来自确定性命令注册表",
           "command": [
             "pnpm",
@@ -557,7 +557,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 恢复 Session 时只更新环境观察",
           "command": [
             "pnpm",
@@ -583,7 +583,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 环境评估按 blocked、needs-onboard、degraded、managed 顺序确定结果",
           "command": [
             "pnpm",
@@ -609,7 +609,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/extension.test.ts",
+          "path": "packages/omp-sbtd/test/extension.test.ts",
           "title": "Scenario: 有相同派生 capability 的 Route 改变时 AcceptedSkip Plan 不能重放",
           "command": [
             "pnpm",
@@ -635,7 +635,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/accepted-skip.test.ts",
+          "path": "packages/omp-sbtd/test/accepted-skip.test.ts",
           "title": "Scenario: 项目与全局 AcceptedSkip 仅在精确作用域内有效",
           "command": [
             "pnpm",
@@ -650,7 +650,7 @@
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/accepted-skip.test.ts",
+          "path": "packages/omp-sbtd/test/accepted-skip.test.ts",
           "title": "Scenario: 到期与撤销保留 append-only 历史并立即失效",
           "command": [
             "pnpm",
@@ -676,7 +676,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 关闭自动控制但保留基础约束",
           "command": [
             "pnpm",
@@ -702,7 +702,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: OMP Adapter 通过根项目事实导入成为有效入口",
           "command": [
             "pnpm",
@@ -728,7 +728,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: 未导入根项目事实的 OMP Adapter 使根项目事实失效",
           "command": [
             "pnpm",
@@ -754,7 +754,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: OMP Adapter 通过根项目事实导入成为有效入口",
           "command": [
             "pnpm",
@@ -780,7 +780,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/onboard.test.ts",
+          "path": "packages/omp-sbtd/test/onboard.test.ts",
           "title": "Scenario: 用户确认安装三层 Managed Block",
           "command": [
             "pnpm",
@@ -806,7 +806,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/onboard.test.ts",
+          "path": "packages/omp-sbtd/test/onboard.test.ts",
           "title": "Scenario: 已记录 Managed Block 内容漂移时要求显式修复",
           "command": [
             "pnpm",
@@ -858,7 +858,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/onboard.test.ts",
+          "path": "packages/omp-sbtd/test/onboard.test.ts",
           "title": "Scenario: 完成的 Onboard operation 可安全重试",
           "command": [
             "pnpm",
@@ -884,7 +884,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/extension.test.ts",
+          "path": "packages/omp-sbtd/test/extension.test.ts",
           "title": "Scenario: Extension factory 只注册一个 sbtd 命令且不执行运行时动作",
           "command": [
             "pnpm",
@@ -910,7 +910,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/onboard.test.ts",
+          "path": "packages/omp-sbtd/test/onboard.test.ts",
           "title": "Scenario: 预览三层 AGENTS Onboard 计划",
           "command": [
             "pnpm",
@@ -936,7 +936,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/tool-evidence.test.ts",
+          "path": "packages/omp-sbtd/test/tool-evidence.test.ts",
           "title": "does not collapse unavailable callability into another facet",
           "command": [
             "pnpm",
@@ -962,7 +962,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 在未完成 Onboard 时查看帮助",
           "command": [
             "pnpm",
@@ -988,7 +988,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/extension.test.ts",
+          "path": "packages/omp-sbtd/test/extension.test.ts",
           "title": "Scenario: 帮助不创建 Agent Turn 或 KPi 状态记录",
           "command": [
             "pnpm",
@@ -1014,7 +1014,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: AcceptedSkip 命令、帮助与候选均由注册表派生",
           "command": [
             "pnpm",
@@ -1040,7 +1040,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 在未完成 Onboard 时查看帮助",
           "command": [
             "pnpm",
@@ -1066,13 +1066,13 @@
       "evidence": [
         {
           "kind": "feature",
-          "path": "plugins/omp-sbtd/features/runtime-workflow-gates.feature",
+          "path": "packages/omp-sbtd/features/runtime-workflow-gates.feature",
           "title": "Scenario: 无歧义 Draft enabled 与裸 mode 状态迁移到版本一",
           "mode": "contract-backed"
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 无歧义 Draft enabled 与裸 mode 状态迁移到版本一",
           "command": [
             "pnpm",
@@ -1087,7 +1087,7 @@
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 冲突 Draft 状态或未知 stateVersion 保持修复阻断",
           "command": [
             "pnpm",
@@ -1113,7 +1113,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/p0-release-validator.test.ts",
+          "path": "packages/omp-sbtd/test/p0-release-validator.test.ts",
           "title": "Scenario: 39 个测试矩阵条目都具有稳定证据定位器",
           "command": [
             "pnpm",
@@ -1139,7 +1139,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/rules.test.ts",
+          "path": "packages/omp-sbtd/test/rules.test.ts",
           "title": "Scenario: relaxed 不降低 Route 必需门禁",
           "command": [
             "pnpm",
@@ -1165,7 +1165,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/report-command.test.ts",
+          "path": "packages/omp-sbtd/test/report-command.test.ts",
           "title": "Scenario: Provider 报告不保留 credential-disabled 原因",
           "command": [
             "pnpm",
@@ -1180,7 +1180,7 @@
         },
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/p0-release-validator.test.ts",
+          "path": "packages/omp-sbtd/test/p0-release-validator.test.ts",
           "title": "Scenario: 不完整或敏感的运行不能提升为规范证据",
           "command": [
             "pnpm",
@@ -1206,7 +1206,7 @@
       "evidence": [
         {
           "kind": "file",
-          "path": "plugins/omp-sbtd/validation/p0/compatibility.v2.json",
+          "path": "packages/omp-sbtd/validation/p0/compatibility.v2.json",
           "mode": "blocked"
         }
       ],
@@ -1227,7 +1227,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: AcceptedSkip 命令、帮助与候选均由注册表派生",
           "command": [
             "pnpm",
@@ -1253,7 +1253,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: OMP Adapter 通过根项目事实导入成为有效入口",
           "command": [
             "pnpm",
@@ -1279,7 +1279,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/environment.test.ts",
+          "path": "packages/omp-sbtd/test/environment.test.ts",
           "title": "Scenario: 未导入根项目事实的 OMP Adapter 使根项目事实失效",
           "command": [
             "pnpm",
@@ -1305,7 +1305,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/extension.test.ts",
+          "path": "packages/omp-sbtd/test/extension.test.ts",
           "title": "Scenario: Extension factory 只注册一个 sbtd 命令且不执行运行时动作",
           "command": [
             "pnpm",
@@ -1331,7 +1331,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 在未完成 Onboard 时查看帮助",
           "command": [
             "pnpm",
@@ -1357,7 +1357,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 环境评估按 blocked、needs-onboard、degraded、managed 顺序确定结果",
           "command": [
             "pnpm",
@@ -1383,7 +1383,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/commands-state.test.ts",
+          "path": "packages/omp-sbtd/test/commands-state.test.ts",
           "title": "Scenario: 恢复 Session 时只更新环境观察",
           "command": [
             "pnpm",
@@ -1435,7 +1435,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/onboard.test.ts",
+          "path": "packages/omp-sbtd/test/onboard.test.ts",
           "title": "Scenario: Project-only Plan 不写入全局 AGENTS",
           "command": [
             "pnpm",
@@ -1461,7 +1461,7 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "plugins/omp-sbtd/test/p0-release-validator.test.ts",
+          "path": "packages/omp-sbtd/test/p0-release-validator.test.ts",
           "title": "Scenario: 价值指标接受边界相等和一个允许的重 Route 激活",
           "command": [
             "pnpm",
@@ -1476,7 +1476,7 @@
         },
         {
           "kind": "file",
-          "path": "plugins/omp-sbtd/validation/p0/value-study/corpus.v1.json",
+          "path": "packages/omp-sbtd/validation/p0/value-study/corpus.v1.json",
           "mode": "blocked"
         }
       ],

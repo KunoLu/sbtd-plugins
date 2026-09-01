@@ -1,22 +1,21 @@
 import { createHash } from "node:crypto";
+import type { Stats } from "node:fs";
 import { lstat, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { kitSnapshotSchema } from "../onboard/index.js";
 import {
-  embeddedStableProvenanceSchema,
+  type embeddedStableProvenanceSchema,
   isStrictPosixRelativePath,
   verifyEmbeddedKitManifest,
 } from "./manifest.js";
-import { kitSnapshotSchema } from "../onboard/index.js";
 
 const sha256 = (value: string | Uint8Array): string =>
   createHash("sha256").update(value).digest("hex");
 
 const embeddedKitRoot = fileURLToPath(new URL("../../kit/", import.meta.url));
 const utf8Decoder = new TextDecoder();
-
-
 
 export const profileSchema = z
   .object({
@@ -84,7 +83,7 @@ async function readRegularEmbeddedKitFile(
 ): Promise<Uint8Array> {
   if (!isStrictPosixRelativePath(relativePath))
     throw new Error(`unsafe embedded Kit asset path: ${relativePath}`);
-  let rootStat;
+  let rootStat: Stats;
   try {
     rootStat = await lstat(root);
   } catch {
@@ -97,7 +96,7 @@ async function readRegularEmbeddedKitFile(
   let target = root;
   for (const [index, segment] of segments.entries()) {
     target = join(target, segment);
-    let entry;
+    let entry: Stats;
     try {
       entry = await lstat(target);
     } catch {
@@ -136,7 +135,10 @@ function assetText(
 export async function loadEmbeddedKitFromDirectory(
   root: string,
 ): Promise<EmbeddedKit> {
-  const manifestContent = await readRegularEmbeddedKitFile(root, "manifest.json");
+  const manifestContent = await readRegularEmbeddedKitFile(
+    root,
+    "manifest.json",
+  );
   let manifestInput: unknown;
   try {
     manifestInput = JSON.parse(utf8Decoder.decode(manifestContent));

@@ -58,7 +58,7 @@ const exactStableRuntimeSchema = z
 const evidenceLocatorSchema = z
   .string()
   .regex(
-    /^(?:plugins\/omp-sbtd\/)?validation\/p0\/evidence\/[A-Za-z0-9._/-]+$/,
+    /^(?:(?:plugins|packages)\/omp-sbtd\/)?validation\/p0\/evidence\/[A-Za-z0-9._/-]+$/,
     "expected a repository evidence locator beneath validation/p0/evidence/",
   )
   .refine(
