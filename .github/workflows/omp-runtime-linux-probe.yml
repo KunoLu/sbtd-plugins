@@ -46,16 +46,30 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build and pack the Plugin subject
+        id: pack
         run: |
           set -euo pipefail
+          shopt -s nullglob
           pnpm --filter @kunolu/omp-sbtd build
           mkdir -p "${RUNNER_TEMP}/omp-probe-pack"
           pnpm --filter @kunolu/omp-sbtd pack --pack-destination "${RUNNER_TEMP}/omp-probe-pack"
+          tarballs=("${RUNNER_TEMP}/omp-probe-pack"/kunolu-omp-sbtd-*.tgz)
+          if [ "${#tarballs[@]}" -eq 0 ]; then
+            echo "expected exactly one kunolu-omp-sbtd-*.tgz under ${RUNNER_TEMP}/omp-probe-pack, found 0" >&2
+            exit 1
+          fi
+          if [ "${#tarballs[@]}" -ne 1 ]; then
+            echo "expected exactly one kunolu-omp-sbtd-*.tgz under ${RUNNER_TEMP}/omp-probe-pack, found ${#tarballs[@]}: ${tarballs[*]}" >&2
+            exit 1
+          fi
+          tarball="$(readlink -f "${tarballs[0]}")"
+          echo "tarball=${tarball}" >> "${GITHUB_OUTPUT}"
+          echo "resolved pack tarball: ${tarball}"
 
       - name: Run frozen-tarball Host Event live cell
         env:
           SPIKE_OMP_BIN: ${{ github.workspace }}/packages/omp-sbtd/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js
-          HOST_EVENT_PLUGIN_TARBALL: ${{ runner.temp }}/omp-probe-pack/kunolu-omp-sbtd-0.1.0-rc.13.tgz
+          HOST_EVENT_PLUGIN_TARBALL: ${{ steps.pack.outputs.tarball }}
           HOST_EVENT_RUNS_ROOT: ${{ runner.temp }}/host-event-runs
           HOST_EVENT_TARGET_VERSION: "17.3.5"
         run: pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/host-event/run-live-cell.ts
