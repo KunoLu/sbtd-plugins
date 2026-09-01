@@ -1,14 +1,14 @@
-# SBTD Workflow Onboard 到 KPi OMP Plugin 的同步与投影手册
+# SBTD Workflow Onboard 到 sbtd-plugins OMP Plugin 的同步与投影手册
 
 ## 目的与适用范围
 
-本文说明如何把上游 `640-skills` 仓库中 `sbtd-workflow-onboard/` 的已提交版本，安全、可重建地同步到当前仓库，并通过 KPi Kit 投影后嵌入 `plugins/omp-sbtd`。
+本文说明如何把上游 `640-skills` 仓库中 `sbtd-workflow-onboard/` 的已提交版本，安全、可重建地同步到当前仓库，并通过本仓库 `packages/sbtd-workflow-kit` 投影后嵌入 `packages/omp-sbtd`。
 
 本文适用于以下场景：
 
 - 上游发布了新的 `sbtd-workflow-onboard` tag 或确定的 commit；
 - Onboard 的 AGENTS 模板、bundled Skills、external stable Skills、安装脚本、规则或许可证发生变化；
-- 需要更新 KPi vendored source、generated Kit 和 Plugin embedded Kit；
+- 需要更新本仓库 vendored source、generated Kit 和 Plugin embedded Kit；
 - 需要判断哪些上游规则应复用、排除，或替换为 OMP 专属 adapter。
 
 本文不负责：
@@ -16,19 +16,19 @@
 - 修改或发布 `@kunolu/omp-sbtd` 的 npm 版本；
 - 扩大 OMP host 兼容声明、修改 peer dependency 或执行 host certification；
 - 安装 Plugin、修改用户 AGENTS/Profile、同步外部自动化或写入生产凭据；
-- 在 KPi 中维护第二份上游 Onboard 或 external Skills 事实源。
+- 在 sbtd-plugins 中维护第二份上游 Onboard 或 external Skills 事实源。
 
 ## 核心结论
 
-同步不是把上游文件直接复制到 `plugins/omp-sbtd`，也不是逐文件手工“拆分”。正确路径是：
+同步不是把上游文件直接复制到 `packages/omp-sbtd`，也不是逐文件手工“拆分”。正确路径是：
 
 ```mermaid
 flowchart LR
-  A[640-skills 已提交 Git object\nsbtd-workflow-onboard] --> B[KPi vendored source]
+  A[640-skills 已提交 Git object\nsbtd-workflow-onboard] --> B[sbtd-plugins vendored source]
   B --> C[section map + OMP overlays]
   C --> D[packages/sbtd-workflow-kit/generated\ncanonical Kit]
   C --> E[packages/sbtd-workflow-kit/generated-omp\nOMP projection]
-  E --> F[plugins/omp-sbtd/kit]
+  E --> F[packages/omp-sbtd/kit]
   E --> G[manifest / provenance / notices]
   F --> H[OMP Plugin build / pack / host validation]
 ```
@@ -36,7 +36,7 @@ flowchart LR
 所有权固定如下：
 
 1. **`640-skills` 是 canonical source。** 通用规则、Onboard runtime、bundled Skills、external stable mirror 及其来源证明由上游拥有。
-2. **KPi Kit 是确定性投影与打包层。** 它固定上游完整 commit，验证来源和 stable manifest，执行 section map 与 OMP overlay，生成内容寻址的 Kit。
+2. **`packages/sbtd-workflow-kit` 是确定性投影与打包层。** 它固定上游完整 commit，验证来源和 stable manifest，执行 section map 与 OMP overlay，生成内容寻址的 Kit。
 3. **`omp-sbtd` 是消费方和 OMP adapter。** 它嵌入生成后的 Kit，提供 OMP runtime、RPC、命令、doctor 和 onboard 行为；它不是第二事实源。
 4. **同步与发布分离。** promotion 成功不等于 npm 包可发布，也不等于新 OMP host 已获得支持。
 
@@ -44,15 +44,15 @@ flowchart LR
 
 | 层 | 路径 | 职责 | 是否可手改 |
 |---|---|---|---|
-| 上游事实源 | `../640-skills/sbtd-workflow-onboard/**`（相对 KPi 仓库根目录） | Onboard 模板、脚本、bundled/external Skills、许可证和稳定来源策略 | 只在上游仓库按其流程修改 |
-| KPi vendored source | `packages/sbtd-workflow-kit/vendor/sbtd-workflow-kit-upstream/**` | 指定上游 Git object 的完整快照 | 否；仅由 promotion 替换 |
+| 上游事实源 | `../640-skills/sbtd-workflow-onboard/**`（相对 sbtd-plugins 仓库根目录） | Onboard 模板、脚本、bundled/external Skills、许可证和稳定来源策略 | 只在上游仓库按其流程修改 |
+| sbtd-plugins vendored source | `packages/sbtd-workflow-kit/vendor/sbtd-workflow-kit-upstream/**` | 指定上游 Git object 的完整快照 | 否；仅由 promotion 替换 |
 | 上游锁 | `packages/sbtd-workflow-kit/upstream.lock.json` | canonical URI、完整 revision、source tree digest、transform version | 由 promotion 生成 revision/digest |
 | 投影规则 | `packages/sbtd-workflow-kit/agents-section-map.yaml` | 对上游 AGENTS section 做严格、穷尽的 `include`、`omit`、`replace-with-overlay` 分类 | 可审查修改；必须有测试 |
 | OMP 覆盖层 | `packages/sbtd-workflow-kit/overlays/AGENTS.project-omp.md` | OMP task worker、Channel、runtime marker 和 mode-aware adapter 规则 | 可审查修改；不得复制 Codex runtime 策略 |
 | Canonical generated Kit | `packages/sbtd-workflow-kit/generated/**` | 完整 canonical Kit；作为 OMP 投影的受验证输入 | 否；仅由 generator 生成 |
 | OMP generated projection | `packages/sbtd-workflow-kit/generated-omp/**` | schema-v2 OMP-only 投影：canonical/projection 双来源、受保留 assets、OMP targets、catalog、许可证与 notices | 否；仅由 generator 生成 |
-| Plugin embedded Kit | `plugins/omp-sbtd/kit/**` | `generated-omp/**` 的字节一致嵌入副本 | 否；仅由 embed/promotion 生成 |
-| Plugin host 代码 | `plugins/omp-sbtd/src/**`、`scripts/**`、`test/**` | 加载、交叉验证和使用 embedded Kit；适配 OMP host | 仅在契约变化需要时修改 |
+| Plugin embedded Kit | `packages/omp-sbtd/kit/**` | `generated-omp/**` 的字节一致嵌入副本 | 否；仅由 embed/promotion 生成 |
+| Plugin host 代码 | `packages/omp-sbtd/src/**`、`scripts/**`、`test/**` | 加载、交叉验证和使用 embedded Kit；适配 OMP host | 仅在契约变化需要时修改 |
 
 `sync-upstream` 事务直接拥有以下目标：
 
@@ -82,7 +82,7 @@ flowchart LR
 |---|---|---|
 | `include` | 将上游 section 投影到指定 owner/target | 已审查可复用的规则；正文可能提及 Codex，但必须明确限定 host，不能把 Codex 执行策略当成 OMP 策略 |
 | `omit` | 从三个投影目标中排除该 section | 完全不适用于 OMP 投影、且无需保留用于跨 host 隔离的正文 |
-| `replace-with-overlay` | 不复制上游正文，改用 KPi OMP overlay | Trellis dispatch、Channel、OMP adapter 等平台专属策略 |
+| `replace-with-overlay` | 不复制上游正文，改用本仓库 OMP overlay | Trellis dispatch、Channel、OMP adapter 等平台专属策略 |
 
 规则：
 
@@ -93,7 +93,7 @@ flowchart LR
 - AGENTS section-leakage 检查不得以 `Codex`、`CODEX_HOME` 或 `.codex` 等单个关键词为判据；当前 `include` 的跨 host 边界可以说明 Codex 与 OMP 的差异，真正约束是 OMP 不得继承 Codex-only 的执行决策。
 - 这是 AGENTS 语义检查，不是包内容检查。对 `generated-omp/**`、embedded Kit 和 packed tarball 的零 Codex/非 OMP runtime 约束，必须由独立的路径与 payload scanner 执行；不得用 section-leakage 测试替代它。
 
-当前边界是：三个 AGENTS target 受 section map 管理；`AGENTS.project-omp.md` overlay 拥有面向 Agent 的 OMP task-worker、Channel 与 runtime marker 消费策略，Plugin source 则拥有 marker 生成、运行状态计算和命令实现。`generated/**` 可保留完整跨平台 Onboard runtime，包含合法的 `.codex/**`、`$CODEX_HOME`、Codex gitignore 模板及 Trellis/Impeccable 的 Codex 支持路径；它是 canonical 输入，不是 Plugin 载荷。`generated-omp/**` 只能保留 OMP distribution map 明确允许或替换后的资源，并且 `plugins/omp-sbtd/kit/**` 必须与其逐字节一致。leakage 测试只应断言被分类为 `omit` 或 `replace-with-overlay` 的**完整上游正文**没有逐字进入三个投影 target，不能断言 canonical Kit 中完全没有 Codex 术语。
+当前边界是：三个 AGENTS target 受 section map 管理；`AGENTS.project-omp.md` overlay 拥有面向 Agent 的 OMP task-worker、Channel 与 runtime marker 消费策略，Plugin source 则拥有 marker 生成、运行状态计算和命令实现。`generated/**` 可保留完整跨平台 Onboard runtime，包含合法的 `.codex/**`、`$CODEX_HOME`、Codex gitignore 模板及 Trellis/Impeccable 的 Codex 支持路径；它是 canonical 输入，不是 Plugin 载荷。`generated-omp/**` 只能保留 OMP distribution map 明确允许或替换后的资源，并且 `packages/omp-sbtd/kit/**` 必须与其逐字节一致。leakage 测试只应断言被分类为 `omit` 或 `replace-with-overlay` 的**完整上游正文**没有逐字进入三个投影 target，不能断言 canonical Kit 中完全没有 Codex 术语。
 
 ### 2. Onboard runtime 和 Skills：canonical 保留，OMP 投影筛选
 
@@ -107,7 +107,7 @@ packages/sbtd-workflow-kit/generated/onboard/runtime/**
 
 ```text
 packages/sbtd-workflow-kit/generated-omp/onboard/runtime/**
-plugins/omp-sbtd/kit/onboard/runtime/**
+packages/omp-sbtd/kit/onboard/runtime/**
 ```
 
 canonical runtime 可以保留 `SKILL.md`、`REFERENCE.md`、`scripts/onboard.py`、跨平台模板、stable assets、catalog 与其他完整运行资产。OMP 投影不得把 Python Onboard bridge、Codex-only runtime/模板或其它未获分配的跨平台资源带入 Plugin；这不是按关键词删减，而是由严格且穷尽的 distribution map、overlay 和 schema-v2 asset digest 验证完成。
@@ -135,7 +135,7 @@ sbtd-workflow-onboard/assets/external-skills/stable/MANIFEST.json
 
 ## 标准同步流程
 
-以下命令均从 KPi 仓库根目录执行，并约定 `640-skills` 位于当前仓库的同级目录 `../640-skills`。命令需要 Bash、Git、`jq`、`shasum`、`cmp`、`diff`、Node.js 与 pnpm。包含 pipeline 的 shell 必须先启用 `set -o pipefail`，避免 `tee` 或 `shasum` 掩盖上游命令失败。示例变量只用于说明，不应把某一 tag 的值写死为永久默认值。
+以下命令均从 sbtd-plugins 仓库根目录执行。`640-skills` 通常为同级目录 `../640-skills`；在本云主机上也可使用绝对路径 `/workspace/640-skills`。命令需要 Bash、Git、`jq`、`shasum`、`cmp`、`diff`、Node.js 与 pnpm。包含 pipeline 的 shell 必须先启用 `set -o pipefail`，避免 `tee` 或 `shasum` 掩盖上游命令失败。示例变量只用于说明，不应把某一 tag 的值写死为永久默认值。
 
 ### 阶段 0：建立任务和变更分类
 
@@ -155,7 +155,7 @@ sbtd-workflow-onboard/assets/external-skills/stable/MANIFEST.json
 ```bash
 set -o pipefail
 
-UPSTREAM_REPO="../640-skills"
+UPSTREAM_REPO="${UPSTREAM_REPO:-../640-skills}"  # cloud host may use /workspace/640-skills
 UPSTREAM_ROOT="$(cd "$UPSTREAM_REPO" && pwd -P)"
 UPSTREAM_TAG="vX.Y.Z"
 REVISION="$(git -C "$UPSTREAM_ROOT" rev-parse "${UPSTREAM_TAG}^{commit}")"
@@ -230,7 +230,7 @@ jq '{canonicalSourceUri,resolvedRevision,sourceTreeSha256,transformVersion}' \
 
 ```bash
 set -o pipefail
-PLAN_FILE="$(mktemp -t kpi-sbtd-plan)"
+PLAN_FILE="$(mktemp -t sbtd-plugins-plan)"
 
 pnpm --filter @kunolu/sbtd-workflow-kit exec tsx src/sync-upstream.ts \
   --plan \
@@ -274,9 +274,9 @@ git status --porcelain=v1 --ignored -- \
   packages/sbtd-workflow-kit/agents-section-map.yaml \
   packages/sbtd-workflow-kit/overlays \
   packages/sbtd-workflow-kit/generated \
-  plugins/omp-sbtd/kit \
-  plugins/omp-sbtd/LICENSE \
-  plugins/omp-sbtd/THIRD_PARTY_NOTICES.md
+  packages/omp-sbtd/kit \
+  packages/omp-sbtd/LICENSE \
+  packages/omp-sbtd/THIRD_PARTY_NOTICES.md
 ```
 
 有任何输出都应先判定所有权；不要靠 `reset`、`clean`、强制覆盖或盲目 stash 消除它。
@@ -337,7 +337,7 @@ Apply 会：
    ```bash
    PROMOTION_BASE="<approved-clean-commit>"
    PROMOTION_BRANCH="promotion/sbtd-<tag>"
-   PROMOTION_WORKTREE="../KPi-sbtd-<tag>"
+   PROMOTION_WORKTREE="../sbtd-plugins-sbtd-<tag>"
    git worktree add -b "$PROMOTION_BRANCH" "$PROMOTION_WORKTREE" "$PROMOTION_BASE"
    ```
 
@@ -399,22 +399,22 @@ set -o pipefail
 # OMP projection manifest 与 embedded manifest 必须字节一致。
 cmp \
   packages/sbtd-workflow-kit/generated-omp/manifest.json \
-  plugins/omp-sbtd/kit/manifest.json
+  packages/omp-sbtd/kit/manifest.json
 
 # 完整 OMP projection 与 embedded Plugin Kit 必须一致。
 diff -qr \
   packages/sbtd-workflow-kit/generated-omp \
-  plugins/omp-sbtd/kit
+  packages/omp-sbtd/kit
 
 # retained-only stable manifest：OMP projection 与 embedded Plugin 必须字节一致。
 cmp \
   packages/sbtd-workflow-kit/generated-omp/onboard/runtime/assets/external-skills/stable/MANIFEST.json \
-  plugins/omp-sbtd/kit/onboard/runtime/assets/external-skills/stable/MANIFEST.json
+  packages/omp-sbtd/kit/onboard/runtime/assets/external-skills/stable/MANIFEST.json
 
 # retained-only stable manifest digest 必须绑定两个 schema-v2 manifest。
 RETAINED_MANIFEST_SHA="$(shasum -a 256 packages/sbtd-workflow-kit/generated-omp/onboard/runtime/assets/external-skills/stable/MANIFEST.json | cut -d ' ' -f 1)"
 test "$RETAINED_MANIFEST_SHA" = "$(jq -r '.retainedProvenance.manifestSha256' packages/sbtd-workflow-kit/generated-omp/manifest.json)"
-test "$RETAINED_MANIFEST_SHA" = "$(jq -r '.retainedProvenance.manifestSha256' plugins/omp-sbtd/kit/manifest.json)"
+test "$RETAINED_MANIFEST_SHA" = "$(jq -r '.retainedProvenance.manifestSha256' packages/omp-sbtd/kit/manifest.json)"
 ```
 
 再验证以下不变量：
@@ -507,8 +507,8 @@ test "$RETAINED_MANIFEST_SHA" = "$(jq -r '.retainedProvenance.manifestSha256' pl
 - `packages/sbtd-workflow-kit/generated/manifest.json`
 - `packages/sbtd-workflow-kit/generated-omp/manifest.json`
 - `packages/sbtd-workflow-kit/generated-omp/projection-report.json`
-- `plugins/omp-sbtd/scripts/embed-kit.mjs`
-- `plugins/omp-sbtd/src/kit/index.ts`
-- `plugins/omp-sbtd/test/kit-embedding.test.ts`
-- `plugins/omp-sbtd/test/kit-stable-provenance.test.ts`
+- `packages/omp-sbtd/scripts/embed-kit.mjs`
+- `packages/omp-sbtd/src/kit/index.ts`
+- `packages/omp-sbtd/test/kit-embedding.test.ts`
+- `packages/omp-sbtd/test/kit-stable-provenance.test.ts`
 - `.trellis/tasks/07-29-sbtd-upstream-promotion/`
