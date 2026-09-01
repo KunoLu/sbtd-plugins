@@ -19,3 +19,13 @@ Rules:
 - Local, fork, manual or otherwise untrusted runs are `local-observation`
   material: they are never committed here as trusted evidence, never written
   to the public ledger, and never change the derived support matrix.
+
+- Historical assessments attested under `KunoLu/KPi` before the cutover to
+  `KunoLu/sbtd-plugins` are preserved verbatim in
+  `../compatibility-ledger.kunolu-kpi-legacy.v1.json`. That archive is not the
+  active ledger: `compatibility-matrix validate` and public matrix derivation
+  read only `../compatibility-ledger.v1.json`, which accepts only provenance
+  matching `compatibility-trust-policy.v1.json` (`repository`:
+  `KunoLu/sbtd-plugins`). Legacy evidence bundles remain here while the
+  archive references them; do not rewrite their KPi provenance.
+

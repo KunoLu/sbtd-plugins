@@ -8,6 +8,10 @@
 // - validation/p0/compatibility-ledger.v1.json owns the append-only
 //   assessment/revocation successor chain; entrySha256 is computed over the
 //   RFC 8785 canonical bytes of the entry minus its entrySha256 field.
+// - validation/p0/compatibility-ledger.kunolu-kpi-legacy.v1.json is an
+//   audit-only archive of pre-cutover KunoLu/KPi attestations. It is never
+//   loaded by validate/append/derive paths and never rewrites historical
+//   provenance to this repository.
 // - validation/p0/compatibility-trust-policy.v1.json owns the accepted
 //   issuer/repository/workflow/ref/event/subject rules.
 // - The public overall state is derived only from the latest valid trusted
