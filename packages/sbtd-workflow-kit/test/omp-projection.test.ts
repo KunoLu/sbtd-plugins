@@ -650,7 +650,7 @@ describe("OMP Distribution Projection", () => {
       manifest.retainedProvenance.repositories,
     ).sort();
     expect(retainedRepositories).toEqual(
-      ["mattpocock-skills", "ui-ux-pro-max-skill"].sort(),
+      ["mattpocock-skills", "ponytail", "ui-ux-pro-max-skill"].sort(),
     );
     expect(
       Object.keys(manifest.retainedProvenance.skills).sort(),
@@ -677,6 +677,7 @@ describe("OMP Distribution Projection", () => {
     ).toString();
     expect(stableNotices).toContain("mattpocock/skills");
     expect(stableNotices).toContain("ui-ux-pro-max");
+    expect(stableNotices).toContain("ponytail");
     expect(stableNotices).not.toContain("impeccable");
     expect(stableNotices).not.toContain("shadcn");
 

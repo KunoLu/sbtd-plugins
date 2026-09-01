@@ -25,6 +25,9 @@ This Skill is responsible for the Trellis lifecycle, task artifacts, phase check
 `.trellis/workflow.md` is the workflow actually in effect for the current project.
 All Trellis phase decisions must be based on this file.
 
+When the per-turn breadcrumb is `[workflow-state:task_error]`, do not create or activate another task. Inspect and repair the named task's `task.json` so it is a valid JSON object with a non-empty `status`. Preserve existing fields and artifacts; if the correct status cannot be determined safely, ask the user.
+
+
 ## Requirement Clarification and PRD Entry Point
 
 Trellis is responsible for the task lifecycle; it does not replace requirement clarification, domain terminology alignment, or PRD generation.
@@ -37,9 +40,9 @@ When the user provides only an initial requirement, and the requirement involves
 4. Only write terminology into the project's designated context documentation when long-term consensus has been reached; use `docs/CONTEXT.md` by default, and use `docs/contexts/<context>/CONTEXT.md` for multi-context projects; do not create a root-level `CONTEXT.md` unless the project already uses that path or project rules explicitly specify it; do not turn CONTEXT into a temporary specification.
 5. Suggest writing an ADR only when a decision simultaneously meets all three conditions: difficult to roll back, surprising without context, and involving real trade-offs; write to `docs/adr/*.md` by default, and write to `docs/contexts/<context>/adr/*.md` for multi-context projects.
 6. After consensus is reached, every completed `grill-with-docs` session, regardless of whether the Agent or the user initiated it, must be followed immediately by `book-ddd-distilled-modeling` as an independent second-pass boundary review. `domain-modeling` inside `grill-with-docs` does not satisfy or replace this gate.
-7. Output a visible `DDD Boundary Review` with status `confirmed`, `needs-clarification`, or `blocked`, covering ubiquitous language, bounded-context assumptions, invariants, subdomain classification, corrections to the `grill-with-docs` result, and open conflicts.
-8. If the review is not `confirmed`, resolve each finding through one-question-at-a-time clarification and rerun `book-ddd-distilled-modeling`; the workflow must not advance to requirement confirmation, PRD, design, task creation, or implementation.
-9. After the review reaches `confirmed`, output a requirement confirmation summary covering the goal, users / scenarios, in-scope and out-of-scope items, terminology, constraints, acceptance criteria, and open questions.
+7. Output the visible `DDD Boundary Review` that reviewer Skill defines; `book-ddd-distilled-modeling/SKILL.md` is the sole source for its status vocabulary, output fields, rerun loop, and stop condition.
+8. Until that review reaches its documented passing status, the workflow must not advance to requirement confirmation, PRD, design, task creation, or implementation.
+9. Only after that reviewer reports its own passing status may you output a requirement confirmation summary covering the goal, users / scenarios, in-scope and out-of-scope items, terminology, constraints, acceptance criteria, and open questions.
 10. Before outputting the requirement confirmation summary, a PRD / design / implement review gate, or `task.py start`, state the usage status of `grill-with-docs` and the latest `DDD Boundary Review` status. If `grill-with-docs` was not fully invoked, explain why. Ask only when using versus skipping the Skill presents a material trade-off that could change requirements, domain boundaries, or implementation decisions; otherwise proceed from the established project facts without creating a confirmation gate.
 11. After the user confirms the summary, use `to-spec` to generate the Markdown spec / PRD; in a Trellis project, write or update the final spec / PRD in `.trellis/tasks/<task>/prd.md`.
 12. After the spec / PRD is confirmed, use `to-tickets` to split it into Trellis-ready vertical slices, marking dependency order, AFK / HITL, acceptance criteria, and testing strategy; the decomposition results should be materialized as parent / child task artifacts under `.trellis/tasks/<task>/...`.
@@ -55,7 +58,7 @@ If the requirement is only a general solution inquiry and has no project documen
 
 During Phase 1 planning, in the requirement confirmation summary, at a PRD / design / implement review gate, or before `task.py start`, state according to the global rules whether `grill-with-docs` was fully invoked and explain any omission. Ask only when using versus skipping the Skill presents a material trade-off; otherwise proceed from established project facts.
 
-When `grill-with-docs` was fully completed, also state whether the mandatory `book-ddd-distilled-modeling` second pass ran and output its visible `DDD Boundary Review`. A missing, unreadable, or evidence-blocked reviewer is `blocked`, not a reason to skip the gate.
+When `grill-with-docs` was fully completed, also state whether the mandatory `book-ddd-distilled-modeling` second pass ran and output its visible `DDD Boundary Review`, using that Skill's own status vocabulary. A missing, unreadable, or evidence-blocked reviewer keeps the gate unmet; it is never a reason to skip it.
 
 Do not execute `$trellis-before-dev` or begin implementation before the requirement confirmation summary, PRD, or task artifacts are stable.
 
@@ -176,7 +179,7 @@ For confirmed user-visible behavior, the persistent `.feature` file is the behav
 
 Current task artifacts take precedence over general assumptions.
 
-Where a generated workflow classifies its platform as sub-agent dispatch, `implement.jsonl` and `check.jsonl` must both contain real spec / research / task artifact entries before `task.py start` or dispatch begins; seed / `_example` rows are tolerated by runtime consumers for compatibility but are never planning-ready. Codex effective Inline, including its invalid-config fail-closed fallback, skips JSONL curation; report and repair a Codex invalid dispatch setting instead of treating a seed-only sub-agent task as ready. For OMP, obey the generated workflow's planning gate: its extension may parse role-specific JSONL non-fatally, but that does not relax workflow readiness.
+Where a generated workflow classifies its platform as sub-agent dispatch, `implement.jsonl` and `check.jsonl` must both contain real spec / research / task artifact entries before `task.py start` or dispatch begins. `task.py validate` fails and `task.py start` refuses while a seeded manifest is still empty; pass `task.py start --allow-empty-context` only when the user explicitly wants a zero-context start. Seed / `_example` rows are tolerated by some runtime consumers for compatibility but are never planning-ready. Codex effective Inline, including its invalid-config fail-closed fallback, skips JSONL curation; report and repair a Codex invalid dispatch setting instead of treating a seed-only sub-agent task as ready. For OMP, obey the generated workflow's planning gate: its extension may parse role-specific JSONL non-fatally, but that does not relax workflow readiness.
 
 `.trellis/spec` stores only long-term project rules.
 
@@ -205,6 +208,7 @@ Do not write the following directly into `.trellis/spec`:
 - `$trellis-finish-work`: execute after validation passes
 - `$trellis-update-spec`: update long-term project specifications
 - `$trellis-brainstorm`: clarify ambiguous requirements within a Trellis task; when project documentation and domain terminology alignment are required, use `grill-with-docs` first
+- `task.py rename <task> <new-slug> [--dry-run]`: rename a task directory and rewrite identity, parent/child references, and jsonl together; dry-run first and treat it as a path-mutating operation
 
 ## Trellis Updates and Migrations
 
@@ -215,7 +219,7 @@ When upgrading Trellis, switching templates, or discovering missing generated fi
 - `trellis update` may install new bundled skills, platform templates, or `.trellis/agents/{check,implement}.md` channel runtime files; these are generated Trellis workflow assets, not channel runtime logs.
 - When an update changes sub-agent context injection, preserve the default bounded injection behavior. Review `.trellis/config.yaml` before raising `context_injection` byte limits; treat `0` (unlimited) as an explicit, user-owned trade-off rather than a workaround for missing task artifacts. Binary referenced files may be represented by a notice instead of inlined content, so inspect the referenced path rather than retrying dispatch with copied binary data.
 - For Codex hook-based sub-agents, treat saved `SubagentStart` output as the recovery source when an injected marker is incomplete. After `trellis update`, verify the generated `trellis-{implement,check,research}` agents retain a single context prelude and recover context without manually pasting task data or increasing injection limits.
-- The configured `prompt_injection.skip_keyword` can suppress per-turn workflow-state injection for the matching turn. Do not infer that a skipped breadcrumb disables Trellis task rules, required artifacts, or explicit workflow commands.
+- The configured `prompt_injection.skip_keyword` can suppress per-turn workflow-state injection for the matching turn. Generated OMP extensions honor the same keyword as Python per-turn hooks. Do not infer that a skipped breadcrumb disables Trellis task rules, required artifacts, or explicit workflow commands.
 - Treat `channel.trusted_context_dirs` as a narrow allowlist for known linked-worktree locations. Do not broaden it to arbitrary external directories or bypass containment checks; when a top-level `.trellis/tasks` or `.trellis/workspace` symlink is intentional, confirm its resolved destination and review the generated configuration.
 - `trellis update` preserves user-set `model` and `model_reasoning_effort` keys in generated `.codex/agents/trellis-*.toml`. Preserve only these documented user-owned keys; after updating, verify the agent files retain the intended settings and that the generated context prelude remains singular.
 - When Trellis adds or renames an AI platform, review the generated commands, skills, agents, shared skills directories, and the project's `.gitignore` / commit policy; do not treat reusable platform template directories, runtime logs, and local caches as the same category.
@@ -226,8 +230,8 @@ When upgrading Trellis, switching templates, or discovering missing generated fi
 - For platforms such as Pi where session-start can only notify and cannot directly inject model context, after updating, you must confirm that startup context still has a valid injection path and manual fallback, such as agent-start extension injection, start prompts, agent tools frontmatter, and tool-name casing conventions; do not inspect only whether `session_start` configuration exists.
 - For optional platform hooks, statusline, or status-bar enhancements, do not assume `trellis update` will forcibly install, delete, or rewrite them; enable them only when the user selects the corresponding init/update flag, the project already has the configuration, or the manifest explicitly requires it, and review the generated diff.
 - When using registry-backed spec templates, `trellis update` may refresh `.trellis/spec`; you must review hash / conflict prompts and the actual diff, and must not silently overwrite long-term project specifications.
-- Trellis updates may refresh filesystem-safety behavior, including atomic state writes, task archive guard, Channel safe-name guard, uninstall dirty-data guard, active-task pointer containment, AGENTS managed-block scrubber, template overwrite temp-first swap, rename-dir ownership check, and traces-to-journal non-clobber migration; after updating, review the generated diff before performing operations that delete, move, overwrite, or resolve paths by name. Do not assume `trellis update` rewrites existing session pointers; if a task ref resolves outside the project, treat it as no active task instead of following the escaped path.
-- When `trellis uninstall --yes` or an automated uninstall encounters an uncommitted-data guard for `.trellis/spec`, `.trellis/tasks`, or `.trellis/workspace`, do not set `TRELLIS_ALLOW_DIRTY_UNINSTALL=1` to bypass it unless the user has explicitly confirmed the backup and deletion scope; preferentially run a dry-run first or ask the user to manually clean up / commit the relevant data.
+- Trellis updates may refresh filesystem-safety behavior, including atomic state writes, task archive guard, Channel safe-name guard, uninstall dirty-data guard, task rename containment, reversible ablation backup/restore, active-task pointer containment, AGENTS managed-block scrubber, template overwrite temp-first swap, rename-dir ownership check, and traces-to-journal non-clobber migration; after updating, review the generated diff before performing operations that delete, move, overwrite, or resolve paths by name. Do not assume `trellis update` rewrites existing session pointers; if a task ref resolves outside the project, treat it as no active task instead of following the escaped path.
+- When `trellis uninstall --yes`, `trellis ablate`, `trellis restore`, or an automated uninstall / ablation encounters an uncommitted-data or conflict guard for `.trellis/spec`, `.trellis/tasks`, or `.trellis/workspace`, do not set `TRELLIS_ALLOW_DIRTY_UNINSTALL=1` or otherwise bypass it unless the user has explicitly confirmed the backup and deletion / restore scope; preferentially run a dry-run first or ask the user to manually clean up / commit the relevant data. Do not run `trellis ablate` without that explicit confirmation.
 - When a Trellis update involves workflow phases, step numbering, status routing, or resume / continue behavior, after updating, you must review whether the generated workflow, `/continue` command, workflow variants, bundled skill references, and platform prompts remain aligned with `.trellis/workflow.md`; do not inspect only references containing the words `Phase X.Y`, but also inspect bare numeric routing.
 - If a command reports that `.trellis/agents/<name>.md` referenced by the workflow is missing, first run `trellis update`, then retry the workflow or Channel operation.
 
@@ -277,23 +281,68 @@ Do not complete the task without executing $trellis-check.
 
 ---
 
+## Ponytail and Code Readability Sequence
+
+For coding tasks, the implementation phase must follow this order:
+
+```text
+requirements / PRD / BDD / design stable
+→ Book Gate Plan
+→ applicable Legacy / Refactoring / DDIA pre-implementation gates
+→ ponytail
+→ implementation
+→ targeted smoke / targeted tests
+→ ponytail-review
+→ accept or reject simplification findings
+→ Code Readability Review
+→ rerun affected validation when readability edits were applied
+→ project-validation final validation
+→ book-release-readiness (when applicable)
+```
+
+- Invoke `ponytail` proactively after requirements, design, and applicable development gates are settled, and before the first implementation edit. It selects the smallest correct implementation within the confirmed scope; it must not re-question confirmed requirements.
+- Invoke `ponytail-review` proactively after a non-trivial production diff is complete and targeted smoke has passed, and before final `project-validation`. Its findings are complexity candidates only, never correctness, Book Gate, or validation evidence.
+- Every `ponytail-review` delete / inline / merge finding must be decided against the global `AGENTS.md` `Code Readability` rules; readability and maintainability outrank source lines, file count, and minimal diff. Accepted findings require rerunning the affected smoke / tests.
+- Invoke `ponytail-audit` only for explicit whole-repo audit triggers, and `ponytail-debt` only when `ponytail:` markers are added, touched, or explicitly requested; neither expands an ordinary task into a repo-wide cleanup.
+- Code Readability Review covers the modified hand-written production code and tests before final validation and does not modify vendored or generated code. If a finding needs a broad behavior-preserving refactor, stop the cleanup and return to `book-refactoring-pass`; do not silently widen the task at the finish line.
+
+Record the outcome in the task check summary:
+
+```text
+Code Readability Review
+Scope: modified hand-written production code and tests
+Findings: none | <concrete locations and issues>
+Ponytail conflicts resolved: none | <accepted/rejected finding and reason>
+Changes applied: none | <task-scoped readability edits>
+Revalidation required: yes | no
+```
+
+---
+
 ## Book-derived Skill Gate
 
-During requirements, design, implementation, and validation phases, first produce a task-level `Book Gate Plan`. For each bundled book-derived Skill, record `required` or `on-demand`, objective trigger evidence, execution phase, and a separate Gate state: `planned` / `running` / `passed` / `blocked` / `not-required`. A required or selected on-demand gate starts `planned`; an unselected on-demand gate is `not-required`; the only normal transition is `planned` → `running` → `passed` / `blocked`. Record the reviewer-specific status only after that Skill actually runs. The workflow must not downgrade a matched mandatory gate to on-demand because the Agent expects a low-risk result; only changed scope or project evidence may remove the trigger, and that change must be recorded.
+At each task phase, maintain the task-level `Book Gate Plan` defined by the active global AGENTS rules: record `required` / `on-demand`, objective trigger evidence, execution phase, and Gate state. Do not duplicate reviewer-specific status vocabularies in Trellis artifacts.
 
-Do not invoke all 5 Skills mechanically for every task. The following objective development triggers are mandatory; unmatched scenarios remain on-demand and may still invoke a Skill because the user requests it or a secondary risk warrants it.
+Use the global Skill routing table as the objective-trigger source. Load the matched `book-*/SKILL.md` before the gate runs; that reviewer Skill is the sole source for its output schema, pass status, correction loop, and stop condition. Unmatched scenarios remain on-demand; matched mandatory gates cannot be downgraded.
 
-Phase orchestration:
+When the global routing table is not visible, use this self-contained trigger fallback:
 
-- Requirements / PRD phase: every completed `grill-with-docs` session must immediately invoke `book-ddd-distilled-modeling`, emit a visible `DDD Boundary Review`, and reach `confirmed` before `to-spec` / `to-tickets`; this is mandatory even when the embedded `domain-modeling` pass found no ambiguity. When `grill-with-docs` was not used, invoke `book-ddd-distilled-modeling` independently only when business terminology, domain rules, bounded contexts, or model boundaries warrant it.
-- Design phase: when persisted or shared data, schemas / migrations, shared / persistent / cross-request / cross-process cache, queues / events / streams / jobs, ETL / analytics, cross-service data flow, data ownership, source of truth, transaction boundaries, read / write paths, backfill, replay, rollback, or recovery changes, invoke `book-ddia-data-design` before design artifacts become stable or implementation begins. Emit `DDIA Data Design Review` with status `confirmed`, `needs-design-change`, or `blocked`; do not advance until `confirmed`.
-- Before behavior changes: for every existing-behavior bug fix, or when existing code has weak / missing tests, unclear behavior, hidden dependencies, or high regression risk, invoke `book-legacy-change-safety` before the first behavior-changing edit. Emit `Legacy Change Safety Review` with status `characterized`, `needs-safety-net`, `seam-required`, or `blocked`. Use `seam-required` only when current behavior and preserved behavior are established but the safety net requires a production seam.
-- Before implementation edits: whenever the task modifies existing production code, invoke `book-refactoring-pass` before the first implementation edit to existing production code. Emit `Refactoring Review` with status `proceed`, `refactor-first`, or `blocked`; `proceed` may explicitly conclude that no refactoring is needed, while `refactor-first` requires the smallest behavior-preserving refactor and a rerun before feature or fix edits.
-- After validation / before completion: when production-path services, APIs, auth, billing, notifications, background jobs, queues, schedulers, external integrations, data pipelines, or deployment behavior changes, invoke `book-release-readiness` after all applicable testing-tool gates and project validation, but before the task is declared complete, the final release decision, or Channel preflight. Emit `Release Readiness Review` with status `ready`, `needs-mitigation`, or `blocked`; required validation that did not run is always `blocked`, while only an optional check may be accepted by an explicit accountable owner as residual risk.
+- `book-ddd-distilled-modeling`: every completed `grill-with-docs` session; otherwise business terminology, domain rules, context boundaries, or model ambiguity.
+- `book-ddia-data-design`: persisted / shared data, schema / migration, shared / persistent / cross-request / cross-process cache, queue / event / stream / job, ETL / analytics, cross-service data flow, API ownership, data ownership, source of truth, transaction boundaries, read / write paths, or backfill / replay / rollback / recovery changes, before the design is stable.
+- `book-legacy-change-safety`: existing-behavior bug fixes, weak / missing tests, unclear behavior, hidden dependencies, or high regression risk, before the first behavior change.
+- `book-refactoring-pass`: any edit to existing production code, before the first implementation edit.
+- `book-release-readiness`: service / API / auth / billing / notification / background job / queue / scheduler / external integration / data-pipeline / deployment / rollout / migration / runtime operational behavior changes, after testing-tool gates and `project-validation`.
 
-If the legacy and refactoring gates both match, normally complete `Legacy Change Safety Review` first, then `Refactoring Review`. Controlled exception: `seam-required` → `Refactoring Review` (`safety-seam-only`) → implement and validate only the smallest behavior-preserving test seam → rerun legacy to `characterized` → rerun the normal refactoring gate. No feature / fix behavior or unrelated cleanup is allowed in `safety-seam-only` mode. For any `needs-*`, `seam-required`, or `refactor-first` result, keep Gate state `running`, complete the correction, and rerun the relevant Skill. A missing Skill or missing evidence is `blocked` for a matched mandatory gate rather than a skip.
+These fallback rows decide only whether a reviewer is mandatory; load that bundled reviewer Skill for its status vocabulary and completion rules. Missing required reviewer evidence or Skill remains `blocked`.
 
-Conclusions from book-derived Skills should preferentially be written into the current task's `prd.md`, `design.md`, `implement.md`, or check summary. Only long-term architecture, APIs, data models, permissions, business rules, or technical conventions belong in `.trellis/spec`.
+Phase orchestration remains:
+
+- requirements / PRD: post-`grill-with-docs` DDD review before requirement confirmation or `to-spec`;
+- design: applicable DDIA review before design becomes stable;
+- behavior change / implementation: applicable legacy review, then refactoring review; follow their documented safety-seam exception when required;
+- completion: applicable release-readiness review after all testing-tool gates and `project-validation`, before completion or Channel preflight.
+
+A matched gate with a missing Skill or insufficient evidence is `blocked`, not skipped. Record task-specific conclusions in `prd.md`, `design.md`, `implement.md`, or the check summary; only durable rules belong in `.trellis/spec`.
 
 ---
 

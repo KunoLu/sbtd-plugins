@@ -5,7 +5,7 @@
   "results": [
     {
       "name": "trellis-workflow",
-      "sourceSha256": "f0259907f5ca27d4fff51dac0ab6d608b94ef80a6c3308262e92197a4efd70bc",
+      "sourceSha256": "7f98aa7ebf187f169ec63c7b1297477c365414badfd77d4e16b280a6ae8863e5",
       "checks": {
         "portable": {
           "status": "fail",

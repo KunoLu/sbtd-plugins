@@ -25,7 +25,7 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertEqual(
             entries,
-            [".DS_Store", ".gitnexus/", ".trellis/", "__pycache__/"],
+            [".DS_Store", ".gitnexus/", ".trellis/", "__pycache__/", "AGENTS.md"],
         )
 
     def test_project_template_ignores_trellis_workspace(self) -> None:
@@ -34,23 +34,23 @@ class WorkflowContractTests(unittest.TestCase):
         )
         entries = template.read_text(encoding="utf-8").splitlines()
 
-        self.assertIn(".trellis/workspace", entries)
+        # Coverage comes from the parent wildcard alone. A separate
+        # `.trellis/workspace` entry is a direct child of `.trellis/*` and so
+        # changes no verdict; keeping it contradicts the adjacent comment that
+        # forbids re-listing direct children.
+        self.assertIn(".trellis/*", entries)
+        self.assertNotIn(".trellis/workspace", entries)
         self.assertNotIn("!.trellis/workspace/", entries)
         self.assertNotIn("!.trellis/workspace/**", entries)
 
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         readme_html = (ROOT / "README.html").read_text(encoding="utf-8")
-        self.assertIn("无尾随斜杠的 `.trellis/workspace`", readme)
+        self.assertIn("无尾随斜杠的 `.trellis/*`", readme)
         self.assertIn(
-            "无尾随斜杠的 <code>.trellis/workspace</code>",
+            "无尾随斜杠的 <code>.trellis/*</code>",
             readme_html,
         )
-        self.assertIn(
-            "本项目模板选择用无尾随斜杠的 `.trellis/workspace`",
-            readme,
-        )
         self.assertIn("有意不同于上游 Trellis 默认会 stage workspace 内容", readme)
-        self.assertIn("本项目模板选择用无尾随斜杠的 <code>.trellis/workspace</code>", readme_html)
         self.assertIn(
             "有意不同于上游 Trellis 默认会 stage workspace 内容",
             readme_html,
@@ -117,6 +117,80 @@ class WorkflowContractTests(unittest.TestCase):
                 cwd=project,
             )
             self.assertEqual(ignored_symlink.returncode, 0)
+
+    def assert_template_ignore_state(
+        self,
+        ignored: tuple[str, ...],
+        trackable: tuple[str, ...],
+    ) -> None:
+        template = (
+            ROOT / "sbtd-workflow-onboard" / "templates" / "project" / ".gitignore"
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project = Path(temp_dir)
+            subprocess.run(
+                ["git", "init", "--quiet"],
+                cwd=project,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            shutil.copyfile(template, project / ".gitignore")
+
+            for relative_path in ignored:
+                result = subprocess.run(
+                    ["git", "check-ignore", "--no-index", "--quiet", relative_path],
+                    cwd=project,
+                )
+                self.assertEqual(
+                    result.returncode, 0, f"{relative_path} must be ignored"
+                )
+            for relative_path in trackable:
+                result = subprocess.run(
+                    ["git", "check-ignore", "--no-index", "--quiet", relative_path],
+                    cwd=project,
+                )
+                self.assertEqual(
+                    result.returncode, 1, f"{relative_path} must stay trackable"
+                )
+
+    def test_project_template_trellis_star_covers_runtime_children(self) -> None:
+        """`.trellis/*` alone covers every runtime child, so the template never
+        needs to re-list `.backup-*`, `worktrees`, `.runtime`, `.cache`,
+        `channels`, or `.template-hashes.json`."""
+        self.assert_template_ignore_state(
+            ignored=(
+                ".trellis/.backup-20260101/spec.md",
+                ".trellis/worktrees/feature/file.md",
+                ".trellis/.runtime/state.json",
+                ".trellis/.cache/index.bin",
+                ".trellis/channels/main.jsonl",
+                ".trellis/.template-hashes.json",
+            ),
+            trackable=(
+                ".trellis/workflow.md",
+                ".trellis/spec/spec.md",
+                ".trellis/agents/agent.md",
+                ".trellis/lessons/lessons.md",
+                ".trellis/tasks/sample/prd.md",
+            ),
+        )
+
+    def test_project_template_ignores_env_secrets_but_keeps_example(self) -> None:
+        """A bare `.env` holds real credentials and must never be committable,
+        while `.env.example` stays tracked as the checked-in template."""
+        self.assert_template_ignore_state(
+            ignored=(".env", ".env.local", ".env.production.local"),
+            trackable=(".env.example",),
+        )
+
+    def test_project_template_output_ignore_is_root_anchored(self) -> None:
+        """`output/` is a Playwright artifact directory at the repository root;
+        unanchored it would also swallow nested source directories."""
+        self.assert_template_ignore_state(
+            ignored=("output/report.json",),
+            trackable=("src/output/index.ts", "docs/output/guide.md"),
+        )
 
     def test_project_template_tracks_managed_agent_controls(self) -> None:
         template = (
@@ -227,7 +301,6 @@ class WorkflowContractTests(unittest.TestCase):
             / "automations"
             / "sbtd-workflow-tools-version-check.md"
         ).read_text(encoding="utf-8")
-        root_agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 
         for installer in (bash_installer, powershell_installer):
             self.assertIn("Target Agent CLI and MCP platform.", installer)
@@ -244,6 +317,21 @@ class WorkflowContractTests(unittest.TestCase):
                 "does not select the global AGENTS target",
                 document,
             )
+            self.assertIn("~/.omp/agent/AGENTS.md", document)
+            self.assertIn("does not create `.omp`", document)
+            self.assertIn("single file write", document)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme_html = (ROOT / "README.html").read_text(encoding="utf-8")
+        self.assertIn("~/.omp/agent/AGENTS.md", readme)
+        self.assertIn("~/.omp/agent/AGENTS.md", readme_html)
+        self.assertIn("不存在则跳过且不创建 `.omp`", readme)
+        self.assertIn("不存在则跳过且不创建 <code>.omp</code>", readme_html)
+        init_asset = (
+            ROOT / "docs" / "assets" / "onboard-skill-init.md"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("不写 `~/.omp/agent/AGENTS.md`", init_asset)
+        self.assertIn("~/.omp/agent/AGENTS.md", init_asset)
+
         for path in (
             "`install.sh`",
             "`install.ps1`",
@@ -251,7 +339,9 @@ class WorkflowContractTests(unittest.TestCase):
             "`tests/**`",
         ):
             self.assertIn(path, prompt)
-            self.assertIn(path, root_agents)
+        self.assertIn("不依赖根 `AGENTS.md` 是否存在", prompt)
+        self.assertIn("不得创建缺失的 `.omp`", prompt)
+
         self.assertIn("无人值守自动化", prompt)
         self.assertIn("用户在交互会话中明确要求", prompt)
 
@@ -596,10 +686,20 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertTrue(changelog_path.is_file())
         changelog = changelog_path.read_text(encoding="utf-8")
         self.assertTrue(changelog.startswith("# CHANGELOG\n"))
-        self.assertLess(changelog.index("## v1.0.4"), changelog.index("## v1.0.3"))
-        self.assertLess(changelog.index("## v1.0.3"), changelog.index("## v1.0.2"))
-        self.assertLess(changelog.index("## v1.0.2"), changelog.index("## v1.0.1"))
-        self.assertLess(changelog.index("## v1.0.1"), changelog.index("## v1.0.0"))
+
+        def heading_index(version: str) -> int:
+            match = re.search(
+                rf"^## {re.escape(version)}（",
+                changelog,
+                re.MULTILINE,
+            )
+            self.assertIsNotNone(match, version)
+            return int(match.start())
+
+        self.assertLess(heading_index("v1.0.4"), heading_index("v1.0.3"))
+        self.assertLess(heading_index("v1.0.3"), heading_index("v1.0.2"))
+        self.assertLess(heading_index("v1.0.2"), heading_index("v1.0.1"))
+        self.assertLess(heading_index("v1.0.1"), heading_index("v1.0.0"))
         self.assertIn("## v1.0.4（2026-07-19）", changelog)
         self.assertIn("## v1.0.3（2026-07-19）", changelog)
         self.assertIn("## v1.0.2（2026-07-18）", changelog)
@@ -607,9 +707,6 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertNotIn("## v1.0.2（未发布）", changelog)
         self.assertNotIn("## v1.0.4（未发布）", changelog)
         self.assertRegex(changelog, r"[\u4e00-\u9fff]")
-        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("## CHANGELOG 维护规则", agents)
-        self.assertIn("每个 Git tag 使用一个二级标题章节", agents)
 
     def test_onboard_skill_is_discoverable_and_documents_npx_install(self) -> None:
         skill_path = ROOT / "sbtd-workflow-onboard" / "SKILL.md"
@@ -688,6 +785,10 @@ class WorkflowContractTests(unittest.TestCase):
                 "skill:ui-ux-pro-max",
                 "skill:impeccable",
                 "skill:shadcn",
+                "skill:ponytail",
+                "skill:ponytail-review",
+                "skill:ponytail-audit",
+                "skill:ponytail-debt",
             ],
         )
         onboard_root = ROOT / "sbtd-workflow-onboard"
@@ -912,7 +1013,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("catalog.schema.json", prompt)
         self.assertIn("`__pycache__/`", prompt)
         self.assertIn("不要修改 `ENTRYPOINT.md`", prompt)
-        self.assertIn("内容严格为四行", prompt)
+        self.assertIn("内容严格为五行", prompt)
         self.assertIn(
             "- `prompts/automations/sbtd-workflow-tools-version-check.md`",
             prompt,
@@ -968,7 +1069,6 @@ class WorkflowContractTests(unittest.TestCase):
         documents = {
             path: (ROOT / path).read_text(encoding="utf-8")
             for path in (
-                "AGENTS.md",
                 "ENTRYPOINT.md",
                 "README.md",
                 "README.html",
@@ -1009,15 +1109,10 @@ class WorkflowContractTests(unittest.TestCase):
         )
 
     def test_update_archive_names_use_positive_numeric_sequences(self) -> None:
-        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         archive_names = [
             path.name for path in (ROOT / "archive").glob("UPDATED-*.md")
         ]
 
-        self.assertIn("`UPDATED-yyyy-mm-dd-<正整数序号>.md`", agents)
-        self.assertNotIn("UPDATED-yyyy-mm-dd-index.md", agents)
-        self.assertIn("最大正整数序号加一", agents)
-        self.assertIn("从 `1` 开始", agents)
         self.assertTrue(archive_names)
         for archive_name in archive_names:
             with self.subTest(archive_name=archive_name):
@@ -1055,6 +1150,7 @@ class WorkflowContractTests(unittest.TestCase):
         )
         plan_command = (
             'python "$SBTD_ONBOARD_DIR/scripts/onboard.py" plan \\\n'
+            "  --platform codex \\\n"
             "  --projects-root /abs/project-one,/abs/project-two \\\n"
             "  --json"
         )
@@ -1107,10 +1203,18 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn("包含 `web-ui-autotest-generator`", prompt)
         self.assertIn("`AGENTS.project.md` 不在普通 sync 范围内", prompt)
+        self.assertIn(
+            "install-external-skills --skills ponytail,ponytail-review,ponytail-audit,ponytail-debt",
+            prompt,
+        )
+        self.assertIn("不得把 Ponytail stable 路径列为 cp/rsync 目标", prompt)
+        self.assertNotIn(
+            "templates/skills/ponytail",
+            prompt,
+        )
 
-        control_paths = (ROOT / "AGENTS.md", ROOT / "ENTRYPOINT.md")
-        for control_path in control_paths:
-            self.assertTrue(control_path.is_file())
+        entrypoint_path = ROOT / "ENTRYPOINT.md"
+        self.assertTrue(entrypoint_path.is_file())
         tracked = subprocess.run(
             ["git", "ls-files", "--", "AGENTS.md", "ENTRYPOINT.md"],
             cwd=ROOT,
@@ -1118,32 +1222,29 @@ class WorkflowContractTests(unittest.TestCase):
             capture_output=True,
             text=True,
         ).stdout.splitlines()
-        self.assertEqual(set(tracked), {"AGENTS.md", "ENTRYPOINT.md"})
-
-        agents = control_paths[0].read_text(encoding="utf-8")
-        web_ui_sync_row = (
-            "| `sbtd-workflow-onboard/templates/skills/"
-            "web-ui-autotest-generator/` | "
-            "`/Users/lusonglin/.agent/skills/web-ui-autotest-generator/` |"
+        self.assertEqual(set(tracked), {"ENTRYPOINT.md"})
+        ignored = subprocess.run(
+            ["git", "check-ignore", "-q", "--", "AGENTS.md"],
+            cwd=ROOT,
         )
-        self.assertIn(web_ui_sync_row, agents)
+        self.assertEqual(ignored.returncode, 0)
+
         for document in (readme, readme_html):
             self.assertIn("web-ui-autotest-generator", document)
             self.assertIn(
                 "/Users/lusonglin/.agent/skills/web-ui-autotest-generator/",
                 document,
             )
-        entrypoint = control_paths[1].read_text(encoding="utf-8")
-        self.assertIn("必须由 Git 追踪", agents)
-        self.assertNotIn("本地控制文件 Gate", agents)
-        self.assertIn("README 与自动化 Prompt 同步规则", agents)
-        self.assertIn("SBTD Workflow Tools Version Check", agents)
-        self.assertIn("普通代码或文档修改只维护仓库内的版本化 prompt", agents)
-        self.assertIn("只有用户明确执行 `sync` / `同步` 时", agents)
-        self.assertIn("`update` / `更新` 不检查、不修改也不同步", agents)
-        self.assertNotIn("即使本轮 prompt 内容没有变化", agents)
-        self.assertNotIn("每次修改版本化 automation prompt 后", agents)
+            self.assertIn(
+                "install-external-skills --skills ponytail,ponytail-review,ponytail-audit,ponytail-debt",
+                document,
+            )
+            self.assertIn("不得作为同步表", document)
+            self.assertIn("本机可选", document)
+            self.assertIn("不进入远程", document)
+        entrypoint = entrypoint_path.read_text(encoding="utf-8")
         self.assertIn("## 0. 版本监控配置", entrypoint)
+        self.assertIn("本机若存在根 `AGENTS.md` 则一并扫描", entrypoint)
 
     def test_readme_knowledge_cli_example_is_shell_executable(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -1318,15 +1419,28 @@ class WorkflowContractTests(unittest.TestCase):
             "`grill-with-docs` 内嵌的 external `domain-modeling` dependency 已运行也不得替代",
             "必须立即调用 `book-ddd-distilled-modeling`",
             "`DDD Boundary Review`",
-            "`confirmed` / `needs-clarification` / `blocked`",
-            "未达到 `confirmed` 不得进入需求确认、PRD、design、Trellis task 或实现",
+            "审核状态枚举、输出字段、重跑回路和 stop condition 以 `book-ddd-distilled-modeling/SKILL.md` 为唯一事实源",
+            "审核未达到该 Skill 定义的通过状态前，不得进入需求确认、PRD、design、Trellis task 或实现",
         ):
             with self.subTest(global_rule=phrase):
                 self.assertIn(phrase, global_agents)
 
+        # The status enum belongs to the owning reviewer Skill. The global rules
+        # fix only this gate's timing, so they must not restate the vocabulary.
+        self.assertNotIn(
+            "`confirmed` / `needs-clarification` / `blocked`", global_agents
+        )
+
+        # The project template delegates the enum and the cross-reviewer order
+        # to the global rules, so it must still bind the gate without restating
+        # the vocabulary.
         self.assertIn("强制 post-grill DDD 二次审核", project_agents)
         self.assertIn(
-            "`grill-with-docs` 完整结束后必须先输出 `DDD Boundary Review`",
+            "并输出 `DDD Boundary Review` 后才能进入需求确认 / PRD",
+            project_agents,
+        )
+        self.assertIn(
+            "`book-ddd-distilled-modeling` 不可用时记为 `blocked`",
             project_agents,
         )
 
@@ -1346,6 +1460,7 @@ class WorkflowContractTests(unittest.TestCase):
             ddd_review,
         )
         self.assertIn("## Mandatory Post-grill Review", ddd_review)
+        self.assertIn("DDD Boundary Review", ddd_review)
         self.assertIn("Status: confirmed | needs-clarification | blocked", ddd_review)
         self.assertIn("Corrections to the grill-with-docs result", ddd_review)
 
@@ -1392,38 +1507,60 @@ class WorkflowContractTests(unittest.TestCase):
 
         for phrase in (
             "`Book Gate Plan`",
-            "命中强制触发条件后不得以主观判断降级为按需",
-            "`DDIA Data Design Review`",
-            "`confirmed` / `needs-design-change` / `blocked`",
-            "`Legacy Change Safety Review`",
-            "`characterized` / `needs-safety-net` / `seam-required` / `blocked`",
-            "`Refactoring Review`",
-            "`proceed` / `refactor-first` / `blocked`",
-            "`Release Readiness Review`",
-            "`ready` / `needs-mitigation` / `blocked`",
-            "未命中强制触发条件的其他场景仍保持按需调用",
+            "下方 Skill 路由表是客观触发条件的唯一常驻事实源",
+            "各 `book-*/SKILL.md` 独占 reviewer 状态、输出 schema、修正回路和 stop condition",
+            "命中触发条件后不得主观降级",
+            "未命中时保持 on-demand",
+            "`seam-required` 的受控例外以两份 reviewer Skill 为准",
+            "强制门禁命中但 Skill 缺失、不可读取或证据不足时，Gate state 为 `blocked`",
         ):
             with self.subTest(global_rule=phrase):
                 self.assertIn(phrase, global_agents)
 
+        # Reviewer display names and status enums are owned by the matched
+        # book-*/SKILL.md, asserted below. The global rules route to them and
+        # must not carry a second copy that could drift.
+        for review_name, status_enum in (
+            (
+                "`DDIA Data Design Review`",
+                "`confirmed` / `needs-design-change` / `blocked`",
+            ),
+            (
+                "`Legacy Change Safety Review`",
+                "`characterized` / `needs-safety-net` / `seam-required` / `blocked`",
+            ),
+            ("`Refactoring Review`", "`proceed` / `refactor-first` / `blocked`"),
+            ("`Release Readiness Review`", "`ready` / `needs-mitigation` / `blocked`"),
+        ):
+            with self.subTest(global_delegates=review_name):
+                self.assertNotIn(review_name, global_agents)
+                self.assertNotIn(status_enum, global_agents)
+
+        # AGENTS.project.md is the project-only fallback. It routes objective
+        # trigger predicates to the owning Skill instead of restating reviewer
+        # labels, and leaves cross-reviewer ordering to the global rules.
         for phrase in (
-            "数据密集型变更在设计稳定前强制审核",
-            "遗留 / bug 风险在行为修改前强制审核",
-            "既有生产代码在首次实现编辑前强制审核",
-            "生产路径变更在项目验证后强制审核",
-            "Legacy Change Safety Review` → `Refactoring Review",
+            "修改既有生产代码 -> 行为保持型重构检查（`book-refactoring-pass`）",
+            "高回归风险任一命中 -> 遗留代码安全修改检查（`book-legacy-change-safety`）",
+            "上下文边界或模型歧义 -> 领域边界审核（`book-ddd-distilled-modeling`）",
+            "API 所有权",
+            "-> 数据设计风险检查（`book-ddia-data-design`）",
+            "rollout / migration / runtime 运维行为变更任一命中",
+            "-> 发布就绪检查（`book-release-readiness`）",
+            "对应 bundled Skill 不存在时该项为 `blocked`，不得记为 `passed` 或静默跳过",
+            "若当前会话的全局规则已把某 reviewer 标为强制门禁，则缺 Skill 必须 `blocked`",
         ):
             with self.subTest(project_rule=phrase):
                 self.assertIn(phrase, project_agents)
 
         for phrase in (
             "`Book Gate Plan`",
-            "must not downgrade a matched mandatory gate to on-demand",
-            "`DDIA Data Design Review`",
-            "`Legacy Change Safety Review`",
-            "`Refactoring Review`",
-            "`Release Readiness Review`",
             "unmatched scenarios remain on-demand",
+            "matched mandatory gates cannot be downgraded",
+            "Use the global Skill routing table as the objective-trigger source.",
+            "Load the matched `book-*/SKILL.md` before the gate runs",
+            "that reviewer Skill is the sole source for its output schema, pass status, correction loop, and stop condition",
+            "Do not duplicate reviewer-specific status vocabularies in Trellis artifacts.",
         ):
             with self.subTest(trellis_rule=phrase):
                 self.assertIn(phrase.lower(), trellis.lower())
@@ -1431,21 +1568,25 @@ class WorkflowContractTests(unittest.TestCase):
         required_skill_phrases = {
             "book-ddia-data-design": (
                 "## Mandatory Development Gate",
+                "DDIA Data Design Review",
                 "Status: confirmed | needs-design-change | blocked",
                 "before design artifacts become stable or implementation begins",
             ),
             "book-legacy-change-safety": (
                 "## Mandatory Development Gate",
+                "Legacy Change Safety Review",
                 "Status: characterized | needs-safety-net | seam-required | blocked",
                 "before the first behavior-changing edit",
             ),
             "book-refactoring-pass": (
                 "## Mandatory Development Gate",
+                "Refactoring Review",
                 "Status: proceed | refactor-first | blocked",
                 "before the first implementation edit to existing production code",
             ),
             "book-release-readiness": (
                 "## Mandatory Development Gate",
+                "Release Readiness Review",
                 "Status: ready | needs-mitigation | blocked",
                 "after all applicable testing-tool gates and project validation",
             ),
@@ -1466,6 +1607,258 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn("其他场景仍按需调用", document)
 
     def test_book_gate_lifecycle_resolves_review_findings(self) -> None:
+        """Every gate-lifecycle claim is checked independently so one drifted
+        document cannot mask the rest of the surfaces in the same run."""
+        onboard_root = ROOT / "sbtd-workflow-onboard"
+        agents_root = onboard_root / "templates" / "agents"
+        skills_root = onboard_root / "templates" / "skills"
+
+        def agents(name: str) -> str:
+            return (agents_root / name).read_text(encoding="utf-8")
+
+        def skill(name: str) -> str:
+            return (skills_root / name / "SKILL.md").read_text(encoding="utf-8")
+
+        global_agents = agents("AGENTS.global.md")
+        project_agents = agents("AGENTS.project.md")
+        trellis = skill("trellis-workflow")
+        legacy = skill("book-legacy-change-safety")
+        refactoring = skill("book-refactoring-pass")
+        ddia = skill("book-ddia-data-design")
+        release = skill("book-release-readiness")
+        onboard_skill = (onboard_root / "SKILL.md").read_text(encoding="utf-8")
+        reference = (onboard_root / "REFERENCE.md").read_text(encoding="utf-8")
+        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        readme_html = (ROOT / "README.html").read_text(encoding="utf-8")
+
+        def present(label: str, document: str, needle: str, topic: str) -> None:
+            with self.subTest(topic=topic, document=label, expect="present"):
+                self.assertIn(needle, document)
+
+        def absent(label: str, document: str, needle: str, topic: str) -> None:
+            with self.subTest(topic=topic, document=label, expect="absent"):
+                self.assertNotIn(needle, document)
+
+        lifecycle = "`planned` → `running` → `passed` / `blocked`"
+        gate_states = "`planned` / `running` / `passed` / `blocked` / `not-required`"
+
+        # AGENTS.global.md owns the Gate state enum and README mirrors it for
+        # users. trellis-workflow/SKILL.md maintains the plan but delegates the
+        # vocabulary, so it must name the plan without restating the states.
+        for label, document in (
+            ("AGENTS.global.md", global_agents),
+            ("README.md", readme),
+        ):
+            present(label, document, "Book Gate Plan", "gate plan")
+            present(label, document, gate_states, "gate state enum")
+            present(label, document, lifecycle, "gate lifecycle")
+        present("trellis-workflow", trellis, "Book Gate Plan", "gate plan")
+        present(
+            "trellis-workflow",
+            trellis,
+            "Do not duplicate reviewer-specific status vocabularies in Trellis artifacts.",
+            "vocabulary delegation",
+        )
+        absent("trellis-workflow", trellis, gate_states, "gate state enum")
+        # AGENTS.project.md names the plan but delegates the enum; the
+        # delegation itself is held by
+        # test_reviewer_status_vocabularies_stay_in_their_owning_skill.
+        present("AGENTS.project.md", project_agents, "Book Gate Plan", "gate plan")
+        present("README.html", readme_html, "Book Gate Plan", "gate plan")
+        for state in ("planned", "running", "passed", "blocked", "not-required"):
+            with self.subTest(topic="gate state enum", document="README.html", state=state):
+                self.assertIn(f"<code>{state}</code>", readme_html)
+        present(
+            "README.html",
+            readme_html,
+            "<code>planned</code> → <code>running</code>",
+            "gate lifecycle",
+        )
+
+        present(
+            "AGENTS.global.md",
+            global_agents,
+            "已命中强制门禁：不得直接跳过",
+            "no-skip rule",
+        )
+        unavailable_section = global_agents.split("### Skill 不可用时", 1)[1]
+        present(
+            "AGENTS.global.md#unavailable",
+            unavailable_section,
+            "book-derived 开发阶段强制门禁",
+            "skill-unavailable fallback",
+        )
+        present(
+            "AGENTS.global.md#unavailable",
+            unavailable_section,
+            "`blocked`",
+            "skill-unavailable fallback",
+        )
+        absent(
+            "AGENTS.global.md#unavailable",
+            unavailable_section,
+            "- 直接跳过。\n- 不要阻塞任务。",
+            "skill-unavailable fallback",
+        )
+
+        # `seam-required` is owned by the two reviewer Skills. The global rules
+        # pin only its controlled exception; Trellis must not restate it.
+        for label, document in (
+            ("AGENTS.global.md", global_agents),
+            ("book-legacy-change-safety", legacy),
+            ("book-refactoring-pass", refactoring),
+        ):
+            present(label, document, "`seam-required`", "seam-required ownership")
+        present(
+            "AGENTS.global.md",
+            global_agents,
+            "`seam-required` 的受控例外以两份 reviewer Skill 为准",
+            "seam-required exception",
+        )
+        absent("trellis-workflow", trellis, "`seam-required`", "seam-required ownership")
+        for label, document in (
+            ("book-legacy-change-safety", legacy),
+            ("book-refactoring-pass", refactoring),
+        ):
+            present(label, document, "safety-seam-only", "safety-seam-only ownership")
+
+        release_order = "after all applicable testing-tool gates and project validation"
+        for label, document in (
+            ("book-release-readiness", release),
+            ("sbtd-workflow-onboard/SKILL.md", onboard_skill),
+            ("REFERENCE.md", reference),
+        ):
+            present(label, document, release_order, "release gate ordering")
+        # Trellis states the same ordering in its own phase vocabulary.
+        arrows = trellis.replace("\u2192", "->")
+        present(
+            "trellis-workflow",
+            trellis,
+            "after all testing-tool gates and `project-validation`",
+            "release gate ordering",
+        )
+        present(
+            "trellis-workflow",
+            arrows,
+            "-> project-validation final validation",
+            "release phase order",
+        )
+        present(
+            "trellis-workflow",
+            arrows,
+            "-> book-release-readiness (when applicable)",
+            "release phase order",
+        )
+        for needle in ("required validation", "optional check", "accountable owner"):
+            present("book-release-readiness", release, needle, "release evidence roles")
+
+        cache_trigger = "shared, persistent, cross-request, or cross-process caches"
+        present("book-ddia-data-design", ddia, cache_trigger, "cache trigger")
+        absent("book-ddia-data-design", ddia, "- Caches, queues", "cache trigger")
+        for label, document in (
+            ("AGENTS.global.md", global_agents),
+            ("AGENTS.project.md", project_agents),
+            ("trellis-workflow", trellis),
+            ("README.md", readme),
+            ("README.html", readme_html),
+        ):
+            present(
+                label,
+                document,
+                "shared / persistent / cross-request / cross-process cache",
+                "cache trigger",
+            )
+
+        for label, document in (
+            ("sbtd-workflow-onboard/SKILL.md", onboard_skill),
+            ("REFERENCE.md", reference),
+        ):
+            present(label, document, "normal `init` / `reset`", "gate activation scope")
+            present(
+                label,
+                document,
+                "bootstrap and `init-projects` do not activate",
+                "gate activation scope",
+            )
+        present(
+            "sbtd-workflow-onboard/SKILL.md",
+            onboard_skill,
+            "`Book Gate Plan`",
+            "gate plan",
+        )
+
+        present(
+            "CHANGELOG.md",
+            changelog,
+            "external `domain-modeling` dependency",
+            "domain-modeling provenance",
+        )
+        absent(
+            "CHANGELOG.md",
+            changelog,
+            "内部 `domain-modeling`",
+            "domain-modeling provenance",
+        )
+
+        # The caveman auto-lite rule is restated in several README sections.
+        # The floor is 2 rather than the current 3 so adding or removing one
+        # restatement stays legal; it only catches the rule collapsing to a
+        # single mention. README.html carries its own wording, so this is a
+        # within-README consistency check, not a cross-file parity check.
+        for phrase in (
+            "5 个独立工具结果",
+            "`autoLiteEligible` 单调锁存",
+            "只有新的主要目标重置",
+        ):
+            with self.subTest(topic="caveman rule restatement", phrase=phrase):
+                self.assertGreaterEqual(readme.count(phrase), 2)
+
+        present(
+            "README.html",
+            readme_html,
+            "事务边界、读写路径、backfill / replay / rollback / recovery",
+            "ddia trigger prose",
+        )
+
+    def test_reviewer_status_vocabularies_stay_in_their_owning_skill(self) -> None:
+        """A status enum copied into a second document drifts out of step with
+        its owner without anything failing, so the delegating template must
+        point at the owner rather than restate the members."""
+        agents_root = ROOT / "sbtd-workflow-onboard" / "templates" / "agents"
+        global_agents = (agents_root / "AGENTS.global.md").read_text(encoding="utf-8")
+        project_agents = (agents_root / "AGENTS.project.md").read_text(encoding="utf-8")
+
+        gate_states = "`planned` / `running` / `passed` / `blocked` / `not-required`"
+        # Exact membership, not a subset: a member added to or dropped from the
+        # rendering below stops matching the owning document.
+        self.assertEqual(
+            {part.strip().strip("`") for part in gate_states.split("/")},
+            {"planned", "running", "passed", "blocked", "not-required"},
+        )
+        self.assertEqual(global_agents.count(gate_states), 1)
+
+        self.assertIn("本文件不复制 reviewer 状态词表", project_agents)
+        self.assertNotIn(gate_states, project_agents)
+        # `blocked` stays reachable in the delegating template because the
+        # fallback needs it; the states that only ever appear inside the enum
+        # must not.
+        for state in ("planned", "running", "not-required"):
+            with self.subTest(delegated_state=state):
+                self.assertNotIn(f"`{state}`", project_agents)
+        self.assertIn("`blocked`", project_agents)
+
+        for owned in ("`seam-required`", "`safety-seam-only`"):
+            with self.subTest(reviewer_status=owned):
+                self.assertNotIn(owned, project_agents)
+
+    def test_book_gate_rows_cover_every_canonical_trigger(self) -> None:
+        """Each gate's trigger predicate is restated in three standalone rule
+        sources. A trigger widened in the canonical Skill but missed in a
+        restatement silently narrows the gate wherever it was missed. Every
+        trigger token is asserted inside the single routing row that owns it,
+        so a short token such as `API` cannot be satisfied by an unrelated
+        mention elsewhere in the file."""
         onboard_root = ROOT / "sbtd-workflow-onboard"
         agents_root = onboard_root / "templates" / "agents"
         skills_root = onboard_root / "templates" / "skills"
@@ -1474,83 +1867,171 @@ class WorkflowContractTests(unittest.TestCase):
         trellis = (skills_root / "trellis-workflow" / "SKILL.md").read_text(
             encoding="utf-8"
         )
-        legacy = (skills_root / "book-legacy-change-safety" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        refactoring = (skills_root / "book-refactoring-pass" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        ddia = (skills_root / "book-ddia-data-design" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        release = (skills_root / "book-release-readiness" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        onboard_skill = (onboard_root / "SKILL.md").read_text(encoding="utf-8")
-        reference = (onboard_root / "REFERENCE.md").read_text(encoding="utf-8")
-        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        readme_html = (ROOT / "README.html").read_text(encoding="utf-8")
 
-        lifecycle = "`planned` → `running` → `passed` / `blocked`"
-        gate_states = "`planned` / `running` / `passed` / `blocked` / `not-required`"
-        for document in (global_agents, project_agents, trellis, readme):
-            self.assertIn("Book Gate Plan", document)
-            self.assertIn(gate_states, document)
-            self.assertIn(lifecycle, document)
-        self.assertIn("Book Gate Plan", readme_html)
-        for state in ("planned", "running", "passed", "blocked", "not-required"):
-            self.assertIn(f"<code>{state}</code>", readme_html)
-        self.assertIn("<code>planned</code> → <code>running</code>", readme_html)
+        def gate_bullets(skill: str) -> list[str]:
+            section = skill.split("## Mandatory Development Gate", 1)[1]
+            section = section.split("Emit a separate visible review", 1)[0]
+            return [
+                line[2:].strip()
+                for line in section.splitlines()
+                if line.startswith("- ")
+            ]
 
-        self.assertIn("强制门禁命中时不得直接跳过", global_agents)
-        unavailable_section = global_agents.split("### Skill 不可用时", 1)[1]
-        self.assertIn("book-derived 开发阶段强制门禁", unavailable_section)
-        self.assertIn("`blocked`", unavailable_section)
-        self.assertNotIn("- 直接跳过。\n- 不要阻塞任务。", unavailable_section)
+        def normalize(text: str) -> str:
+            """Fold hyphen/space differences so `data-pipeline` in the English
+            restatement matches the canonical `data pipeline`."""
+            return re.sub(r"[-\s]+", " ", text).lower()
 
-        for document in (global_agents, project_agents, trellis, legacy, refactoring):
-            self.assertIn("`seam-required`", document)
-        self.assertIn("safety-seam-only", legacy)
-        self.assertIn("safety-seam-only", refactoring)
-        self.assertIn(
-            "`seam-required` → `Refactoring Review` (`safety-seam-only`)",
-            project_agents,
-        )
+        # canonical bullet -> (Chinese trigger tokens, English trigger tokens)
+        coverage: dict[str, dict[str, tuple[tuple[str, ...], tuple[str, ...]]]] = {
+            "book-ddia-data-design": {
+                "Persisted or shared data, databases, schemas, or migrations.": (
+                    ("持久化 / 共享数据", "schema / migration"),
+                    ("persisted / shared data", "schema / migration"),
+                ),
+                "shared, persistent, cross-request, or cross-process caches; queues, events, streams, jobs, ETL, or analytics pipelines.": (
+                    (
+                        "cross-request / cross-process cache",
+                        "queue / event / stream / job",
+                        "ETL / analytics",
+                    ),
+                    (
+                        "cross-request / cross-process cache",
+                        "queue / event / stream / job",
+                        "ETL / analytics",
+                    ),
+                ),
+                "Cross-service data flow or API ownership.": (
+                    ("跨服务数据流", "API 所有权"),
+                    ("cross-service data flow", "API ownership"),
+                ),
+                "Data ownership, source of truth, transaction boundaries, or read / write paths.": (
+                    ("数据所有权", "source of truth", "事务边界", "读写路径"),
+                    (
+                        "data ownership",
+                        "source of truth",
+                        "transaction boundaries",
+                        "read / write paths",
+                    ),
+                ),
+                "Backfill, replay, rollback, or recovery behavior.": (
+                    ("backfill / replay / rollback / recovery",),
+                    ("backfill / replay / rollback / recovery",),
+                ),
+            },
+            "book-release-readiness": {
+                "Service, API, auth, billing, or notification behavior.": (
+                    ("service", "API", "auth", "billing", "notification"),
+                    ("service", "API", "auth", "billing", "notification"),
+                ),
+                "Background job, queue, scheduler, or data pipeline.": (
+                    ("background job", "queue", "scheduler", "data pipeline"),
+                    ("background job", "queue", "scheduler", "data pipeline"),
+                ),
+                "External integration.": (("外部集成",), ("external integration",)),
+                "Deployment, rollout, migration, or runtime operational behavior.": (
+                    ("deployment", "rollout", "migration", "runtime 运维行为"),
+                    (
+                        "deployment",
+                        "rollout",
+                        "migration",
+                        "runtime operational behavior",
+                    ),
+                ),
+            },
+        }
 
-        release_order = "after all applicable testing-tool gates and project validation"
-        for document in (trellis, release, onboard_skill, reference):
-            self.assertIn(release_order, document)
-        self.assertIn("required validation", release)
-        self.assertIn("optional check", release)
-        self.assertIn("accountable owner", release)
+        for skill_name, mapping in coverage.items():
+            canonical = (skills_root / skill_name / "SKILL.md").read_text(
+                encoding="utf-8"
+            )
+            bullets = gate_bullets(canonical)
+            self.assertTrue(bullets, f"{skill_name} declares no gate triggers")
+            # Every canonical trigger must be mapped, so a new bullet cannot be
+            # added to the Skill without also being restated in the rule files.
+            self.assertEqual(
+                sorted(bullets),
+                sorted(mapping),
+                f"{skill_name} gate triggers are not all covered below",
+            )
 
-        cache_trigger = "shared, persistent, cross-request, or cross-process caches"
-        self.assertIn(cache_trigger, ddia)
-        self.assertNotIn("- Caches, queues", ddia)
-        for document in (global_agents, project_agents, trellis, readme, readme_html):
-            self.assertIn("shared / persistent / cross-request / cross-process cache", document)
+            # The routing row is the only place a trigger token counts, so
+            # locate exactly one row per source before asserting tokens.
+            rows = {
+                "AGENTS.global.md": [
+                    line
+                    for line in global_agents.splitlines()
+                    if line.startswith(f"| `{skill_name}` |")
+                ],
+                "AGENTS.project.md": [
+                    line
+                    for line in project_agents.splitlines()
+                    if f"`{skill_name}`" in line and "任一命中" in line
+                ],
+                "trellis-workflow": [
+                    line
+                    for line in trellis.splitlines()
+                    if line.startswith(f"- `{skill_name}`:")
+                ],
+            }
+            for label, matched in rows.items():
+                with self.subTest(skill=skill_name, source=label, check="one row"):
+                    self.assertEqual(
+                        len(matched),
+                        1,
+                        f"{label} must carry exactly one {skill_name} routing row",
+                    )
 
-        self.assertIn("normal `init` / `reset`", onboard_skill)
-        self.assertIn("bootstrap and `init-projects` do not activate", onboard_skill)
-        self.assertIn("normal `init` / `reset`", reference)
-        self.assertIn("bootstrap and `init-projects` do not activate", reference)
-        self.assertIn("`Book Gate Plan`", onboard_skill)
+            for bullet, (chinese, english) in mapping.items():
+                for label, tokens in (
+                    ("AGENTS.global.md", chinese),
+                    ("AGENTS.project.md", chinese),
+                    ("trellis-workflow", english),
+                ):
+                    row = normalize(rows[label][0])
+                    for token in tokens:
+                        with self.subTest(
+                            skill=skill_name,
+                            trigger=bullet,
+                            source=label,
+                            token=token,
+                        ):
+                            self.assertIn(
+                                normalize(token),
+                                row,
+                                f"{label} {skill_name} row drops trigger {token!r}",
+                            )
 
-        self.assertIn("external `domain-modeling` dependency", changelog)
-        self.assertNotIn("内部 `domain-modeling`", changelog)
+    def test_book_gate_fallbacks_match_across_both_self_contained_sources(
+        self,
+    ) -> None:
+        """Either AGENTS file may be the only one loaded, so both must resolve
+        an unavailable Skill the same way: a mandatory gate degrades to
+        `blocked`, and only a non-mandatory Skill may be skipped."""
+        agents_root = ROOT / "sbtd-workflow-onboard" / "templates" / "agents"
+        global_agents = (agents_root / "AGENTS.global.md").read_text(encoding="utf-8")
+        project_agents = (agents_root / "AGENTS.project.md").read_text(encoding="utf-8")
 
-        for phrase in (
-            "5 个独立工具结果",
-            "`autoLiteEligible` 单调锁存",
-            "只有新的主要目标重置",
+        for document, label in (
+            (global_agents, "AGENTS.global.md"),
+            (project_agents, "AGENTS.project.md"),
         ):
-            self.assertGreaterEqual(readme.count(phrase), 2)
+            with self.subTest(source=label):
+                self.assertIn("不可用", document)
+                self.assertIn("`blocked`", document)
+                self.assertIn("不阻塞任务", document)
+                # The pre-gate wording let any missing Skill be skipped.
+                self.assertNotIn("- 直接跳过。\n- 不要阻塞任务。", document)
 
-        html_ddia = (
-            "事务边界、读写路径、backfill / replay / rollback / recovery"
+        unavailable = global_agents.split("### Skill 不可用时", 1)[1]
+        self.assertIn("已命中强制门禁：不得直接跳过", unavailable)
+        self.assertIn("`blocked`", unavailable)
+        self.assertIn("未命中强制门禁的普通按需 Skill", unavailable)
+
+        self.assertIn(
+            "`book-ddd-distilled-modeling` 不可用时记为 `blocked`", project_agents
         )
-        self.assertIn(html_ddia, readme_html)
+        self.assertIn("不冒充 Skill 审核", project_agents)
 
     def test_trellis_dispatch_layers_remain_distinct(self) -> None:
         onboard_root = ROOT / "sbtd-workflow-onboard"
@@ -1571,7 +2052,6 @@ class WorkflowContractTests(unittest.TestCase):
         entrypoint = (ROOT / "ENTRYPOINT.md").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         readme_html = (ROOT / "README.html").read_text(encoding="utf-8")
-        root_agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         automation = (
             ROOT
             / "prompts"
@@ -1589,13 +2069,24 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("不得读取、写入或推断 `codex.dispatch_mode`", global_agents)
         self.assertIn("同一变更职责只能有一个写入执行者", global_agents)
         self.assertIn("独立只读 review / cross-validation 可并行进行", global_agents)
-        self.assertIn("当前 host 与其专属生成资产决定本次执行", project_agents)
-        self.assertIn("当前 host 为 Codex 且 `.codex/**` 集成可用", project_agents)
-        self.assertIn("当前 host 为 OMP 且 `.omp/**` 集成可用", project_agents)
-        self.assertIn("OMP 自己的 `task` worker", project_agents)
-        self.assertIn("不要把 `codex.dispatch_mode`", project_agents)
-        self.assertIn("同一变更职责只能由当前平台的一个 Trellis role subagent", project_agents)
-        self.assertIn("独立只读 review / cross-validation 可并行进行", project_agents)
+        # AGENTS.project.md is the minimal fallback: it states the platform
+        # boundary in condensed form and leaves the per-host dispatch detail to
+        # the global rules asserted above.
+        self.assertIn(
+            "`.trellis/**` 只定义共享 workflow gate，不标识 host", project_agents
+        )
+        self.assertIn(
+            "Codex 只解释 `.codex/**` 和有效 `codex.dispatch_mode`", project_agents
+        )
+        self.assertIn("OMP 只解释 `.omp/**` 与生成 worker", project_agents)
+        self.assertIn("两者不得互相套用", project_agents)
+        self.assertIn(
+            "每项变更只有一个 writer，每个验证环境只有一个 controller", project_agents
+        )
+        self.assertIn(
+            "显式 `codex.dispatch_mode` 取值非法时 fail-closed 到 Inline",
+            project_agents,
+        )
         self.assertIn("Shared `.trellis/config.yaml`, `.trellis/workflow.md`, and task artifacts define workflow gates, not platform identity.", workflow)
         self.assertIn("**Codex only, when the current host is Codex", workflow)
         self.assertIn("**OMP, when the current host is OMP", workflow)
@@ -1625,7 +2116,6 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("OMP phase dispatch", entrypoint)
         self.assertIn("Platform identity", entrypoint)
         self.assertIn("当前 host 与其 `.codex/**` / `.omp/**` 生成资产决定本次执行", entrypoint)
-        self.assertIn("纯静态审查不得选择其中一个运行时", root_agents)
         self.assertIn("当前 host 与其专属生成资产决定本次执行", readme)
         self.assertIn("当前 host 与其 <code>.codex/**</code> 或 <code>.omp/**</code> 生成资产决定本次执行", readme_html)
         self.assertIn("Platform identity comes from the current host and its generated integration", channel)
@@ -1639,7 +2129,6 @@ class WorkflowContractTests(unittest.TestCase):
             "仅当前 OMP host 且 <code>.omp/**</code> 集成可用时",
             readme_html,
         )
-        self.assertIn("stable tag 的有效配置、workflow 模板和 migration manifest", root_agents)
         self.assertIn(
             "GitHub release body 缺失、为空或明显不足以判断变更",
             automation,
@@ -1694,6 +2183,13 @@ class WorkflowContractTests(unittest.TestCase):
         )
         self.assertIn(
             "LESSON-20260718-automation-sync-trigger-separation",
+            repository_lesson,
+        )
+        self.assertIn("状态更新（2026-08-20）", repository_lesson)
+        self.assertIn("状态更新（2026-08-20）", validation_lesson)
+        self.assertIn("LESSON-20260820-root-agents-local-only", repository_lesson)
+        self.assertIn(
+            "`.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/`、`AGENTS.md` 五行",
             repository_lesson,
         )
 

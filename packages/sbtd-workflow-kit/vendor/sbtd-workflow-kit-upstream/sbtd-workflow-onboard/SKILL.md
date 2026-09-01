@@ -21,14 +21,15 @@ Resolve these questions in order:
 2. Is this a normal `init` / `reset`, or project-only initialization equivalent to `--init-projects`?
 3. What are the project roots? Accept one or more existing absolute paths separated by English commas.
 4. Should project `AGENTS.md` be installed into every selected project root?
-5. If any selected root has no `.trellis/`, what Trellis developer username and optional Trellis platform flags should be used?
-   Treat Trellis flags as a separate namespace: requested OMP uses `omp` and generates `--omp`; `pi` generates only `--pi`. Never substitute or infer one from the other, including from the Oh My Pi package name.
+5. If any selected root has no `.trellis/`, what Trellis developer username should be used? Pass `--platform` to `plan` / `init` / `reset` / `init-projects`. When `--trellis-platform` is omitted, Onboard uses that Agent platform as the Trellis flag if it matches exactly (`codex`, `claude`, `kimi`). Extra or different Trellis integrations are passed with `--trellis-platform` and replace that default. `omp` and `pi` stay explicit: `--platform oh-my-pi` does not choose either. Empty Trellis flags are not passed to `trellis init --yes`.
 
-The Agent platform selects the CLI and MCP adapter; it does not select the global AGENTS target. Unless the user explicitly supplies a global AGENTS path, normal onboarding writes the Codex global template to the resolved `$CODEX_HOME/AGENTS.md` / `~/.codex/AGENTS.md` path. Project-only mode does not write any global AGENTS file.
+The Agent platform selects the CLI and MCP adapter; it does not select the global AGENTS target. Unless the user explicitly supplies a global AGENTS path, normal onboarding writes the Codex global template to the resolved `$CODEX_HOME/AGENTS.md` / `~/.codex/AGENTS.md` path. If the user-home `.omp` directory already exists (POSIX `~/.omp`, Windows `%USERPROFILE%\.omp`), `init` / `reset` also backup-then-overwrite the same template to `~/.omp/agent/AGENTS.md`. Missing `.omp` is skipped; Onboard does not create `.omp`. `--global-agents-path` overrides only the Codex target and does not cancel the OMP write. If that path or a project `AGENTS.md` resolves to the same file as another AGENTS target, Onboard keeps a single file write. Project-only mode does not write any global AGENTS file.
 
 If multiple paths are supplied to this Skill but the user did not explicitly say they are projects to initialize, ask whether they are the intended initialization roots before running checks or writes. Do not infer that every mentioned repository path should be initialized.
 
-Normal `init` / `reset` always installs bundled and external workflow Skills globally. There is no global/project/none Skill scope choice. Project-only initialization must not check, install, update, or configure global Agent CLIs, runtimes, tools, Skills, AGENTS, or MCP.
+Normal `init` / `reset` always target bundled and required external workflow Skills globally. There is no global/project/none Skill scope choice. `init` skips a bundled or required external Skill whose target is already a valid Skill shell (regular directory, regular `SKILL.md`, matching frontmatter `name`); installing a missing required external Skill does not reinstall already-valid dependencies. `reset` overwrites every bundled Skill without backup and force-reinstalls every required external Skill from the current stable snapshot. Global and project `AGENTS.md` still backup-then-overwrite; project `.gitignore` still appends missing template lines. Project-only initialization must not check, install, update, or configure global Agent CLIs, runtimes, tools, Skills, AGENTS, or MCP.
+
+
 
 ## Skill Installation Modes
 
@@ -135,8 +136,11 @@ All referenced external Skills are also required globally. Install every missing
 - `domain-modeling`, `codebase-design`, `handoff`, `writing-for-agents`
 - `to-spec`, `to-tickets`, `ui-ux-pro-max`, `impeccable`
 - `shadcn`
+- `ponytail`, `ponytail-review`, `ponytail-audit`, `ponytail-debt`
 
 Dependencies are still expanded automatically: `tdd` includes `codebase-design`; `grill-me` includes `grilling`; `grill-with-docs` includes `grilling` and `domain-modeling`.
+
+The four Ponytail Skills are required like every other external Skill: `check` only inspects and reports them, while normal `init` / `reset` installs or repairs missing and invalid copies from the vendored stable set without asking, and a failed install fails the run. Onboard uses the stable skill-only provider and never installs, enables, disables, trusts, or removes the official Ponytail plugin. When `check` detects the official Ponytail plugin enabled for Codex or OMP, it reports `ponytailProvider.provider=conflict` and fails; `init` / `reset` block before writing stable copies, and the root installers stop with the same guidance. A plugin that is installed but disabled is reported but does not block. `ponytail-gain` and `ponytail-help` belong only to the official plugin and are never managed by Onboard.
 
 The mandatory runtime gate contracts are owned by the installed global `AGENTS.md`, project template, Trellis workflow, and bundled reviewer Skills. They become active only after normal `init` / `reset` successfully writes the global rules and installs the required bundled / external Skills. The public Skills CLI bootstrap and `init-projects` do not activate these runtime gates by themselves; they only install the Onboard Skill or process project-local assets respectively.
 
@@ -155,7 +159,7 @@ For every selected project root, normal `init` / `reset` and project-only `init-
 1. Check whether project `AGENTS.md` should be installed.
 2. Ensure every non-empty line from the bundled project `.gitignore` exists, appending only missing lines without reordering or duplicating existing project content.
 3. Check whether `.trellis/` exists.
-4. If missing and not explicitly skipped, require the global Trellis CLI and run `trellis init -u <username> ... --yes --skip-existing` in that project.
+4. If missing and not explicitly skipped, require the global Trellis CLI and run `trellis init -u <username>` with at least one platform flag and `--yes --skip-existing` in that project.
 5. Check `.trellis/tasks/00-bootstrap-guidelines` after initialization.
 6. If the bootstrap task exists, report `bootstrap-required` for that project and require a `trellis-workflow` handoff. Continue checking every other selected root before returning the aggregate status.
 7. Check project Playwright applicability. Only offer project installation when an existing Playwright dependency/config/script or E2E directory makes it applicable.
@@ -202,15 +206,16 @@ python scripts/onboard.py check-projects \
 Normal plan/init/reset:
 
 ```bash
-python scripts/onboard.py plan --projects-root /abs/one,/abs/two
-python scripts/onboard.py init --projects-root /abs/one,/abs/two --trellis-user your-name --yes
-python scripts/onboard.py reset --projects-root /abs/one,/abs/two --trellis-user your-name --yes
+python scripts/onboard.py plan --platform codex --projects-root /abs/one,/abs/two --json
+python scripts/onboard.py init --platform codex --projects-root /abs/one,/abs/two --trellis-user your-name --yes
+python scripts/onboard.py reset --platform codex --projects-root /abs/one,/abs/two --trellis-user your-name --yes
 ```
 
 Project-only initialization:
 
 ```bash
 python scripts/onboard.py init-projects \
+  --platform codex \
   --projects-root /abs/one,/abs/two \
   --trellis-user your-name \
   --yes
@@ -246,6 +251,8 @@ python scripts/onboard.py promote-external-skills-stable \
   --stable-set <yyyy-mm-dd.index> \
   --yes
 ```
+
+First-time registration of a repository that is not yet in the stable manifest additionally requires `--repo`, `--license`, and at least one `--license-file SOURCE=STABLE_PATH` mapping; the promoted Skills are selected from catalog external entries whose `source.repo` matches `--repo` exactly. For a repository that already exists in the manifest, `--repo` may only repeat the recorded URL and `--license` / `--license-file` are rejected, so promotion can never silently rewrite repository metadata.
 
 ## Reporting
 

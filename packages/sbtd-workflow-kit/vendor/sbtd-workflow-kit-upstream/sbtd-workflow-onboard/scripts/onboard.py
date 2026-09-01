@@ -17,6 +17,7 @@ import tarfile
 import tempfile
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -322,6 +323,7 @@ AGENT_PLATFORM_ALIASES = {
     "ohmypi": "oh-my-pi",
     "omp": "oh-my-pi",
 }
+TRELLIS_INIT_CAPABILITY_SET = "0.6.15"
 TRELLIS_INIT_PLATFORMS = (
     "cursor",
     "claude",
@@ -337,12 +339,28 @@ TRELLIS_INIT_PLATFORMS = (
     "codebuddy",
     "copilot",
     "droid",
-    "omp",
+    "dsh",
     "pi",
     "reasonix",
     "zcode",
+    "omp",
     "trae",
+    "grok",
+    "kimi",
+    "snow",
 )
+TRELLIS_DEFAULT_FROM_AGENT_PLATFORM = {
+    "codex": "codex",
+    "claude": "claude",
+    "kimi": "kimi",
+}
+if any(
+    flag not in TRELLIS_INIT_PLATFORMS
+    for flag in TRELLIS_DEFAULT_FROM_AGENT_PLATFORM.values()
+):
+    raise RuntimeError(
+        "SBTD Onboard Agent-to-Trellis defaults must be Trellis init flags"
+    )
 TRELLIS_BOOTSTRAP_TASK_CANDIDATES = (".trellis/tasks/00-bootstrap-guidelines",)
 BUNDLED_SKILLS = tuple(SKILL_SOURCES.keys())
 MATTPOCOCK_CANONICAL_SKILLS = (
@@ -373,11 +391,18 @@ MATTPOCOCK_REQUIRED_DEPENDENCIES = {
     "grill-me": ("grilling",),
     "grill-with-docs": ("grilling", "domain-modeling"),
 }
+PONYTAIL_REQUIRED_SKILLS = (
+    "ponytail",
+    "ponytail-review",
+    "ponytail-audit",
+    "ponytail-debt",
+)
 REFERENCED_SKILLS = (
     *MATTPOCOCK_CANONICAL_SKILLS,
     "ui-ux-pro-max",
     "impeccable",
     "shadcn",
+    *PONYTAIL_REQUIRED_SKILLS,
 )
 INTERACTION_SKILLS = ("caveman",)
 if set(EXTERNAL_SKILL_SOURCES) != set(REFERENCED_SKILLS):
@@ -437,6 +462,7 @@ class Operation:
     target: Path
     kind: str
     same_location: bool = False
+    skip_when_valid: bool = False
 
 
 def expand_path(value: str | None) -> Path | None:
@@ -450,6 +476,27 @@ def default_codex_home() -> Path:
     if env_value:
         return Path(env_value).expanduser().resolve()
     return (Path.home() / ".codex").resolve()
+
+
+def user_home() -> Path:
+    if os.name == "nt":
+        raw = os.environ.get("USERPROFILE") or os.environ.get("HOME")
+        if raw:
+            return Path(raw).expanduser()
+    return Path.home()
+
+
+def detect_omp_root() -> Path | None:
+    root = user_home() / ".omp"
+    try:
+        resolved = root.resolve()
+    except OSError:
+        return None
+    return resolved if resolved.is_dir() else None
+
+
+def omp_global_agents_path(omp_root: Path) -> Path:
+    return omp_root / "agent" / "AGENTS.md"
 
 
 def known_global_skills_dirs() -> tuple[Path, ...]:
@@ -1771,6 +1818,191 @@ def build_installation_report(results: dict[str, object]) -> dict[str, object]:
     }
 
 
+def normalized_ponytail_repo_identity(value: str) -> str:
+    identity = value.strip().lower().strip("/")
+    for prefix in ("git+ssh://", "ssh://", "https://", "http://", "git://"):
+        if identity.startswith(prefix):
+            identity = identity[len(prefix):]
+            break
+    if identity.startswith("git@"):
+        identity = identity[len("git@"):]
+    elif identity.startswith("git:"):
+        identity = identity[len("git:"):]
+    if ":" in identity.split("/")[0]:
+        identity = identity.replace(":", "/", 1)
+    identity = identity.strip("/").removesuffix(".git").strip("/")
+    return identity
+
+
+def is_official_ponytail_plugin(platform_name: str, record: object) -> bool:
+    if not isinstance(record, dict):
+        return False
+    entry = cast(dict[str, object], record)
+    if platform_name == "codex":
+        canonical = str(entry.get("id") or entry.get("canonical") or "").lower()
+        if canonical == "ponytail@ponytail":
+            return True
+        return (
+            str(entry.get("name") or "") == "ponytail"
+            and str(entry.get("marketplace") or "") == "ponytail"
+        )
+    if platform_name == "omp":
+        if str(entry.get("name") or "") != "ponytail":
+            return False
+        expected = normalized_ponytail_repo_identity(
+            str(EXTERNAL_SKILL_SOURCES["ponytail"]["repo"])
+        )
+        for key in ("source", "installSpec", "install", "url", "repository", "spec"):
+            value = entry.get(key)
+            if isinstance(value, str) and normalized_ponytail_repo_identity(value) == expected:
+                return True
+        return False
+    return False
+
+
+def ponytail_plugin_record_enabled(record: dict[str, object]) -> bool:
+    enabled = record.get("enabled")
+    if isinstance(enabled, bool):
+        return enabled
+    status = str(record.get("status") or record.get("state") or "").lower()
+    return status in {"enabled", "active", "on"}
+
+
+def plugin_records_from_map(mapping: dict[str, object]) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    for key, value in mapping.items():
+        if not isinstance(value, dict):
+            continue
+        record = {"name": str(key), **cast(dict[str, object], value)}
+        if "@" in str(key):
+            record.setdefault("id", str(key))
+        records.append(record)
+    return records
+
+
+def list_platform_plugins(platform_name: str) -> tuple[str, list[dict[str, object]]]:
+    executable = shutil.which(platform_name)
+    if executable is None:
+        return "cli-unavailable", []
+    try:
+        completed = subprocess.run(
+            [executable, "plugin", "list", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "cli-unavailable", []
+    if completed.returncode != 0:
+        return "cli-unavailable", []
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return "cli-unavailable", []
+    records: list[dict[str, object]] = []
+    if isinstance(payload, list):
+        candidates: list[object] = payload
+        for candidate in candidates:
+            if isinstance(candidate, dict):
+                records.append(cast(dict[str, object], candidate))
+        return "ok", records
+    if not isinstance(payload, dict):
+        return "cli-unavailable", []
+    body = cast(dict[str, object], payload)
+    for key in ("plugins", "items", "data", "installed"):
+        value = body.get(key)
+        if isinstance(value, list):
+            for candidate in value:
+                if isinstance(candidate, dict):
+                    records.append(cast(dict[str, object], candidate))
+            return "ok", records
+        if isinstance(value, dict):
+            return "ok", plugin_records_from_map(cast(dict[str, object], value))
+    if body and all(isinstance(value, dict) for value in body.values()):
+        records = plugin_records_from_map(body)
+    return "ok", records
+
+
+def detect_ponytail_provider(global_skills_dir: Path) -> dict[str, object]:
+    valid = [
+        name
+        for name in PONYTAIL_REQUIRED_SKILLS
+        if external_skill_target_is_valid(global_skills_dir, name)
+    ]
+    existing = [
+        name
+        for name in PONYTAIL_REQUIRED_SKILLS
+        if filesystem_entry_exists(global_skills_dir / name)
+    ]
+    if len(valid) == len(PONYTAIL_REQUIRED_SKILLS):
+        skill_status = "complete"
+    elif not existing:
+        skill_status = "missing"
+    elif valid:
+        skill_status = "partial"
+    else:
+        skill_status = "invalid"
+
+    platforms: dict[str, object] = {}
+    any_unavailable = False
+    enabled_found = False
+    disabled_found = False
+    for platform_name in ("codex", "omp"):
+        if platform_name == "omp" and detect_omp_root() is None:
+            platforms[platform_name] = {"status": "not-configured"}
+            continue
+        status, records = list_platform_plugins(platform_name)
+        if status != "ok":
+            platforms[platform_name] = {"status": "cli-unavailable"}
+            any_unavailable = True
+            continue
+        official = [
+            record
+            for record in records
+            if is_official_ponytail_plugin(platform_name, record)
+        ]
+        if any(ponytail_plugin_record_enabled(record) for record in official):
+            enabled_found = True
+            platforms[platform_name] = {"status": "installed-enabled"}
+        elif official:
+            disabled_found = True
+            platforms[platform_name] = {"status": "installed-disabled"}
+        else:
+            platforms[platform_name] = {"status": "missing"}
+
+    if enabled_found:
+        provider = "conflict"
+        plugin_status = "installed-enabled"
+    elif any_unavailable:
+        provider = "unknown"
+        plugin_status = "cli-unavailable"
+    elif disabled_found:
+        provider = "onboard-stable"
+        plugin_status = "installed-disabled"
+    else:
+        provider = "onboard-stable"
+        plugin_status = "missing"
+
+    if provider == "conflict":
+        next_step = "disable-or-remove-plugin"
+    elif skill_status == "missing":
+        next_step = "install-required"
+    elif skill_status in {"partial", "invalid"}:
+        next_step = "repair-required"
+    else:
+        next_step = "none"
+
+    return {
+        "provider": provider,
+        "skillStatus": skill_status,
+        "requiredSkills": list(PONYTAIL_REQUIRED_SKILLS),
+        "pluginStatus": plugin_status,
+        "platforms": platforms,
+        "nextStep": next_step,
+    }
+
+
 def build_check_results(args: argparse.Namespace) -> dict[str, object]:
     project_roots = resolve_project_roots(args)
     global_skills_dir, global_skills_dir_source = resolve_global_skills_dir(
@@ -1813,6 +2045,7 @@ def build_check_results(args: argparse.Namespace) -> dict[str, object]:
         "skills": [item["name"] for item in skills if not item["installed"]],
     }
 
+    omp_root = detect_omp_root()
     results = {
         "mode": "check",
         "platform": platform.system() or sys.platform,
@@ -1820,7 +2053,12 @@ def build_check_results(args: argparse.Namespace) -> dict[str, object]:
             "globalSkillsDir": str(global_skills_dir),
             "globalSkillsDirSource": global_skills_dir_source,
             "projectRoots": [str(project_root) for project_root in project_roots],
+            "ompRoot": str(omp_root) if omp_root else None,
+            "ompGlobalAgents": (
+                str(omp_global_agents_path(omp_root)) if omp_root else None
+            ),
         },
+
         "runtime": runtime,
         "cliChecksSkipped": cli_checks_skipped,
         "tools": tools,
@@ -1828,6 +2066,7 @@ def build_check_results(args: argparse.Namespace) -> dict[str, object]:
         "manualChecks": manual_checks,
         "projectChecks": project_checks,
         "missing": missing,
+        "ponytailProvider": detect_ponytail_provider(global_skills_dir),
     }
     results["installationReport"] = build_installation_report(results)
     return results
@@ -2010,6 +2249,13 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
         print(f"- {item['name']} [{item['category']}]: {item['advice']}")
         print_config_examples(item)
 
+    provider = cast(dict[str, object], results["ponytailProvider"])
+    print("\nPonytail provider:")
+    print(f"- provider: {provider['provider']}")
+    print(f"- skillStatus: {provider['skillStatus']}")
+    print(f"- pluginStatus: {provider['pluginStatus']}")
+    print(f"- nextStep: {provider['nextStep']}")
+
     if results["projectChecks"]:
         print("")
         print_projects_check_results(
@@ -2052,6 +2298,40 @@ def remove_existing_target(target: Path) -> None:
         target.unlink()
 
 
+EXTERNAL_TREE_DIGEST_EXCLUDED_DIRS = frozenset(
+    {"__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
+)
+EXTERNAL_TREE_DIGEST_EXCLUDED_SUFFIXES = frozenset({".pyc", ".pyo"})
+EXTERNAL_TREE_COMPARE_EXCLUDED_DIRS = {".git", *EXTERNAL_TREE_DIGEST_EXCLUDED_DIRS}
+
+
+def external_copy_ignore(*extra: str) -> Callable[[str, list[str]], set[str]]:
+    """Copies drop exactly what the pinned digest drops; otherwise unauthenticated
+    cache files reach installed Skills without changing treeSha256."""
+
+    match_names = shutil.ignore_patterns(
+        *extra, *sorted(EXTERNAL_TREE_DIGEST_EXCLUDED_DIRS)
+    )
+
+    def ignore(directory: str, names: list[str]) -> set[str]:
+        ignored = set(match_names(directory, names))
+        # The digest drops cache entries by file suffix and never rejects a
+        # directory for its name, so a directory called `pkg.pyc` must still be
+        # copied; a bare glob would drop that whole subtree while its files kept
+        # counting toward treeSha256.
+        for name in names:
+            if name in ignored:
+                continue
+            if Path(name).suffix not in EXTERNAL_TREE_DIGEST_EXCLUDED_SUFFIXES:
+                continue
+            if Path(directory, name).is_dir():
+                continue
+            ignored.add(name)
+        return ignored
+
+    return ignore
+
+
 def compare_tree(
     source: Path, target: Path, ignored_names: set[str] | None = None
 ) -> list[str]:
@@ -2061,7 +2341,7 @@ def compare_tree(
         rel = item.relative_to(source)
         if any(part in ignored for part in rel.parts):
             continue
-        if item.name.endswith(".pyc"):
+        if rel.suffix in EXTERNAL_TREE_DIGEST_EXCLUDED_SUFFIXES and not item.is_dir():
             continue
         other = target / rel
         if item.is_dir():
@@ -2124,6 +2404,14 @@ def ensure_file_contains(source: Path, target: Path) -> str:
 def copy_operation(operation: Operation) -> str:
     if operation.same_location:
         return "skipped-same-location"
+    if (
+        operation.kind == "dir"
+        and operation.skip_when_valid
+        and external_skill_target_is_valid(
+            operation.target.parent, operation.target.name
+        )
+    ):
+        return "skipped-already-valid"
     operation.target.parent.mkdir(parents=True, exist_ok=True)
     if operation.kind == "ensure-file-block":
         return ensure_file_contains(operation.source, operation.target)
@@ -2139,17 +2427,182 @@ def copy_operation(operation: Operation) -> str:
     return action
 
 
+
+GITIGNORE_MUST_TRACK_PROBES = (
+    ".trellis/workflow.md",
+    ".trellis/spec/spec.md",
+    ".trellis/agents/agent.md",
+    ".trellis/lessons/lessons.md",
+    ".trellis/tasks/sample/prd.md",
+    ".trellis/tasks/sample/design.md",
+    ".trellis/tasks/sample/implement.md",
+)
+
+GITIGNORE_MUST_IGNORE_PROBES = (
+    ".trellis/workspace/index.md",
+    ".trellis/worktrees/feature/notes.md",
+    ".trellis/channels/main/message.json",
+    ".trellis/.runtime/state.json",
+    ".trellis/.cache/index.json",
+    ".trellis/.backup/spec.md",
+    ".trellis/.template-hashes.json",
+    ".env",
+    ".env.local",
+)
+
+GITIGNORE_PROBE_UNAVAILABLE = "unavailable"
+GITIGNORE_PROBE_ERROR = "error"
+
+# Checks that could not be evaluated. They are not failures, but the final
+# summary must not read as "everything was verified" once one is recorded.
+UNVERIFIED_CHECKS: list[str] = []
+
+
+def note_unverified(message: str) -> None:
+    UNVERIFIED_CHECKS.append(message)
+    print(f"Note: {message}", file=sys.stderr)
+
+
+@dataclass(frozen=True)
+class GitignoreVerdict:
+    ignored: bool
+    origin: str
+
+
+def gitignore_verdicts(
+    project_root: Path, probes: tuple[str, ...]
+) -> dict[str, GitignoreVerdict] | str:
+    """Resolve every probe in one `git check-ignore` pass.
+
+    `-v --non-matching` names the deciding line for both outcomes, so a
+    negation that re-exposes a runtime path is reported as precisely as a broad
+    exclusion that buries a workflow file. The verdict follows git's own rule:
+    the last matching pattern wins and a `!` pattern means "not ignored", which
+    `--quiet` alone cannot distinguish from "no pattern matched".
+
+    `-z --stdin` is what makes that verdict trustworthy. It emits
+    `source NUL linenum NUL pattern NUL pathname NUL`, so the deciding pattern
+    arrives as its own field. Splitting the textual `source:linenum:pattern`
+    form instead truncates any pattern containing a colon: `!.en[v:]` reduces
+    to `]`, which drops the leading `!` and reports a re-included `.env` as
+    ignored -- inverting the verdict for the exact case this check exists to
+    catch.
+    """
+    result = run_project_command(
+        (
+            "git",
+            "check-ignore",
+            "--no-index",
+            "-v",
+            "--non-matching",
+            "-z",
+            "--stdin",
+        ),
+        project_root,
+        timeout=60,
+        stdin_text="".join(f"{probe}\0" for probe in probes),
+    )
+    if result is None or result.returncode == 128:
+        return GITIGNORE_PROBE_UNAVAILABLE
+    if result.returncode not in (0, 1):
+        return GITIGNORE_PROBE_ERROR
+
+    fields = result.stdout.split("\0")
+    if fields and fields[-1] == "":
+        fields.pop()
+    if len(fields) % 4:
+        return GITIGNORE_PROBE_ERROR
+
+    verdicts: dict[str, GitignoreVerdict] = {}
+    for index in range(0, len(fields), 4):
+        source, linenum, pattern, path = fields[index : index + 4]
+        verdicts[path] = GitignoreVerdict(
+            ignored=bool(pattern) and not pattern.startswith("!"),
+            origin=f"{source}:{linenum}:{pattern}" if pattern else "",
+        )
+    if set(verdicts) != set(probes):
+        return GITIGNORE_PROBE_ERROR
+    return verdicts
+
+
+def gitignore_effectiveness_failures(target: Path) -> list[str]:
+    """Verify required Trellis paths using git's actual ignore semantics."""
+    project_root = target.parent
+    verdicts = gitignore_verdicts(
+        project_root, GITIGNORE_MUST_TRACK_PROBES + GITIGNORE_MUST_IGNORE_PROBES
+    )
+    if isinstance(verdicts, str):
+        if verdicts == GITIGNORE_PROBE_ERROR:
+            return [
+                "git check-ignore could not evaluate the merged .gitignore --"
+                " resolve the repository error instead of trusting rules that"
+                " were never verified"
+            ]
+        # git is missing or the project is outside a work tree: there is no
+        # ignore semantics to query, so say the check was skipped instead of
+        # letting a silent pass read as "verified effective".
+        note_unverified(
+            ".gitignore effectiveness verification skipped for"
+            f" {project_root} -- git could not evaluate it (no git binary or no"
+            " work tree), so the merged rules remain unverified."
+        )
+        return []
+
+    failures: list[str] = []
+    blocked: dict[str, list[str]] = {}
+    for probe in GITIGNORE_MUST_TRACK_PROBES:
+        verdict = verdicts[probe]
+        if verdict.ignored:
+            key = verdict.origin or "an unknown gitignore pattern"
+            blocked.setdefault(key, []).append(probe)
+    for origin, paths in blocked.items():
+        shown = ", ".join(paths[:3])
+        extra = f" (+{len(paths) - 3} more)" if len(paths) > 3 else ""
+        failures.append(
+            f"{origin} ignores paths that must stay trackable: {shown}{extra}"
+            " -- delete or narrow that pattern; a broad directory exclusion"
+            " defeats every !.trellis/... re-inclusion regardless of order"
+        )
+
+    for probe in GITIGNORE_MUST_IGNORE_PROBES:
+        verdict = verdicts[probe]
+        if verdict.ignored:
+            continue
+        if verdict.origin:
+            failures.append(
+                f"{verdict.origin} re-includes {probe}, which must stay ignored"
+                " -- narrow that re-inclusion so local runtime state and"
+                " secrets cannot be committed"
+            )
+        else:
+            failures.append(
+                f"{probe} must stay ignored but no pattern covers it -- restore"
+                " the removed rule so local runtime state and secrets cannot be"
+                " committed"
+            )
+    return failures
+
+
 def verify_operation(operation: Operation) -> list[str]:
     if operation.same_location:
         return []
+    if (
+        operation.kind == "dir"
+        and operation.skip_when_valid
+        and external_skill_target_is_valid(
+            operation.target.parent, operation.target.name
+        )
+    ):
+        return []
+
     if operation.kind == "ensure-file-block":
         if not operation.target.is_file():
             return [operation.label]
         source_text = operation.source.read_text(encoding="utf-8")
         target_text = operation.target.read_text(encoding="utf-8")
-        if not missing_file_lines(source_text, target_text):
-            return []
-        return [operation.label]
+        if missing_file_lines(source_text, target_text):
+            return [operation.label]
+        return gitignore_effectiveness_failures(operation.target)
     if operation.kind == "file":
         if operation.target.is_file() and filecmp.cmp(
             operation.source, operation.target, shallow=False
@@ -2233,11 +2686,15 @@ def parse_skill_names(args: argparse.Namespace) -> list[str]:
             f"Unknown external skill(s): {', '.join(unknown)}. Known: {known}"
         )
 
+    names = canonical_requested
+    if getattr(args, "expand_dependencies", True):
+        names = external_skill_dependency_closure(canonical_requested)
     unique: list[str] = []
-    for name in external_skill_dependency_closure(canonical_requested):
+    for name in names:
         if name not in unique:
             unique.append(name)
     return unique
+
 
 
 def resolve_install_skills_dir(args: argparse.Namespace) -> Path:
@@ -2401,11 +2858,21 @@ def source_dir_for_external_skill(repo_root: Path, skill_name: str) -> Path:
     )
 
 
+def external_tree_digest_excluded(relative: Path) -> bool:
+    """Locally generated caches must not change a pinned Skill's identity."""
+
+    if EXTERNAL_TREE_DIGEST_EXCLUDED_DIRS.intersection(relative.parts):
+        return True
+    return relative.suffix in EXTERNAL_TREE_DIGEST_EXCLUDED_SUFFIXES
+
+
 def external_tree_sha256(root: Path) -> str:
     digest = hashlib.sha256()
     for path in sorted(
         candidate for candidate in root.rglob("*") if candidate.is_file()
     ):
+        if external_tree_digest_excluded(path.relative_to(root)):
+            continue
         if path.is_symlink():
             raise RuntimeError(
                 f"external Skill contains an unsupported symlink: {path.relative_to(root)}"
@@ -2493,7 +2960,7 @@ def external_skill_target_is_valid(skills_root: Path, skill_name: str) -> bool:
     return True
 
 
-def load_external_stable_manifest() -> dict[str, object]:
+def load_external_stable_manifest(relaxed: bool = False) -> dict[str, object]:
     try:
         manifest = json.loads(EXTERNAL_STABLE_MANIFEST.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -2508,7 +2975,7 @@ def load_external_stable_manifest() -> dict[str, object]:
         raise RuntimeError(
             "stable External Skills manifest must contain repositories and skills objects"
         )
-    if set(skills) != set(EXTERNAL_SKILL_SOURCES):
+    if not relaxed and set(skills) != set(EXTERNAL_SKILL_SOURCES):
         missing = sorted(set(EXTERNAL_SKILL_SOURCES) - set(skills))
         extra = sorted(set(skills) - set(EXTERNAL_SKILL_SOURCES))
         raise RuntimeError(
@@ -2692,12 +3159,12 @@ def copy_external_skill(source: Path, target: Path) -> tuple[str, bool, str | No
         shutil.copytree(
             source,
             target,
-            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+            ignore=external_copy_ignore(".git"),
         )
     except OSError as exc:
         return "failed", replaced_existing, str(exc)
 
-    failures = compare_tree(source, target, {".git", "__pycache__"})
+    failures = compare_tree(source, target, EXTERNAL_TREE_COMPARE_EXCLUDED_DIRS)
     if failures:
         return (
             "failed",
@@ -2777,10 +3244,10 @@ def stage_external_skills(
             shutil.copytree(
                 source,
                 destination,
-                ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+                ignore=external_copy_ignore(".git"),
             )
             validate_external_skill_source(name, destination)
-            failures = compare_tree(source, destination, {".git", "__pycache__"})
+            failures = compare_tree(source, destination, EXTERNAL_TREE_COMPARE_EXCLUDED_DIRS)
             if failures:
                 raise RuntimeError(
                     f"staging verification failed for {name}: "
@@ -3054,9 +3521,7 @@ def backup_skill_target(target: Path, backup_dir: Path) -> str | None:
         remove_existing_target(destination)
     backup_dir.mkdir(parents=True, exist_ok=True)
     if target.is_dir() and not target.is_symlink():
-        shutil.copytree(
-            target, destination, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
-        )
+        shutil.copytree(target, destination, ignore=external_copy_ignore())
     else:
         shutil.copy2(target, destination)
     return str(destination)
@@ -3350,25 +3815,133 @@ def install_external_skills(args: argparse.Namespace) -> int:
     return 1 if transaction["status"] != "committed" else 0
 
 
+def stable_notice_attribution(repository_url: str) -> str:
+    path_parts = [
+        part for part in repository_url.removesuffix(".git").split("/") if part
+    ]
+    if len(path_parts) < 2:
+        raise RuntimeError(
+            f"cannot derive repository attribution from {repository_url}"
+        )
+    return "/".join(path_parts[-2:])
+
+
+def upsert_stable_third_party_notice(
+    notice_path: Path,
+    repository_url: str,
+    license_name: str,
+    license_file_mappings: list[dict[str, str]],
+) -> str:
+    attribution = stable_notice_attribution(repository_url)
+    license_refs = ", ".join(
+        f"`{mapping['stablePath']}`" for mapping in license_file_mappings
+    )
+    row = f"| `{attribution}` | {license_name} | {license_refs} |"
+    text = (
+        notice_path.read_text(encoding="utf-8") if notice_path.is_file() else ""
+    )
+    marker = f"| `{attribution}` |"
+    if marker in text:
+        text = "\n".join(
+            line for line in text.splitlines() if not line.startswith(marker)
+        )
+    if text and not text.endswith("\n"):
+        text += "\n"
+    notice_path.write_text(text + row + "\n", encoding="utf-8")
+    return row
+
+
+def parse_license_file_mappings(values: object) -> list[dict[str, str]]:
+    if values is None:
+        return []
+    mappings: list[dict[str, str]] = []
+    for raw in cast(list[str], values):
+        source, separator, stable_path = str(raw).partition("=")
+        if not separator or not source.strip() or not stable_path.strip():
+            raise SystemExit(
+                "--license-file must use SOURCE=STABLE_PATH, for example "
+                "LICENSE=licenses/ponytail-LICENSE"
+            )
+        mappings.append({"source": source.strip(), "stablePath": stable_path.strip()})
+    return mappings
+
+
 def promote_external_skills_stable(args: argparse.Namespace) -> int:
-    manifest = load_external_stable_manifest()
+    if not re.fullmatch(r"[0-9a-f]{40}", str(args.revision)):
+        raise SystemExit(
+            "--revision must be a full 40-character lowercase commit SHA"
+        )
+    manifest = load_external_stable_manifest(relaxed=True)
     repositories = cast(dict[str, object], manifest["repositories"])
     skills = cast(dict[str, object], manifest["skills"])
-    repository = repositories.get(args.repository)
-    if not isinstance(repository, dict):
-        known = ", ".join(sorted(repositories))
-        raise SystemExit(
-            f"Unknown stable repository: {args.repository}. Known: {known}"
+    existing_repository = repositories.get(args.repository)
+    registration = not isinstance(existing_repository, dict)
+    license_name = ""
+    license_file_mappings: list[dict[str, str]]
+    if registration:
+        if re.fullmatch(r"[a-z0-9][a-z0-9-]*", str(args.repository)) is None:
+            raise SystemExit(f"Invalid stable repository id: {args.repository}")
+        repository_url = str(getattr(args, "repo", None) or "")
+        if not valid_https_repository_url(repository_url):
+            raise SystemExit(
+                "First-time stable repository registration requires --repo with a "
+                "valid HTTPS repository URL."
+            )
+        license_name = str(getattr(args, "license", None) or "").strip()
+        if not license_name:
+            raise SystemExit(
+                "First-time stable repository registration requires --license with "
+                "an SPDX license id."
+            )
+        license_file_mappings = parse_license_file_mappings(
+            getattr(args, "license_files", None)
         )
-    selected = [
-        name
-        for name, entry in skills.items()
-        if isinstance(entry, dict) and entry.get("repository") == args.repository
-    ]
+        if not license_file_mappings:
+            raise SystemExit(
+                "First-time stable repository registration requires at least one "
+                "--license-file SOURCE=STABLE_PATH mapping."
+            )
+        selected = [
+            name
+            for name, source_spec in EXTERNAL_SKILL_SOURCES.items()
+            if str(source_spec["repo"]) == repository_url
+        ]
+        if not selected:
+            raise SystemExit(
+                f"No catalog external Skills match --repo {repository_url}; register "
+                "the catalog entries before promotion."
+            )
+    else:
+        repository = cast(dict[str, object], existing_repository)
+        repository_url = str(repository.get("url") or "")
+        if getattr(args, "repo", None) and str(args.repo) != repository_url:
+            raise SystemExit(
+                f"--repo {args.repo} does not match the stable repository URL "
+                f"{repository_url}; refusing to rewrite repository metadata."
+            )
+        if getattr(args, "license", None) or getattr(args, "license_files", None):
+            raise SystemExit(
+                "--license/--license-file are only valid for first-time repository "
+                "registration; refusing to rewrite existing repository metadata."
+            )
+        existing_license_files = repository.get("licenseFiles")
+        if not isinstance(existing_license_files, list):
+            raise SystemExit(
+                f"stable repository {args.repository} has no licenseFiles list"
+            )
+        license_file_mappings = cast(
+            list[dict[str, str]], existing_license_files
+        )
+        selected = [
+            name
+            for name, entry in skills.items()
+            if isinstance(entry, dict) and entry.get("repository") == args.repository
+        ]
     plan = {
         "mode": "promote-external-skills-stable",
         "repository": args.repository,
-        "repo": repository.get("url"),
+        "repo": repository_url,
+        "registration": registration,
         "revision": args.revision,
         "stableSet": args.stable_set,
         "skills": selected,
@@ -3387,9 +3960,7 @@ def promote_external_skills_stable(args: argparse.Namespace) -> int:
     payload: dict[str, object] = {**plan, "status": "failed"}
     with tempfile.TemporaryDirectory(prefix="sbtd-external-promotion-source-") as tmp:
         repo_root = Path(tmp) / "repository"
-        ok, error = clone_repo_at_revision(
-            str(repository.get("url") or ""), args.revision, repo_root
-        )
+        ok, error = clone_repo_at_revision(repository_url, args.revision, repo_root)
         if not ok:
             payload["error"] = error
             print(
@@ -3408,12 +3979,31 @@ def promote_external_skills_stable(args: argparse.Namespace) -> int:
         previous_root = candidate_container / "previous"
         retain_candidate_container = False
         try:
-            shutil.copytree(EXTERNAL_STABLE_ROOT, candidate_root)
+            shutil.copytree(
+                EXTERNAL_STABLE_ROOT,
+                candidate_root,
+                ignore=external_copy_ignore(".git"),
+            )
             candidate_manifest = json.loads(json.dumps(manifest))
             candidate_repositories = cast(
                 dict[str, object], candidate_manifest["repositories"]
             )
             candidate_skills = cast(dict[str, object], candidate_manifest["skills"])
+            if registration:
+                candidate_repositories[args.repository] = {
+                    "url": repository_url,
+                    "revision": args.revision,
+                    "license": license_name,
+                    "licenseFiles": license_file_mappings,
+                }
+                for name in selected:
+                    candidate_skills[name] = {
+                        "repository": args.repository,
+                        "sourceSubpath": str(
+                            EXTERNAL_SKILL_SOURCES[name]["subpath"]
+                        ),
+                        "stablePath": f"skills/{name}",
+                    }
 
             for name in selected:
                 entry = candidate_skills[name]
@@ -3436,7 +4026,7 @@ def promote_external_skills_stable(args: argparse.Namespace) -> int:
                 shutil.copytree(
                     source,
                     destination,
-                    ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+                    ignore=external_copy_ignore(".git"),
                 )
                 validate_external_skill_source(name, destination)
                 entry["treeSha256"] = external_tree_sha256(destination)
@@ -3445,16 +4035,7 @@ def promote_external_skills_stable(args: argparse.Namespace) -> int:
                 candidate_manifest, candidate_root
             )
 
-            license_files = repository.get("licenseFiles")
-            if not isinstance(license_files, list):
-                raise RuntimeError(
-                    f"stable repository {args.repository} has no licenseFiles list"
-                )
-            for license_entry in license_files:
-                if not isinstance(license_entry, dict):
-                    raise RuntimeError(
-                        f"stable repository {args.repository} has an invalid license entry"
-                    )
+            for license_entry in license_file_mappings:
                 source = resolve_contained_relative_path(
                     repo_root,
                     license_entry.get("source"),
@@ -3472,6 +4053,23 @@ def promote_external_skills_stable(args: argparse.Namespace) -> int:
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, destination)
 
+            if registration:
+                upsert_stable_third_party_notice(
+                    candidate_root / "THIRD_PARTY_NOTICES.md",
+                    repository_url,
+                    license_name,
+                    license_file_mappings,
+                )
+            notice_text = (candidate_root / "THIRD_PARTY_NOTICES.md").read_text(
+                encoding="utf-8"
+            )
+            attribution = stable_notice_attribution(repository_url)
+            if f"| `{attribution}` |" not in notice_text:
+                raise RuntimeError(
+                    "candidate THIRD_PARTY_NOTICES.md has no attribution row for "
+                    f"{attribution}"
+                )
+
             candidate_repository = candidate_repositories[args.repository]
             if not isinstance(candidate_repository, dict):
                 raise RuntimeError(
@@ -3485,6 +4083,21 @@ def promote_external_skills_stable(args: argparse.Namespace) -> int:
                 json.dumps(candidate_manifest, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
+
+            candidate_skill_names = set(
+                cast(dict[str, object], candidate_manifest["skills"])
+            )
+            if candidate_skill_names != set(EXTERNAL_SKILL_SOURCES):
+                missing_names = sorted(
+                    set(EXTERNAL_SKILL_SOURCES) - candidate_skill_names
+                )
+                extra_names = sorted(
+                    candidate_skill_names - set(EXTERNAL_SKILL_SOURCES)
+                )
+                raise RuntimeError(
+                    "candidate stable manifest does not match the canonical "
+                    f"catalog set; missing={missing_names}, extra={extra_names}"
+                )
 
             validate_external_stable_metadata(candidate_manifest, candidate_root)
             for name in EXTERNAL_SKILL_SOURCES:
@@ -3533,25 +4146,37 @@ def missing_required_external_skills(args: argparse.Namespace) -> list[str]:
     ]
 
 
-def install_required_external_skills(args: argparse.Namespace) -> int:
-    missing = missing_required_external_skills(args)
-    if not missing:
-        return 0
-    print(
-        "Required global external Skills are missing and will be installed: "
-        + ", ".join(missing)
-    )
+def install_required_external_skills(
+    args: argparse.Namespace, *, overwrite: bool = False
+) -> int:
+    if overwrite:
+        selected = list(EXTERNAL_SKILL_SOURCES)
+        print(
+            "Reset will overwrite all required global external Skills: "
+            + ", ".join(selected)
+        )
+    else:
+        selected = missing_required_external_skills(args)
+        if not selected:
+            return 0
+        print(
+            "Required global external Skills are missing and will be installed: "
+            + ", ".join(selected)
+        )
     install_args = argparse.Namespace(
-        all=False,
-        skills=",".join(missing),
+        all=overwrite,
+        skills=None if overwrite else ",".join(selected),
         scope="global",
         source="auto",
         global_skills_dir=getattr(args, "global_skills_dir", None),
         replace=False,
         yes=True,
         json=False,
+        expand_dependencies=overwrite,
     )
+
     return install_external_skills(install_args)
+
 
 
 def default_shell_profile() -> Path:
@@ -4460,7 +5085,10 @@ def install_maestro(args: argparse.Namespace) -> int:
 
 
 def run_project_command(
-    command: tuple[str, ...], cwd: Path, timeout: int = 900
+    command: tuple[str, ...],
+    cwd: Path,
+    timeout: int = 900,
+    stdin_text: str | None = None,
 ) -> subprocess.CompletedProcess[str] | None:
     try:
         return subprocess.run(
@@ -4470,6 +5098,7 @@ def run_project_command(
             capture_output=True,
             text=True,
             timeout=timeout,
+            input=stdin_text,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -4497,7 +5126,49 @@ def parse_trellis_platforms(args: argparse.Namespace) -> list[str]:
     return platforms
 
 
+def resolve_trellis_init_platforms(args: argparse.Namespace) -> dict[str, object]:
+    explicit = parse_trellis_platforms(args)
+    if explicit:
+        return {
+            "platforms": explicit,
+            "source": "explicit",
+            "status": "resolved",
+        }
+    agent = None
+    raw_platform = getattr(args, "platform", None)
+    if raw_platform and str(raw_platform).strip():
+        agent = normalize_agent_platform(str(raw_platform))
+        default_flag = TRELLIS_DEFAULT_FROM_AGENT_PLATFORM.get(agent)
+        if default_flag:
+            return {
+                "platforms": [default_flag],
+                "source": "agent-platform",
+                "status": "resolved",
+            }
+    if agent == "oh-my-pi":
+        reason = (
+            "Agent platform oh-my-pi does not select a Trellis init flag. "
+            "Pass --trellis-platform omp and/or pi; omp and pi stay independent."
+        )
+    else:
+        reason = (
+            "trellis init --yes without platform flags installs Claude and Cursor. "
+            "Pass --trellis-platform, or pass --platform codex, claude, or kimi."
+        )
+    return {
+        "platforms": [],
+        "source": "missing",
+        "status": "needs-user",
+        "reason": reason,
+    }
+
+
 def trellis_init_command(username: str, platforms: list[str]) -> tuple[str, ...]:
+    if not platforms:
+        raise ValueError(
+            "trellis init requires at least one platform flag; "
+            "empty flags plus --yes would install Claude and Cursor."
+        )
     platform_flags = tuple(f"--{platform_name}" for platform_name in platforms)
     return (
         "trellis",
@@ -4558,7 +5229,10 @@ def run_trellis_project_setup_for_root(
         return report
 
     trellis_dir = project_root / ".trellis"
-    platforms = parse_trellis_platforms(args)
+    resolution = resolve_trellis_init_platforms(args)
+    platforms = [str(item) for item in resolution["platforms"]]
+    report["platforms"] = platforms
+    report["platformSource"] = resolution["source"]
     username = (getattr(args, "trellis_user", None) or "").strip()
     if trellis_dir.exists():
         report["init"] = {
@@ -4567,13 +5241,26 @@ def run_trellis_project_setup_for_root(
             "reason": "Target project already has .trellis/.",
         }
     elif not username:
-        example = trellis_init_command("your-name", platforms)
         report["status"] = "needs-user"
         report["init"] = {
             "status": "needs-user",
             "reason": "Target project does not have .trellis/ and --trellis-user was not provided.",
-            "nextStep": "Ask for the Trellis developer username and optional platform flags, then rerun with --projects-root, --trellis-user, and --trellis-platform.",
-            "exampleCommand": command_display(example),
+            "nextStep": "Ask for the Trellis developer username, then rerun with --projects-root, --trellis-user, --platform, and optional --trellis-platform.",
+        }
+        if platforms:
+            report["init"]["exampleCommand"] = command_display(
+                trellis_init_command("your-name", platforms)
+            )
+        return report
+    elif str(resolution["status"]) == "needs-user":
+        report["status"] = "needs-user"
+        report["init"] = {
+            "status": "needs-user",
+            "reason": resolution["reason"],
+            "nextStep": (
+                "Pass --trellis-platform, or --platform codex, claude, or kimi. "
+                "oh-my-pi requires --trellis-platform omp and/or pi."
+            ),
         }
         return report
     else:
@@ -4662,6 +5349,64 @@ def run_trellis_project_setup(mode: str, args: argparse.Namespace) -> dict[str, 
         "mode": mode,
         "status": aggregate_trellis_status(projects),
         "projects": projects,
+    }
+
+
+def build_trellis_init_plan(
+    mode: str, args: argparse.Namespace
+) -> dict[str, object]:
+    if mode not in {"plan", "init", "reset", "init-projects"}:
+        return {
+            "status": "skipped",
+            "reason": "Trellis init is not part of this mode.",
+        }
+    if getattr(args, "skip_trellis_init", False):
+        return {
+            "status": "skipped",
+            "reason": "--skip-trellis-init was provided.",
+        }
+    project_roots = resolve_project_roots(args)
+    needing = [
+        str(path) for path in project_roots if not (path / ".trellis").exists()
+    ]
+    agent = None
+    raw_platform = getattr(args, "platform", None)
+    if raw_platform and str(raw_platform).strip():
+        agent = normalize_agent_platform(str(raw_platform))
+    resolution = resolve_trellis_init_platforms(args)
+    username = (getattr(args, "trellis_user", None) or "").strip()
+    command = None
+    if str(resolution["status"]) == "resolved" and username:
+        command = command_display(
+            trellis_init_command(
+                username, [str(item) for item in resolution["platforms"]]
+            )
+        )
+    if not project_roots:
+        status = "skipped"
+        reason: str | None = "--projects-root was not provided."
+    elif not needing:
+        status = "skipped-existing"
+        reason = "Every selected project already has .trellis/."
+    elif not username or str(resolution["status"]) == "needs-user":
+        status = "needs-user"
+        if str(resolution["status"]) == "needs-user":
+            reason = str(resolution.get("reason") or "")
+        else:
+            reason = (
+                "Target project does not have .trellis/ and --trellis-user was not provided."
+            )
+    else:
+        status = "planned"
+        reason = None
+    return {
+        "status": status,
+        "agentPlatform": agent,
+        "platforms": [str(item) for item in resolution["platforms"]],
+        "platformSource": resolution["source"],
+        "command": command,
+        "projectsNeedingInit": needing,
+        "reason": reason,
     }
 
 
@@ -4839,6 +5584,20 @@ def build_operations(mode: str, args: argparse.Namespace) -> list[Operation]:
                 "file",
             )
         )
+        omp_root = detect_omp_root()
+        if omp_root is not None:
+            omp_agents = omp_global_agents_path(omp_root).resolve()
+            if omp_agents != global_agents.resolve():
+                operations.append(
+                    Operation(
+                        "omp global AGENTS.md",
+                        GLOBAL_AGENTS_TEMPLATE,
+                        omp_agents,
+                        "file",
+                    )
+                )
+
+
         skills_root = scoped_skills_root(args)
         for name, source in SKILL_SOURCES.items():
             target = skills_root / name
@@ -4849,6 +5608,7 @@ def build_operations(mode: str, args: argparse.Namespace) -> list[Operation]:
                     target,
                     "dir",
                     source.resolve() == target.resolve(),
+                    skip_when_valid=mode == "init",
                 )
             )
 
@@ -4870,8 +5630,22 @@ def build_operations(mode: str, args: argparse.Namespace) -> list[Operation]:
                 "ensure-file-block",
             )
         )
+    return dedupe_file_operations(operations)
 
-    return operations
+
+def dedupe_file_operations(operations: list[Operation]) -> list[Operation]:
+    seen: set[Path] = set()
+    unique: list[Operation] = []
+    for operation in operations:
+        if operation.kind == "file":
+            target = operation.target.resolve()
+            if target in seen:
+                continue
+            seen.add(target)
+        unique.append(operation)
+    return unique
+
+
 
 
 def build_bundled_skill_migration_plan(
@@ -4998,49 +5772,85 @@ def print_bundled_skill_migration_report(results: list[dict[str, object]]) -> No
             print(f"  error: {item['error']}")
 
 
-def print_plan(
+def operation_plan_entry(operation: Operation) -> dict[str, object]:
+    entry: dict[str, object] = {
+        "label": operation.label,
+        "source": str(operation.source),
+        "target": str(operation.target),
+        "kind": operation.kind,
+        "targetExists": operation.target.exists(),
+        "sameLocation": operation.same_location,
+    }
+    if operation.kind != "dir":
+        return entry
+    valid = external_skill_target_is_valid(
+        operation.target.parent, operation.target.name
+    )
+    entry["targetValid"] = valid
+    if operation.same_location:
+        action = "skipped-same-location"
+        entry["plannedActionOnInit"] = action
+        entry["plannedActionOnReset"] = action
+        return entry
+    if valid:
+        entry["plannedActionOnInit"] = "skipped-already-valid"
+        entry["plannedActionOnReset"] = "overwritten-without-backup"
+        return entry
+    action = (
+        "overwritten-without-backup" if operation.target.exists() else "copied"
+    )
+    entry["plannedActionOnInit"] = action
+    entry["plannedActionOnReset"] = action
+    return entry
+
+
+def build_plan_payload(
     mode: str,
     operations: list[Operation],
-    as_json: bool,
     bundled_migration_plan: dict[str, object] | None = None,
     external_migration_plan: dict[str, object] | None = None,
     global_skills_dir: Path | None = None,
     global_skills_dir_source: str | None = None,
-) -> None:
-    payload = {
+    trellis_init_plan: dict[str, object] | None = None,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
         "mode": mode,
         "platform": platform.system() or sys.platform,
         "skillDir": str(SKILL_DIR),
         "globalSkillsDir": str(global_skills_dir) if global_skills_dir else None,
         "globalSkillsDirSource": global_skills_dir_source,
-        "operations": [
-            {
-                "label": op.label,
-                "source": str(op.source),
-                "target": str(op.target),
-                "kind": op.kind,
-                "targetExists": op.target.exists(),
-                "sameLocation": op.same_location,
-            }
-            for op in operations
-        ],
+        "skillWritePolicy": {
+            "init": "skip-valid-shells",
+            "reset": "overwrite-all",
+        },
+        "operations": [operation_plan_entry(op) for op in operations],
     }
+
     if bundled_migration_plan:
         payload["bundledMigration"] = bundled_migration_plan
     if external_migration_plan:
         payload["externalMigration"] = external_migration_plan
-    if as_json:
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-        return
+    if trellis_init_plan:
+        payload["trellisInit"] = trellis_init_plan
+    return payload
 
-    print(f"Mode: {mode}")
+
+def print_plan(payload: dict[str, object]) -> None:
+    print(f"Mode: {payload['mode']}")
     print(f"Platform: {payload['platform']}")
     for item in payload["operations"]:
         if item["sameLocation"]:
             exists = "same source and target"
         else:
             exists = "exists" if item["targetExists"] else "missing"
+        if item.get("plannedActionOnInit"):
+            exists += (
+                f", init={item['plannedActionOnInit']}"
+                f", reset={item['plannedActionOnReset']}"
+            )
         print(f"- {item['label']}: {item['target']} ({exists})")
+
+    bundled_migration_plan = payload.get("bundledMigration")
     if bundled_migration_plan:
         print("\nBundled Skill rename migration:")
         print(f"- status: {bundled_migration_plan['status']}")
@@ -5060,6 +5870,7 @@ def print_plan(
                 f"{item['path']} (expected {item['expectedName']}, "
                 f"got {item.get('actualName') or '<missing>'})"
             )
+    external_migration_plan = payload.get("externalMigration")
     if external_migration_plan:
         print("\nExternal mattpocock migration:")
         print(f"- status: {external_migration_plan['status']}")
@@ -5095,6 +5906,21 @@ def print_plan(
                     str(name) for name in external_migration_plan["removeLegacy"]
                 )
             )
+    trellis_init_plan = payload.get("trellisInit")
+    if trellis_init_plan:
+        print("\nTrellis init:")
+        print(f"- status: {trellis_init_plan.get('status')}")
+        if trellis_init_plan.get("agentPlatform"):
+            print(f"- agent platform: {trellis_init_plan['agentPlatform']}")
+        platforms = trellis_init_plan.get("platforms") or []
+        if platforms:
+            print("- platforms: " + ", ".join(str(item) for item in platforms))
+        if trellis_init_plan.get("platformSource"):
+            print(f"- platform source: {trellis_init_plan['platformSource']}")
+        if trellis_init_plan.get("command"):
+            print(f"- command: {trellis_init_plan['command']}")
+        if trellis_init_plan.get("reason"):
+            print(f"- reason: {trellis_init_plan['reason']}")
 
 
 def operation_allows_existing_target(operation: Operation) -> bool:
@@ -5170,8 +5996,20 @@ def ensure_confirmed(args: argparse.Namespace, mode: str) -> None:
 
 
 def run(mode: str, args: argparse.Namespace) -> int:
+    # One process may run several modes; a note left by an earlier run would
+    # make a later one report checks it never skipped.
+    UNVERIFIED_CHECKS.clear()
     if mode == "check":
-        print_check_results(build_check_results(args), args.json)
+        results = build_check_results(args)
+        print_check_results(results, args.json)
+        provider = cast(dict[str, object], results["ponytailProvider"])
+        if provider["provider"] == "conflict":
+            print(
+                "Ponytail provider conflict: the official Ponytail plugin is "
+                "enabled; disable or remove it before using Onboard stable Skills.",
+                file=sys.stderr,
+            )
+            return 4
         return 0
     if mode == "check-projects":
         print_projects_check_results(build_projects_check_results(args), args.json)
@@ -5218,16 +6056,33 @@ def run(mode: str, args: argparse.Namespace) -> int:
         if mode == "init-projects"
         else build_external_migration_plan(args)
     )
-    print_plan(
+    plan_payload = build_plan_payload(
         mode,
         operations,
-        args.json,
         bundled_migration_plan,
         external_migration_plan,
         global_skills_dir,
         global_skills_dir_source,
+        build_trellis_init_plan(mode, args),
     )
+    plan_json_emitted = False
+
+    def emit_plan_json() -> None:
+        """Release the held-back plan as this run's single `--json` document.
+
+        Write modes fold the plan into one merged document at the end of the
+        run, so any path that returns before that has to emit the plan itself
+        or `--json` would leave stdout empty.
+        """
+        nonlocal plan_json_emitted
+        if args.json and not plan_json_emitted:
+            plan_json_emitted = True
+            print(json.dumps(plan_payload, indent=2, ensure_ascii=False))
+
+    if not args.json:
+        print_plan(plan_payload)
     if mode == "plan":
+        emit_plan_json()
         return 0
 
     ensure_confirmed(args, mode)
@@ -5237,6 +6092,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
             "does not match the configured legacy name.",
             file=sys.stderr,
         )
+        emit_plan_json()
         return 4
 
     external_identity_failures = (
@@ -5253,14 +6109,29 @@ def run(mode: str, args: argparse.Namespace) -> int:
         for item in external_identity_failures:
             label = item.get("name") or item.get("repo") or "migration"
             print(f"- {label}: {item.get('error', 'unknown failure')}", file=sys.stderr)
+        emit_plan_json()
         return 4
 
     if mode in {"init", "reset"}:
-        external_install_status = install_required_external_skills(args)
+        ponytail_provider = detect_ponytail_provider(global_skills_dir)
+        if ponytail_provider["provider"] == "conflict":
+            print(
+                "Ponytail provider conflict: the official Ponytail plugin is "
+                "enabled; disable or remove it before init/reset writes Onboard "
+                "stable Skills.",
+                file=sys.stderr,
+            )
+            emit_plan_json()
+            return 4
+        external_install_status = install_required_external_skills(
+            args, overwrite=mode == "reset"
+        )
+
         if external_install_status != 0:
             print(
                 "Required global external Skill installation failed.", file=sys.stderr
             )
+            emit_plan_json()
             return 4
 
     active_operations = [op for op in operations if not op.same_location]
@@ -5272,14 +6143,21 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
     backups: list[tuple[Path, Path]] = []
     backup_by_target: dict[Path, Path] = {}
+    backed_up: set[Path] = set()
     for op in conflicts:
         if op.kind != "file":
+            continue
+        target = op.target.resolve()
+        if target in backed_up or not op.target.exists():
             continue
         backup = backup_path(op.target)
         op.target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(op.target), str(backup))
         backups.append((op.target, backup))
         backup_by_target[op.target] = backup
+        backup_by_target[target] = backup
+        backed_up.add(target)
+
 
     operation_results: list[dict[str, object]] = []
     for op in active_operations:
@@ -5322,7 +6200,9 @@ def run(mode: str, args: argparse.Namespace) -> int:
         item for item in operation_results if item["status"] == "failed"
     ]
 
-    if backups:
+    if backups and not args.json:
+        # `--json` keeps stdout to a single document, and that document carries
+        # `backups`, so the prose list would only corrupt the payload here.
         print("Backups:")
         for original, backup in backups:
             print(f"- {original} -> {backup}")
@@ -5337,6 +6217,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 f"- {item['label']}: {item.get('reason', 'unknown failure')}",
                 file=sys.stderr,
             )
+        emit_plan_json()
         return 3
 
     bundled_migration_results = run_bundled_skill_migration(bundled_migration_plan)
@@ -5352,6 +6233,7 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 f"- {item['name']}: {item.get('error', 'unknown failure')}",
                 file=sys.stderr,
             )
+        emit_plan_json()
         return 4
 
     migration_results = run_external_migration(external_migration_plan)
@@ -5365,13 +6247,33 @@ def run(mode: str, args: argparse.Namespace) -> int:
         for item in failed_migrations:
             label = item.get("name") or item.get("repo") or "migration"
             print(f"- {label}: {item.get('error', 'unknown failure')}", file=sys.stderr)
+        emit_plan_json()
         return 4
 
     trellis_report = run_trellis_project_setup(mode, args)
     if args.json:
+        # One run, one root object. The plan was held back above so it can be
+        # merged here; flushing it earlier made stdout two concatenated
+        # documents, which `json.loads` rejects on every successful write mode.
+        #
+        # The plan keys stay at the root so `mode` sits in the same place for
+        # every mode -- `plan` and the check modes already answer there, and
+        # nesting only write modes would make `--json` a different contract
+        # depending on which mode produced it.
+        plan_json_emitted = True
         print(
             json.dumps(
-                {"trellisProjectSetup": trellis_report}, indent=2, ensure_ascii=False
+                {
+                    **plan_payload,
+                    "backups": [
+                        {"target": str(target), "backup": str(backup)}
+                        for target, backup in backups
+                    ],
+                    "trellisProjectSetup": trellis_report,
+                    "unverifiedChecks": list(UNVERIFIED_CHECKS),
+                },
+                indent=2,
+                ensure_ascii=False,
             )
         )
     else:
@@ -5383,8 +6285,19 @@ def run(mode: str, args: argparse.Namespace) -> int:
     if trellis_report.get("status") == "bootstrap-required":
         return 6
 
-    print("Verification passed.")
     if not args.json:
+        # `--json` promises one machine-readable document on stdout. Each note
+        # already went to stderr when it was recorded, and the JSON document
+        # carries `unverifiedChecks`, so nothing is lost by staying quiet here.
+        if UNVERIFIED_CHECKS:
+            print(
+                "Verification passed, except for checks that could not be"
+                " evaluated:"
+            )
+            for item in UNVERIFIED_CHECKS:
+                print(f"- {item}")
+        else:
+            print("Verification passed.")
         if mode == "init-projects":
             print_projects_check_results(build_projects_check_results(args), False)
         else:
@@ -5424,6 +6337,10 @@ def build_parser() -> argparse.ArgumentParser:
         )
         sub.add_argument(
             "--json", action="store_true", help="Print machine-readable plan."
+        )
+        sub.add_argument(
+            "--platform",
+            help="Target Agent platform: codex, claude, kimi, oh-my-pi, or omp.",
         )
         sub.add_argument(
             "--trellis-user",
@@ -5529,7 +6446,14 @@ def build_parser() -> argparse.ArgumentParser:
     promote.add_argument(
         "--repository",
         required=True,
-        help="Repository id from the stable External Skills manifest.",
+        help="Repository id from the stable External Skills manifest, or the new id for first-time registration.",
+    )
+    promote.add_argument(
+        "--repo",
+        help=(
+            "Upstream HTTPS repository URL. Required for first-time repository "
+            "registration; afterwards it may only repeat the manifest URL."
+        ),
     )
     promote.add_argument(
         "--revision",
@@ -5540,6 +6464,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--stable-set",
         required=True,
         help="New Onboard stable set identifier, for example 2026-07-11.2.",
+    )
+    promote.add_argument(
+        "--license",
+        help="SPDX license id; required only for first-time repository registration.",
+    )
+    promote.add_argument(
+        "--license-file",
+        dest="license_files",
+        action="append",
+        help=(
+            "License mapping SOURCE=STABLE_PATH, repeatable; required only for "
+            "first-time repository registration."
+        ),
     )
     promote.add_argument(
         "--yes", action="store_true", help="Allow stable snapshot replacement."

@@ -2,14 +2,15 @@
 
 ## Bundled Templates
 
-- `templates/agents/AGENTS.global.md` → global Codex `AGENTS.md`
+- `templates/agents/AGENTS.global.md` -> global Codex `AGENTS.md`, and `~/.omp/agent/AGENTS.md` when `~/.omp` already exists
 - `templates/agents/AGENTS.project.md` → each selected project root `AGENTS.md`
 - `templates/project/.gitignore` → each selected project root `.gitignore`
 - `templates/skills/**` → required global bundled Skills
 
 `catalog.json` is the runtime source of truth for these paths, all bundled Skill ids, and every external Skill repository/subpath/alias. `catalog.schema.json` defines its Draft 2020-12 contract; `examples/catalog.minimal.json` is the minimal valid shape. The root installers require both catalog files, and `scripts/onboard.py` rejects duplicate ids, absolute or escaping paths, malformed HTTPS repository URLs, invalid kind/id/target-role combinations, wrong local source types, missing sources, and bundled Skill frontmatter identity mismatches before processing a command.
 
-AGENTS files are backed up before overwrite. Bundled Skill targets are overwritten without backup only after their catalog sources pass the startup checks above. After the canonical `sbtd-workflow-onboard` target validates, the legacy `kuno-workflow-onboard-skills` directory is removed without leaving an alias only when its own `SKILL.md` frontmatter confirms the legacy identity. An unrelated or mismatched legacy path blocks `init` / `reset` before target changes and remains untouched; deletion errors are returned as migration failures. Project `.gitignore` is updated in place by ensuring that the bundled block exists.
+AGENTS files are backed up before overwrite. On `reset`, bundled Skill targets are overwritten without backup after their catalog sources pass the startup checks above. On `init`, a bundled Skill target that is already a valid Skill shell is skipped; missing or invalid shells are copied. After the canonical `sbtd-workflow-onboard` target validates, the legacy `kuno-workflow-onboard-skills` directory is removed without leaving an alias only when its own `SKILL.md` frontmatter confirms the legacy identity. An unrelated or mismatched legacy path blocks `init` / `reset` before target changes and remains untouched; deletion errors are returned as migration failures. Project `.gitignore` is updated in place by ensuring that the bundled block exists.
+
 
 ## Official Skills CLI Bootstrap
 
@@ -51,13 +52,13 @@ Important arguments:
 - `--global-skills-dir <path>`
 - `--trellis-user <name>`
 - repeatable or comma-separated `--trellis-platform <name>`
-  `omp` and `pi` are separate Trellis flags: `omp` emits `trellis init --omp`, while `pi` emits `--pi`; never translate either value to the other.
+  When omitted, `plan` / `init` / `reset` / `init-projects` use `--platform` as the Trellis flag if it matches exactly (`codex`, `claude`, `kimi`). Explicit `--trellis-platform` replaces that default. Empty flags are not passed to `trellis init --yes`. `omp` and `pi` are separate Trellis flags: `omp` emits `trellis init --omp`, while `pi` emits `--pi`; `--platform oh-my-pi` does not choose either.
 
 - `--skip-trellis-init`
 - `--skip-trellis-bootstrap`
 - `--no-mcp`, `--dry-run`, `--yes`, `--no-color`
 
-The Agent platform selects the CLI and MCP adapter; it does not select the global AGENTS target. Normal onboarding keeps the Codex global AGENTS default shown under [Paths](#paths) unless `--global-agents-path` / `-GlobalAgentsPath` explicitly overrides it. Project-only mode never writes global AGENTS.
+The Agent platform selects the CLI and MCP adapter; it does not select the global AGENTS target. Normal onboarding keeps the Codex global AGENTS default shown under [Paths](#paths) unless `--global-agents-path` / `-GlobalAgentsPath` explicitly overrides it. If the user-home `.omp` directory already exists (POSIX `~/.omp`, Windows `%USERPROFILE%\.omp`), `init` / `reset` also backup-then-overwrite the same template to `~/.omp/agent/AGENTS.md`. Missing `.omp` is skipped; Onboard does not create `.omp`. `--global-agents-path` overrides only the Codex target. Project-only mode never writes global AGENTS.
 
 ### PowerShell
 
@@ -100,16 +101,18 @@ Normal onboarding:
 4. Runs the global preflight.
 5. Installs missing global Trellis and GitNexus without a scope prompt.
 6. Preserves the existing optional RTK, caveman, Java, and Maestro decisions.
-7. Installs every missing required external Skill globally without a selection or scope prompt.
+7. For `init`, installs only missing or invalid required external Skills globally. For `reset`, force-reinstalls every required external Skill from the current stable snapshot.
 8. Optionally configures selected user/global MCP servers.
 9. Checks project-only Playwright and React Bits conditions for every root.
-10. Writes global AGENTS and all bundled Skills once.
+10. Writes global AGENTS with backup-then-overwrite. For `init`, copies missing or invalid bundled Skills and skips valid Skill shells. For `reset`, overwrites every bundled Skill without backup.
 11. Writes project AGENTS and `.gitignore` for every root.
 12. Runs Trellis initialization and bootstrap detection for every root.
+
 
 ### Project-only init-projects
 
 Project-only mode:
+
 
 1. Resolves the Agent platform because project workflow and Trellis platform context may need it.
 2. Skips target Agent CLI detection and installation.
@@ -119,6 +122,8 @@ Project-only mode:
 6. Writes project AGENTS and `.gitignore`.
 7. Uses an already available global Trellis CLI when initialization is required; if it is unavailable, the affected projects are reported as blocked rather than installing the CLI.
 8. Checks bootstrap guidelines for every root.
+
+Because no global AGENTS or bundled Skills are installed, the project `AGENTS.md` written in step 6 carries its own minimum rules: it restates the safety-bearing boundaries (destructive Trellis operations, single writer per change, secret handling, report retention) and lists objective triggers for the book-derived gates. Those triggers are evaluated from the change itself, so a run still has to report a conclusion for every gate it hits. When the corresponding Skill is absent the gate is `blocked` — never `passed` and never silently skipped — so a project-only install cannot claim a reviewer ran.
 
 ## Target Agent CLI Gate
 
@@ -197,7 +202,7 @@ The 15 bundled Skills are always global during normal init/reset:
 
 The Onboard rename is a bundled migration: normal `plan` reports any detected legacy target, and normal `init` / `reset` removes it only after the canonical `sbtd-workflow-onboard/SKILL.md` exists with matching frontmatter. Project-only `init-projects` never inspects or modifies global Skill directories.
 
-All 14 referenced external Skills are also required globally:
+All 18 referenced external Skills are also required globally:
 
 | Skill | Repository |
 |---|---|
@@ -205,6 +210,15 @@ All 14 referenced external Skills are also required globally:
 | `impeccable` | `https://github.com/pbakaus/impeccable.git` |
 | `ui-ux-pro-max` | `https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git` |
 | `shadcn` | `https://github.com/shadcn-ui/ui.git`, subpath `skills/shadcn` |
+| `ponytail`, `ponytail-review`, `ponytail-audit`, `ponytail-debt` | `https://github.com/DietrichGebert/ponytail.git`, subpaths `skills/<name>` |
+
+### Ponytail Provider Boundary
+
+The four Ponytail Skills are ordinary required external Skills: no install confirmation, no optional group, and a missing or invalid copy is installed or repaired from the vendored stable set with the same transaction semantics as every other required Skill. Onboard is the stable skill-only provider and never installs, enables, disables, trusts, or removes the official Ponytail plugin; `ponytail-gain` and `ponytail-help` belong only to that plugin and are never Onboard-managed.
+
+`check --json` reports `ponytailProvider` with `provider` (`onboard-stable` / `conflict` / `unknown`), `skillStatus` (`complete` / `partial` / `missing` / `invalid`), `pluginStatus` (`installed-enabled` / `installed-disabled` / `missing` / `cli-unavailable`), per-platform detail, and `nextStep`. Detection is read-only: Codex uses `codex plugin list --json`; OMP uses `omp plugin list --json` only when `~/.omp` already exists, because merely starting an unconfigured OMP CLI may create that directory. A missing `~/.omp` reports OMP as `not-configured` without invoking the CLI. Codex matches only canonical `ponytail@ponytail` (or name `ponytail` with marketplace `ponytail`); OMP matches name `ponytail` only when its source / install spec normalizes to the official `github.com/DietrichGebert/ponytail` repository. Same-named third-party packages never count.
+
+An enabled official plugin is `provider=conflict`: `check` exits non-zero and `init` / `reset` block before writing stable copies; the root installers stop with the same guidance. The remedy is manual — disable or remove the plugin with the platform's own CLI, then rerun. An installed-but-disabled plugin is reported without blocking. When any platform CLI cannot be queried or its output cannot be parsed (and no enabled plugin was proven on the other platform), `provider=unknown`: Onboard neither fabricates a clean state nor blocks on unproven conflict.
 
 The runtime gate contracts become active only after normal `init` / `reset` successfully writes the global rules and installs the required bundled / external Skills. The public Skills CLI bootstrap and `init-projects` do not activate these runtime gates by themselves. Installed global `AGENTS.md`, project rules, Trellis workflow, and bundled reviewer Skills jointly own the execution contract.
 
@@ -252,6 +266,21 @@ python scripts/onboard.py promote-external-skills-stable \
 
 Promotion updates every managed Skill from that repository as one group, refreshes its license files and digests, validates the entire candidate stable set, and then swaps the stable directory transactionally. It never runs during normal `init`, `reset`, or external installation.
 If upstream changed canonical names, repository layout, or license paths, first review and update the manifest/configured source contract in the same repository change; promotion intentionally refuses to guess a new subpath.
+
+First-time registration of a repository that is not yet in the manifest uses catalog-driven selection:
+
+```bash
+python scripts/onboard.py promote-external-skills-stable \
+  --repository <new-repository-id> \
+  --repo <upstream-https-url> \
+  --revision <full-40-character-commit-sha> \
+  --stable-set <yyyy-mm-dd.index> \
+  --license <spdx-license-id> \
+  --license-file "LICENSE=licenses/<new-repository-id>-LICENSE" \
+  --yes
+```
+
+`--repo` must be a valid HTTPS URL and selects every catalog external entry whose `source.repo` matches it exactly; an empty selection is rejected. `--license` takes an SPDX id, and `--license-file` is repeatable with `SOURCE=STABLE_PATH` mappings. The current manifest is read in relaxed mode for this bootstrap, and catalog equality is enforced only after the candidate tree is fully assembled and validated. For an existing repository, `--repo` may only repeat the recorded URL and `--license` / `--license-file` are rejected, so promotion never silently rewrites repository metadata. Any validation failure leaves the live stable tree unchanged; if commit and rollback both fail, the single recovery directory is retained and reported.
 
 Legacy aliases remain recognized for migration: `diagnose` → `diagnosing-bugs`, `write-a-skill` and `writing-great-skills` → `writing-for-agents`, `to-prd` → `to-spec`, and `to-issues` → `to-tickets`; removed `zoom-out` has no replacement. `migrate-external-skills` first validates every detected legacy target's directory and `SKILL.md` frontmatter identity. If any identity conflicts, it fail-closes before any canonical install, backup, or deletion. It then installs every required canonical replacement using the chosen source policy and shared transaction. When that transaction commits, its legacy predecessors and temporary rollback directory are deleted; the rollback directory is retained only for an incomplete restore. A legacy-only cleanup that needs no canonical install—because the canonical target is already valid or because the legacy target is `zoom-out`—copies the verified legacy directory into a persistent migration backup before removal. Normal `init` / `reset` retain legacy-only automatic migration so already canonical external Skills are not cloned twice during every run.
 
@@ -315,15 +344,17 @@ For every root:
 
 1. If `.trellis/` exists, report `skipped-existing`.
 2. If it is missing and no username was provided, report `needs-user` for that root.
-3. Otherwise run:
+3. If it is missing and no Trellis platform is resolved, report `needs-user`. Empty flags are not passed to `trellis init --yes`.
+4. Otherwise run:
 
 ```bash
-trellis init -u <username> [--platform-flags] --yes --skip-existing
+trellis init -u <username> --<platform-flag> [--more-platform-flags] --yes --skip-existing
 ```
 
-4. Confirm `.trellis/` was created.
-5. Unless skipped, check only `.trellis/tasks/00-bootstrap-guidelines`.
-6. If present, report `bootstrap-required` with the root and task path.
+`plan --json` includes this command under `trellisInit.command`.
+5. Confirm `.trellis/` was created.
+6. Unless skipped, check only `.trellis/tasks/00-bootstrap-guidelines`.
+7. If present, report `bootstrap-required` with the root and task path.
 
 Processing continues for all roots even when an earlier root has a bootstrap task. Aggregate status priority is:
 
@@ -364,6 +395,15 @@ Global AGENTS:
 2. `$CODEX_HOME/AGENTS.md`
 3. `~/.codex/AGENTS.md`
 
+Additional OMP global AGENTS, only when the user-home `.omp` directory already exists:
+
+- POSIX: `~/.omp/agent/AGENTS.md`
+- Windows: `%USERPROFILE%\.omp\agent\AGENTS.md`
+
+Existing OMP `AGENTS.md` is backed up then overwritten. Missing `.omp` is skipped; Onboard does not create `.omp`. `--global-agents-path` does not disable this extra write. If `--global-agents-path` or a project `AGENTS.md` resolves to the same file as the OMP or Codex global target, `init` / `reset` keep a single file write and a single backup.
+
+
+
 Global Skills:
 
 1. `--global-skills-dir`
@@ -388,16 +428,18 @@ Generic bundled/external workflow Skills are never installed under `<project-roo
 ```bash
 python scripts/onboard.py check --projects-root /abs/one,/abs/two
 python scripts/onboard.py check-projects --projects-root /abs/one,/abs/two
-python scripts/onboard.py plan --projects-root /abs/one,/abs/two
-python scripts/onboard.py init --projects-root /abs/one,/abs/two --trellis-user your-name --yes
-python scripts/onboard.py reset --projects-root /abs/one,/abs/two --trellis-user your-name --yes
-python scripts/onboard.py init-projects --projects-root /abs/one,/abs/two --trellis-user your-name --yes
+python scripts/onboard.py plan --platform codex --projects-root /abs/one,/abs/two --trellis-user your-name --json
+python scripts/onboard.py init --platform codex --projects-root /abs/one,/abs/two --trellis-user your-name --yes
+python scripts/onboard.py reset --platform codex --projects-root /abs/one,/abs/two --trellis-user your-name --yes
+python scripts/onboard.py init-projects --platform codex --projects-root /abs/one,/abs/two --trellis-user your-name --yes
 ```
+
+`--json` prints exactly one JSON document on stdout and suppresses all human-readable prose, including on non-zero exits. Write modes reuse the plan payload as the root object and add their results to it: `init`, `reset`, and `init-projects` append `backups`, `trellisProjectSetup`, and `unverifiedChecks` next to the planned `operations`, `bundledMigration`, `externalMigration`, and `trellisInit`. Read-only `plan`, `check`, and `check-projects` payloads are unchanged.
 
 Global-only onboarding is still supported by omitting `--projects-root` and explicitly skipping project AGENTS when using the Python command directly:
 
 ```bash
-python scripts/onboard.py init --skip-project-agents --yes
+python scripts/onboard.py init --platform codex --skip-project-agents --yes
 ```
 
 ## Verification

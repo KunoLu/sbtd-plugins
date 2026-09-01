@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "runtime": "omp",
   "counts": {
-    "included": 176,
-    "omitted": 173,
+    "included": 207,
+    "omitted": 174,
     "replaced": 11
   },
   "decisions": [
@@ -51,6 +51,12 @@
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE",
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
@@ -668,6 +674,12 @@
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/open-system-browser.mjs",
+      "owner": "third-party",
+      "policy": "omit",
+      "detail": "Stable Skill tree is not retained in the OMP distribution"
+    },
+    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/provider.mjs",
       "owner": "third-party",
       "policy": "omit",
@@ -1022,7 +1034,7 @@
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/ui-core.mjs",
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/ui-surfaces.mjs",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
@@ -1068,6 +1080,30 @@
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ponytail-audit/SKILL.md",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ponytail-debt/SKILL.md",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ponytail-review/SKILL.md",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ponytail/SKILL.md",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/skills/shadcn/agents/openai.yml",
@@ -1214,6 +1250,12 @@
       "detail": "third-party"
     },
     {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/catalog-summary.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/charts.csv",
       "owner": "third-party",
       "policy": "include",
@@ -1221,6 +1263,18 @@
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/colors.csv",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/data-provenance.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/google-font-licenses.json",
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
@@ -1245,6 +1299,12 @@
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/motion.csv",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/phosphor-icons-upstream.json",
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
@@ -1442,7 +1502,103 @@
       "detail": "third-party"
     },
     {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/reasoning_contract.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/search.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-api.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-catalog.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-existing.csv",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-metadata.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-overrides.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/icons-curated.csv",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-core.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-package.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-exports.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-package.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-baseline.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-cases.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-thresholds.json",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_refresh.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_core_data_quality.py",
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
@@ -1454,7 +1610,43 @@
       "detail": "third-party"
     },
     {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_data_contracts.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_design_system_mode.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_native_desktop_stack_freshness.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_relevance_evaluator.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_style_taxonomy.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_text_layout_resilience.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_web_stack_freshness.py",
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
@@ -2168,15 +2360,15 @@
       "detail": "third-party"
     }
   ],
-  "policySha256": "83b9cf75025b858f10dfb6687ee18f6035c2d34f02e8d5bafa2ebe8cb54a0d85",
-  "decisionsSha256": "5cbb7731399f20cdd0163f2c9306f4e965f2df95c11de6143a611170c1d9a094",
-  "canonicalManifestSha256": "195300dd96a98060396556b0c2c7fdd3d0a5e28b41016890ef2da26c3a6ac120",
-  "retainedProvenanceManifestSha256": "017bfad63bbf316a1c742051f0a3939ea64cdcb6530a1b177d5b5fb4feb204f9",
-  "generatedSha256": "1dccef74b53454a862a0568dd8e119049e8278d15c4c6af40f9c0be77601c040",
+  "policySha256": "cf46d12004f7520e767655945839aa470afd770f462f654102ddaf6e477804d3",
+  "decisionsSha256": "70a67af872fbc027fba728611a74de15df46ac197f59cefa3cab9822f10d5f43",
+  "canonicalManifestSha256": "daba6fe2c81dd0d65eafe5104b0b37f566587c108f1172eac20d10a9280791f3",
+  "retainedProvenanceManifestSha256": "e15db2d80ce4594fba639a561e218b84bdf9871c57a0292d9a893203fdf79fcd",
+  "generatedSha256": "bba692f4f186c39a3deef9def9a2dd5eb0710cb9ad3f72256d43bd0eed36cb32",
   "forbiddenTokenScan": {
-    "scannedPaths": 192,
-    "scannedFiles": 192,
+    "scannedPaths": 223,
+    "scannedFiles": 223,
     "matches": 0,
-    "canonicalRuntimeMatches": 30
+    "canonicalRuntimeMatches": 37
   }
 }

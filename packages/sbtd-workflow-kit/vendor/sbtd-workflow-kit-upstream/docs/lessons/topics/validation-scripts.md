@@ -16,6 +16,7 @@
 - 预防：后续所有针对 `skills/**/SKILL.md` 的自动化检查都应先过滤目录或直接使用 `rg --files skills -g SKILL.md`，不要手写无类型的路径拼接。
 - 状态更新（2026-07-16）：Python 验证会生成仓库根或 `tests/` 下的 `__pycache__/`，当前 canonical 契约已调整为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/` 四行；新验证必须使用当前契约，不得改写上方历史修复字段。
 - 状态更新（2026-07-18）：fresh-clone 审核确认根 `AGENTS.md` 和 `ENTRYPOINT.md` 必须保持可恢复且由 Git 追踪，当前 `.gitignore` canonical 契约恢复为上述四行；验证除断言精确四行外，还必须直接检查两个控制文件存在于 Git 索引。
+- 状态更新（2026-08-20）：当前 `.gitignore` canonical 契约为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/`、`AGENTS.md` 五行。验证应断言 `AGENTS.md` 不在 Git 索引、`ENTRYPOINT.md` 仍在索引；不得读取被忽略的本地 `AGENTS.md` 证明 fresh-clone 可恢复。
 
 ## LESSON-20260701-markdown-section-parse-headings: Markdown Section Parse Headings
 
@@ -365,3 +366,15 @@
 - 修复：参数解析后再安全复制 stdin 并回退只读 `/dev/null`；PowerShell 保存为 UTF-8 BOM；`.gitignore` 比较时只规范化首行 BOM、写回保留原字节；React Bits 检查始终要求目标覆盖；automation allowlist 包含其实际读取的版本基线与输出文件。
 - 预防：安装器回归必须包含 closed-stdin 命令、PowerShell 编码字节断言、普通与 BOM 文件幂等 fixture、已有目标覆盖和版本化路径 allowlist；比较规范化不得改变持久化字节。
 - 状态更新（2026-07-19）：closed-stdin 回归最初通过显式 `--skip-project-agents` 绕过了 project AGENTS 提示，未证明 `--yes` 本身能够完成非交互执行；后续真实调用因此仍在 `[Y/n]` 提示处失败。非交互 flag 的回归必须保留默认确认和默认拒绝两类提示，验证 `--yes` 对两者都明确回答 Yes，而不是靠额外 skip 参数提前删除提示。
+
+## LESSON-20260831-paginated-edit-source-truncation: Never Rewrite Large Files From Paginated Tool Output
+
+- 日期：2026-08-31
+- 标签：editing, tools, pagination, truncation, tests, recovery
+- 适用场景：编辑超长 AGENTS / test / script 文件，工具读取结果含 `Showing lines`、省略号或分页 footer
+- 严重级别：critical
+- 来源：用文本替换工具编辑 1733 行 `test_workflow_contracts.py`
+- 问题：编辑工具把分页展示的前 300 行和 `[Showing lines ...]` footer 当作完整文件写回，文件缩短到 370 行并出现 SyntaxError；若只跑新增定点测试，可能把大批既有测试静默删除。
+- 根因：在未取得完整、未省略 source 的情况下执行 whole-file / fuzzy replacement，且没有把返回后的行数、footer 搜索和语法解析作为即时 gate。
+- 修复：从 Git 恢复未预期改动；后续大文件仅使用行锚定小补丁，或使用带唯一 anchor / match-count 断言的一次性脚本，并在执行后立即删除脚本。
+- 预防：任何读取含分页 / elision 标记的文件都不得作为整文件写回来源。每次大文件编辑后立即运行 `wc -l`、语法解析、`git diff --stat` 和 footer 搜索；行数异常先恢复，再运行所属完整测试文件而非只跑定点测试。

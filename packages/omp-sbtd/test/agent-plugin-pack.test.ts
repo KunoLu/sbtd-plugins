@@ -95,7 +95,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       "version" in packedPackage
         ? packedPackage.version
         : undefined;
-    expect(packedVersion).toBe("0.1.0-rc.13");
+    expect(packedVersion).toBe("0.1.0-rc.14");
     // Tarball-bound identity: the packed manifest must carry the widened
     // peer range and the exact development pin (Slice 3 candidate contract).
     expect(dependencySpec(packedPackage, "peerDependencies")).toBe(

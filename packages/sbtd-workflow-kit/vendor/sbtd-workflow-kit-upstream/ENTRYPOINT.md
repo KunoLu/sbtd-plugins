@@ -6,6 +6,7 @@
 > `web-ui-autotest-generator` 作为 Web UI Playwright 测试资产生成、选择器审计和覆盖率报告的可选专项分支。
 > `shadcn Skill` 作为 shadcn/ui 项目组件、registry、preset 和 CLI 工作流的可选辅助，必须先确认项目存在 `components.json`、使用或准备初始化 shadcn/ui，或任务明确涉及 shadcn registry / preset / CLI。
 > `React Bits Pro Skill` 仅作为 React / shadcn UI 项目的可选前端组件与 blocks 集成辅助，必须先确认技术栈、项目内 Skill 安装状态和可读取的 license key。
+> `ponytail` / `ponytail-review` / `ponytail-audit` / `ponytail-debt` 作为 required external Skills 由 Onboard stable set 统一安装和管理：缺失即补装、失败即阻断；官方 Ponytail plugin 与 Onboard stable provider 不得同时启用，检测到已启用 plugin 时 check / init / reset 阻断并交由人工处理。Ponytail 版本基线只以 `assets/external-skills/stable/MANIFEST.json` 为事实源，不纳入下方版本监控表。
 > 本仓库当前可复用模板和本地安装 / 重置自动化集中在 `sbtd-workflow-onboard/`，旧 `agents/` 和 `skills/` 顶层目录已移除。
 
 ## 0. 版本监控配置
@@ -14,12 +15,12 @@
 
 | 工具 | GitHub 仓库 | 当前使用版本 | 版本通道策略 | 是否启用监控 | 备注 |
 |---|---|---:|---|---|---|
-| Codex | openai/codex | v0.147.0 | stable-only | 是 | 核心 Coding Agent |
-| Trellis | mindfold-ai/trellis | v0.6.15 | stable-only | 是 | 复杂任务编排 / TDD workflow |
-| GitNexus | abhigyanpatwari/GitNexus | v1.6.9 | stable-only | 是 | 代码理解、依赖关系、影响分析 |
+| Codex | openai/codex | v0.151.0 | stable-only | 是 | 核心 Coding Agent |
+| Trellis | mindfold-ai/trellis | v0.6.16 | stable-only | 是 | 复杂任务编排 / TDD workflow |
+| GitNexus | abhigyanpatwari/GitNexus | v1.6.10 | stable-only | 是 | 代码理解、依赖关系、影响分析 |
 | Chrome DevTools MCP | ChromeDevTools/chrome-devtools-mcp | latest | stable-only | 否 | Web 运行时诊断 / MCP 浏览器检查 |
 | Playwright | microsoft/playwright | v1.62.1 | stable-only | 是 | Web E2E / 回归测试 / Playwright MCP |
-| Maestro | mobile-dev-inc/Maestro | cli-2.8.0 | stable-only | 是 | Android / iOS / Hybrid App E2E |
+| Maestro | mobile-dev-inc/Maestro | cli-2.10.0 | stable-only | 是 | Android / iOS / Hybrid App E2E |
 | web-ui-autotest-generator | KunoLu/640-skills | bundled | repository-controlled | 否 | 内置 Web UI Playwright 测试资产生成 Skill |
 | React Bits Pro Skill | pro.reactbits.dev | manual | manual | 否 | React / shadcn UI 组件与 blocks 集成辅助 |
 | 待添加 | owner/repo | 未明确 | stable-only | 否 | 后续需要监控的新工具在此补充 |
@@ -42,7 +43,7 @@
 
 公开仓库也可通过官方 `npx skills add` 只 bootstrap 自包含的 `sbtd-workflow-onboard` 到用户级全局目录；这不是完整 onboarding，不自动执行 `scripts/onboard.py`、安装其余 Skills / Trellis / GitNexus、写入 AGENTS 或初始化项目。安装后由 Agent 调用该 Skill，再执行 `plan` / `init` / `reset`。全局 Skill 目录按显式参数、`$AGENT_SKILLS_DIR`、已安装 Onboard Skill 的受信父目录、平台默认值依次解析，JSON 结果暴露 `globalSkillsDirSource`。
 
-定时版本检查自动化评估规则影响时，应扫描根 `AGENTS.md`、版本化 automation prompt 和 `sbtd-workflow-onboard/` 下的 Skill 入口、参考文档、安装脚本与 bundled templates；不要再扫描已删除的旧 `agents/` 或 `skills/` 顶层目录。
+定时版本检查自动化评估规则影响时，应扫描版本化 automation prompt 和 `sbtd-workflow-onboard/` 下的 Skill 入口、参考文档、安装脚本与 bundled templates；本机若存在根 `AGENTS.md` 则一并扫描，缺失时跳过，不得把它的存在当作 Gate。不要再扫描已删除的旧 `agents/` 或 `skills/` 顶层目录。
 
 ---
 
@@ -168,8 +169,12 @@ grill-me / grill-with-docs（内部使用 grilling，涉及项目语言时使用
   → to-tickets as Trellis-ready Markdown tasks
   → Trellis workflow（默认 native）
   → GitNexus impact-analysis
+  → ponytail（首次实现编辑前选择最小正确实现）
   → Codex implementation
   → tdd / codebase-design（行为风险需要回归测试或测试面设计时）
+  → 定点 smoke / targeted tests
+  → ponytail-review（非平凡 diff 的删繁 findings，经 Code Readability 裁决）
+  → Code Readability Review（有修改则重跑受影响验证）
   → project tests
   → Chrome DevTools MCP（需要 Web 运行时诊断时）
   → Playwright CLI（涉及 Web 回归时）
@@ -215,7 +220,7 @@ handoff
 
 | 项目 | 当前结论 |
 |---|---|
-| 当前关注版本 | v0.6.15 |
+| 当前关注版本 | v0.6.16 |
 | 当前定位 | 复杂任务编排 / 多阶段任务 / TDD workflow |
 | 启用条件 | 存在 Trellis 强证据，或任务复杂度需要 Trellis |
 | Native Workflow | 普通功能开发、文档修改、小型 bug 修复、工具配置调整 |
@@ -321,12 +326,12 @@ handoff
 
 | 类别 | 工具 | 当前版本记录 |
 |---|---|---:|
-| Coding Agent | Codex | v0.147.0 |
-| Agent Harness | Trellis | v0.6.15 |
-| 代码理解 | GitNexus | v1.6.9 |
+| Coding Agent | Codex | v0.151.0 |
+| Agent Harness | Trellis | v0.6.16 |
+| 代码理解 | GitNexus | v1.6.10 |
 | Web 诊断 | Chrome DevTools MCP | latest |
 | Web 回归测试 | Playwright | v1.62.1 |
-| 移动 E2E | Maestro | cli-2.8.0 |
+| 移动 E2E | Maestro | cli-2.10.0 |
 | Web UI 测试资产 | web-ui-autotest-generator | bundled |
 | 前端 UI 组件辅助 | React Bits Pro Skill | manual |
 

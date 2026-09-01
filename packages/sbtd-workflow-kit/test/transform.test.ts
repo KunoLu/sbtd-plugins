@@ -26,19 +26,21 @@ import {
 
 const packageRoot = new URL("..", import.meta.url).pathname;
 const temporaryRoots: string[] = [];
-const pluginPackageRoot = new URL("../../../packages/omp-sbtd/", import.meta.url)
-  .pathname;
+const pluginPackageRoot = new URL(
+  "../../../packages/omp-sbtd/",
+  import.meta.url,
+).pathname;
 const execFileAsync = promisify(execFile);
 
 const STABLE_MANIFEST_SHA256 =
-  "5d607007086b671866142ce3d0edd0a896e8c878e5566cf7ca9b1592e7c844ca";
-const STABLE_SET = "2026-08-11.1";
+  "cf1c7f48b03a5c987a5ee00afcc9719b37667b10c0f7d6005c63d6283f765cdb";
+const STABLE_SET = "2026-08-27.1";
 const V106_REVISION = "1f019e070d1ca41f064572febe055643d8dbc1ce";
-const HEAD_REVISION = "4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb";
-const HEAD_STABLE_SET = "2026-08-11.1";
+const HEAD_REVISION = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
+const HEAD_STABLE_SET = "2026-08-27.1";
 const HEAD_STABLE_MANIFEST_SHA256 =
-  "5d607007086b671866142ce3d0edd0a896e8c878e5566cf7ca9b1592e7c844ca";
-const HEAD_MATTPOCOCK_REVISION = "6acc160e4e0cd062dbbbd7a1b26ae92855edf07e";
+  "cf1c7f48b03a5c987a5ee00afcc9719b37667b10c0f7d6005c63d6283f765cdb";
+const HEAD_MATTPOCOCK_REVISION = "6654f6b60cd9d5be8b54c6fafe44346dabeb3b76";
 const STABLE_MANIFEST_PATH =
   "sbtd-workflow-onboard/assets/external-skills/stable/MANIFEST.json";
 
@@ -958,12 +960,12 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     const nestedPolicyRoot = await fixture();
     const nestedMapping = join(nestedPolicyRoot, "agents-section-map.yaml");
     const nestedSection =
-      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis Channel > 主动 Preflight 场景"\n    policy: replace-with-overlay\n    owner: project-omp\n    overlay: AGENTS.project-omp.md';
+      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis > Trellis 目录"\n    policy: replace-with-overlay\n    owner: project-omp\n    overlay: AGENTS.project-omp.md';
     await writeFile(
       nestedMapping,
       (await readFile(nestedMapping, "utf8")).replace(
         nestedSection,
-        '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis Channel > 主动 Preflight 场景"\n    policy: include\n    owner: project-omp',
+        '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis > Trellis 目录"\n    policy: include\n    owner: project-omp',
       ),
       "utf8",
     );
@@ -1621,7 +1623,7 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       "utf8",
     );
     expect(runtimeTemplate).toContain("## Trellis Channel");
-    expect(runtimeTemplate).toContain("### 主动 Preflight 场景");
+    expect(runtimeTemplate).not.toContain("### 主动 Preflight 场景");
     const projectTarget = await readFile(
       join(output, "AGENTS.project-root.md"),
       "utf8",
@@ -1692,7 +1694,7 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     });
     expect(parsed.sections).toContainEqual({
       source:
-        "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis 调度层",
+        "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis",
       policy: "replace-with-overlay",
       owner: "project-omp",
       overlay: "AGENTS.project-omp.md",
@@ -1805,7 +1807,7 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       });
       expect(plan.classifiedSections).toContainEqual({
         source:
-          "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis 调度层",
+          "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis",
         policy: "replace-with-overlay",
       });
       expect(plan.classifiedSections).toContainEqual({

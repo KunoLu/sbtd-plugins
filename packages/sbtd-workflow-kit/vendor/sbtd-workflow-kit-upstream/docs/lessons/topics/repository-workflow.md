@@ -120,6 +120,7 @@
 - 预防：后续在 `main` 合并、快进或推送前，都要运行 `.gitignore` 精确三行检查；即使变更来自远程已有提交，也不能跳过本仓库规则验证。
 - 状态更新（2026-07-16）：Python 验证会生成仓库根或 `tests/` 下的 `__pycache__/`，因此当前 canonical 契约已调整为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/` 四行；自动化和测试必须断言这四行，不得继续套用历史三行规则。
 - 状态更新（2026-07-18）：并行审核确认，把仓库必需的 `AGENTS.md` 和 authoritative `ENTRYPOINT.md` 同时设为 ignored / untracked 会让新 clone 缺少启动规则和版本基线；已恢复二者由 Git 追踪，当前 canonical `.gitignore` 恢复为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/` 四行。
+- 状态更新（2026-08-20）：用户要求根 `AGENTS.md` 加入 `.gitignore` 并从远程 `main` 删除；当前 canonical `.gitignore` 为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/`、`AGENTS.md` 五行。`ENTRYPOINT.md` 仍必须追踪。不得把 `AGENTS.md` 的存在当作 Gate。
 
 ## LESSON-20260718-required-controls-tracked-source: Required Controls Need a Tracked Source
 
@@ -132,6 +133,19 @@
 - 根因：只验证了既有工作树的“文件仍存在”，没有验证远程 clone 的可恢复性，也没有提供 tracked canonical source 和先于 Gate 执行的 bootstrap。
 - 修复：恢复 `AGENTS.md` 和 `ENTRYPOINT.md` 由 Git 追踪，`.gitignore` 恢复四行；README、automation prompt 和契约测试同步改为断言 tracked controls，并让测试直接检查 Git 索引。
 - 预防：任何启动前必需文件必须直接受版本控制，或同时提供受版本控制的 canonical source 与可在 Gate 前执行的 bootstrap；不得把文件设为 ignored / untracked 后又把其存在作为所有操作的前置条件。
+- 状态更新（2026-08-20）：用户覆盖“根 `AGENTS.md` 必须追踪”。该文件现为 ignored / 本机可选；`ENTRYPOINT.md` 仍必须追踪。与本 lesson 的预防一致：ignored 文件不得再作为全操作前置条件。详见 LESSON-20260820-root-agents-local-only。
+
+## LESSON-20260820-root-agents-local-only: Root AGENTS.md Is Local-Only
+
+- 日期：2026-08-20
+- 标签：repository, controls, gitignore, agents
+- 适用场景：调整根 `AGENTS.md` 追踪策略、根 `.gitignore` canonical 内容，或编写读取根 `AGENTS.md` 的契约测试
+- 严重级别：high
+- 来源：用户明确要求将 `AGENTS.md` 加入 `.gitignore` 并从远程 `main` 删除，且不写入 CHANGELOG
+- 问题：根 `AGENTS.md` 曾被当作启动必需的 tracked control；若继续让测试和 automation 读取本机忽略副本，会掩盖 fresh-clone 缺失。
+- 根因：把本机工作树文件存在当成远程可恢复性。
+- 修复：根 `.gitignore` 现为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/`、`AGENTS.md` 五行；从 Git 索引和远程 `main` 移除 `AGENTS.md`，本机可保留；`ENTRYPOINT.md` 仍必须追踪。测试、README、automation prompt 不得把 `AGENTS.md` 存在当作 Gate。
+- 预防：不要把 ignored 本地文件当作 clone 可恢复证据；不要因旧四行契约把 `AGENTS.md` 重新加入索引。
 
 ## LESSON-20260701-entrypoint-detail-section-contract: ENTRYPOINT Detail Section Contract
 
@@ -350,6 +364,18 @@
 - 修复：将 `omp` 加入 Trellis allow-list，明确 `omp → --omp` 与 `pi → --pi`，并用记录 fake `trellis` argv 的 `init-projects` 回归测试断言 `--omp --pi --codex`。
 - 预防：平台名跨 Agent CLI、npm 包和下游 CLI 时必须按命名空间分别建模；对相近名称必须查询下游 CLI help，并用 argv 级集成测试同时覆盖各自 flag 和顺序。
 
+## LESSON-20260827-trellis-init-empty-yes-defaults: Empty Trellis Init Flags Are Not Neutral
+
+- 日期：2026-08-27
+- 标签：onboard, trellis, init, platform, installer, validation
+- 适用场景：维护 Onboard `init` / `plan` 的 Trellis 平台参数、Agent `--platform` 与 `trellis init` 的映射
+- 严重级别：high
+- 来源：demo 项目指定目标平台 Codex 后，`onboard.py init` 生成 `.claude/` / `.cursor/` 而没有 `.codex/`
+- 问题：用户给了 Agent 平台 `codex`，但 `trellis init -u ... --yes --skip-existing` 未带 `--codex`。Trellis 在 `--yes` 且无平台 flag 时默认安装 Claude 和 Cursor。
+- 根因：Skill 把 Trellis flags 写成可选独立命名空间，Agent 因此省略 `--trellis-platform`；Onboard 把空列表原样交给 `trellis init --yes`。`plan --json` 也不展示将要执行的 `trellis init` 命令。
+- 修复：`--platform codex|claude|kimi` 在未给 `--trellis-platform` 时作为默认 Trellis flag；空列表不再交给 `trellis init --yes`；`oh-my-pi` 仍须显式 `omp`/`pi`；`plan --json` 增加 `trellisInit.command`。
+- 预防：不要把“不得从 Oh My Pi 推断 `--pi`”扩成“用户指定 Codex 也不传 `--codex`”。对会改变下游默认安装集的 CLI，空 flag 必须视为危险默认，而不是中性省略。
+
 ## LESSON-20260811-stable-promotion-candidate-prune-safety: Stable Promotion Pruning Must Stay Contained
 
 - 日期：2026-08-11
@@ -386,3 +412,28 @@
 - 根因：`@ladybugdb/core/lbugjs.node` 未由 GitNexus 全局安装的 lifecycle 产物写入 package directory；进程在 MCP `initialize` 之前退出。
 - 修复：从当前 `CODEX_HOME` 定位生效 MCP command 后，运行该 GitNexus 安装目录内 `node_modules/@ladybugdb/core/install.js`，再以 JSON-RPC `initialize` 握手验证 serverInfo 响应。
 - 预防：先用 `CODEX_HOME` 和 `codex mcp get gitnexus` 确认生效 command；再运行真实 MCP handshake 区分 transport 启动失败与“Repository not indexed”。不要因索引缺失重装或修改 MCP 配置。
+- 状态更新（2026-08-24）：全局 `gitnexus@1.6.9` 在当天 09:20 被重装后，`lbugjs.node` 再次从 `@ladybugdb/core` 消失，但 `@ladybugdb/core-darwin-arm64/lbugjs.node` 仍在。`npm config get ignore-scripts` 为 `false`，说明重装仍可能跳过或未持久化 `@ladybugdb/core` 的 `install` 脚本。不要把“已经修过一次”当成模块仍在。
+
+## LESSON-20260824-gitnexus-claude-json-shebang-path: Pin Claude GitNexus MCP To Explicit Node
+
+- 日期：2026-08-24
+- 标签：gitnexus, mcp, claude, omp, path, shebang, transport
+- 适用场景：OMP 报 `Failed: gitnexus [config: ~/.claude.json]: Transport closed`，或 GUI / 干净 PATH 下启动 `gitnexus mcp`
+- 严重级别：high
+- 来源：OMP 从 `~/.claude.json` 导入 GitNexus MCP 失败；同一错误在 2026-08-20 只修了 native module 后又复发
+- 问题：`~/.claude.json` 使用绝对路径 `.../bin/gitnexus` + `args=["mcp"]`，在本机 nvm PATH 下 handshake 成功，但 OMP 仍报 `Transport closed`。
+- 根因：`gitnexus` 是 `#!/usr/bin/env node` 脚本。OMP 导入 Claude 配置时 PATH 往往只有 `/usr/bin:/bin:...`，没有 nvm 的 `node`，进程以 exit 127 / `env: node: No such file or directory` 立即退出，被汇总成 Transport closed。这与缺失 `lbugjs.node` 是独立根因，可同时存在。
+- 修复：把 `~/.claude.json` 的 command 改成 nvm 绝对 `node`，args 改成 GitNexus CLI 绝对路径 + `mcp`，并设置 `env.PATH` 包含该 nvm `bin`。用干净 PATH 复跑 JSON-RPC `initialize`，确认不再依赖 `/usr/bin/env node`。
+- 预防：诊断 OMP `config: ~/.claude.json` 失败时，必须同时做带 nvm PATH 和干净 PATH 的 handshake。不要只在当前 shell 里跑通 `gitnexus mcp` 就认为 Claude 配置对 GUI 启动安全。
+
+## LESSON-20260831-readonly-cli-probe-side-effect: Read-only Checks Must Not Bootstrap CLI State
+
+- 日期：2026-08-31
+- 标签：onboard, cli, omp, side-effect, validation, read-only
+- 适用场景：`check` / preflight / provider detection 调用第三方 CLI 查询版本、plugin 或配置
+- 严重级别：high
+- 来源：`onboard.py check --json` 在隔离 HOME 下探测 OMP Ponytail provider
+- 问题：只读 `check --json` 在用户尚无 `~/.omp` 时执行 `omp plugin list --json`；OMP CLI 启动即创建 `.omp`，违反“缺失则跳过且不得创建”的契约，现有回归测试以 `FileExistsError` 暴露副作用。
+- 根因：把语义上只读的子命令当成进程级无副作用，没有先检查平台配置根是否存在，也没有在检测契约中验证 HOME 字节状态。
+- 修复：OMP provider 探测仅在 `~/.omp` 已存在时执行 CLI；缺失时报告 per-platform `not-configured`。保留 configured OMP 的官方 plugin 冲突检测，并用隔离 HOME 聚焦测试覆盖。
+- 预防：调用第三方 CLI 的 read-only 子命令前，先验证它不会 bootstrap 配置 / cache；无法证明时先检查既有配置根或在隔离 HOME 运行。check/preflight 测试必须断言目标 HOME 没有新增路径。

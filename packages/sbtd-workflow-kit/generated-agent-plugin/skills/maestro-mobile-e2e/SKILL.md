@@ -8,7 +8,7 @@ allowed-tools: read grep glob bash
 metadata:
   sbtd.category: testing
   sbtd.portable: "true"
-  sbtd.source-revision: 4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb
+  sbtd.source-revision: f8aa0d7225a26c5e00b81d2f1b05121108e63630
 compatibility: Requires Java 17+, Maestro CLI, a device, an app artifact, and
   the scenario environment including account and backend prerequisites.
 ---

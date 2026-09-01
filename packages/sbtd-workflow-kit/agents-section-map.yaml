@@ -54,6 +54,12 @@ sections:
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 范围控制"
     policy: include
     owner: global
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 代码可读性"
+    policy: include
+    owner: global
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 代码可读性 > Ponytail 与代码可读性审查"
+    policy: include
+    owner: global
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 验证最低要求"
     policy: include
     owner: global
@@ -72,78 +78,49 @@ sections:
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 项目事实源"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 加载与激活边界"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > UI/UX 设计上下文"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Project-only fallback"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > UI/UX 设计上下文 > shadcn Skill"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 代码可读性"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > UI/UX 设计上下文 > React Bits Tier 和 Pro Skill"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > UI/UX 项目上下文"
     policy: include
     owner: project-root
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis"
     policy: replace-with-overlay
     owner: project-omp
     overlay: AGENTS.project-omp.md
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis > Trellis 目录"
+    policy: replace-with-overlay
+    owner: project-omp
+    overlay: AGENTS.project-omp.md
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > 持久规格路径"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > 持久路径与语言"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > 语言与内容"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > 工作流规则"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > Source Of Truth"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > Source of truth"
     policy: include
     owner: project-root
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > GitNexus"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > mattpocock/skills 项目级编排"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Skill 编排边界"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 交互压缩工具项目级边界"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > agent-rules-books 派生 Skill 编排"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis 调度层"
-    policy: replace-with-overlay
-    owner: project-omp
-    overlay: AGENTS.project-omp.md
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis Channel"
     policy: replace-with-overlay
     owner: project-omp
     overlay: AGENTS.project-omp.md
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis Channel > 主动 Preflight 场景"
-    policy: replace-with-overlay
-    owner: project-omp
-    overlay: AGENTS.project-omp.md
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis Channel > Review / Validation 用法"
-    policy: replace-with-overlay
-    owner: project-omp
-    overlay: AGENTS.project-omp.md
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 目录规则"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Web / Mobile 验证与测试资产"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Web / Mobile 验证工具"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Mobile / Hybrid E2E 测试资产"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Web UI / E2E 测试资产"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > SEO / GEO 发布检查"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > SEO / GEO"
     policy: include
     owner: project-root
   - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 验证命令"

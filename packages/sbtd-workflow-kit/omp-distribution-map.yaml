@@ -680,7 +680,7 @@ decisions:
     owner: third-party
     policy: omit
     reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/ui-core.mjs
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/ui-surfaces.mjs
     owner: third-party
     policy: omit
     reason: Stable Skill tree is not retained in the OMP distribution
@@ -1273,5 +1273,102 @@ decisions:
     owner: third-party
     policy: include
   - path: third-party/sbtd-workflow-onboard/NOTICE
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/open-system-browser.mjs
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/ponytail-audit/SKILL.md
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ponytail-debt/SKILL.md
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ponytail-review/SKILL.md
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ponytail/SKILL.md
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/catalog-summary.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/data-provenance.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/google-font-licenses.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/phosphor-icons-upstream.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/reasoning_contract.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-api.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-catalog.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-existing.csv
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-metadata.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-overrides.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/icons-curated.csv
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-core.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-package.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-exports.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-package.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-baseline.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-cases.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-thresholds.json
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_refresh.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_core_data_quality.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_data_contracts.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_native_desktop_stack_freshness.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_relevance_evaluator.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_style_taxonomy.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_text_layout_resilience.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_web_stack_freshness.py
     owner: third-party
     policy: include
