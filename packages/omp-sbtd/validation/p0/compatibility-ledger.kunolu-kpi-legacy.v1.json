@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "kind": "compatibility-ledger-legacy-archive",
+  "archivedFromRepository": "KunoLu/KPi",
+  "archivedReason": "These assessment entries were produced and attested under KunoLu/KPi before omp-sbtd ownership moved to KunoLu/sbtd-plugins. The active compatibility-trust-policy.v1.json pins attestation.repository to KunoLu/sbtd-plugins, so validating them in compatibility-ledger.v1.json fails closed with COMPATIBILITY_PROVENANCE_UNTRUSTED. Entries are preserved verbatim (including KunoLu/KPi provenance and digests) for audit; they are not rewritten, are not validated against the active trust policy, and do not contribute to the derived support matrix. New trusted attestations must be signed in KunoLu/sbtd-plugins.",
+  "activeLedgerPath": "compatibility-ledger.v1.json",
+  "entries": [
+    {
+      "schemaVersion": 1,
+      "entryType": "assessment",
+      "attemptId": "gha:32970295741:1",
+      "pluginPackage": "@kunolu/omp-sbtd",
+      "pluginVersion": "0.1.0-rc.12",
+      "pluginTarballSha256": "49edb4b7cab68f851359179b2c27bb53be8eff5682f16285f5caf9a351c39a33",
+      "pluginPackageIntegrity": "sha512-DOFO9focJ1gU4my0bOO1m2tdYP4Mo2wT0wf6iA3y/IXN2FFml9VSx0IBNVHvieajEhgNtfDQAQXpof9DWetzPw==",
+      "pluginManifestSha256": "0385da382745fecebfcb4b894067851960ca06dcdf51fe79969ac7e998c41647",
+      "pluginPeerRange": "17.3.5",
+      "assessmentTargetSource": "published-catalog",
+      "ompVersion": "17.3.5",
+      "ompRegistryIntegrity": "sha512-LW1lOEmun2xkVPoQ9R5omT2ETY1Fl3FgTJHAySTqbedWOOxFbx5cz+deRBN4Z7N/82PofhngFS8dsLQC5FPyvw==",
+      "loadedRuntimeVersion": "17.3.5",
+      "loadedRuntimeArtifactSha256": "b6984f1f5047d3096544c2946a82475424853d5102cd703b02a237d697b1c70d",
+      "contractProfile": "omp-extension-v1",
+      "commandSetSha256": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+      "hostEventScenarioSetSha256": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b",
+      "previousEntrySha256": null,
+      "profiles": {
+        "runtimeCapabilityProbe": {
+          "profile": "omp-runtime-capabilities-v1",
+          "outcome": "blocked",
+          "evidenceTrust": "missing",
+          "evidenceSha256": null,
+          "evidenceLocator": null
+        },
+        "commandSurface": {
+          "profile": "omp-command-surface-v1",
+          "outcome": "blocked",
+          "evidenceTrust": "missing",
+          "evidenceSha256": null,
+          "evidenceLocator": null
+        },
+        "hostEventSurface": {
+          "profile": "omp-host-events-v1",
+          "outcome": "blocked",
+          "evidenceTrust": "missing",
+          "evidenceSha256": null,
+          "evidenceLocator": null
+        }
+      },
+      "provenance": {
+        "format": "github-artifact-attestation-v1",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "repository": "KunoLu/KPi",
+        "workflowRef": ".github/workflows/omp-compatibility-certification.yml@refs/heads/main",
+        "eventName": "workflow_dispatch",
+        "runId": "32970295741",
+        "sourceRef": "refs/heads/main",
+        "sourceRevision": "d5ec4e913676bfa6b2b976dd2378cbd63a790bea",
+        "attestationBundleSha256": "db558a1de0cdc954719f4a28882ff133576a9fa0123847f6c80f74fa8e379932",
+        "attestationBundleLocator": "validation/p0/evidence/db558a1de0cdc954719f4a28882ff133576a9fa0123847f6c80f74fa8e379932.json",
+        "subjectDigests": {
+          "pluginTarball": "49edb4b7cab68f851359179b2c27bb53be8eff5682f16285f5caf9a351c39a33",
+          "pluginManifest": "0385da382745fecebfcb4b894067851960ca06dcdf51fe79969ac7e998c41647",
+          "ompArtifact": "b6984f1f5047d3096544c2946a82475424853d5102cd703b02a237d697b1c70d",
+          "commandSet": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+          "hostEventScenarioSet": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b"
+        }
+      },
+      "overallOutcome": "eligible",
+      "entrySha256": "4bfb1167adb34c3c038d9fa2464559d65cd36d73eb2e0486e4d98fe7e8b6aad9"
+    },
+    {
+      "schemaVersion": 1,
+      "entryType": "assessment",
+      "attemptId": "gha:33083037731:1",
+      "pluginPackage": "@kunolu/omp-sbtd",
+      "pluginVersion": "0.1.0-rc.12",
+      "pluginTarballSha256": "49edb4b7cab68f851359179b2c27bb53be8eff5682f16285f5caf9a351c39a33",
+      "pluginPackageIntegrity": "sha512-DOFO9focJ1gU4my0bOO1m2tdYP4Mo2wT0wf6iA3y/IXN2FFml9VSx0IBNVHvieajEhgNtfDQAQXpof9DWetzPw==",
+      "pluginManifestSha256": "0385da382745fecebfcb4b894067851960ca06dcdf51fe79969ac7e998c41647",
+      "pluginPeerRange": "17.3.5",
+      "assessmentTargetSource": "published-catalog",
+      "ompVersion": "17.3.5",
+      "ompRegistryIntegrity": "sha512-LW1lOEmun2xkVPoQ9R5omT2ETY1Fl3FgTJHAySTqbedWOOxFbx5cz+deRBN4Z7N/82PofhngFS8dsLQC5FPyvw==",
+      "loadedRuntimeVersion": "17.3.5",
+      "loadedRuntimeArtifactSha256": "b6984f1f5047d3096544c2946a82475424853d5102cd703b02a237d697b1c70d",
+      "contractProfile": "omp-extension-v1",
+      "commandSetSha256": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+      "hostEventScenarioSetSha256": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b",
+      "previousEntrySha256": "4bfb1167adb34c3c038d9fa2464559d65cd36d73eb2e0486e4d98fe7e8b6aad9",
+      "profiles": {
+        "runtimeCapabilityProbe": {
+          "profile": "omp-runtime-capabilities-v1",
+          "outcome": "blocked",
+          "evidenceTrust": "missing",
+          "evidenceSha256": null,
+          "evidenceLocator": null
+        },
+        "commandSurface": {
+          "profile": "omp-command-surface-v1",
+          "outcome": "blocked",
+          "evidenceTrust": "missing",
+          "evidenceSha256": null,
+          "evidenceLocator": null
+        },
+        "hostEventSurface": {
+          "profile": "omp-host-events-v1",
+          "outcome": "blocked",
+          "evidenceTrust": "missing",
+          "evidenceSha256": null,
+          "evidenceLocator": null
+        }
+      },
+      "provenance": {
+        "format": "github-artifact-attestation-v1",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "repository": "KunoLu/KPi",
+        "workflowRef": ".github/workflows/omp-compatibility-certification.yml@refs/heads/main",
+        "eventName": "workflow_dispatch",
+        "runId": "33083037731",
+        "sourceRef": "refs/heads/main",
+        "sourceRevision": "7c0e9c83f1a68081ec3f2d292ae9e179572b6b83",
+        "attestationBundleSha256": "249b2ae6f75af27bd94ca17081117c44a35b88e72c301a72cbcb5f33f4a5e037",
+        "attestationBundleLocator": "validation/p0/evidence/249b2ae6f75af27bd94ca17081117c44a35b88e72c301a72cbcb5f33f4a5e037.json",
+        "subjectDigests": {
+          "pluginTarball": "49edb4b7cab68f851359179b2c27bb53be8eff5682f16285f5caf9a351c39a33",
+          "pluginManifest": "0385da382745fecebfcb4b894067851960ca06dcdf51fe79969ac7e998c41647",
+          "ompArtifact": "b6984f1f5047d3096544c2946a82475424853d5102cd703b02a237d697b1c70d",
+          "commandSet": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+          "hostEventScenarioSet": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b"
+        }
+      },
+      "overallOutcome": "eligible",
+      "entrySha256": "ca032c9b92965530a64ceb766ba2c16518bebd7f71b2f0d48b48eca35f819227"
+    },
+    {
+      "schemaVersion": 1,
+      "entryType": "assessment",
+      "attemptId": "gha:33083037731:1",
+      "pluginPackage": "@kunolu/omp-sbtd",
+      "pluginVersion": "0.1.0-rc.13",
+      "pluginTarballSha256": "b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185",
+      "pluginPackageIntegrity": "sha512-YeHQly8ONkZvNczhPBRd+1re3zX1ZAQ2xPUqfzZHhLVHyX90G3Pyk6ypY+knfBK6jZ5No599YaQZxsITvr232w==",
+      "pluginManifestSha256": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+      "pluginPeerRange": ">=17.3.5 <18",
+      "assessmentTargetSource": "published-catalog",
+      "ompVersion": "17.3.5",
+      "ompRegistryIntegrity": "sha512-LW1lOEmun2xkVPoQ9R5omT2ETY1Fl3FgTJHAySTqbedWOOxFbx5cz+deRBN4Z7N/82PofhngFS8dsLQC5FPyvw==",
+      "loadedRuntimeVersion": "17.3.5",
+      "loadedRuntimeArtifactSha256": "b6984f1f5047d3096544c2946a82475424853d5102cd703b02a237d697b1c70d",
+      "contractProfile": "omp-extension-v1",
+      "commandSetSha256": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+      "hostEventScenarioSetSha256": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b",
+      "previousEntrySha256": null,
+      "profiles": {
+        "runtimeCapabilityProbe": {
+          "profile": "omp-runtime-capabilities-v1",
+          "outcome": "passed",
+          "evidenceTrust": "verified",
+          "evidenceSha256": "e2ddd003e0464d69ae36e7603dafd4f31109a076427cb6016c93398fe97e1231",
+          "evidenceLocator": "validation/p0/evidence/e2ddd003e0464d69ae36e7603dafd4f31109a076427cb6016c93398fe97e1231.json"
+        },
+        "commandSurface": {
+          "profile": "omp-command-surface-v1",
+          "outcome": "passed",
+          "evidenceTrust": "verified",
+          "evidenceSha256": "a0cabb82ae99ce5f851785e280b128f8c6a8d72209b2e3880a65db997bc60648",
+          "evidenceLocator": "validation/p0/evidence/a0cabb82ae99ce5f851785e280b128f8c6a8d72209b2e3880a65db997bc60648.json"
+        },
+        "hostEventSurface": {
+          "profile": "omp-host-events-v1",
+          "outcome": "passed-with-diagnostics",
+          "evidenceTrust": "verified",
+          "evidenceSha256": "8da78e23a875d6601461e31b8a39a02822e24dd122a8556256ada8293fce593a",
+          "evidenceLocator": "validation/p0/evidence/8da78e23a875d6601461e31b8a39a02822e24dd122a8556256ada8293fce593a.json"
+        }
+      },
+      "provenance": {
+        "format": "github-artifact-attestation-v1",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "repository": "KunoLu/KPi",
+        "workflowRef": ".github/workflows/omp-compatibility-certification.yml@refs/heads/main",
+        "eventName": "workflow_dispatch",
+        "runId": "33083037731",
+        "sourceRef": "refs/heads/main",
+        "sourceRevision": "7c0e9c83f1a68081ec3f2d292ae9e179572b6b83",
+        "attestationBundleSha256": "f08b620fe1dac3c789ecbe2519ccad8eae22b2465ad542e7a02e718d6e3581c1",
+        "attestationBundleLocator": "validation/p0/evidence/f08b620fe1dac3c789ecbe2519ccad8eae22b2465ad542e7a02e718d6e3581c1.json",
+        "subjectDigests": {
+          "pluginTarball": "b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185",
+          "pluginManifest": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+          "ompArtifact": "b6984f1f5047d3096544c2946a82475424853d5102cd703b02a237d697b1c70d",
+          "commandSet": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+          "hostEventScenarioSet": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b",
+          "runtimeCapabilityProbe": "e2ddd003e0464d69ae36e7603dafd4f31109a076427cb6016c93398fe97e1231",
+          "commandSurface": "a0cabb82ae99ce5f851785e280b128f8c6a8d72209b2e3880a65db997bc60648",
+          "hostEventSurface": "8da78e23a875d6601461e31b8a39a02822e24dd122a8556256ada8293fce593a"
+        }
+      },
+      "overallOutcome": "certified",
+      "entrySha256": "9cb6776194676a7f4be29b3f9e790566ecf0bbf7fb73b89b60740a0ef29e340f"
+    },
+    {
+      "schemaVersion": 1,
+      "entryType": "assessment",
+      "attemptId": "gha:33083037731:1",
+      "pluginPackage": "@kunolu/omp-sbtd",
+      "pluginVersion": "0.1.0-rc.13",
+      "pluginTarballSha256": "b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185",
+      "pluginPackageIntegrity": "sha512-YeHQly8ONkZvNczhPBRd+1re3zX1ZAQ2xPUqfzZHhLVHyX90G3Pyk6ypY+knfBK6jZ5No599YaQZxsITvr232w==",
+      "pluginManifestSha256": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+      "pluginPeerRange": ">=17.3.5 <18",
+      "assessmentTargetSource": "published-catalog",
+      "ompVersion": "17.4.2",
+      "ompRegistryIntegrity": "sha512-WcX6H81eucB1PFFujI6XCF5ObDJm42RSAnEAxQAAEEzURZCR3yOsn3kFUTR9cxkJa+jdcfMVrN3ahih2Xn/6/Q==",
+      "loadedRuntimeVersion": "17.4.2",
+      "loadedRuntimeArtifactSha256": "18f16e64b895f813d04bb02d98f00302ac6fef829a5a2a61e6a1f9206d640318",
+      "contractProfile": "omp-extension-v1",
+      "commandSetSha256": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+      "hostEventScenarioSetSha256": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b",
+      "previousEntrySha256": null,
+      "profiles": {
+        "runtimeCapabilityProbe": {
+          "profile": "omp-runtime-capabilities-v1",
+          "outcome": "passed",
+          "evidenceTrust": "verified",
+          "evidenceSha256": "a12622c58281fc09b8228ac09438b60034fc0b245e9088036d9315a26d1e4c1e",
+          "evidenceLocator": "validation/p0/evidence/a12622c58281fc09b8228ac09438b60034fc0b245e9088036d9315a26d1e4c1e.json"
+        },
+        "commandSurface": {
+          "profile": "omp-command-surface-v1",
+          "outcome": "passed",
+          "evidenceTrust": "verified",
+          "evidenceSha256": "fbebb20cb619834c6a4423dac0234c31b27265fa73c50f910df63bc71f5255e7",
+          "evidenceLocator": "validation/p0/evidence/fbebb20cb619834c6a4423dac0234c31b27265fa73c50f910df63bc71f5255e7.json"
+        },
+        "hostEventSurface": {
+          "profile": "omp-host-events-v1",
+          "outcome": "failed",
+          "evidenceTrust": "verified",
+          "evidenceSha256": "89f30594296cf5e51610738d11ac3bf6a01a38907b914f97fc417b600141e2f5",
+          "evidenceLocator": "validation/p0/evidence/89f30594296cf5e51610738d11ac3bf6a01a38907b914f97fc417b600141e2f5.json"
+        }
+      },
+      "provenance": {
+        "format": "github-artifact-attestation-v1",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "repository": "KunoLu/KPi",
+        "workflowRef": ".github/workflows/omp-compatibility-certification.yml@refs/heads/main",
+        "eventName": "workflow_dispatch",
+        "runId": "33083037731",
+        "sourceRef": "refs/heads/main",
+        "sourceRevision": "7c0e9c83f1a68081ec3f2d292ae9e179572b6b83",
+        "attestationBundleSha256": "128f0add7aab67b66e97ff6954bab049a7f229885f5385ffd1f43d84de514342",
+        "attestationBundleLocator": "validation/p0/evidence/128f0add7aab67b66e97ff6954bab049a7f229885f5385ffd1f43d84de514342.json",
+        "subjectDigests": {
+          "pluginTarball": "b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185",
+          "pluginManifest": "d979833bb20f73737f0eedd66e23d05d8428acbe66f1c2d8fb195e410b222efc",
+          "ompArtifact": "18f16e64b895f813d04bb02d98f00302ac6fef829a5a2a61e6a1f9206d640318",
+          "commandSet": "d571ed08cc016960ec97afaf280b64c11ec770ed09dcb5349bd271f75e1f0c61",
+          "hostEventScenarioSet": "8eefb34d1309dc8539a812aad47ca5c2da885c8514b8c79cee5719d6d8933f1b",
+          "runtimeCapabilityProbe": "a12622c58281fc09b8228ac09438b60034fc0b245e9088036d9315a26d1e4c1e",
+          "commandSurface": "fbebb20cb619834c6a4423dac0234c31b27265fa73c50f910df63bc71f5255e7",
+          "hostEventSurface": "89f30594296cf5e51610738d11ac3bf6a01a38907b914f97fc417b600141e2f5"
+        }
+      },
+      "overallOutcome": "incompatible",
+      "entrySha256": "d5bbcc32f5bef3961eb308ff95fb81cf2b0739691b9688d2a314a6584f1329c2"
+    }
+  ]
+}

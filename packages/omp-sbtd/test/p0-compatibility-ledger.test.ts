@@ -418,9 +418,30 @@ describe("compatibility target catalog", () => {
       "0.1.0-rc.12",
       "0.1.0-rc.13",
     ]);
+    // Active ledger starts empty after the KunoLu/KPi → KunoLu/sbtd-plugins
+    // cutover: historical KPi attestations live in the legacy archive and are
+    // not rewritten to pretend they were signed by this repository.
+    expect(parseCompatibilityLedger(JSON.parse(ledgerRaw)).entries).toEqual(
+      [],
+    );
+    const legacyArchive = JSON.parse(
+      await readFile(
+        join(dataRoot, "compatibility-ledger.kunolu-kpi-legacy.v1.json"),
+        "utf8",
+      ),
+    ) as {
+      kind: string;
+      archivedFromRepository: string;
+      entries: ReadonlyArray<{ provenance: { repository: string } }>;
+    };
+    expect(legacyArchive.kind).toBe("compatibility-ledger-legacy-archive");
+    expect(legacyArchive.archivedFromRepository).toBe("KunoLu/KPi");
+    expect(legacyArchive.entries.length).toBeGreaterThanOrEqual(1);
     expect(
-      parseCompatibilityLedger(JSON.parse(ledgerRaw)).entries.length,
-    ).toBeGreaterThanOrEqual(1);
+      legacyArchive.entries.every(
+        (entry) => entry.provenance.repository === "KunoLu/KPi",
+      ),
+    ).toBe(true);
     const policy = parseCompatibilityTrustPolicy(JSON.parse(policyRaw));
     expect(policy.attestation.repository).toBe("KunoLu/sbtd-plugins");
     expect(policy.attestation.sourceRefs).toEqual(["refs/heads/main"]);
