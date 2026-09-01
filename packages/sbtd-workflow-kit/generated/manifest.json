@@ -8,7 +8,7 @@
   "overlayDigests": {
     "AGENTS.project-omp.md": "82e1b95f6534c157cdf40dcb1540750c2e29716c5214240e0752fc0a206d9ff1"
   },
-  "generatedSha256": "49cd8e794e1b7aab0c5e8a707d9f3cdd47003908b4ec3a6672a9e19ade0e8349",
+  "generatedSha256": "f25e6c07dae83c628a8d662aedbcf31d8b44005e1ae19ba22dc68d294deed6e9",
   "targets": {
     "AGENTS.global.md": "da79205cea6921b1a85213b663ef2dd9f76b827c8592055571e02fd705ff150b",
     "AGENTS.project-root.md": "c379f4c4e6387bc06849ed6274f877ea8d1cc9fd031e6018603601b77e11cd32",
@@ -20,7 +20,7 @@
     "AGENTS.project-omp.md": "3f9d602310fb399d24db3a12c71a29b5a1988b65facb963b2ecb515afb082f9f",
     "AGENTS.project-root.md": "c379f4c4e6387bc06849ed6274f877ea8d1cc9fd031e6018603601b77e11cd32",
     "catalog.json": "a1acb34aeb48ff8711357bcf268eae5be12d0f827b7d2f61a167ea5b1698ed13",
-    "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "onboard/runtime/assets/external-skills/stable/licenses/impeccable-LICENSE": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
     "onboard/runtime/assets/external-skills/stable/licenses/impeccable-NOTICE.md": "c60a093c2845fd9fb82f9c6f742ece31f379f8190b535309d32d66c45ccffdcb",
     "onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",

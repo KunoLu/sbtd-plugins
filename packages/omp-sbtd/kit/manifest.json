@@ -7,14 +7,14 @@
     "resolvedRevision": "4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb",
     "sourceTreeSha256": "d1f01d6820775d9428419501b6349130b5e0706db3ecb816f2548149402d4a14",
     "transformVersion": "p0-v3",
-    "manifestSha256": "ef765f4b2e6c040e057cfe17085e4fa76be558e4d7455020f6a61c71ee31a768",
-    "generatedSha256": "49cd8e794e1b7aab0c5e8a707d9f3cdd47003908b4ec3a6672a9e19ade0e8349"
+    "manifestSha256": "195300dd96a98060396556b0c2c7fdd3d0a5e28b41016890ef2da26c3a6ac120",
+    "generatedSha256": "f25e6c07dae83c628a8d662aedbcf31d8b44005e1ae19ba22dc68d294deed6e9"
   },
   "projection": {
     "policyVersion": 1,
     "policySha256": "83b9cf75025b858f10dfb6687ee18f6035c2d34f02e8d5bafa2ebe8cb54a0d85",
     "decisionsSha256": "5cbb7731399f20cdd0163f2c9306f4e965f2df95c11de6143a611170c1d9a094",
-    "generatedSha256": "406dc865dbf30a5e99bbabc1aa74cc531152cc28e5601b53bbc232c3646333e5",
+    "generatedSha256": "1dccef74b53454a862a0568dd8e119049e8278d15c4c6af40f9c0be77601c040",
     "counts": {
       "included": 176,
       "omitted": 173,
@@ -45,7 +45,7 @@
     "AGENTS.project-omp.md": "3f9d602310fb399d24db3a12c71a29b5a1988b65facb963b2ecb515afb082f9f",
     "AGENTS.project-root.md": "13f38edba5f3aba4c29649675f82603b7f8024f462cf71ea179392d24f0d5b71",
     "catalog.json": "a1acb34aeb48ff8711357bcf268eae5be12d0f827b7d2f61a167ea5b1698ed13",
-    "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
     "onboard/runtime/assets/external-skills/stable/licenses/ui-ux-pro-max-skill-LICENSE": "738f69dfa83db5c347c678fb9d90e560877059f0de93a327c39001bff92dc014",
     "onboard/runtime/assets/external-skills/stable/MANIFEST.json": "017bfad63bbf316a1c742051f0a3939ea64cdcb6530a1b177d5b5fb4feb204f9",

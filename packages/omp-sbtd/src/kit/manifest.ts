@@ -103,9 +103,9 @@ export function isStrictPosixRelativePath(path: string): boolean {
     !path.startsWith("/") &&
     !path.includes("\\") &&
     !path.includes("\0") &&
-    path.split("/").every(
-      (segment) => segment !== "" && segment !== "." && segment !== "..",
-    )
+    path
+      .split("/")
+      .every((segment) => segment !== "" && segment !== "." && segment !== "..")
   );
 }
 
@@ -131,7 +131,9 @@ function assertStableProvenance(
   manifest: EmbeddedKitManifestV2,
   stableManifestBytes: Uint8Array,
 ): void {
-  if (sha256(stableManifestBytes) !== manifest.retainedProvenance.manifestSha256)
+  if (
+    sha256(stableManifestBytes) !== manifest.retainedProvenance.manifestSha256
+  )
     throw new Error(
       "embedded Kit stable manifest digest does not match derived provenance",
     );
@@ -198,7 +200,8 @@ export async function verifyEmbeddedKitManifest(
   }
 
   if (
-    generatedProjectionDigest(manifest) !== manifest.projection.generatedSha256 ||
+    generatedProjectionDigest(manifest) !==
+      manifest.projection.generatedSha256 ||
     manifest.targets["AGENTS.global.md"] !==
       manifest.assets["AGENTS.global.md"] ||
     manifest.targets["AGENTS.project-root.md"] !==

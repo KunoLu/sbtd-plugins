@@ -349,7 +349,9 @@ describe("Feature: P0 发布一致性与证据", () => {
       bugs?: string;
       homepage?: string;
     };
-    expect(manifest.repository?.url).toBe("https://github.com/KunoLu/sbtd-plugins.git");
+    expect(manifest.repository?.url).toBe(
+      "https://github.com/KunoLu/sbtd-plugins.git",
+    );
     expect(manifest.bugs).toBe("https://github.com/KunoLu/sbtd-plugins/issues");
     expect(manifest.homepage).toBe("https://github.com/KunoLu/sbtd-plugins");
     expect(security).toContain("songlin.lu@neox-inc.com");

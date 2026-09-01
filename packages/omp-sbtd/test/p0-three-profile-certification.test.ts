@@ -1422,11 +1422,11 @@ describe("finalize-cell / collect attested subject staging", () => {
   } as const;
   const cellKey = `${draftTarget.pluginTarballSha256.slice(0, 12)}-omp-17.9.2`;
   const stageEvidenceDir = (stageRoot: string): string =>
-    join(stageRoot, "plugins", "omp-sbtd", "validation", "p0", "evidence");
+    join(stageRoot, "packages", "omp-sbtd", "validation", "p0", "evidence");
   const stageLedgerPath = (stageRoot: string): string =>
     join(
       stageRoot,
-      "plugins",
+      "packages",
       "omp-sbtd",
       "validation",
       "p0",
@@ -1479,7 +1479,7 @@ describe("finalize-cell / collect attested subject staging", () => {
     // (packages/omp-sbtd/validation/p0) so the stage evidence overlay derives
     // the committed workspace root from it.
     const dataRoot = options.committedDataLayout
-      ? join(root, "repo", "plugins", "omp-sbtd", "validation", "p0")
+      ? join(root, "repo", "packages", "omp-sbtd", "validation", "p0")
       : join(root, "data");
     const evidenceDir = stageEvidenceDir(stageRoot);
     const appended = appendCompatibilityTarget(emptyTargets, draftTarget, {

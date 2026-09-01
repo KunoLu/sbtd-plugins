@@ -187,7 +187,7 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 // ---------------------------------------------------------------------------
 
 const mirrorP0 = (stageRoot: string): string =>
-  join(stageRoot, "plugins", "omp-sbtd", "validation", "p0");
+  join(stageRoot, "packages", "omp-sbtd", "validation", "p0");
 const mirrorEvidence = (stageRoot: string): string =>
   join(mirrorP0(stageRoot), "evidence");
 const transport = (stageRoot: string): string => join(stageRoot, "transport");
