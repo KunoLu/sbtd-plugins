@@ -324,7 +324,7 @@ sbtd-plugins/packages/dsh-sbtd/
 ```yaml
 - insert:
     - id: sbtd
-      name: dsh-sbtd
+      name: "@kunolu/dsh-sbtd"
       # config: { ... }
 ```
 
