@@ -131,3 +131,8 @@ spec — a one-time setup so every future AI session follows the team's
 conventions instead of writing generic code. Before we start, do you have
 any existing convention docs (CLAUDE.md, .cursorrules, CONTRIBUTING.md,
 etc.) I can pull from, or should I scan the codebase from scratch?"
+
+## Notes
+
+Specs were checked into the repo via PR #6 (7cecd67). This task is metadata-close only.
+
