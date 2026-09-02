@@ -16,7 +16,7 @@ Source files:
 - `src/index.ts` — `name`, `inject = ["tools", "systemPrompt"]`, `apply`
 - `src/section.ts` — static Chinese section text, `name: "sbtd"`, `order: 50`
 - `src/state.ts` — `Map` keyed by caller `sessionId`; `serialize()` / `restore()`
-- `src/tools/plan.ts` — sbtd_plan registers/updates BookGatePlan
+- `src/tools/plan.ts` — sbtd_plan registers/updates BookGatePlan. DDD is required only after completed `grill-with-docs`; bare `ddd` stays on-demand.
 
 Do not import `@deepseek-ai/dsh` types. Local context type only.
 

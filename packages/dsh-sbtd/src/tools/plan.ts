@@ -57,14 +57,12 @@ type InferredGate = {
 
 const PREDICATES: Record<GateKind, { re: RegExp; fact: string }[]> = {
   ddd: [
-    { re: /grill-with-docs/i, fact: "full grill-with-docs" },
-    { re: /grill-me/i, fact: "grill-me" },
-    { re: /grilling/i, fact: "grilling" },
-    { re: /领域建模/, fact: "领域建模" },
-    { re: /domain[- ]model/i, fact: "domain modeling" },
-    { re: /\bddd\b/i, fact: "DDD" },
-    { re: /ubiquitous language/i, fact: "ubiquitous language" },
-    { re: /澄清/, fact: "澄清" },
+    { re: /完整执行\s*grill-with-docs/i, fact: "完整执行 grill-with-docs" },
+    { re: /completed\s+grill-with-docs/i, fact: "completed grill-with-docs" },
+    {
+      re: /fully?\s+executed\s+grill-with-docs/i,
+      fact: "fully executed grill-with-docs",
+    },
   ],
   ddia: [
     { re: /持久化/, fact: "持久化" },

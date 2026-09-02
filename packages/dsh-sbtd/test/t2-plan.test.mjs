@@ -4,8 +4,9 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
-import { getSession } from "../dist/state.js";
+import { getSession, restore } from "../dist/state.js";
 import {
+  createPlanTool,
   GATE_KINDS,
   inferRequirements,
   sbtdPlan,
@@ -29,7 +30,7 @@ test("客观谓词：命中 required+planned，未命中 on-demand+not-required"
     assert.equal(none[kind].state, "not-required");
   }
 
-  const hit = inferRequirements("clarify DDD after grill-with-docs", [
+  const hit = inferRequirements("completed grill-with-docs", [
     "修既有行为 bug",
     "将修改既有生产代码",
     "持久化 session 状态",
@@ -46,6 +47,10 @@ test("客观谓词：命中 required+planned，未命中 on-demand+not-required"
   for (const kind of GATE_KINDS) {
     assert.equal(subjective[kind].requirement, "on-demand");
   }
+
+  const bareDdd = inferRequirements("model DDD ubiquitous language");
+  assert.equal(bareDdd.ddd.requirement, "on-demand");
+  assert.equal(bareDdd.ddd.state, "not-required");
 });
 
 test("sbtd_plan 写入隔离 session 且五项 gate 齐全", () => {
@@ -95,6 +100,59 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
   assert.match(third.plan.gates.ddia.fact, /disappeared/);
 });
 
+test("新 taskId 开新 plan，不保留上一目标的 passed", () => {
+  const id = "plan-sess-new-task";
+  sbtdPlan(id, {
+    task_summary: "task alpha persist shared data",
+  });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const next = sbtdPlan(id, {
+    task_summary: "task beta persist shared data",
+  });
+  assert.notEqual(
+    next.plan.taskId,
+    taskIdFromSummary("task alpha persist shared data"),
+  );
+  assert.equal(
+    next.plan.taskId,
+    taskIdFromSummary("task beta persist shared data"),
+  );
+  assert.equal(next.plan.gates.ddia.requirement, "required");
+  assert.equal(next.plan.gates.ddia.state, "planned");
+  assert.equal(next.plan.gates.ddia.reviewStatus, undefined);
+});
+
+test("空 task_summary 抛错", () => {
+  assert.throws(
+    () => sbtdPlan("plan-empty", { task_summary: "" }),
+    /task_summary/,
+  );
+  assert.throws(
+    () => sbtdPlan("plan-empty", { task_summary: "   " }),
+    /task_summary/,
+  );
+});
+
+test("restore 已 hydrate；空 snapshot 已清除 plan", () => {
+  const id = "plan-sess-restore";
+  const written = sbtdPlan(id, {
+    task_summary: "persist shared data",
+  });
+  assert.ok(getSession(id).plan);
+
+  restore("plan-sess-hydrated", { plan: written.plan });
+  assert.equal(
+    getSession("plan-sess-hydrated").plan?.taskId,
+    written.plan.taskId,
+  );
+
+  restore(id, {});
+  assert.equal(getSession(id).plan, undefined);
+});
+
 test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
   const tools = [];
   const sections = [];
@@ -116,6 +174,13 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
   assert.equal(tools.length, 1);
   assert.equal(tools[0].name, SBTD_PLAN_TOOL_NAME);
   assert.equal(sections[0].name, "sbtd");
+  assert.equal(tools[0].isConcurrencySafe({}), false);
+  assert.equal(tools[0].parameters.task_summary.required, true);
+  assert.equal(tools[0].parameters.facts.type, "array");
+  assert.equal(tools[0].output.schema.type, "object");
+  assert.equal(tools[0].output.schema.additionalProperties, false);
+  assert.equal(tools[0].output.schema.properties.plan.type, "json");
+  assert.equal(tools[0].output.schema.properties.markdown.type, "string");
 
   const result = await tools[0].execute(
     { task_summary: "deploy production path job" },
@@ -129,9 +194,19 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
   assert.ok(result.markdown);
 
   const src = readFileSync(join(pkgRoot, "src/tools/plan.ts"), "utf8");
-  assert.doesNotMatch(src, /writeFile|AGENTS\.md/);
+  assert.doesNotMatch(src, /writeFile|AGENTS\.md|@deepseek-ai\/dsh/);
   const index = readFileSync(join(pkgRoot, "src/index.ts"), "utf8");
-  assert.doesNotMatch(index, /writeFile|AGENTS\.md/);
+  assert.doesNotMatch(index, /writeFile|AGENTS\.md|@deepseek-ai\/dsh/);
+});
+
+test("ParameterSchemaSpec rc.2：createPlanTool 形状", () => {
+  const tool = createPlanTool();
+  assert.equal(tool.name, SBTD_PLAN_TOOL_NAME);
+  assert.equal(tool.parameters.task_summary.type, "string");
+  assert.equal(tool.parameters.task_summary.required, true);
+  assert.equal(tool.parameters.facts.required, undefined);
+  assert.equal(tool.output.schema.additionalProperties, false);
+  assert.equal(tool.isConcurrencySafe({ task_summary: "x" }), false);
 });
 
 test("README 提到 sbtd_plan 并保持钉版本与 @next", () => {
@@ -140,4 +215,8 @@ test("README 提到 sbtd_plan 并保持钉版本与 @next", () => {
   assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
   assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
   assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
+  assert.doesNotMatch(
+    readme,
+    /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/,
+  );
 });
