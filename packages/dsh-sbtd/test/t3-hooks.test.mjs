@@ -307,6 +307,70 @@ test("rm 或包管理器改业务代码要 ask", async () => {
   }
 });
 
+test("无 plan 时 rm src 被 ask", async () => {
+  const { hooks } = loadPlugin();
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "bash",
+      arguments: { command: "rm src/foo.ts" },
+      agent: { id: "t3-rm-src-noplan" },
+    },
+    nextAllow,
+  );
+  assert.equal(result.kind, "ask");
+  assert.match(result.reason, /sbtd_plan/);
+});
+
+test("有 plan 且 required unpassed 时 rm src 被 deny 去 sbtd_review", async () => {
+  const id = "t3-rm-src-plan";
+  sbtdPlan(id, {
+    task_summary: "change existing production after completed grill-with-docs",
+    facts: [
+      "existing behavior",
+      "existing production",
+      "completed grill-with-docs",
+    ],
+  });
+  const { hooks } = loadPlugin();
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "bash",
+      arguments: { command: "rm src/foo.ts" },
+      agent: { id },
+    },
+    nextAllow,
+  );
+  assert.equal(result.kind, "deny");
+  assert.match(result.reason, /sbtd_review kind=legacy/);
+});
+
+test("有 plan 时 rm features/test 放行", async () => {
+  const id = "t3-rm-exempt-plan";
+  sbtdPlan(id, {
+    task_summary: "change existing production after completed grill-with-docs",
+    facts: [
+      "existing behavior",
+      "existing production",
+      "completed grill-with-docs",
+    ],
+  });
+  const { hooks } = loadPlugin();
+  let nextCalled = false;
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "bash",
+      arguments: { command: "rm features/test" },
+      agent: { id },
+    },
+    async () => {
+      nextCalled = true;
+      return { kind: "allow" };
+    },
+  );
+  assert.equal(nextCalled, true);
+  assert.equal(result.kind, "allow");
+});
+
 test("pre-step 先 await next，开发意图无 plan 时注入 plugin notice，不自己 reject", async () => {
   const { hooks } = loadPlugin();
   const preStep = hooks.get(PRE_STEP_EVENT);
