@@ -54,10 +54,23 @@ Feature: DSH T3 hooks 门禁
     Then pre-execute 调用 next 放行
 
   Scenario: rm 或包管理器改业务代码要 ask
-    Given 任意 session
+    Given session 没有 plan
     When 模型 bash rm 生产路径或对 src/app/packages 做包管理器变更
     Then pre-execute 返回 kind ask
-    And reason 提到 sbtd_plan
+    And reason 指出先调用 sbtd_plan
+    Given plan 中 legacy 与 refactor 均为 required 未 passed
+    When 模型对生产 PathClass 做 bash rm 或对 src/app/packages 做包管理器变更
+    Then 先因 legacy 被 deny
+    And 仅当 legacy 已 passed 才因 refactor 被 deny
+    And 仅当 refactor 已 passed 才因 ddd 被 deny
+    Given plan 中仅 ddia 为 required 未 passed
+    When 模型 bash rm src/foo.ts 或对 src/app/packages 做包管理器变更
+    Then pre-execute 调用 next 放行
+    When 模型 bash rm src/schema.sql
+    Then pre-execute 返回 deny 并指出 sbtd_review kind=ddia
+    Given plan 中仅 release 为 required 未 passed
+    When 模型对生产 PathClass 做 bash rm 或对 src/app/packages 做包管理器变更
+    Then pre-execute 调用 next 放行
 
   Scenario: pre-step 注入尚未计划提醒且不 reject
     Given session 没有 plan 且用户意图是开发任务

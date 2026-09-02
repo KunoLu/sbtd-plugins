@@ -269,12 +269,11 @@ export function gatePreExecute(exec: ToolExec): PreToolDecision | undefined {
   if (cls === "readme") {
     return undefined;
   }
-  if (isRmOrPkgBusiness(exec)) {
-    return { kind: "ask", reason: ASK_RM_PKG };
-  }
-
   const session = getSession(sessionFromAgent(exec.agent));
   const plan = session.plan;
+  if (isRmOrPkgBusiness(exec) && plan === undefined) {
+    return { kind: "ask", reason: ASK_RM_PKG };
+  }
   if (plan === undefined) {
     if (cls === "other") {
       return undefined;
