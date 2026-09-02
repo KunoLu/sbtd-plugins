@@ -3,7 +3,7 @@
 | 项 | 内容 |
 |---|---|
 | 文档版本 | 1.1 |
-| 日期 | 2026-08-31 |
+| 日期 | 2026-09-02 |
 | 状态 | 已定方案，部分落地（T0 stub 已在 sbtd-plugins；T1–T16 未实现） |
 | 选定方案 | **方案 2a：外壳插件（shell）**（相对 v1.0 不变） |
 | 源工作流基线 | `KunoLu/640-skills` `main`；v1.0 锁 `4222b15`。T4 开工前重锁 SHA |
@@ -58,13 +58,18 @@
 
 ### 0.4 在 `sbtd-plugins` 里用 SBTD 工作流开发
 
-- 仓内故意没有 `.trellis/`、`AGENTS.md`、`.omp/`、`.codex/`（未拷贝）。
+- 仓内已有 `.trellis/`（2026-09-02 核对）。
 - 不要自动 `trellis init`。
 - 经人工确认后，可用 omp-sbtd 的 `/sbtd onboard` 或 `trellis init`。
 - 若仓库已连接到 Cursor，cloud agent / coding bot 可以改代码。
 - fork 会撞上 omp CI 的 repo-name guard，CI 会失败。
 - Research desk 不写代码。
 - 在 T1–T16 落地之前，`dsh-sbtd` 不能当 SBTD 运行时用。
+
+### 0.5 2026-09-02 核对
+
+- **T16 验收仓**：默认用本仓 `sbtd-plugins` 做真实仓库 e2e（仓内已有 `.trellis/`）。不要优先用 KunoLu/KPi（该仓现为 private）。onboard / `trellis init` 前必须人类确认；不要未提示代跑。不要改 `640-skills`。
+- **T0 发布**：`@kunolu/dsh-sbtd` 尚未发布到 registry（尚无 `next` dist-tag；同仓 `@kunolu/omp-sbtd` 的 `next` 已发布）。现场验收用本地 path 或 GitHub URL，不要 `dsh plugin add @kunolu/dsh-sbtd` / `@kunolu/dsh-sbtd@next`。
 
 ---
 
@@ -571,14 +576,17 @@ flowchart TB
 - peer / README 钉 `@deepseek-ai/dsh@0.1.1-rc.2`。
 - 不调用 `trellis init --dsh`。
 - 不把包发到官方仓。
+- `@kunolu/dsh-sbtd` 尚未发布到 registry（尚无 `next` dist-tag）；现场验收用本地 path 或 GitHub URL，不要用 registry 包名或 `@next` 安装。
 
 **验收**：
 
 ```bash
-dsh plugin --profile web add <path-or-github>
+dsh plugin --profile web add <local-path-or-github-url>
 dsh --profile web --dump-config   # 能看到 id: sbtd
 dsh web                           # 进程能起来，无 failOnStartupError
 ```
+
+registry 包未发布，尚无 `next` dist-tag。现场验收必须用**本地 path 或 GitHub URL** 安装，不要 `dsh plugin add @kunolu/dsh-sbtd` 或 `@kunolu/dsh-sbtd@next`。
 
 ---
 
@@ -866,7 +874,7 @@ dsh web                           # 进程能起来，无 failOnStartupError
 **依赖**：T8、T10、T13、T14、T15。  
 **输出**：验收记录（可附在 README 或 `docs/acceptance.md`）。
 
-**验收仓**：优先用已有 `.trellis/` 的 KPi。若用 `sbtd-plugins` 自身做验收，必须先经人工确认再 onboard / `trellis init`（默认不代执行）。
+**验收仓**：默认用本仓 `sbtd-plugins` 做真实仓库 e2e（仓内已有 `.trellis/`）。不要优先用 KunoLu/KPi（该仓现为 private）。onboard / `trellis init` 前必须人类确认；不要未提示代跑。不要改 `640-skills`。
 
 **场景**：
 
