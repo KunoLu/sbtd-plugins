@@ -4,7 +4,7 @@
 
 Host-facing Cordis plugin in `packages/dsh-sbtd` only. T2 adds `sbtd_plan` on T1 section + in-process session Map. Hooks, other tools, backends, commands stay absent.
 
-DSH 0.1.1-rc.2 loads `name` / `inject` / `apply`. Tool registration uses `ctx.tools.register` with a local ParameterSchemaSpec rc.2 shape. Do not import `@deepseek-ai/dsh` types.
+DSH 0.1.1-rc.2 loads `name` / `inject` / `apply`. Tool registration uses `ctx.tools.register` with a local JSON Schema object root. Do not import `@deepseek-ai/dsh` types.
 
 ## Contract
 
@@ -24,8 +24,8 @@ Local `PluginHost = SectionHost & ToolsHost` only.
 ### plan.ts
 
 - Name `sbtd_plan`.
-- Parameters (ParameterSchemaSpec rc.2, implicit open object): `task_summary` `{ type: "string", required: true }`; optional `facts` `{ type: "array", items: { type: "string" } }`.
-- Output: `{ type: "object", additionalProperties: false, properties: { plan: { type: "json" }, markdown: { type: "string" } } }`.
+- Parameters (JSON Schema object root): `{ type: "object", properties: { task_summary: { type: "string" }, facts: { type: "array", items: { type: "string" } } }, required: ["task_summary"] }`.
+- Output: `{ type: "object", additionalProperties: false, properties: { plan: { type: "object" }, markdown: { type: "string" } } }`.
 - `isConcurrencySafe` returns `false`.
 - `execute(args, exec)` → `sbtdPlan(sessionIdFromExec(exec), args)`.
 - Session id = `exec.agent.id` if non-empty string, else `"default"`.
@@ -87,7 +87,7 @@ Behavior to change: DDD required must not fire on bare ddd; only after completed
 Behavior to preserve: name/inject; T0 log; section; T1 Map serialize/restore; no fs/AGENTS.md; no hooks; peer 0.1.1-rc.2
 Current reproduction evidence: leftover PREDICATES.ddd includes /\bddd\b/i
 Safety net: t2-plan.test.mjs vs dist/ after tsc; T0/T1 apply stubs tools.register
-Hidden dependencies / seam: host ctx.tools.register; local ParameterSchemaSpec only
+Hidden dependencies / seam: host ctx.tools.register; local JSON Schema object root only
 Validation plan: biome check src; tsc --noEmit; tsc; node --test test/*.test.mjs
 Review mode: normal
 ```
@@ -97,7 +97,7 @@ Refactoring Review
 Status: proceed
 Review mode: normal
 Existing-code scope: packages/dsh-sbtd/src/tools/plan.ts PREDICATES.ddd; apply() already registers the tool
-Behavior that must remain unchanged: session isolation; five gates; ParameterSchemaSpec rc.2; restore hydrate
+Behavior that must remain unchanged: session isolation; five gates; JSON Schema object-root parameters; restore hydrate
 Structural friction: none
 Decision and smallest safe step: no extra refactor; delete non-3.4 DDD predicates
 Safety net and validation: node:test + tsc

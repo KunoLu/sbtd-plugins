@@ -39,3 +39,10 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     When 再次调用 sbtd_plan 且触发事实仍在
     Then 该 gate 保持 passed
     And 若触发事实消失则写明原因并不再当作 required
+
+  Scenario: 宿主看到的 sbtd_plan 参数是 JSON Schema 对象根
+    Given 插件已向宿主注册 sbtd_plan
+    When 宿主读取该 tool 的 parameters 与输出 schema
+    Then parameters 根节点 type 为 object
+    And task_summary 在 properties 中且出现在 required
+    And 返回值 plan 的 type 为 object 而不是 json

@@ -275,24 +275,27 @@ export function createPlanTool(): PlanToolDefinition {
     name: SBTD_PLAN_TOOL_NAME,
     description: SBTD_PLAN_DESCRIPTION,
     parameters: {
-      task_summary: {
-        type: "string",
-        required: true,
-        description: "Short description of the development task.",
+      type: "object",
+      properties: {
+        task_summary: {
+          type: "string",
+          description: "Short description of the development task.",
+        },
+        facts: {
+          type: "array",
+          description:
+            "Optional objective trigger facts (PRD 3.4). Also inferred from task_summary.",
+          items: { type: "string" },
+        },
       },
-      facts: {
-        type: "array",
-        description:
-          "Optional objective trigger facts (PRD 3.4). Also inferred from task_summary.",
-        items: { type: "string" },
-      },
+      required: ["task_summary"],
     },
     output: {
       schema: {
         type: "object",
         additionalProperties: false,
         properties: {
-          plan: { type: "json" },
+          plan: { type: "object" },
           markdown: { type: "string" },
         },
       },

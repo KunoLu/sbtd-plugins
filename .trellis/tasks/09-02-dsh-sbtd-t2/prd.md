@@ -40,8 +40,8 @@ Models can register or update a Book Gate Plan via `sbtd_plan`. Required vs on-d
 - Q10 return plan JSON plus markdown table; five gates always present.
   A10 Return plan JSON plus a markdown table. All five gates are always present.
 
-- Q11 apply registers tool; ParameterSchemaSpec rc.2; no alpha APIs.
-  A11 `apply` registers the tool. Parameters use ParameterSchemaSpec rc.2 (`required: true` on properties). No 0.1.2-alpha APIs.
+- Q11 apply registers tool; JSON Schema object root; no alpha APIs.
+  A11 `apply` registers the tool. Parameters are a JSON Schema object root (`type: "object"`, `properties`, `required: ["task_summary"]`). No 0.1.2-alpha APIs.
 
 - Q12 T0 T1 apply tests must stub tools.register.
   A12 T0 and T1 `apply` tests must stub `tools.register`.
@@ -61,8 +61,8 @@ Models can register or update a Book Gate Plan via `sbtd_plan`. Required vs on-d
 - Q17 feature t2-sbtd-plan.feature and test t2-plan.test.mjs vs dist after tsc.
   A17 `features/t2-sbtd-plan.feature` plus `test/t2-plan.test.mjs` against `dist/` after `tsc`.
 
-- Q18 output plan json and markdown string; object additionalProperties false; isConcurrencySafe false.
-  A18 Output `{ plan: json, markdown: string }` object with `additionalProperties: false`. `isConcurrencySafe` is `false`.
+- Q18 output plan object and markdown string; object additionalProperties false; isConcurrencySafe false.
+  A18 Output `{ plan: object, markdown: string }` object with `additionalProperties: false`. `plan` schema type is `object`, not `json`. `isConcurrencySafe` is `false`.
 
 - Q19 empty summary throws.
   A19 Empty `task_summary` throws.
@@ -101,7 +101,7 @@ Q20: both legacy and refactor are required. Order is a later task.
 - [x] Bare `ddd` stays on-demand; completed `grill-with-docs` makes DDD required.
 - [x] Repeat same goal keeps `passed` until trigger disappears (reason recorded). New `taskId` is a new plan.
 - [x] Empty `task_summary` throws.
-- [x] `apply()` registers `sbtd_plan` (ParameterSchemaSpec rc.2; output object `additionalProperties: false`; `isConcurrencySafe` false) and does not write `AGENTS.md`.
+- [x] `apply()` registers `sbtd_plan` (JSON Schema object-root parameters; output `plan` type `object`; `additionalProperties: false`; `isConcurrencySafe` false) and does not write `AGENTS.md`.
 - [x] T0/T1 apply tests stub `tools.register`. Restore hydrate / empty-snapshot tests exist without reworking `restore`.
 - [x] Host pin `0.1.1-rc.2`; `private: true`.
 - [x] Package lint / typecheck / build / test pass.

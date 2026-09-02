@@ -3,7 +3,7 @@
 ## Order
 
 1. Restrict `PREDICATES.ddd` to completed / 完整执行 / full `grill-with-docs`. Bare `ddd` stays on-demand. Do not treat “after grill-with-docs” as completion.
-2. Keep `registerPlanTool` from `apply()`. Local ParameterSchemaSpec rc.2. No `@deepseek-ai/dsh` imports. No hooks / other tools / fs / `AGENTS.md`.
+2. Keep `registerPlanTool` from `apply()`. Local JSON Schema object-root parameters. `plan` schema type `object`, not `json`. No `@deepseek-ai/dsh` imports. No hooks / other tools / fs / `AGENTS.md`.
 3. README already mentions `sbtd_plan`; keep unpublished warning + pin `0.1.1-rc.2` + `@next`. No path install. No root README.
 4. Tests: `test/t2-plan.test.mjs` vs `dist/` after `tsc`. Cover isolation, predicates (including bare ddd), passed keep/reset, new taskId, empty summary, restore hydrate / empty snapshot (do not rework `restore`), apply register + schema, README. T0/T1 apply tests stub `tools.register`.
 5. Feature: `features/t2-sbtd-plan.feature`.
@@ -54,7 +54,7 @@ Required tests: isolation, passed keep/reset, new taskId, restore hydrate
 Legacy Change Safety Review
 Status: characterized
 Behavior to change: DDD must not fire on bare ddd; only completed/full/完整执行 grill-with-docs
-Behavior to preserve: name/inject; T0 log; section; T1 Map serialize/restore; no fs/AGENTS.md; no hooks; peer 0.1.1-rc.2; ParameterSchemaSpec rc.2
+Behavior to preserve: name/inject; T0 log; section; T1 Map serialize/restore; no fs/AGENTS.md; no hooks; peer 0.1.1-rc.2; JSON Schema object-root parameters
 Current reproduction evidence: leftover PREDICATES.ddd included /\bddd\b/i
 Safety net: t2-plan.test.mjs vs dist/; T0/T1 apply stubs tools.register
 Validation plan: biome check src; tsc --noEmit; tsc; node --test test/*.test.mjs

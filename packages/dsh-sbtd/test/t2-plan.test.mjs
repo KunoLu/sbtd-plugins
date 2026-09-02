@@ -186,11 +186,13 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
   assert.equal(tools[0].name, SBTD_PLAN_TOOL_NAME);
   assert.equal(sections[0].name, "sbtd");
   assert.equal(tools[0].isConcurrencySafe({}), false);
-  assert.equal(tools[0].parameters.task_summary.required, true);
-  assert.equal(tools[0].parameters.facts.type, "array");
+  assert.equal(tools[0].parameters.type, "object");
+  assert.deepEqual(tools[0].parameters.required, ["task_summary"]);
+  assert.equal(tools[0].parameters.properties.task_summary.type, "string");
+  assert.equal(tools[0].parameters.properties.facts.type, "array");
   assert.equal(tools[0].output.schema.type, "object");
   assert.equal(tools[0].output.schema.additionalProperties, false);
-  assert.equal(tools[0].output.schema.properties.plan.type, "json");
+  assert.equal(tools[0].output.schema.properties.plan.type, "object");
   assert.equal(tools[0].output.schema.properties.markdown.type, "string");
 
   const result = await tools[0].execute(
@@ -210,13 +212,19 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
   assert.doesNotMatch(index, /writeFile|AGENTS\.md|@deepseek-ai\/dsh/);
 });
 
-test("ParameterSchemaSpec rc.2：createPlanTool 形状", () => {
+test("createPlanTool parameters 为 JSON Schema object 根，plan type 为 object", () => {
   const tool = createPlanTool();
   assert.equal(tool.name, SBTD_PLAN_TOOL_NAME);
-  assert.equal(tool.parameters.task_summary.type, "string");
-  assert.equal(tool.parameters.task_summary.required, true);
-  assert.equal(tool.parameters.facts.required, undefined);
+  assert.equal(tool.parameters.type, "object");
+  assert.equal(tool.parameters.properties.task_summary.type, "string");
+  assert.equal(tool.parameters.properties.task_summary.required, undefined);
+  assert.deepEqual(tool.parameters.required, ["task_summary"]);
+  assert.equal(tool.parameters.properties.facts.type, "array");
+  assert.equal(tool.parameters.properties.facts.items.type, "string");
+  assert.equal(tool.parameters.task_summary, undefined);
   assert.equal(tool.output.schema.additionalProperties, false);
+  assert.equal(tool.output.schema.properties.plan.type, "object");
+  assert.notEqual(tool.output.schema.properties.plan.type, "json");
   assert.equal(tool.isConcurrencySafe({ task_summary: "x" }), false);
 });
 
