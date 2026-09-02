@@ -1,6 +1,13 @@
-export const name = "dsh-sbtd";
-export const inject = [] as const;
+type T0Context = {
+  systemPrompt: {
+    section: (opts: { name: string; order: number; text: string }) => void;
+  };
+};
 
-export function apply(_ctx: unknown): void {
-  // Stub: sbtd_* tools, hooks, and the short section land in a later change.
+export const name = "dsh-sbtd";
+export const inject = ["tools", "systemPrompt"] as const;
+
+export function apply(ctx: T0Context): void {
+  console.log("[dsh-sbtd] plugin loaded (T0 stub)");
+  ctx.systemPrompt.section({ name: "sbtd", order: 50, text: "" });
 }
