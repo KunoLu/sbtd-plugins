@@ -157,9 +157,6 @@ function classifyRel(
   if (/^(?:src|app|packages)(?:\/|$)/.test(rel) && !rel.endsWith(".md")) {
     return "production";
   }
-  if (IMPL_EXT.test(rel) && !rel.endsWith(".md")) {
-    return "production";
-  }
   return "other";
 }
 
@@ -201,7 +198,7 @@ function primaryClass(
   const command = exec.name === "bash" ? commandOf(args) : "";
   const files = direct !== undefined ? [direct] : pathsFromBash(command);
   if (files.length === 0) {
-    return "production";
+    return "other";
   }
   let sawExempt = false;
   let sawReadme = false;
