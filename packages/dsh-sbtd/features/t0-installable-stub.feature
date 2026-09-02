@@ -16,6 +16,12 @@ Feature: DSH T0 stub 可安装
     And 文档不出现裸包名安装或本地路径安装
     And 文档不出现 0.1.0-rc.7 或 0.1.2-alpha
 
+  Scenario: README 声明尚未发布且复制粘贴会失败
+    Given 用户打开 packages/dsh-sbtd 的 README
+    Then 文档警告包尚未发布到 npm 且复制粘贴会失败
+    And 文档不声称已发布或当前可从 registry 安装
+    And package.json 的 private 为 true
+
   @todo
   # blocked: this environment has no dsh CLI
   Scenario: 用本机 dsh CLI 把 stub 装进 web profile
