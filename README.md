@@ -32,15 +32,14 @@ OMP plugin (published on dist-tag next as 0.1.0-rc.14):
 omp plugin install @kunolu/omp-sbtd@next
 ```
 
-This is 0.1.0-rc.14 on dist-tag next. Do NOT recommend @latest (still 0.1.0-rc.2). published is not installable is not certified. Compatibility certification is decoupled from publish.
+This is 0.1.0-rc.14 on dist-tag next. Never recommend @latest. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-DSH-SBTD is a T0 stub and is NOT on npm.
-Host pin: @deepseek-ai/dsh@0.1.1-rc.2. Do not recommend 0.1.2-alpha.
+DSH host pin: @deepseek-ai/dsh@0.1.1-rc.2.
 
-From the repo root:
+`@kunolu/dsh-sbtd` is published as a T0 stub. Install with dist-tag @next, not the bare package name. Available after the package is published to npm (copy-paste will fail until then).
 
 ```bash
-npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add ./packages/dsh-sbtd
+npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
 npx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
 ```
 
@@ -50,12 +49,13 @@ Optional global install:
 
 ```bash
 npm i -g @deepseek-ai/dsh@0.1.1-rc.2
-dsh plugin --profile web add /absolute/path/to/sbtd-plugins/packages/dsh-sbtd
+dsh plugin --profile web add @kunolu/dsh-sbtd@next
 dsh --profile web --dump-config
 dsh web --no-open
 ```
 
 Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md).
+
 
 ## Roadmap
 
