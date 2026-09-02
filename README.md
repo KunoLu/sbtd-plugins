@@ -26,32 +26,27 @@ SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH host adapters.
 
 ## Install
 
-OMP plugin (published on dist-tag next as 0.1.0-rc.14):
+OMP plugin — `@kunolu/omp-sbtd` is published:
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@next
 ```
 
-This is 0.1.0-rc.14 on dist-tag next. Never recommend @latest. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
+This is 0.1.0-rc.14 on dist-tag next. Do not use @latest (still 0.1.0-rc.2). **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-DSH host pin: @deepseek-ai/dsh@0.1.1-rc.2.
-
-`@kunolu/dsh-sbtd` is a T0 stub. Install with dist-tag @next, not the bare package name. Available after the package is published to npm (copy-paste will fail until then).
-
-```bash
-npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
-npx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
-```
-
-Expect dump-config id: sbtd.
-
-Optional global install:
+DSH plugin — T0 stub for host `@deepseek-ai/dsh` 0.1.1-rc.2 (`latest` and `next` dist-tags are both this version). Do not use 0.1.2-alpha.4. Add with dist-tag `next`, not the bare package name. Copy-paste of the add command fails until the package exists.
 
 ```bash
 npm i -g @deepseek-ai/dsh@0.1.1-rc.2
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
-dsh --profile web --dump-config
+dsh --profile web --dump-config  # expect id: sbtd
 dsh web --no-open
+```
+
+Or with npx (same 0.1.1-rc.2 host):
+
+```bash
+npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
 ```
 
 Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md).
