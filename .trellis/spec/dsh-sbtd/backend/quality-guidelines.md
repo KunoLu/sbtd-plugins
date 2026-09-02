@@ -28,14 +28,14 @@ Tests import `dist/` after `tsc`. They are not a no-op.
 ## Observed Local Style
 
 - Local host context type (`SectionHost`); do not import `@deepseek-ai/dsh` types.
-- `apply(ctx)` logs then `registerSection(ctx)`. No `fs`, no `AGENTS.md`.
+- `apply(ctx)` logs then registerSection + registerPlanTool. No `fs`, no AGENTS.md.
 - Session state is a module-level `Map` keyed by caller `sessionId` (dynamic keys). Restart drops it.
 - Partial implementations land as real code or not at all — no fake tool/hook registries.
 
 ## What This Package Must NOT Claim
 
 - No error-handling, logging, IO, or zod conventions "from dsh-sbtd" beyond `console.log` on load.
-- No tools/hooks/backends until those files exist.
+- No hooks/backends until those files exist. T2 adds src/tools/plan.ts only.
 - Do not report live `dsh plugin add` as passing unless the `dsh` CLI was actually run.
 
 ## Verification

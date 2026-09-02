@@ -22,6 +22,9 @@ test("插件加载时打印 T0 stub 日志并注册非空中文 sbtd section", (
           sections.push(opts);
         },
       },
+      tools: {
+        register() {},
+      },
     });
   } finally {
     console.log = original;
