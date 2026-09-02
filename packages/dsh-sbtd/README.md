@@ -1,6 +1,6 @@
 # @kunolu/dsh-sbtd
 
-DSH 宿主上的 SBTD workflow 适配器。当前为 T1：注册短中文 sbtd section 与进程内会话状态，尚未实现 tools / hooks。
+DSH 宿主上的 SBTD workflow 适配器。当前为 T2：注册短中文 sbtd section、进程内会话状态，以及 `sbtd_plan`（登记 / 更新 Book Gate Plan）。尚未实现 hooks。
 
 目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
 
@@ -16,4 +16,4 @@ DSH 宿主上的 SBTD workflow 适配器。当前为 T1：注册短中文 sbtd s
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
 ```
 
-加载时 `apply()` 打印 `[dsh-sbtd] plugin loaded (T0 stub)`，并注册短中文 sbtd section（name `sbtd`，order 50），不写用户磁盘或 `AGENTS.md`。
+加载时 `apply()` 打印 `[dsh-sbtd] plugin loaded (T0 stub)`，注册短中文 sbtd section（name `sbtd`，order 50），并注册 `sbtd_plan`。不写用户磁盘或 `AGENTS.md`。
