@@ -76,7 +76,7 @@ Models can register or update a Book Gate Plan via `sbtd_plan`. Required vs on-d
 |---|---|---|---|
 | ddd | on-demand | not-required | no completed grill-with-docs |
 | ddia | on-demand | not-required | no persist / shared data / cache / async / cross-service in this change |
-| legacy | required | planned | existing DDD predicate fires on bare ddd |
+| legacy | required | planned | existing apply()/T0-T1 test behavior (tools.register stub) |
 | refactor | required | planned | modify existing production `src/tools/plan.ts` |
 | release | on-demand | not-required | no production path service / API / job / deploy |
 
