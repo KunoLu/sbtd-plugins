@@ -32,12 +32,14 @@ test("插件加载时打印 T0 stub 日志并注册空 section", () => {
   assert.deepEqual(sections, [{ name: "sbtd", order: 50, text: "" }]);
 });
 
-test("README 钉 0.1.1-rc.2 并说明本地安装命令", () => {
+test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 
   assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
-  assert.match(readme, /dsh plugin --profile web add /);
+  assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
+  assert.doesNotMatch(readme, /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/);
+  assert.doesNotMatch(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd(?!@next)/);
   assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
   assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
   assert.deepEqual(pkg.files, ["dist/", "cordis.patch.yml", "manuals/"]);
