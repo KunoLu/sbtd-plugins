@@ -87,6 +87,27 @@ test("README 编辑放行", async () => {
   assert.equal(result.kind, "allow");
 });
 
+test("cwd 外实现文件与无路径 mutating bash 不是生产代码", async () => {
+  const { hooks } = loadPlugin();
+  const pre = hooks.get(PRE_EXECUTE_EVENT);
+  for (const exec of [
+    writeSrc("t3-offroot", "scripts/foo.ts"),
+    {
+      name: "bash",
+      arguments: { command: "mkdir tmp" },
+      agent: { id: "t3-mkdir" },
+    },
+  ]) {
+    let nextCalled = false;
+    const result = await pre(exec, async () => {
+      nextCalled = true;
+      return { kind: "allow" };
+    });
+    assert.equal(nextCalled, true, exec.arguments.path ?? exec.arguments.command);
+    assert.equal(result.kind, "allow");
+  }
+});
+
 test("str_replace_editor command=view 放行", async () => {
   const { hooks } = loadPlugin();
   let nextCalled = false;
