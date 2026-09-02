@@ -87,6 +87,24 @@ test("README 编辑放行", async () => {
   assert.equal(result.kind, "allow");
 });
 
+test("str_replace_editor command=view 放行", async () => {
+  const { hooks } = loadPlugin();
+  let nextCalled = false;
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "str_replace_editor",
+      arguments: { command: "view", path: "src/foo.ts" },
+      agent: { id: "t3-sre-view" },
+    },
+    async () => {
+      nextCalled = true;
+      return { kind: "allow" };
+    },
+  );
+  assert.equal(nextCalled, true);
+  assert.equal(result.kind, "allow");
+});
+
 test("view 与 git commit status log diff show 放行", async () => {
   const { hooks } = loadPlugin();
   const pre = hooks.get(PRE_EXECUTE_EVENT);
