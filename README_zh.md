@@ -36,7 +36,7 @@ omp plugin install @kunolu/omp-sbtd@next
 
 DSH 宿主固定 @deepseek-ai/dsh@0.1.1-rc.2。
 
-`@kunolu/dsh-sbtd` 已作为 T0 stub 发布。使用 dist-tag @next 安装，不要使用裸包名。该包发布到 npm 之后才可用（在此之前复制粘贴会失败）。
+`@kunolu/dsh-sbtd` 当前为 T0 stub，**尚未发布**到 npm。发布之后使用 dist-tag @next 安装，不要使用裸包名。在包发布到 npm 之前，复制粘贴下面的命令会失败。
 
 ```bash
 npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next

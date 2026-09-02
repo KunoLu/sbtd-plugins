@@ -44,6 +44,16 @@ test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
   assert.deepEqual(pkg.files, ["dist/", "cordis.patch.yml", "manuals/"]);
 });
+test("README 声明尚未发布且复制粘贴会失败", () => {
+  const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
+  const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
+
+  assert.match(readme, /尚未发布到 npm/);
+  assert.match(readme, /复制粘贴.*会失败/);
+  assert.doesNotMatch(readme, /已发布|已作为.*发布/);
+  assert.doesNotMatch(readme, /可安装/);
+  assert.equal(pkg.private, true);
+});
 
 test("cordis patch name 使用已安装的 npm 包名", () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
