@@ -26,13 +26,13 @@ SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH host adapters.
 
 ## Install
 
-Install the OMP plugin from `next` (`0.1.0-rc.14`):
+Install the OMP plugin from `next`:
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@next
 ```
 
-Do not install from `latest`. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
+`next` is `0.1.0-rc.14`; `latest` is still `0.1.0-rc.2` (alternative: `omp plugin install @kunolu/omp-sbtd@latest`). **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
 `@kunolu/dsh-sbtd` is a T0 stub and is not a complete DSH SBTD workflow yet.
 

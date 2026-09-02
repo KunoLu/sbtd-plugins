@@ -26,13 +26,13 @@ SBTD 宿主插件 monorepo：共享 workflow kit，以及 OMP / DSH 宿主适配
 
 ## 安装
 
-从 `next` 安装 OMP 插件（`0.1.0-rc.14`）：
+从 `next` 安装 OMP 插件：
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@next
 ```
 
-不要从 `latest` 安装。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
+`next` 为 `0.1.0-rc.14`；`latest` 仍为 `0.1.0-rc.2`（备选：`omp plugin install @kunolu/omp-sbtd@latest`）。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
 
 `@kunolu/dsh-sbtd` 目前是 T0 stub，还不是完整的 DSH SBTD workflow。
 
