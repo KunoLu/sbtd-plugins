@@ -26,36 +26,32 @@ SBTD 宿主插件 monorepo：共享 workflow kit，以及 OMP / DSH 宿主适配
 
 ## 安装
 
-OMP 插件（发布在 dist-tag next，版本 0.1.0-rc.14）：
+`@kunolu/omp-sbtd` 已发布。从 `next` 安装（`0.1.0-rc.14`）：
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@next
 ```
 
-这是 dist-tag next 上的 0.1.0-rc.14。不要推荐 @latest。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
+不要推荐 `@latest`（仍为 `0.1.0-rc.2`）。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
 
-DSH 宿主固定 @deepseek-ai/dsh@0.1.1-rc.2。
-
-`@kunolu/dsh-sbtd` 已作为 T0 stub 发布。使用 dist-tag @next 安装，不要使用裸包名。该包发布到 npm 之后才可用（在此之前复制粘贴会失败）。
+`@kunolu/dsh-sbtd` 已发布到公共 registry。当前是 T0 stub。宿主包是 `@deepseek-ai/dsh` 版本 `0.1.1-rc.2`（`latest` 与 `next` dist-tag 均为此版本）。不要使用 `0.1.2-alpha.4`。
 
 ```bash
-npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
+npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd
 npx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
 ```
+`dump-config` 应含 `id: sbtd`。
 
-dump-config 应含 id: sbtd。
-
-可选全局安装：
+可选（全局 `dsh` 在 PATH 上）：
 
 ```bash
 npm i -g @deepseek-ai/dsh@0.1.1-rc.2
-dsh plugin --profile web add @kunolu/dsh-sbtd@next
+dsh plugin --profile web add @kunolu/dsh-sbtd
 dsh --profile web --dump-config
 dsh web --no-open
 ```
 
-可选说明：[docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md).
-
+可选说明：[`docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md`](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md)。
 
 ## 路线图
 
