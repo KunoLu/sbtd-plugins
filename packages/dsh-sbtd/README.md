@@ -6,7 +6,11 @@ DSH 宿主上的 SBTD workflow 适配器。当前为 T1：注册短中文 sbtd s
 
 ## 安装
 
-使用 dist-tag `@next`，不要使用裸包名或本地路径：
+
+
+> ⚠️ `@kunolu/dsh-sbtd` 尚未发布到 npm，当前无法从 registry 安装；在发布之前复制粘贴下面的命令会失败。
+>
+> 发布之后使用 dist-tag `@next`，不要使用裸包名或本地路径：
 
 ```bash
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
