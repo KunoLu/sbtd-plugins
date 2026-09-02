@@ -1,60 +1,50 @@
 # dsh-sbtd Backend Guidelines
 
-> Conventions for `@kunolu/dsh-sbtd` (`packages/dsh-sbtd/`): the DSH host adapter. **This package
-> is currently a stub** — nearly every topic has no real code. Do not invent conventions here;
-> inherit them from the monorepo root and the sibling packages.
+> Conventions for `@kunolu/dsh-sbtd` (`packages/dsh-sbtd/`): the DSH host adapter.
+> T1 landed the short `sbtd` section and in-process session state. Tools / hooks are not implemented.
 
 ---
 
-## Current State (as of bootstrap, 2026-08)
+## Current State (T1)
 
-Per `packages/dsh-sbtd/README.md`: "DSH 宿主上的 SBTD workflow 适配器。当前仅为 stub，尚未实现
-tools / hooks。目标宿主：dsh@0.1.0-rc.7。" The root `README.md` package table agrees:
-"DSH 宿主适配器（当前仅为 stub）".
+Per `packages/dsh-sbtd/README.md`: DSH SBTD adapter registers a short Chinese `sbtd` section
+and in-process session state. Target host: `@deepseek-ai/dsh@0.1.1-rc.2`. Tools / hooks are still
+absent. `apply()` does not write `AGENTS.md` or user disk.
 
-The entire source is one file, `src/index.ts`, exporting the cordis-style plugin contract:
+Source files:
 
-```ts
-export const name = "dsh-sbtd";
-export const inject = [] as const;
+- `src/index.ts` — `name`, `inject = ["tools", "systemPrompt"]`, `apply`
+- `src/section.ts` — static Chinese section text, `name: "sbtd"`, `order: 50`
+- `src/state.ts` — `Map` keyed by caller `sessionId`; `serialize()` / `restore()`
 
-export function apply(_ctx: unknown): void {
-  // Stub: sbtd_* tools, hooks, and the short section land in a later change.
-}
-```
-
-Planned work (from the stub comment and README): `sbtd_*` tools, hooks, and "the short section".
+Do not import `@deepseek-ai/dsh` types. Local context type only.
 
 ## Guidelines Index
 
 | Guide | Description |
 |-------|-------------|
-| [Directory Structure](./directory-structure.md) | Real (minimal) layout and the DSH host boundary |
-| [Quality Guidelines](./quality-guidelines.md) | Inherited toolchain conventions; what this package must NOT claim |
+| [Directory Structure](./directory-structure.md) | Layout and the DSH host boundary |
+| [Quality Guidelines](./quality-guidelines.md) | Inherited toolchain conventions |
 
-Templates for database, error handling, logging, and frontend topics were **deleted**: there is no
-code in this package to back them. When real implementation lands, model new guidance on the
-sibling specs (`../../omp-sbtd/backend/`, `../../sbtd-workflow-kit/backend/`) rather than
-reinstating generic templates.
+When later tasks add tools/hooks, model new guidance on the sibling specs
+(`../../omp-sbtd/backend/`, `../../sbtd-workflow-kit/backend/`) rather than reinstating generic
+templates.
 
 ---
 
 ## Pre-Development Checklist
 
-- [ ] Confirm the task is actually implementing the stub (tools/hooks/section) — until then, most
-  changes here should be version bumps or metadata only.
+- [ ] Confirm the task is implementing the remaining stub (tools/hooks) — T1 section/state already exist.
 - [ ] When adding real behavior, check the DSH host contract first: `cordis.patch.yml` +
   `package.json#dsh.bundle.patch` + the `name`/`inject`/`apply` exports in `src/index.ts`.
-- [ ] When adding tests, follow the sibling conventions (vitest, BDD-mirrored titles) instead of
-  extending the current no-op `test` script.
+- [ ] Tests use `node:test` against `dist/` after `tsc`, with BDD-mirrored titles under `features/`.
 
 ## Quality Check
 
-- [ ] `pnpm --filter @kunolu/dsh-sbtd lint` and `typecheck` pass.
+- [ ] `pnpm --filter @kunolu/dsh-sbtd lint`, `typecheck`, `build`, and `test` pass.
 - [ ] The package remains `"private": true`.
-- [ ] `plugin.json`-style publish surface does NOT exist here — this package is never published.
-- [ ] No claims in docs or specs attribute error-handling, logging, validation, or testing
-  conventions to this package until the code exists.
+- [ ] `plugin.json`-style publish surface does NOT exist here — this package is not published in T1.
+- [ ] `apply()` still does not write `AGENTS.md` or user disk.
 
 ---
 

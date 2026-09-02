@@ -28,6 +28,6 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src",
-    "test": "node --test test/t0-stub.test.mjs"
+    "test": "node --test test/*.test.mjs"
   }
 }

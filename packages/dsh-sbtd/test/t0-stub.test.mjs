@@ -4,10 +4,11 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
+import { SBTD_SECTION_TEXT } from "../dist/section.js";
 
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("插件加载时打印 T0 stub 日志并注册空 section", () => {
+test("插件加载时打印 T0 stub 日志并注册非空中文 sbtd section", () => {
   const logs = [];
   const original = console.log;
   console.log = (...args) => {
@@ -29,7 +30,8 @@ test("插件加载时打印 T0 stub 日志并注册空 section", () => {
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
   assert.deepEqual(logs, ["[dsh-sbtd] plugin loaded (T0 stub)"]);
-  assert.deepEqual(sections, [{ name: "sbtd", order: 50, text: "" }]);
+  assert.deepEqual(sections, [{ name: "sbtd", order: 50, text: SBTD_SECTION_TEXT }]);
+  assert.ok(sections[0].text.length > 0);
 });
 
 test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
@@ -44,6 +46,7 @@ test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
   assert.deepEqual(pkg.files, ["dist/", "cordis.patch.yml", "manuals/"]);
 });
+
 test("README 声明尚未发布且复制粘贴会失败", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));

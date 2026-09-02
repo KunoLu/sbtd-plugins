@@ -1,12 +1,12 @@
 Feature: DSH T0 stub 可安装
   用户需要把 @kunolu/dsh-sbtd 作为 T0 stub 装到 DSH 0.1.1-rc.2，
-  加载时只打日志并注册空的 sbtd section，不写用户磁盘。
+  加载时只打日志并注册非空中文 sbtd section，不写用户磁盘。
 
-  Scenario: 插件加载时打印 T0 stub 日志并注册空 section
+  Scenario: 插件加载时打印 T0 stub 日志并注册非空中文 sbtd section
     Given T0 stub 插件已被宿主加载
     When 宿主调用 apply
     Then 终端出现 "[dsh-sbtd] plugin loaded (T0 stub)"
-    And 系统提示注册名为 "sbtd"、顺序为 50、正文为空的 section
+    And 系统提示注册名为 "sbtd"、顺序为 50、正文为非空中文短规则的 section
     And 插件不写入 AGENTS.md 或用户磁盘
 
   Scenario: README 钉 0.1.1-rc.2 并说明 @next 安装命令
