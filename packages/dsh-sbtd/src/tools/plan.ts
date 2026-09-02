@@ -69,7 +69,7 @@ const PREDICATES: Record<GateKind, { re: RegExp; fact: string }[]> = {
     { re: /持久化/, fact: "持久化" },
     { re: /persist/i, fact: "persistence" },
     { re: /数据库/, fact: "数据库" },
-    { re: /database|\bsql\b|\bschema\b/i, fact: "database/schema" },
+    { re: /database|\bsql\b/i, fact: "database/sql" },
     { re: /缓存|cache|\bredis\b/i, fact: "cache" },
     { re: /共享数据|shared data/i, fact: "共享数据" },
     { re: /异步/, fact: "异步数据流" },
@@ -83,7 +83,7 @@ const PREDICATES: Record<GateKind, { re: RegExp; fact: string }[]> = {
   legacy: [
     { re: /既有行为/, fact: "修既有行为" },
     { re: /existing behavio[u]?r/i, fact: "existing behavior" },
-    { re: /bugfix|\bbug[- ]fix\b/i, fact: "bugfix" },
+    { re: /修bug|修复.*bug|bug.?fix/i, fact: "bugfix" },
     { re: /弱测试|weak tests/i, fact: "弱测试" },
     { re: /行为不清|unclear behavio[u]?r/i, fact: "行为不清" },
     { re: /隐藏依赖|hidden dependenc/i, fact: "隐藏依赖" },
