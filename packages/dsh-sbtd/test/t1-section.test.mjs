@@ -65,7 +65,7 @@ test("apply 注册非空中文 sbtd section 且不写磁盘", () => {
   ]);
   assert.ok(sections[0].text.length > 0);
 
-  for (const rel of ["src/index.ts", "src/section.ts", "src/state.ts"]) {
+  for (const rel of ["src/index.ts", "src/section.ts", "src/state.ts", "src/hooks.ts"]) {
     const src = readFileSync(join(pkgRoot, rel), "utf8");
     assert.doesNotMatch(src, /writeFile|AGENTS\.md/);
   }

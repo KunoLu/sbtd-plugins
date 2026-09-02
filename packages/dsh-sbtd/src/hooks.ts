@@ -254,6 +254,9 @@ export function gatePreExecute(exec: ToolExec): PreToolDecision | undefined {
   if (name === "view") {
     return undefined;
   }
+  if (name === "str_replace_editor" && commandOf(exec.arguments) === "view") {
+    return undefined;
+  }
   const command = name === "bash" ? commandOf(exec.arguments) : "";
   if (name === "bash" && isGitAllow(command)) {
     return undefined;
