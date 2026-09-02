@@ -13,6 +13,11 @@ Feature: DSH T3 hooks 门禁
     When 模型编辑 README.md
     Then pre-execute 调用 next 放行
 
+  Scenario: cwd 外实现文件与无路径 mutating bash 不是生产代码
+    Given 当前 session 没有 plan
+    When 模型写 scripts/foo.ts 或 bash mkdir tmp
+    Then pre-execute 调用 next 放行
+
   Scenario: view 与 git 只读或 commit 放行
     Given 任意 session
     When 模型调用 view 或 bash git commit status log diff show
