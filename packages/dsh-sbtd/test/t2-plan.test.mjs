@@ -182,6 +182,7 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
         tools.push(definition);
       },
     },
+    on() {},
   });
 
   assert.equal(name, "dsh-sbtd");

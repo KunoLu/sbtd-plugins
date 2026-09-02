@@ -47,6 +47,7 @@ test("apply 注册非空中文 sbtd section 且不写磁盘", () => {
       tools: {
         register() {},
       },
+      on() {},
     });
   } finally {
     console.log = original;
