@@ -1,56 +1,53 @@
-<p align="center"><a href="./README.md">EN</a> · <a href="./README_zh.md">中文</a></p>
+<p align="center">
+  <a href="./README.md">EN</a>
+  ·
+  <a href="./README_zh.md">中文</a>
+</p>
 
 # sbtd-plugins
 
-SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH adapters.
+SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH host adapters.
 
 ## Contents
 
 - [Packages](#packages)
-- [Roadmap](#roadmap)
 - [Install](#install)
-- [Dev](#dev)
+- [Roadmap](#roadmap)
+- [Development](#development)
 - [License](#license)
 
 ## Packages
 
 | Package | Path | Role |
 | --- | --- | --- |
-| `@kunolu/sbtd-workflow-kit` | `packages/sbtd-workflow-kit` | Shared SBTD workflow kit. Not a host plugin. |
-| `@kunolu/omp-sbtd` | `packages/omp-sbtd` | OMP host adapter. npm `next` = `0.1.0-rc.14`. npm `latest` = `0.1.0-rc.2`. |
-| `@kunolu/dsh-sbtd` | `packages/dsh-sbtd` | DSH host adapter. Currently a stub. Target host: `@deepseek-ai/dsh@0.1.1-rc.2`. |
-
-## Roadmap
-
-- **kit** stays shared. It is not a host plugin.
-- **omp-sbtd** is the current OMP host plugin (`next` `0.1.0-rc.14`, `latest` `0.1.0-rc.2`).
-- **dsh-sbtd** is a stub. First milestone (T0): `dsh plugin --profile web add <path-or-github>`, then `dsh --profile web --dump-config` must show `id: sbtd`.
+| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Version **0.1.0-rc.14** on the `next` tag. |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter. Current stub is **T0**. No tools or hooks yet. Target host `@deepseek-ai/dsh@0.1.1-rc.2`. |
+| `@kunolu/sbtd-workflow-kit` | [`packages/sbtd-workflow-kit`](packages/sbtd-workflow-kit) | Shared kit / projection layer. **Not** a host plugin. |
 
 ## Install
 
-OMP host plugin:
+Install the OMP plugin from `next` (`0.1.0-rc.14`):
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.1.0-rc.14
-omp plugin install @kunolu/omp-sbtd@0.1.0-rc.2
+omp plugin install @kunolu/omp-sbtd@next
 ```
 
-Pin `0.1.0-rc.14` for npm `next`, or `0.1.0-rc.2` for npm `latest`.
+Do not install from `latest`. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-DSH host adapter is still a stub. T0 is:
+`@kunolu/dsh-sbtd` is a T0 stub and is not a complete DSH SBTD workflow yet.
 
-```bash
-dsh plugin --profile web add <path-or-github>
-dsh --profile web --dump-config
-```
+Optional notes: [`docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md`](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md).
 
-`dump-config` must show `id: sbtd`. Target host: `@deepseek-ai/dsh@0.1.1-rc.2`.
+## Roadmap
 
-Do not install the kit as a host plugin.
+This repository ships **two host plugins** only: `omp-sbtd` and `dsh-sbtd`.
 
-## Dev
+- **omp-sbtd** is published on `next` as `0.1.0-rc.14`. The embedded kit is locked to **640-skills v1.0.13**. Compatibility certification is decoupled from publish.
+- **dsh-sbtd** uses shell plugin scheme **2a**. **T0** is a stub: `dsh plugin add` plus `dump-config` reports `id: sbtd`. **T1–T16** are not done. Details: [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md).
 
-- Node.js 22 or newer
+## Development
+
+- Node 22 or newer
 - pnpm 11.17
 
 ```bash
@@ -61,4 +58,4 @@ pnpm test
 
 ## License
 
-Apache-2.0. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+Apache-2.0.
