@@ -26,17 +26,36 @@ SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH host adapters.
 
 ## Install
 
-Install the OMP plugin from `next` (`0.1.0-rc.14`):
+OMP plugin (published on dist-tag next as 0.1.0-rc.14):
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@next
 ```
 
-Do not install from `latest`. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
+This is 0.1.0-rc.14 on dist-tag next. Do NOT recommend @latest (still 0.1.0-rc.2). published is not installable is not certified. Compatibility certification is decoupled from publish.
 
-`@kunolu/dsh-sbtd` is a T0 stub and is not a complete DSH SBTD workflow yet.
+DSH-SBTD is a T0 stub and is NOT on npm.
+Host pin: @deepseek-ai/dsh@0.1.1-rc.2. Do not recommend 0.1.2-alpha.
 
-Optional notes: [`docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md`](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md).
+From the repo root:
+
+```bash
+npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add ./packages/dsh-sbtd
+npx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
+```
+
+Expect dump-config id: sbtd.
+
+Optional global install:
+
+```bash
+npm i -g @deepseek-ai/dsh@0.1.1-rc.2
+dsh plugin --profile web add /absolute/path/to/sbtd-plugins/packages/dsh-sbtd
+dsh --profile web --dump-config
+dsh web --no-open
+```
+
+Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md).
 
 ## Roadmap
 
