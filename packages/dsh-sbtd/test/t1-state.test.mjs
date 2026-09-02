@@ -100,3 +100,20 @@ test("重启后 Map 丢失，但 re-import 后 API 仍可测", async () => {
     maestro: { missing: ["java"] },
   });
 });
+
+test("restore 把 snapshot 当 hydrate 而非 merge", () => {
+  const id = "sess-hydrate-empty";
+  const live = getSession(id);
+  live.plan = samplePlan;
+  live.maestro = { java: "21", missing: ["cli"] };
+  live.validate.pre = "done";
+  restore(id, {});
+  assert.deepEqual(getSession(id), { validate: { pre: "done" } });
+  live.plan = samplePlan;
+  live.maestro = { java: "21", missing: ["java"] };
+  restore(id, { maestro: { missing: ["device"] } });
+  const after = getSession(id);
+  assert.equal(after.plan, undefined);
+  assert.deepEqual(after.maestro, { missing: ["device"] });
+  assert.equal(after.validate.pre, "done");
+});
