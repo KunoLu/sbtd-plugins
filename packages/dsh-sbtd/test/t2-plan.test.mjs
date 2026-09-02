@@ -51,11 +51,16 @@ test("客观谓词：命中 required+planned，未命中 on-demand+not-required"
   const bareDdd = inferRequirements("model DDD ubiquitous language");
   assert.equal(bareDdd.ddd.requirement, "on-demand");
   assert.equal(bareDdd.ddd.state, "not-required");
+
+  const bareRefactor = inferRequirements("please refactor the helpers");
+  assert.equal(bareRefactor.refactor.requirement, "on-demand");
+  const existingProd = inferRequirements("edit existing production module");
+  assert.equal(existingProd.refactor.requirement, "required");
 });
 
 test("sbtd_plan 写入隔离 session 且五项 gate 齐全", () => {
   const result = sbtdPlan("plan-sess-1", {
-    task_summary: "fix existing behavior bug in production code",
+    task_summary: "fix existing behavior bug in existing production code",
   });
   const session = getSession("plan-sess-1");
   assert.ok(session.plan);
@@ -219,4 +224,12 @@ test("README 提到 sbtd_plan 并保持钉版本与 @next", () => {
     readme,
     /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/,
   );
+});
+
+test("distinct summaries do not share taskId", () => {
+  const a = taskIdFromSummary("a" + "x".repeat(90));
+  const b = taskIdFromSummary("a" + "y".repeat(90));
+  assert.notEqual(a, b);
+  assert.equal(taskIdFromSummary(""), taskIdFromSummary("   "));
+  assert.match(taskIdFromSummary(""), /^task-[0-9a-f]{12}$/);
 });

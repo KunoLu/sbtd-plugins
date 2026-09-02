@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { type BookGatePlan, type GateState, getSession } from "../state.js";
 
 export const SBTD_PLAN_TOOL_NAME = "sbtd_plan";
@@ -92,8 +93,6 @@ const PREDICATES: Record<GateKind, { re: RegExp; fact: string }[]> = {
     { re: /既有生产/, fact: "既有生产代码" },
     { re: /existing production/i, fact: "existing production" },
     { re: /修改既有/, fact: "修改既有代码" },
-    { re: /refactor/i, fact: "refactor" },
-    { re: /生产代码|production code/i, fact: "将修改既有生产代码" },
   ],
   release: [
     { re: /生产路径|production path/i, fact: "生产路径" },
@@ -115,13 +114,17 @@ export function sessionIdFromExec(exec: PlanToolExec | undefined): string {
 }
 
 export function taskIdFromSummary(summary: string): string {
-  const slug = summary
-    .trim()
+  const trimmed = summary.trim();
+  const digest = createHash("sha256")
+    .update(trimmed)
+    .digest("hex")
+    .slice(0, 12);
+  const slug = trimmed
     .toLowerCase()
     .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-  return slug.length > 0 ? slug : "task";
+    .slice(0, 48);
+  return slug.length > 0 ? `${slug}-${digest}` : `task-${digest}`;
 }
 
 function haystack(summary: string, facts: string[] | undefined): string {
