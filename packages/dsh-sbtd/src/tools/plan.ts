@@ -83,7 +83,7 @@ const PREDICATES: Record<GateKind, { re: RegExp; fact: string }[]> = {
   legacy: [
     { re: /既有行为/, fact: "修既有行为" },
     { re: /existing behavio[u]?r/i, fact: "existing behavior" },
-    { re: /修.*bug|bug.?fix/i, fact: "修既有行为 bug" },
+    { re: /bugfix|\bbug[- ]fix\b/i, fact: "bugfix" },
     { re: /弱测试|weak tests/i, fact: "弱测试" },
     { re: /行为不清|unclear behavio[u]?r/i, fact: "行为不清" },
     { re: /隐藏依赖|hidden dependenc/i, fact: "隐藏依赖" },

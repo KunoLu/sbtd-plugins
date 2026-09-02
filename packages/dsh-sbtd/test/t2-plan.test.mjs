@@ -62,6 +62,10 @@ test("客观谓词：命中 required+planned，未命中 on-demand+not-required"
   assert.equal(bugUi.legacy.requirement, "on-demand");
   const existingBug = inferRequirements("fix existing behavior bug");
   assert.equal(existingBug.legacy.requirement, "required");
+  const debugFix = inferRequirements("add debug fixture");
+  assert.equal(debugFix.legacy.requirement, "on-demand");
+  const debugCn = inferRequirements("修改 debug 输出");
+  assert.equal(debugCn.legacy.requirement, "on-demand");
 });
 
 test("sbtd_plan 写入隔离 session 且五项 gate 齐全", () => {
