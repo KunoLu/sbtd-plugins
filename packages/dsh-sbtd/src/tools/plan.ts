@@ -92,7 +92,6 @@ const PREDICATES: Record<GateKind, { re: RegExp; fact: string }[]> = {
   refactor: [
     { re: /既有生产/, fact: "既有生产代码" },
     { re: /existing production/i, fact: "existing production" },
-    { re: /修改既有/, fact: "修改既有代码" },
   ],
   release: [
     { re: /生产路径|production path/i, fact: "生产路径" },

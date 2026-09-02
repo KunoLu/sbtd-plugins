@@ -56,6 +56,8 @@ test("客观谓词：命中 required+planned，未命中 on-demand+not-required"
   assert.equal(bareRefactor.refactor.requirement, "on-demand");
   const existingProd = inferRequirements("edit existing production module");
   assert.equal(existingProd.refactor.requirement, "required");
+  const docsOnly = inferRequirements("修改既有测试 fixtures");
+  assert.equal(docsOnly.refactor.requirement, "on-demand");
 });
 
 test("sbtd_plan 写入隔离 session 且五项 gate 齐全", () => {
