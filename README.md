@@ -36,7 +36,7 @@ This is 0.1.0-rc.14 on dist-tag next. Never recommend @latest. **published** is 
 
 DSH host pin: @deepseek-ai/dsh@0.1.1-rc.2.
 
-`@kunolu/dsh-sbtd` is published as a T0 stub. Install with dist-tag @next, not the bare package name. Available after the package is published to npm (copy-paste will fail until then).
+`@kunolu/dsh-sbtd` is a T0 stub. Install with dist-tag @next, not the bare package name. Available after the package is published to npm (copy-paste will fail until then).
 
 ```bash
 npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
