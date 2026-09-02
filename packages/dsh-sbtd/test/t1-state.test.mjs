@@ -100,3 +100,18 @@ test("重启后 Map 丢失，但 re-import 后 API 仍可测", async () => {
     maestro: { missing: ["java"] },
   });
 });
+
+test("restore(id, {}) after a populated session clears plan", () => {
+  const id = "sess-restore-empty";
+  const session = getSession(id);
+  session.plan = samplePlan;
+  session.maestro = { java: "21", missing: ["cli"] };
+  session.validate.pre = "done";
+
+  restore(id, {});
+
+  const after = getSession(id);
+  assert.equal(after.plan, undefined);
+  assert.equal(after.maestro, undefined);
+  assert.deepEqual(after.validate, { pre: "done" });
+});

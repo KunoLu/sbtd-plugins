@@ -70,15 +70,16 @@ export function restore(
   sessionId: string,
   snapshot: SbtdHandoffSnapshot,
 ): void {
+  const cloned = structuredClone(snapshot);
   const state = getSession(sessionId);
-  if (snapshot.plan !== undefined) {
-    state.plan = structuredClone(snapshot.plan);
+  if (cloned.plan !== undefined) {
+    state.plan = cloned.plan;
+  } else {
+    delete state.plan;
   }
-  if (snapshot.maestro !== undefined) {
-    const current = state.maestro;
-    state.maestro = {
-      ...(current ?? { missing: [] }),
-      missing: [...snapshot.maestro.missing],
-    };
+  if (cloned.maestro !== undefined) {
+    state.maestro = { missing: [...cloned.maestro.missing] };
+  } else {
+    delete state.maestro;
   }
 }
