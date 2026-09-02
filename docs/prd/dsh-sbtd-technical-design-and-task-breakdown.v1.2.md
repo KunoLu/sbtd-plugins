@@ -561,7 +561,7 @@ flowchart TB
 ### T0 — 让已有 stub 可安装（P0）
 
 **状态**：stub 已存在于 `sbtd-plugins/packages/dsh-sbtd`（noop `apply`、`cordis.patch.yml` id `sbtd`、`private: true`，已完成 path-installable on 7253b29 不要写从未 `dsh plugin add`）。**不要新建仓库。**
-T0 live accept is path or github plus dump-config id sbtd.
+T0 live accept is local path plus dump-config id sbtd. GitHub add is not T0-accepted.
 
 **目标**：让该 stub 能安装到 DSH `0.1.1-rc.2` 上；`apply()` 只 `console` / 注册空 section，不写用户磁盘。
 
@@ -580,7 +580,7 @@ T0 live accept is path or github plus dump-config id sbtd.
 **验收**：
 
 ```bash
-dsh plugin --profile web add <path-or-github>
+dsh plugin --profile web add /absolute/path/to/sbtd-plugins/packages/dsh-sbtd
 dsh --profile web --dump-config   # 能看到 id: sbtd
 dsh web                           # 进程能起来，无 failOnStartupError
 ```
