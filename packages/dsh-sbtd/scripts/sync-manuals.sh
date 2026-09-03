@@ -26,9 +26,9 @@ WHITELIST=(
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ORIG_DEST="${PKG_ROOT}/manuals"
-DEST=""
 CLONE_DIR=""
 STAGE=""
+DEST="${ORIG_DEST}"
 INDEX=""
 
 die() {
@@ -109,7 +109,7 @@ copy_skill() {
     should_copy "${rel}" || continue
     dest_path="${dest_dir}/${rel}"
     mkdir -p "$(dirname "${dest_path}")"
-    git -C "${SOURCE}" show "${PINNED_REVISION}:${path}" > "${dest_path}" || die "copy fail: ${id}/${rel}"
+    git -C "${SOURCE}" cat-file blob "${PINNED_REVISION}:${path}" > "${dest_path}" || die "copy fail: ${id}/${rel}"
     printf '%s\t%s\n' "${path}" "${id}/${rel}" >> "${INDEX}"
     copied=1
   done < "${list}"
@@ -140,7 +140,7 @@ with open(index_path, encoding="utf-8") as fh:
         if os.path.islink(dest_file) or not os.path.isfile(dest_file):
             raise SystemExit(f"sync-manuals: checksum fail: non-regular file {dest_file}")
         blob = subprocess.check_output(
-            ["git", "-C", source_root, "show", f"{revision}:{source_path}"]
+            ["git", "-C", source_root, "cat-file", "blob", f"{revision}:{source_path}"]
         )
         source_digest = hashlib.sha256(blob).hexdigest()
         dest_digest = hashlib.sha256(pathlib.Path(dest_file).read_bytes()).hexdigest()
@@ -210,8 +210,20 @@ fi
 rm -f "${DEST}/.sync-list"
 write_and_verify_manifest
 rm -f "${INDEX}"
-rm -rf "${ORIG_DEST}"
-mv "${STAGE}" "${ORIG_DEST}"
+if [[ -e "${ORIG_DEST}" ]]; then
+  BACKUP="$(mktemp -d "${ORIG_DEST}.bak.XXXXXX")"
+  rmdir "${BACKUP}"
+  mv "${ORIG_DEST}" "${BACKUP}"
+  if ! mv -T "${STAGE}" "${ORIG_DEST}"; then
+    if ! mv -T "${BACKUP}" "${ORIG_DEST}"; then
+      die "replace fail: could not restore last-known-good manuals"
+    fi
+    die "replace fail: restored last-known-good manuals"
+  fi
+  rm -rf "${BACKUP}"
+else
+  mv -T "${STAGE}" "${ORIG_DEST}" || die "replace fail: could not move staged manuals"
+fi
 STAGE=""
 DEST="${ORIG_DEST}"
 echo "sync-manuals: wrote ${DEST}/MANIFEST.json sourceRevision ${PINNED_REVISION}"
