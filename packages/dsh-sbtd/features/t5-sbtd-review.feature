@@ -60,6 +60,16 @@ Feature: DSH T5 sbtd_review 五项 book gate
     Then requirement 仍为 on-demand
     And reviewStatus 为 characterized
 
+  Scenario: on-demand ddia 通过后提升 required 不继承 passed
+    Given hello world 的 plan 中 ddia 为 on-demand
+    When 模型以 confirmed 和空结论完成 sbtd_review kind=ddia
+    And 同一 task_summary 再次 sbtd_plan 并给出 persist facts
+    Then ddia 为 required 且 state 为 planned 而非 passed
+    And reviewStatus 已清除
+    And fact 写明 promoted from on-demand; reset inherited pass
+    When 模型用 str_replace_editor 改 src/schema.sql
+    Then 因 ddia 被 deny
+
   Scenario: 独特结论只在返回值不落盘
     Given session 已有 plan
     When 模型提交带独特结论的 sbtd_review

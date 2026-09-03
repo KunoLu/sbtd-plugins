@@ -243,6 +243,41 @@ test("on-demand review 不提升 requirement", () => {
   assert.equal(getSession(id).plan.gates.legacy.reviewStatus, "characterized");
 });
 
+test("on-demand ddia confirmed 提升 required 重置 planned 并拦 schema.sql", async () => {
+  const id = "t5-promote-ddia";
+  const summary = "hello world plan";
+  sbtdPlan(id, { task_summary: summary });
+  assert.equal(getSession(id).plan.gates.ddia.requirement, "on-demand");
+  sbtdReview(id, { kind: "ddia", status: "confirmed", conclusions: "" });
+  assert.equal(getSession(id).plan.gates.ddia.state, "passed");
+  assert.equal(getSession(id).plan.gates.ddia.requirement, "on-demand");
+
+  const promoted = sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["persist"],
+  });
+  assert.equal(promoted.plan.gates.ddia.requirement, "required");
+  assert.equal(promoted.plan.gates.ddia.state, "planned");
+  assert.notEqual(promoted.plan.gates.ddia.state, "passed");
+  assert.equal(promoted.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(
+    promoted.plan.gates.ddia.fact,
+    "promoted from on-demand; reset inherited pass",
+  );
+
+  const { hooks } = loadPlugin();
+  const data = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "str_replace_editor",
+      arguments: { filePath: "src/schema.sql" },
+      agent: { id },
+    },
+    nextAllow,
+  );
+  assert.equal(data.kind, "deny");
+  assert.match(data.reason, /sbtd_review kind=ddia/);
+});
+
 test("独特结论只在返回值不落盘", () => {
   const id = "t5-conclusion";
   const unique = "CONCLUSION-ZX9Q-NOT-PERSIST";

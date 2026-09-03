@@ -160,7 +160,11 @@ function mergeGate(
   inferred: InferredGate,
 ): BookGatePlan["gates"][GateKind] {
   if (inferred.requirement === "required") {
-    if (previous !== undefined && previous.state === "passed") {
+    if (
+      previous !== undefined &&
+      previous.requirement === "required" &&
+      previous.state === "passed"
+    ) {
       const kept: BookGatePlan["gates"][GateKind] = {
         requirement: "required",
         state: "passed",
@@ -173,6 +177,17 @@ function mergeGate(
         kept.reviewStatus = previous.reviewStatus;
       }
       return kept;
+    }
+    if (
+      previous !== undefined &&
+      previous.requirement === "on-demand" &&
+      previous.state === "passed"
+    ) {
+      return {
+        requirement: "required",
+        state: "planned",
+        fact: "promoted from on-demand; reset inherited pass",
+      };
     }
     if (
       previous !== undefined &&
@@ -268,7 +283,7 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
 }
 
 export const SBTD_PLAN_DESCRIPTION =
-  "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal update facts and keep passed gates unless a trigger disappears.";
+  "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal keep passed gates only while their requirement remains required; reset a pass when a trigger disappears or the gate is promoted from on-demand.";
 
 export function createPlanTool(): PlanToolDefinition {
   return {

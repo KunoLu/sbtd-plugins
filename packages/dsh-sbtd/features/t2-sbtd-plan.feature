@@ -40,6 +40,14 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     Then 该 gate 保持 passed
     And 若触发事实消失则写明原因并不再当作 required
 
+  Scenario: on-demand passed 提升 required 时重置 planned
+    Given 同一 taskId 的 on-demand gate 已 passed
+    When 再次调用 sbtd_plan 且该 gate 现为 required
+    Then 该 gate 为 required planned
+    And 不继承 on-demand 的 passed
+    And fact 写明 promoted from on-demand; reset inherited pass
+    And 若先前已是 required 的 running blocked 或 planned 则保持该 state
+
   Scenario: 宿主看到的 sbtd_plan 参数是 JSON Schema 对象根
     Given 插件已向宿主注册 sbtd_plan
     When 宿主读取该 tool 的 parameters 与输出 schema

@@ -115,6 +115,61 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
   assert.match(third.plan.gates.ddia.fact, /disappeared/);
 });
 
+test("mergeGate 仅在先前已是 required 时保留 passed", () => {
+  const id = "plan-merge-keep-required-pass";
+  const summary = "keep required pass";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const kept = sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  assert.equal(kept.plan.gates.ddia.requirement, "required");
+  assert.equal(kept.plan.gates.ddia.state, "passed");
+  assert.equal(kept.plan.gates.ddia.reviewStatus, "confirmed");
+});
+
+test("mergeGate 将 on-demand passed 提升 required 重置为 planned", () => {
+  const id = "plan-merge-promote-ondemand";
+  const summary = "hello world plan";
+  sbtdPlan(id, { task_summary: summary });
+  const live = getSession(id);
+  assert.equal(live.plan.gates.ddia.requirement, "on-demand");
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const promoted = sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["persist"],
+  });
+  assert.equal(promoted.plan.gates.ddia.requirement, "required");
+  assert.equal(promoted.plan.gates.ddia.state, "planned");
+  assert.equal(promoted.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(
+    promoted.plan.gates.ddia.fact,
+    "promoted from on-demand; reset inherited pass",
+  );
+});
+
+test("mergeGate 提升 required 时保留 running blocked planned", () => {
+  const summary = "hello world plan keep progress";
+  for (const state of ["running", "blocked", "planned"]) {
+    const id = `plan-merge-keep-${state}`;
+    sbtdPlan(id, { task_summary: summary });
+    const live = getSession(id);
+    live.plan.gates.ddia.state = state;
+    live.plan.gates.ddia.reviewStatus = "needs-design-change";
+
+    const next = sbtdPlan(id, {
+      task_summary: summary,
+      facts: ["persist"],
+    });
+    assert.equal(next.plan.gates.ddia.requirement, "required");
+    assert.equal(next.plan.gates.ddia.state, state);
+    assert.equal(next.plan.gates.ddia.reviewStatus, "needs-design-change");
+  }
+});
+
 test("新 taskId 开新 plan，不保留上一目标的 passed", () => {
   const id = "plan-sess-new-task";
   sbtdPlan(id, {
