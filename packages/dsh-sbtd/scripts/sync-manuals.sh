@@ -117,7 +117,6 @@ copy_skill() {
   [[ -f "${dest_dir}/SKILL.md" ]] || die "copy fail: ${id}/SKILL.md"
 }
 
-rm -f "${DEST}/.sync-list"
 write_and_verify_manifest() {
   python3 - "$DEST" "$PINNED_REVISION" "$PINNED_VERSION" "$SOURCE_ID" "$INDEX" "$SOURCE" <<'PY'
 import hashlib, json, os, pathlib, subprocess, sys
