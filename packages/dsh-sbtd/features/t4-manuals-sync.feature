@@ -22,8 +22,10 @@ Feature: DSH T4 manuals 同步
     When SOURCE 的 HEAD 不是钉死 SHA
     Then 脚本以非 0 退出
 
-  Scenario: 拷贝失败或 checksum 失败则非 0
+  Scenario: 拷贝失败则非 0
     When SOURCE 含白名单 skill 的 references/install.sh
     Then 脚本以非 0 退出且 stderr 含 copy fail
+
+  Scenario: checksum 失败则非 0
     When 拷贝后 dest 字节与 source blob 不一致
     Then 脚本以非 0 退出且 stderr 含 checksum fail
