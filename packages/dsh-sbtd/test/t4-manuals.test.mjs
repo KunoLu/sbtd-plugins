@@ -23,6 +23,17 @@ const WHITELIST = [
   "trellis-workflow",
 ];
 
+function walkFiles(root, prefix, out) {
+  for (const ent of readdirSync(root, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${ent.name}` : ent.name;
+    const p = join(root, ent.name);
+    if (ent.isDirectory()) walkFiles(p, rel, out);
+    else if (ent.name !== "MANIFEST.json") {
+      out[rel] = createHash("sha256").update(readFileSync(p)).digest("hex");
+    }
+  }
+}
+
 test("manuals whitelist and MANIFEST checksums", () => {
   const manifest = JSON.parse(readFileSync(join(manuals, "MANIFEST.json"), "utf8"));
   assert.equal(manifest.revision, PIN);
@@ -34,12 +45,11 @@ test("manuals whitelist and MANIFEST checksums", () => {
     .sort();
   assert.deepEqual(dirs, [...WHITELIST].sort());
   const onDisk = {};
-  for (const id of dirs) {
-    const body = readFileSync(join(manuals, id, "SKILL.md"));
-    onDisk[`${id}/SKILL.md`] = createHash("sha256").update(body).digest("hex");
-  }
+  walkFiles(manuals, "", onDisk);
   const expected = Object.fromEntries(manifest.files.map((f) => [f.path, f.sha256]));
   assert.deepEqual(onDisk, expected);
+  assert.ok(existsSync(join(manuals, "domain-modeling", "CONTEXT-FORMAT.md")));
+  assert.ok(existsSync(join(manuals, "domain-modeling", "ADR-FORMAT.md")));
   assert.equal(existsSync(join(manuals, "install.sh")), false);
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /不要手改/);

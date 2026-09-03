@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync whitelist SKILL.md (+ references/) from KunoLu/640-skills into manuals/.
+# Sync whitelist SKILL.md (+ references/ + root *.md) from KunoLu/640-skills into manuals/.
 # Usage: sync-manuals.sh [SOURCE]
 set -euo pipefail
 
@@ -52,27 +52,30 @@ resolve_source() {
     SOURCE="${given}"
   fi
 
+  [[ -e "${SOURCE}" ]] || die "missing source: ${SOURCE}"
   [[ -d "${SOURCE}" ]] || die "missing source: ${SOURCE}"
 
-  if [[ ! -d "${SOURCE}/.git" ]]; then
-    die "SHA mismatch: source is not a git checkout (expected ${PINNED_REVISION})"
-  fi
+  local inside
+  inside="$(git -C "${SOURCE}" rev-parse --is-inside-work-tree 2>/dev/null || true)"
+  [[ "${inside}" == "true" ]] || die "SHA mismatch: source is not a git work tree (expected ${PINNED_REVISION})"
+
+  SOURCE="$(git -C "${SOURCE}" rev-parse --show-toplevel)"
 
   local actual
   actual="$(git -C "${SOURCE}" rev-parse HEAD 2>/dev/null || true)"
   [[ "${actual}" == "${PINNED_REVISION}" ]] || die "SHA mismatch: got ${actual:-unknown}, expected ${PINNED_REVISION}"
 }
 
-find_skill_dir() {
+find_skill_prefix() {
   local id="$1"
-  local templates="${SOURCE}/sbtd-workflow-onboard/templates/skills/${id}"
-  local external="${SOURCE}/sbtd-workflow-onboard/assets/external-skills/stable/skills/${id}"
+  local templates="sbtd-workflow-onboard/templates/skills/${id}"
+  local external="sbtd-workflow-onboard/assets/external-skills/stable/skills/${id}"
   local found=""
 
-  if [[ -f "${templates}/SKILL.md" ]]; then
+  if git -C "${SOURCE}" cat-file -e "${PINNED_REVISION}:${templates}/SKILL.md" 2>/dev/null; then
     found="${templates}"
   fi
-  if [[ -f "${external}/SKILL.md" ]]; then
+  if git -C "${SOURCE}" cat-file -e "${PINNED_REVISION}:${external}/SKILL.md" 2>/dev/null; then
     if [[ -n "${found}" ]]; then
       die "duplicate skill source for ${id}"
     fi
@@ -82,16 +85,42 @@ find_skill_dir() {
   printf '%s\n' "${found}"
 }
 
+should_copy() {
+  local rel="$1"
+  local base
+  base="$(basename "${rel}")"
+  local dir
+  dir="$(dirname "${rel}")"
+  if [[ "${base}" == "SKILL.md" && "${dir}" == "." ]]; then
+    return 0
+  fi
+  if [[ "${rel}" == references/* ]]; then
+    return 0
+  fi
+  if [[ "${dir}" == "." && "${base}" == *.md ]]; then
+    return 0
+  fi
+  return 1
+}
+
 copy_skill() {
   local id="$1"
-  local src="$2"
+  local prefix="$2"
   local dest_dir="${DEST}/${id}"
   mkdir -p "${dest_dir}"
-  cp -f "${src}/SKILL.md" "${dest_dir}/SKILL.md" || die "copy fail: ${id}/SKILL.md"
-  if [[ -d "${src}/references" ]]; then
-    rm -rf "${dest_dir}/references"
-    cp -R "${src}/references" "${dest_dir}/references" || die "copy fail: ${id}/references"
-  fi
+  local copied=0
+  local path rel dest_path
+  while IFS= read -r path; do
+    [[ -n "${path}" ]] || continue
+    rel="${path#"${prefix}/"}"
+    should_copy "${rel}" || continue
+    dest_path="${dest_dir}/${rel}"
+    mkdir -p "$(dirname "${dest_path}")"
+    git -C "${SOURCE}" show "${PINNED_REVISION}:${path}" > "${dest_path}" || die "copy fail: ${id}/${rel}"
+    copied=1
+  done < <(git -C "${SOURCE}" ls-tree -r --name-only "${PINNED_REVISION}" "${prefix}")
+  [[ "${copied}" -eq 1 ]] || die "copy fail: ${id} (no files)"
+  [[ -f "${dest_dir}/SKILL.md" ]] || die "copy fail: ${id}/SKILL.md"
 }
 
 write_and_verify_manifest() {
@@ -149,8 +178,8 @@ resolve_source "${1:-}"
 find "${DEST}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 
 for id in "${WHITELIST[@]}"; do
-  src_dir="$(find_skill_dir "${id}")"
-  copy_skill "${id}" "${src_dir}"
+  prefix="$(find_skill_prefix "${id}")"
+  copy_skill "${id}" "${prefix}"
 done
 
 if find "${DEST}" \( -name 'install.sh' -o -name 'onboard.py' \) | grep -q .; then
