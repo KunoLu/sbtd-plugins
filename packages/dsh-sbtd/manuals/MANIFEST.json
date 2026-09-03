@@ -4,16 +4,6 @@
   "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630",
   "files": [
     {
-      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling/ADR-FORMAT.md",
-      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0",
-      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
-    },
-    {
-      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling/CONTEXT-FORMAT.md",
-      "sha256": "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13",
-      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
-    },
-    {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
       "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
       "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"

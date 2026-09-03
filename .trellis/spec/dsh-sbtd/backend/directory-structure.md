@@ -19,7 +19,7 @@ packages/dsh-sbtd/
 │   ├── t2-sbtd-plan.feature
 │   ├── t3-hooks-gate.feature
 │   └── t4-manuals-sync.feature
-├── manuals/              # SKILL.md + references/ + skill-root markdown + MANIFEST.json (sourcePath/sha256/sourceRevision)
+├── manuals/              # SKILL.md + references/ + MANIFEST.json (sourcePath/sha256/sourceRevision)
 ├── scripts/
 │   └── sync-manuals.sh
 ├── src/

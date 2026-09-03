@@ -17,3 +17,11 @@ test("sync-manuals exits non-zero on missing source or SHA mismatch", () => {
   assert.match(mismatch.stderr, /SHA mismatch: got /);
   assert.match(mismatch.stderr, /expected f8aa0d7225a26c5e00b81d2f1b05121108e63630/);
 });
+
+test("sync-manuals succeeds twice against pinned SOURCE", () => {
+  const source = "/tmp/640-skills";
+  const first = spawnSync("bash", [script, source], { encoding: "utf8" });
+  assert.equal(first.status, 0, first.stderr);
+  const second = spawnSync("bash", [script, source], { encoding: "utf8" });
+  assert.equal(second.status, 0, second.stderr);
+});

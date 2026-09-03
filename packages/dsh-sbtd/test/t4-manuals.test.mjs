@@ -45,21 +45,48 @@ test("manuals whitelist and MANIFEST checksums", () => {
   for (const file of manifest.files) {
     assert.equal(file.sourceRevision, PIN);
     const dest = destFromSourcePath(file.sourcePath);
+    const rest = file.sourcePath.match(SOURCE_PATH_RE)[2];
+    assert.ok(
+      rest === "SKILL.md" || rest.startsWith("references/"),
+      `MANIFEST must only list SKILL.md or references/: ${file.sourcePath}`,
+    );
     assert.equal(statSync(dest).isFile(), true);
     const digest = createHash("sha256").update(readFileSync(dest)).digest("hex");
     assert.equal(digest, file.sha256);
     hashedDest.add(dest);
   }
   for (const id of dirs) {
-    assert.equal(hashedDest.has(join(manuals, id, "SKILL.md")), true);
-    assert.equal(existsSync(join(manuals, id, "agents")), false);
+    const skillDir = join(manuals, id);
+    assert.equal(hashedDest.has(join(skillDir, "SKILL.md")), true);
+    const rootNames = readdirSync(skillDir).sort();
+    const allowed = rootNames.includes("references")
+      ? ["SKILL.md", "references"]
+      : ["SKILL.md"];
+    assert.deepEqual(rootNames, allowed, `${id} root must be SKILL.md and optional references/`);
+    if (allowed.includes("references")) {
+      assert.equal(statSync(join(skillDir, "references")).isDirectory(), true);
+    }
   }
-  assert.equal(existsSync(join(manuals, "domain-modeling", "CONTEXT-FORMAT.md")), true);
-  assert.equal(existsSync(join(manuals, "domain-modeling", "ADR-FORMAT.md")), true);
-  assert.equal(existsSync(join(manuals, "install.sh")), false);
+  const skip = new Set(["node_modules", "dist"]);
+  const stack = [pkgRoot];
+  while (stack.length) {
+    const dir = stack.pop();
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (skip.has(entry.name)) continue;
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(path);
+        continue;
+      }
+      assert.notEqual(entry.name, "install.sh");
+      assert.notEqual(entry.name, "onboard.py");
+    }
+  }
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /不要手改/);
   assert.match(readme, /f8aa0d7225a26c5e00b81d2f1b05121108e63630/);
-  assert.match(readme, /skill-root markdown/);
+  assert.match(readme, /SKILL\.md/);
+  assert.match(readme, /references\//);
+  assert.doesNotMatch(readme, /skill-root markdown/);
   assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), ["plan.ts"]);
 });

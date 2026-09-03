@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Sync whitelist SKILL.md (+ references/ + skill-root markdown except README.md)
-# from KunoLu/640-skills into manuals/.
+# Sync whitelist SKILL.md and that skill's references/ from KunoLu/640-skills into manuals/.
 # Usage: sync-manuals.sh [SOURCE]
 set -euo pipefail
 
@@ -93,19 +92,7 @@ find_skill_prefix() {
 
 should_copy() {
   local rel="$1"
-  local base dir
-  base="$(basename "${rel}")"
-  dir="$(dirname "${rel}")"
-  if [[ "${base}" == "SKILL.md" && "${dir}" == "." ]]; then
-    return 0
-  fi
-  if [[ "${rel}" == references/* ]]; then
-    return 0
-  fi
-  if [[ "${dir}" == "." && "${base}" == *.md && "${base}" != "README.md" ]]; then
-    return 0
-  fi
-  return 1
+  [[ "${rel}" == "SKILL.md" || "${rel}" == references/* ]]
 }
 
 copy_skill() {
@@ -113,7 +100,9 @@ copy_skill() {
   local prefix="$2"
   local dest_dir="${DEST}/${id}"
   mkdir -p "${dest_dir}"
-  local copied=0 path rel dest_path
+  local copied=0 path rel dest_path list
+  list="${DEST}/.sync-list"
+  git -C "${SOURCE}" ls-tree -r --name-only "${PINNED_REVISION}" "${prefix}" > "${list}" || die "copy fail: ${id} (ls-tree)"
   while IFS= read -r path; do
     [[ -n "${path}" ]] || continue
     rel="${path#"${prefix}/"}"
@@ -123,11 +112,12 @@ copy_skill() {
     git -C "${SOURCE}" show "${PINNED_REVISION}:${path}" > "${dest_path}" || die "copy fail: ${id}/${rel}"
     printf '%s\t%s\n' "${path}" "${id}/${rel}" >> "${INDEX}"
     copied=1
-  done < <(git -C "${SOURCE}" ls-tree -r --name-only "${PINNED_REVISION}" "${prefix}")
+  done < "${list}"
   [[ "${copied}" -eq 1 ]] || die "copy fail: ${id} (no files)"
   [[ -f "${dest_dir}/SKILL.md" ]] || die "copy fail: ${id}/SKILL.md"
 }
 
+rm -f "${DEST}/.sync-list"
 write_and_verify_manifest() {
   python3 - "$DEST" "$PINNED_REVISION" "$PINNED_VERSION" "$SOURCE_ID" "$INDEX" "$SOURCE" <<'PY'
 import hashlib, json, os, pathlib, subprocess, sys
@@ -173,7 +163,7 @@ on_disk = {}
 for dirpath, dirnames, filenames in os.walk(dest):
     dirnames.sort()
     for name in sorted(filenames):
-        if name in {"MANIFEST.json", ".sync-index.tsv"}:
+        if name in {"MANIFEST.json", ".sync-index.tsv", ".sync-list"}:
             continue
         path = os.path.join(dirpath, name)
         rel = os.path.relpath(path, dest).replace(os.sep, "/")
@@ -204,7 +194,7 @@ PY
 }
 
 resolve_source "${1:-}"
-STAGE="$(mktemp -d "${TMPDIR:-/tmp}/dsh-sbtd-manuals-stage.XXXXXX")"
+STAGE="$(mktemp -d "${ORIG_DEST}.stage.XXXXXX")"
 DEST="${STAGE}"
 INDEX="${DEST}/.sync-index.tsv"
 : > "${INDEX}"
@@ -218,6 +208,7 @@ if find "${DEST}" \( -name 'install.sh' -o -name 'onboard.py' \) | grep -q .; th
   die "copy fail: installer artifacts must not be copied"
 fi
 
+rm -f "${DEST}/.sync-list"
 write_and_verify_manifest
 rm -f "${INDEX}"
 rm -rf "${ORIG_DEST}"

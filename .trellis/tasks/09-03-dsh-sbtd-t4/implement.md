@@ -5,9 +5,9 @@
 ```text
 Legacy Change Safety Review
 Status: characterized
-Behavior to change: HEAD fba44da copied domain-modeling ADR-FORMAT.md and CONTEXT-FORMAT.md; MANIFEST used dest-relative path + top-level revision.
-Behavior to preserve: 12 whitelist ids from templates/skills and assets/external-skills/stable/skills; SKILL.md always copied; references/ copied only if present; missing source / SHA mismatch / copy fail / checksum fail exit 1; no install.sh, onboard.py, agents/; unpublished private package; hooks.ts and sbtd_plan unchanged.
-Current reproduction evidence: committed manuals/domain-modeling/{ADR,CONTEXT}-FORMAT.md and MANIFEST files[].path entries on fba44da; pin SHA f8aa0d7225a26c5e00b81d2f1b05121108e63630 still required.
+Behavior to change: HEAD e01643c copied skill-root markdown except README.md, including domain-modeling ADR-FORMAT.md and CONTEXT-FORMAT.md.
+Behavior to preserve: 12 whitelist ids from templates/skills and assets/external-skills/stable/skills; SKILL.md always copied; references/ copied only if present; pin-SHA git blob copy; missing source / SHA mismatch / copy fail / checksum fail exit 1; no install.sh, onboard.py, agents/; unpublished private package; hooks.ts and sbtd_plan unchanged.
+Current reproduction evidence: committed manuals/domain-modeling/{ADR,CONTEXT}-FORMAT.md and MANIFEST sourcePath entries on e01643c; pin SHA f8aa0d7225a26c5e00b81d2f1b05121108e63630 still required.
 Safety net: features/t4-manuals-sync.feature + test/t4-manuals.test.mjs (every MANIFEST sourcePath/sha256/sourceRevision vs dest; package walk skip node_modules/dist forbids install.sh) + test/t4-sync-exit.test.mjs.
 Hidden dependencies / seam: script is CLI-only; not imported by apply/hooks. GitNexus impact UNKNOWN (bash not in graph); callers confirmed by text search: tests, README, Trellis artifacts.
 Validation plan: bash packages/dsh-sbtd/scripts/sync-manuals.sh /workspace/640-skills; biome/tsc/node --test.

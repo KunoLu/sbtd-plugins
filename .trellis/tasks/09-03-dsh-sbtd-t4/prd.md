@@ -17,7 +17,7 @@ DDD Boundary Review
 Status: confirmed
 Ubiquitous language: manuals = 640-skills skill 正文的只读副本；MANIFEST = sourcePath + sha256 + sourceRevision 校验目录；whitelist = 12 个钉死 skill id；sourceRevision = 640-skills 钉死 commit；templates/skills 与 assets/external-skills/stable/skills 都是检索根，不可跳过后者。
 Bounded contexts: (1) dsh-sbtd DSH 宿主适配器；(2) 640-skills 源仓。manuals 不是 live skill 安装，也不进入 agents/ 或 onboard 安装器。Trellis task artifacts 不是行为 SOT。
-Invariants and business rules: HEAD 必须等于 pin SHA；拷 SKILL.md、references/ 与 skill-root markdown（不含 README.md）；不拷整棵树、git 历史、onboard.py、install.sh、agents/；源缺失 / SHA mismatch / copy fail / checksum fail 必须非 0；包保持 unpublished 且 private；宿主钉 0.1.1-rc.2；不改 hooks.ts、不加 sbtd_* tool、不做 T5。
+Invariants and business rules: HEAD 必须等于 pin SHA；只拷 SKILL.md 与该 skill 的 references/；不拷 skill-root markdown（含 ADR-FORMAT.md / CONTEXT-FORMAT.md）、整棵树、git 历史、onboard.py、install.sh、agents/；源缺失 / SHA mismatch / copy fail / checksum fail 必须非 0；包保持 unpublished 且 private；宿主钉 0.1.1-rc.2；不改 hooks.ts、不加 sbtd_* tool、不做 T5。
 Core / supporting / generic subdomains: supporting（只读同步桥）；core 仍是 T3 Book Gate 门禁。
 Corrections to the grill-with-docs result: none（沿用锁定边界）。
 Open conflicts and questions: none.
@@ -31,7 +31,7 @@ Open conflicts and questions: none.
 |---|---|---|---|---|
 | `book-ddd-distilled-modeling` | required | Grill+DDD LOCKED；本轮输出锁定边界审核 | requirements | passed |
 | `book-ddia-data-design` | on-demand | MANIFEST 是 checksum 目录，不是应用持久化/共享数据 | — | not-required |
-| `book-legacy-change-safety` | required | HEAD `fba44da` 把 `domain-modeling` 根 `ADR-FORMAT.md` / `CONTEXT-FORMAT.md` 拷进 manuals，违反只拷 `SKILL.md`+`references/` | before first script edit | passed |
+| `book-legacy-change-safety` | required | HEAD `e01643c` 把 skill-root markdown（含 `domain-modeling` 的 `ADR-FORMAT.md` / `CONTEXT-FORMAT.md`）拷进 manuals，违反只拷 `SKILL.md`+`references/` | before first script edit | passed |
 | `book-refactoring-pass` | required | 将改既有 `scripts/sync-manuals.sh` | before first script edit | passed |
 | `book-release-readiness` | on-demand | 不发布、不改生产 API/job/deploy | — | not-required |
 
