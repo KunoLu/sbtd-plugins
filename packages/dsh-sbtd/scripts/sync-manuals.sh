@@ -192,6 +192,21 @@ with open(os.path.join(dest, "MANIFEST.json"), "w", encoding="utf-8") as fh:
 PY
 }
 
+# POSIX: os.rename fails closed if dest exists (no GNU mv -T). Callers must
+# free ORIG_DEST first. Never rmdir the mktemp backup dir (name hole).
+rename_into() {
+  python3 - "$1" "$2" <<'PY'
+import os, sys
+
+src, dest = sys.argv[1], sys.argv[2]
+if not os.path.isdir(src) or os.path.islink(src):
+    raise SystemExit(f"sync-manuals: replace fail: source is not a directory: {src}")
+if os.path.lexists(dest):
+    raise SystemExit(f"sync-manuals: replace fail: dest exists: {dest}")
+os.rename(src, dest)
+PY
+}
+
 resolve_source "${1:-}"
 STAGE="$(mktemp -d "${ORIG_DEST}.stage.XXXXXX")"
 DEST="${STAGE}"
@@ -210,19 +225,34 @@ fi
 rm -f "${DEST}/.sync-list"
 write_and_verify_manifest
 rm -f "${INDEX}"
+
+command -v python3 >/dev/null || die "replace fail: python3 required for portable rename"
+if ! python3 -c "import os; os.rename"; then
+  die "replace fail: python rename unavailable"
+fi
+[[ -d "${STAGE}" && ! -L "${STAGE}" ]] || die "replace fail: missing stage"
+
 if [[ -e "${ORIG_DEST}" ]]; then
-  BACKUP="$(mktemp -d "${ORIG_DEST}.bak.XXXXXX")"
-  rmdir "${BACKUP}"
-  mv "${ORIG_DEST}" "${BACKUP}"
-  if ! mv -T "${STAGE}" "${ORIG_DEST}"; then
-    if ! mv -T "${BACKUP}" "${ORIG_DEST}"; then
+  BACKUP_DIR="$(mktemp -d "${ORIG_DEST}.bak.XXXXXX")" || die "replace fail: could not create backup dir"
+  BACKUP="${BACKUP_DIR}/manuals"
+  if [[ -e "${BACKUP}" ]]; then
+    rmdir "${BACKUP_DIR}" 2>/dev/null || true
+    die "replace fail: backup slot occupied"
+  fi
+  if ! rename_into "${ORIG_DEST}" "${BACKUP}"; then
+    rmdir "${BACKUP_DIR}" 2>/dev/null || true
+    die "replace fail: could not move last-known-good manuals"
+  fi
+  if ! rename_into "${STAGE}" "${ORIG_DEST}"; then
+    if ! rename_into "${BACKUP}" "${ORIG_DEST}"; then
       die "replace fail: could not restore last-known-good manuals"
     fi
+    rmdir "${BACKUP_DIR}" 2>/dev/null || true
     die "replace fail: restored last-known-good manuals"
   fi
-  rm -rf "${BACKUP}"
+  rm -rf "${BACKUP_DIR}"
 else
-  mv -T "${STAGE}" "${ORIG_DEST}" || die "replace fail: could not move staged manuals"
+  rename_into "${STAGE}" "${ORIG_DEST}" || die "replace fail: could not move staged manuals"
 fi
 STAGE=""
 DEST="${ORIG_DEST}"
