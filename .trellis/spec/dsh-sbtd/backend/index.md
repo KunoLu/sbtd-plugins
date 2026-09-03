@@ -18,7 +18,7 @@ Source files:
 - `src/state.ts` — `Map` keyed by caller `sessionId`; `serialize()` / `restore()`
 - `src/tools/plan.ts` — sbtd_plan registers/updates BookGatePlan. DDD is required only after completed `grill-with-docs`; bare `ddd` stays on-demand.
 - `src/hooks.ts` — `ctx.on("tools/pre-execute")` and `ctx.on("agent/pre-step")`. Allow via `next()`. Local host types only.
-- `scripts/sync-manuals.sh` + `manuals/**` — 640-skills v1.0.13 whitelist SKILL.md + references/; MANIFEST.json sourcePath + sha256 + sourceRevision
+- `scripts/sync-manuals.sh` + `manuals/**` — 640-skills v1.0.13 whitelist SKILL.md + references/ + skill-root markdown; MANIFEST.json sourcePath + sha256 + sourceRevision
 
 Do not import `@deepseek-ai/dsh` types. Local context type only.
 

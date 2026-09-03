@@ -17,7 +17,7 @@ DDD Boundary Review
 Status: confirmed
 Ubiquitous language: manuals = 640-skills skill 正文的只读副本；MANIFEST = sourcePath + sha256 + sourceRevision 校验目录；whitelist = 12 个钉死 skill id；sourceRevision = 640-skills 钉死 commit；templates/skills 与 assets/external-skills/stable/skills 都是检索根，不可跳过后者。
 Bounded contexts: (1) dsh-sbtd DSH 宿主适配器；(2) 640-skills 源仓。manuals 不是 live skill 安装，也不进入 agents/ 或 onboard 安装器。Trellis task artifacts 不是行为 SOT。
-Invariants and business rules: HEAD 必须等于 pin SHA；只拷 SKILL.md 与 references/；不拷整棵树、git 历史、onboard.py、install.sh、agents/；源缺失 / SHA mismatch / copy fail / checksum fail 必须非 0；包保持 unpublished 且 private；宿主钉 0.1.1-rc.2；不改 hooks.ts、不加 sbtd_* tool、不做 T5。
+Invariants and business rules: HEAD 必须等于 pin SHA；拷 SKILL.md、references/ 与 skill-root markdown（不含 README.md）；不拷整棵树、git 历史、onboard.py、install.sh、agents/；源缺失 / SHA mismatch / copy fail / checksum fail 必须非 0；包保持 unpublished 且 private；宿主钉 0.1.1-rc.2；不改 hooks.ts、不加 sbtd_* tool、不做 T5。
 Core / supporting / generic subdomains: supporting（只读同步桥）；core 仍是 T3 Book Gate 门禁。
 Corrections to the grill-with-docs result: none（沿用锁定边界）。
 Open conflicts and questions: none.

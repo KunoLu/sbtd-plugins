@@ -20,7 +20,7 @@ dsh plugin --profile web add @kunolu/dsh-sbtd@next
 
 ## manuals
 
-`manuals/` 是从 `KunoLu/640-skills` v1.0.13（sourceRevision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`）只读同步的 skill 正文。每个 skill 只拷贝 `SKILL.md` 和该 skill 自己的 `references/`。不要手改 manuals 正文。
+`manuals/` 是从 `KunoLu/640-skills` v1.0.13（sourceRevision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`）只读同步的 skill 正文。每个 skill 拷贝 `SKILL.md`、该 skill 自己的 `references/`，以及 skill-root markdown（不含 README.md）。不要手改 manuals 正文。
 
 重新同步：给本地 SOURCE 目录，或省略参数让脚本 clone 到钉死 SHA。
 

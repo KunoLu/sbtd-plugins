@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Sync whitelist SKILL.md (+ references/) from KunoLu/640-skills into manuals/.
+# Sync whitelist SKILL.md (+ references/ + skill-root markdown except README.md)
+# from KunoLu/640-skills into manuals/.
 # Usage: sync-manuals.sh [SOURCE]
 set -euo pipefail
 
@@ -25,8 +26,10 @@ WHITELIST=(
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-DEST="${PKG_ROOT}/manuals"
+ORIG_DEST="${PKG_ROOT}/manuals"
+DEST=""
 CLONE_DIR=""
+STAGE=""
 INDEX=""
 
 die() {
@@ -38,8 +41,8 @@ cleanup() {
   if [[ -n "${CLONE_DIR}" && -d "${CLONE_DIR}" ]]; then
     rm -rf "${CLONE_DIR}"
   fi
-  if [[ -n "${INDEX}" && -f "${INDEX}" ]]; then
-    rm -f "${INDEX}"
+  if [[ -n "${STAGE}" && -d "${STAGE}" ]]; then
+    rm -rf "${STAGE}"
   fi
 }
 trap cleanup EXIT
@@ -57,27 +60,28 @@ resolve_source() {
   fi
 
   [[ -d "${SOURCE}" ]] || die "missing source: ${SOURCE}"
-  SOURCE="$(cd "${SOURCE}" && pwd)"
 
-  if ! git -C "${SOURCE}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    die "SHA mismatch: source is not a git checkout (expected ${PINNED_REVISION})"
-  fi
+  local inside
+  inside="$(git -C "${SOURCE}" rev-parse --is-inside-work-tree 2>/dev/null || true)"
+  [[ "${inside}" == "true" ]] || die "SHA mismatch: source is not a git work tree (expected ${PINNED_REVISION})"
+
+  SOURCE="$(git -C "${SOURCE}" rev-parse --show-toplevel)"
 
   local actual
   actual="$(git -C "${SOURCE}" rev-parse HEAD 2>/dev/null || true)"
   [[ "${actual}" == "${PINNED_REVISION}" ]] || die "SHA mismatch: got ${actual:-unknown}, expected ${PINNED_REVISION}"
 }
 
-find_skill_dir() {
+find_skill_prefix() {
   local id="$1"
-  local templates="${SOURCE}/sbtd-workflow-onboard/templates/skills/${id}"
-  local external="${SOURCE}/sbtd-workflow-onboard/assets/external-skills/stable/skills/${id}"
+  local templates="sbtd-workflow-onboard/templates/skills/${id}"
+  local external="sbtd-workflow-onboard/assets/external-skills/stable/skills/${id}"
   local found=""
 
-  if [[ -f "${templates}/SKILL.md" ]]; then
+  if git -C "${SOURCE}" cat-file -e "${PINNED_REVISION}:${templates}/SKILL.md" 2>/dev/null; then
     found="${templates}"
   fi
-  if [[ -f "${external}/SKILL.md" ]]; then
+  if git -C "${SOURCE}" cat-file -e "${PINNED_REVISION}:${external}/SKILL.md" 2>/dev/null; then
     if [[ -n "${found}" ]]; then
       die "duplicate skill source for ${id}"
     fi
@@ -87,34 +91,46 @@ find_skill_dir() {
   printf '%s\n' "${found}"
 }
 
-record_file() {
-  local source_rel="$1"
-  local dest_rel="$2"
-  printf '%s\t%s\n' "${source_rel}" "${dest_rel}" >> "${INDEX}"
+should_copy() {
+  local rel="$1"
+  local base dir
+  base="$(basename "${rel}")"
+  dir="$(dirname "${rel}")"
+  if [[ "${base}" == "SKILL.md" && "${dir}" == "." ]]; then
+    return 0
+  fi
+  if [[ "${rel}" == references/* ]]; then
+    return 0
+  fi
+  if [[ "${dir}" == "." && "${base}" == *.md && "${base}" != "README.md" ]]; then
+    return 0
+  fi
+  return 1
 }
 
 copy_skill() {
   local id="$1"
-  local src="$2"
+  local prefix="$2"
   local dest_dir="${DEST}/${id}"
-  local src_rel="${src#"${SOURCE}/"}"
   mkdir -p "${dest_dir}"
-  cp -f "${src}/SKILL.md" "${dest_dir}/SKILL.md" || die "copy fail: ${id}/SKILL.md"
-  record_file "${src_rel}/SKILL.md" "${id}/SKILL.md"
-  if [[ -d "${src}/references" ]]; then
-    rm -rf "${dest_dir}/references"
-    cp -R "${src}/references" "${dest_dir}/references" || die "copy fail: ${id}/references"
-    local f rel
-    while IFS= read -r -d '' f; do
-      rel="${f#"${src}/"}"
-      record_file "${src_rel}/${rel}" "${id}/${rel}"
-    done < <(find "${src}/references" -type f -print0)
-  fi
+  local copied=0 path rel dest_path
+  while IFS= read -r path; do
+    [[ -n "${path}" ]] || continue
+    rel="${path#"${prefix}/"}"
+    should_copy "${rel}" || continue
+    dest_path="${dest_dir}/${rel}"
+    mkdir -p "$(dirname "${dest_path}")"
+    git -C "${SOURCE}" show "${PINNED_REVISION}:${path}" > "${dest_path}" || die "copy fail: ${id}/${rel}"
+    printf '%s\t%s\n' "${path}" "${id}/${rel}" >> "${INDEX}"
+    copied=1
+  done < <(git -C "${SOURCE}" ls-tree -r --name-only "${PINNED_REVISION}" "${prefix}")
+  [[ "${copied}" -eq 1 ]] || die "copy fail: ${id} (no files)"
+  [[ -f "${dest_dir}/SKILL.md" ]] || die "copy fail: ${id}/SKILL.md"
 }
 
 write_and_verify_manifest() {
   python3 - "$DEST" "$PINNED_REVISION" "$PINNED_VERSION" "$SOURCE_ID" "$INDEX" "$SOURCE" <<'PY'
-import hashlib, json, os, pathlib, sys
+import hashlib, json, os, pathlib, subprocess, sys
 
 dest, revision, version, source_id, index_path, source_root = sys.argv[1:7]
 mapped = []
@@ -131,13 +147,13 @@ with open(index_path, encoding="utf-8") as fh:
             or "/assets/external-skills/stable/skills/" in f"/{source_path}"
         ):
             raise SystemExit(f"sync-manuals: checksum fail: sourcePath outside search roots: {source_path}")
-        source_file = os.path.join(source_root, source_path)
         dest_file = os.path.join(dest, dest_rel)
-        if os.path.islink(source_file) or not os.path.isfile(source_file):
-            raise SystemExit(f"sync-manuals: checksum fail: missing source file {source_path}")
         if os.path.islink(dest_file) or not os.path.isfile(dest_file):
             raise SystemExit(f"sync-manuals: checksum fail: non-regular file {dest_file}")
-        source_digest = hashlib.sha256(pathlib.Path(source_file).read_bytes()).hexdigest()
+        blob = subprocess.check_output(
+            ["git", "-C", source_root, "show", f"{revision}:{source_path}"]
+        )
+        source_digest = hashlib.sha256(blob).hexdigest()
         dest_digest = hashlib.sha256(pathlib.Path(dest_file).read_bytes()).hexdigest()
         if dest_digest != source_digest:
             raise SystemExit(f"sync-manuals: checksum fail: dest does not match source: {dest_rel}")
@@ -181,23 +197,21 @@ manifest = {
     "sourceRevision": revision,
     "files": files,
 }
-manifest_path = os.path.join(dest, "MANIFEST.json")
-with open(manifest_path, "w", encoding="utf-8") as fh:
+with open(os.path.join(dest, "MANIFEST.json"), "w", encoding="utf-8") as fh:
     json.dump(manifest, fh, indent=2, ensure_ascii=False)
     fh.write("\n")
 PY
 }
 
 resolve_source "${1:-}"
-[[ -d "${DEST}" ]] || mkdir -p "${DEST}"
+STAGE="$(mktemp -d "${TMPDIR:-/tmp}/dsh-sbtd-manuals-stage.XXXXXX")"
+DEST="${STAGE}"
 INDEX="${DEST}/.sync-index.tsv"
-
-find "${DEST}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 : > "${INDEX}"
 
 for id in "${WHITELIST[@]}"; do
-  src_dir="$(find_skill_dir "${id}")"
-  copy_skill "${id}" "${src_dir}"
+  prefix="$(find_skill_prefix "${id}")"
+  copy_skill "${id}" "${prefix}"
 done
 
 if find "${DEST}" \( -name 'install.sh' -o -name 'onboard.py' \) | grep -q .; then
@@ -205,4 +219,9 @@ if find "${DEST}" \( -name 'install.sh' -o -name 'onboard.py' \) | grep -q .; th
 fi
 
 write_and_verify_manifest
+rm -f "${INDEX}"
+rm -rf "${ORIG_DEST}"
+mv "${STAGE}" "${ORIG_DEST}"
+STAGE=""
+DEST="${ORIG_DEST}"
 echo "sync-manuals: wrote ${DEST}/MANIFEST.json sourceRevision ${PINNED_REVISION}"
