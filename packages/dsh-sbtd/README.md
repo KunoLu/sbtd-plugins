@@ -16,7 +16,31 @@ DSH 宿主上的 SBTD workflow 适配器。当前为 T5：注册短中文 sbtd s
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
 ```
 
-加载时 `apply()` 打印 `[dsh-sbtd] plugin loaded (T0 stub)`，注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan` 与 `sbtd_review`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。命中 book gate 须 `sbtd_review` 到通过态。
+加载时 `apply()` 注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan` 与 `sbtd_review`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。命中 book gate 须 `sbtd_review` 到通过态。
+
+## sbtd_review
+
+`kind` 仅五枚举：`legacy`、`refactor`、`ddd`、`ddia`、`release`。禁止别名与 skill-id。
+
+| kind | status 枚举 | 3.4 通过态 |
+|---|---|---|
+| `legacy` | `characterized` `needs-safety-net` `seam-required` `blocked` | `characterized` → `passed` |
+| `refactor` | `proceed` `refactor-first` `blocked` | `proceed` → `passed` |
+| `ddd` | `confirmed` `needs-clarification` `blocked` | `confirmed` → `passed` |
+| `ddia` | `confirmed` `needs-design-change` `blocked` | `confirmed` → `passed` |
+| `release` | `ready` `needs-mitigation` `blocked` | `ready` → `passed` |
+
+3.4 映射：`needs-*` / `seam-required` / `refactor-first` 保持 `running`；`blocked` → `blocked`。不改 `requirement`。
+
+示例：
+
+```js
+await sbtd_review({
+  kind: "legacy",
+  status: "characterized",
+  conclusions: "Safety net in t5-review.test.mjs",
+});
+```
 
 ## manuals
 

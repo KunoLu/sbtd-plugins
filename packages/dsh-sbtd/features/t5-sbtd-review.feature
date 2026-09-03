@@ -8,8 +8,10 @@ Feature: DSH T5 sbtd_review 五项 book gate
     Then tools 恰好两个：sbtd_plan 与 sbtd_review
     And inject 仍为 tools 与 systemPrompt
 
-  Scenario: kind 只有五枚举
+  Scenario: 五个规范 kind 成功且拒绝别名
     Given session 已有 plan
+    When 模型用 legacy、refactor、ddd、ddia、release 调用 sbtd_review
+    Then 五个 kind 均成功
     When 模型用 skill-id 或别名调用 sbtd_review
     Then tool 抛错
     And 不推进任何 gate
@@ -21,12 +23,29 @@ Feature: DSH T5 sbtd_review 五项 book gate
     And 不假装 passed
     And 不推进任何 gate
 
-  Scenario: 通过态映射为 passed
+  Scenario: 各 kind 通过态元组
     Given session 已有 plan
-    When 模型提交 characterized 或 proceed 或 confirmed 或 ready
+    When 模型提交 legacy characterized、refactor proceed、ddd confirmed、ddia confirmed、release ready
     Then 对应 gate state 为 passed
     And reviewStatus 已存储
     And requirement 不变
+
+  Scenario: 五个规定标题
+    Given session 已有 plan
+    When 模型完成各 kind 的 sbtd_review
+    Then 返回值含 Legacy Change Safety Review、Refactoring Review、DDD Boundary Review、DDIA Data Design Review、Release Readiness Review
+
+  Scenario: 错误 kind 的 status 被拒绝
+    Given session 已有 plan
+    When 模型用错误 kind 的 status 调用 sbtd_review
+    Then tool 抛错
+    And 不推进任何 gate
+
+  Scenario: 空白填充的 characterized 被拒绝
+    Given session 已有 plan
+    When 模型提交带空白填充的 characterized
+    Then tool 抛错
+    And gate 不变
 
   Scenario: 未通过态保持 running 或 blocked
     Given session 已有 plan
@@ -41,27 +60,42 @@ Feature: DSH T5 sbtd_review 五项 book gate
     Then requirement 仍为 on-demand
     And reviewStatus 为 characterized
 
-  Scenario: 返回规定标题与 requirement 和 state
+  Scenario: 独特结论只在返回值不落盘
+    Given session 已有 plan
+    When 模型提交带独特结论的 sbtd_review
+    Then 结论出现在返回值
+    And 会话状态与 manuals 不包含该结论
+
+  Scenario: 可观察地加载对应 manual
     Given session 已有 plan
     When 模型完成一次 sbtd_review
-    Then 返回值含规定标题
-    And 含该 gate 的 requirement 与 state
-    And 结论只出现在返回值
-    And 从 import.meta.url 只读加载对应 SKILL.md
+    Then 返回值含对应 SKILL.md 正文
+    And 渲染文本含已加载 manual
 
   Scenario: legacy characterized 后允许生产 write
     Given plan 中仅 legacy 为 required
     When 模型以 characterized 完成 sbtd_review
     Then 对 src/foo.ts 的 write 被放行
 
-  Scenario: required 未通过的其他门禁仍生效
-    Given plan 中 legacy 与 refactor 与 ddd 均为 required
+  Scenario: required 未通过的 refactor 拦生产 write
+    Given plan 中 legacy 与 refactor 均为 required
     And legacy 已 characterized
     When 模型写 src/foo.ts
     Then 因 refactor 被 deny
+
+  Scenario: 更早门禁通过后 required 未通过的 ddd 仍拦 write
+    Given plan 中 legacy 与 refactor 与 ddd 均为 required
+    And legacy 已 characterized
+    And refactor 已 proceed
+    When 模型写 src/foo.ts
+    Then 因 ddd 被 deny
+
+  Scenario: required 未通过的 ddia 拦数据路径
     Given 仅 ddia 为 required 未 passed
     When 模型写 src/schema.sql
     Then 因 ddia 被 deny
+
+  Scenario: required 未通过的 release 拦 publish-family bash
     Given 仅 release 为 required 未 passed
     When 模型写 src/foo.ts
     Then 放行

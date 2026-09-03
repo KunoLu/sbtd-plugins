@@ -129,16 +129,13 @@ export function sbtdReview(
     );
   }
   const kind = input.kind;
-  const status = input.status.trim();
-  if (status.length === 0) {
-    throw new Error("sbtd_review: status must be a non-empty string");
-  }
   const allowed = REVIEW_STATUSES[kind];
-  if (!allowed.includes(status)) {
+  if (!allowed.includes(input.status)) {
     throw new Error(
       `sbtd_review: status for ${kind} must be one of ${allowed.join(", ")}`,
     );
   }
+  const status = input.status;
 
   const manual = loadReviewManual(kind);
   const session = getSession(sessionId);
@@ -218,7 +215,7 @@ export function createReviewTool(): ReviewToolDefinition {
         },
       },
       render(_args, value) {
-        return [{ type: "text", text: value.markdown }];
+        return [{ type: "text", text: `${value.markdown}\n\n${value.manual}` }];
       },
     },
     isConcurrencySafe() {
