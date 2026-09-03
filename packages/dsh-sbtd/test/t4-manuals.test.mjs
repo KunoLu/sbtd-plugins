@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -9,11 +10,17 @@ const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const manuals = join(pkgRoot, "manuals");
 const PIN = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
-const WHITELIST = readFileSync(script, "utf8")
-  .match(/WHITELIST=\(([\s\S]*?)\)/)[1]
-  .split("\n")
-  .map((line) => line.trim())
-  .filter((line) => line && !line.startsWith("#"));
+function whitelistFromScript(scriptPath) {
+  const body = readFileSync(scriptPath, "utf8");
+  const match = body.match(/^WHITELIST=\([\s\S]*?^\)/m);
+  assert.ok(match, "WHITELIST assignment missing");
+  const result = spawnSync("bash", ["-c", match[0] + '\nprintf "%s\\n" "${WHITELIST[@]}"'], {
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr || "whitelist parse failed");
+  return result.stdout.split("\n").filter(Boolean);
+}
+const WHITELIST = whitelistFromScript(script);
 const SOURCE_PATH_RE =
   /(?:templates|assets\/external-skills\/stable)\/skills\/([^/]+)\/(.+)$/;
 
