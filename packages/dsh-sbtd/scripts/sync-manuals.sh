@@ -221,5 +221,4 @@ fi
 rm -rf "${BACKUP}"
 STAGE=""
 DEST="${ORIG_DEST}"
-DEST="${ORIG_DEST}"
 echo "sync-manuals: wrote ${DEST}/MANIFEST.json sourceRevision ${PINNED_REVISION}"
