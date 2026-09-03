@@ -35,7 +35,7 @@ Tests import `dist/` after `tsc`. They are not a no-op.
 ## What This Package Must NOT Claim
 
 - No error-handling, logging, IO, or zod conventions "from dsh-sbtd" beyond `console.log` on load.
-- No backends/commands until those files exist. T3 adds src/hooks.ts only.
+- No backends/commands until those files exist. T4 adds manuals sync only; do not add tools.
 - Do not report live `dsh plugin add` as passing unless the `dsh` CLI was actually run.
 
 ## Verification

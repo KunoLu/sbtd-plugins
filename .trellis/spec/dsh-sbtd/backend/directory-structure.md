@@ -1,6 +1,6 @@
 # dsh-sbtd Directory Structure
 
-> Real layout of `packages/dsh-sbtd/` after T3 (hooks on T2 sbtd_plan).
+> Real layout of `packages/dsh-sbtd/` after T4 (manuals sync on T3 hooks).
 > Backends and commands are still absent.
 
 ---
@@ -17,8 +17,11 @@ packages/dsh-sbtd/
 │   ├── t0-installable-stub.feature
 │   ├── t1-section-state.feature
 │   ├── t2-sbtd-plan.feature
-│   └── t3-hooks-gate.feature
-├── manuals/.gitkeep
+│   ├── t3-hooks-gate.feature
+│   └── t4-manuals-sync.feature
+├── manuals/              # SKILL.md + references/ + MANIFEST.json (sourcePath/sha256/sourceRevision)
+├── scripts/
+│   └── sync-manuals.sh
 ├── src/
 │   ├── index.ts            # name / inject / apply; section + plan tool + hooks
 │   ├── tools/
@@ -32,6 +35,8 @@ packages/dsh-sbtd/
 │   ├── t1-state.test.mjs
 │   ├── t2-plan.test.mjs
 │   ├── t3-hooks.test.mjs
+│   ├── t4-manuals.test.mjs
+│   ├── t4-sync-exit.test.mjs
 │   └── snapshots/sbtd-section.txt
 ```
 
