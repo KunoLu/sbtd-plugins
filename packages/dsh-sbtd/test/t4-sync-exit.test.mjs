@@ -77,10 +77,11 @@ function layoutSkills(sourceRoot, extraRel, extraSrc) {
   }
 }
 
-function initSourceRepo(label, extraRel, extraSrc) {
+function initSourceRepo(label, extraRel, extraSrc, tweak) {
   const root = mkdtempSync(join(tmpdir(), `dsh-sbtd-${label}-`));
   git(root, ["init", "-q"]);
   layoutSkills(root, extraRel, extraSrc);
+  if (tweak) tweak(root);
   git(root, ["add", "."]);
   git(root, ["commit", "-q", "-m", label]);
   const sha = git(root, ["rev-parse", "HEAD"]);
@@ -129,6 +130,46 @@ test("sync-manuals exits non-zero on checksum-fail from in-repo fixture", () => 
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /checksum fail:/);
+    assert.equal(source.root.includes("/tmp/640-skills"), false);
+  } finally {
+    rmSync(source.root, { recursive: true, force: true });
+    rmSync(pkg.root, { recursive: true, force: true });
+  }
+});
+
+test("sync-manuals copies fixture blobs with and without trailing newline", () => {
+  const nonewline = join(fixtures, "SKILL.nonewline.md");
+  const source = initSourceRepo("ok-bytes", undefined, undefined, (root) => {
+    const trellis = join(
+      root,
+      "sbtd-workflow-onboard",
+      "templates",
+      "skills",
+      "trellis-workflow",
+      "SKILL.md",
+    );
+    cpSync(nonewline, trellis);
+  });
+  const pkg = isolatedPkg(source.sha);
+  try {
+    const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    const destTrellis = readFileSync(join(pkg.root, "manuals", "trellis-workflow", "SKILL.md"));
+    const destBook = readFileSync(join(pkg.root, "manuals", "book-ddd-distilled-modeling", "SKILL.md"));
+    assert.notEqual(destTrellis[destTrellis.length - 1], 0x0a);
+    assert.equal(destBook[destBook.length - 1], 0x0a);
+    const blob = spawnSync(
+      "git",
+      [
+        "-C",
+        source.root,
+        "cat-file",
+        "blob",
+        `${source.sha}:sbtd-workflow-onboard/templates/skills/trellis-workflow/SKILL.md`,
+      ],
+    );
+    assert.equal(blob.status, 0);
+    assert.deepEqual(destTrellis, blob.stdout);
     assert.equal(source.root.includes("/tmp/640-skills"), false);
   } finally {
     rmSync(source.root, { recursive: true, force: true });

@@ -26,7 +26,6 @@ WHITELIST=(
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ORIG_DEST="${PKG_ROOT}/manuals"
-DEST=""
 CLONE_DIR=""
 STAGE=""
 DEST="${ORIG_DEST}"
@@ -216,7 +215,9 @@ if [[ -e "${ORIG_DEST}" ]]; then
   rmdir "${BACKUP}"
   mv "${ORIG_DEST}" "${BACKUP}"
   if ! mv -T "${STAGE}" "${ORIG_DEST}"; then
-    mv "${BACKUP}" "${ORIG_DEST}"
+    if ! mv -T "${BACKUP}" "${ORIG_DEST}"; then
+      die "replace fail: could not restore last-known-good manuals"
+    fi
     die "replace fail: restored last-known-good manuals"
   fi
   rm -rf "${BACKUP}"
