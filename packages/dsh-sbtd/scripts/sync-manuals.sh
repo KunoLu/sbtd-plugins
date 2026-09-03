@@ -29,6 +29,7 @@ ORIG_DEST="${PKG_ROOT}/manuals"
 DEST=""
 CLONE_DIR=""
 STAGE=""
+DEST="${ORIG_DEST}"
 INDEX=""
 
 die() {
@@ -210,8 +211,14 @@ fi
 rm -f "${DEST}/.sync-list"
 write_and_verify_manifest
 rm -f "${INDEX}"
-rm -rf "${ORIG_DEST}"
-mv "${STAGE}" "${ORIG_DEST}"
+BACKUP="$(mktemp -d "${ORIG_DEST}.bak.XXXXXX")"
+rmdir "${BACKUP}"
+mv "${ORIG_DEST}" "${BACKUP}"
+if ! mv "${STAGE}" "${ORIG_DEST}"; then
+  mv "${BACKUP}" "${ORIG_DEST}"
+  die "replace fail: restored last-known-good manuals"
+fi
+rm -rf "${BACKUP}"
 STAGE=""
 DEST="${ORIG_DEST}"
 echo "sync-manuals: wrote ${DEST}/MANIFEST.json sourceRevision ${PINNED_REVISION}"
