@@ -8,6 +8,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -54,9 +55,18 @@ function git(cwd, args) {
 function layoutSkills(sourceRoot, extraRel, extraSrc) {
   const stub = join(fixtures, "SKILL.md");
   for (const id of WHITELIST) {
-    const dir = id.startsWith("book-") || id === "trellis-workflow"
-      ? join(sourceRoot, "sbtd-workflow-onboard", "templates", "skills", id)
-      : join(sourceRoot, "sbtd-workflow-onboard", "assets", "external-skills", "stable", "skills", id);
+    const dir =
+      id.startsWith("book-") || id === "trellis-workflow"
+        ? join(sourceRoot, "sbtd-workflow-onboard", "templates", "skills", id)
+        : join(
+            sourceRoot,
+            "sbtd-workflow-onboard",
+            "assets",
+            "external-skills",
+            "stable",
+            "skills",
+            id,
+          );
     mkdirSync(dir, { recursive: true });
     cpSync(stub, join(dir, "SKILL.md"));
   }
@@ -68,7 +78,7 @@ function layoutSkills(sourceRoot, extraRel, extraSrc) {
 }
 
 function initSourceRepo(label, extraRel, extraSrc) {
-  const root = mkdtempSync(join(fixtures, `${label}-`));
+  const root = mkdtempSync(join(tmpdir(), `dsh-sbtd-${label}-`));
   git(root, ["init", "-q"]);
   layoutSkills(root, extraRel, extraSrc);
   git(root, ["add", "."]);
@@ -78,14 +88,11 @@ function initSourceRepo(label, extraRel, extraSrc) {
 }
 
 function isolatedPkg(pin, corruptRel) {
-  const root = mkdtempSync(join(fixtures, "pkg-"));
+  const root = mkdtempSync(join(tmpdir(), "dsh-sbtd-pkg-"));
   mkdirSync(join(root, "scripts"), { recursive: true });
   mkdirSync(join(root, "manuals"), { recursive: true });
   writeFileSync(join(root, "manuals", ".keep"), "\n");
-  let body = readFileSync(script, "utf8").replace(
-    `PINNED_REVISION="${PIN}"`,
-    `PINNED_REVISION="${pin}"`,
-  );
+  let body = readFileSync(script, "utf8").replace(`PINNED_REVISION="${PIN}"`, `PINNED_REVISION="${pin}"`);
   if (corruptRel) {
     body = body.replace(
       "rm -f \"${DEST}/.sync-list\"\nwrite_and_verify_manifest",
@@ -108,7 +115,7 @@ test("sync-manuals exits non-zero on copy-fail from in-repo fixture", () => {
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /copy fail:/);
-    assert.ok(source.root.startsWith(fixtures));
+    assert.equal(source.root.includes("/tmp/640-skills"), false);
   } finally {
     rmSync(source.root, { recursive: true, force: true });
     rmSync(pkg.root, { recursive: true, force: true });
@@ -122,8 +129,7 @@ test("sync-manuals exits non-zero on checksum-fail from in-repo fixture", () => 
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /checksum fail:/);
-    assert.ok(source.root.startsWith(fixtures));
-    assert.notEqual(source.root, "/tmp/640-skills");
+    assert.equal(source.root.includes("/tmp/640-skills"), false);
   } finally {
     rmSync(source.root, { recursive: true, force: true });
     rmSync(pkg.root, { recursive: true, force: true });
