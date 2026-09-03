@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync whitelist SKILL.md (+ references/ + root *.md) from KunoLu/640-skills into manuals/.
+# Sync whitelist SKILL.md (+ references/) from KunoLu/640-skills into manuals/.
 # Usage: sync-manuals.sh [SOURCE]
 set -euo pipefail
 
@@ -27,6 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEST="${PKG_ROOT}/manuals"
 CLONE_DIR=""
+INDEX=""
 
 die() {
   echo "sync-manuals: $*" >&2
@@ -36,6 +37,9 @@ die() {
 cleanup() {
   if [[ -n "${CLONE_DIR}" && -d "${CLONE_DIR}" ]]; then
     rm -rf "${CLONE_DIR}"
+  fi
+  if [[ -n "${INDEX}" && -f "${INDEX}" ]]; then
+    rm -f "${INDEX}"
   fi
 }
 trap cleanup EXIT
@@ -52,30 +56,28 @@ resolve_source() {
     SOURCE="${given}"
   fi
 
-  [[ -e "${SOURCE}" ]] || die "missing source: ${SOURCE}"
   [[ -d "${SOURCE}" ]] || die "missing source: ${SOURCE}"
+  SOURCE="$(cd "${SOURCE}" && pwd)"
 
-  local inside
-  inside="$(git -C "${SOURCE}" rev-parse --is-inside-work-tree 2>/dev/null || true)"
-  [[ "${inside}" == "true" ]] || die "SHA mismatch: source is not a git work tree (expected ${PINNED_REVISION})"
-
-  SOURCE="$(git -C "${SOURCE}" rev-parse --show-toplevel)"
+  if ! git -C "${SOURCE}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    die "SHA mismatch: source is not a git checkout (expected ${PINNED_REVISION})"
+  fi
 
   local actual
   actual="$(git -C "${SOURCE}" rev-parse HEAD 2>/dev/null || true)"
   [[ "${actual}" == "${PINNED_REVISION}" ]] || die "SHA mismatch: got ${actual:-unknown}, expected ${PINNED_REVISION}"
 }
 
-find_skill_prefix() {
+find_skill_dir() {
   local id="$1"
-  local templates="sbtd-workflow-onboard/templates/skills/${id}"
-  local external="sbtd-workflow-onboard/assets/external-skills/stable/skills/${id}"
+  local templates="${SOURCE}/sbtd-workflow-onboard/templates/skills/${id}"
+  local external="${SOURCE}/sbtd-workflow-onboard/assets/external-skills/stable/skills/${id}"
   local found=""
 
-  if git -C "${SOURCE}" cat-file -e "${PINNED_REVISION}:${templates}/SKILL.md" 2>/dev/null; then
+  if [[ -f "${templates}/SKILL.md" ]]; then
     found="${templates}"
   fi
-  if git -C "${SOURCE}" cat-file -e "${PINNED_REVISION}:${external}/SKILL.md" 2>/dev/null; then
+  if [[ -f "${external}/SKILL.md" ]]; then
     if [[ -n "${found}" ]]; then
       die "duplicate skill source for ${id}"
     fi
@@ -85,101 +87,117 @@ find_skill_prefix() {
   printf '%s\n' "${found}"
 }
 
-should_copy() {
-  local rel="$1"
-  local base
-  base="$(basename "${rel}")"
-  local dir
-  dir="$(dirname "${rel}")"
-  if [[ "${base}" == "SKILL.md" && "${dir}" == "." ]]; then
-    return 0
-  fi
-  if [[ "${rel}" == references/* ]]; then
-    return 0
-  fi
-  if [[ "${dir}" == "." && "${base}" == *.md ]]; then
-    return 0
-  fi
-  return 1
+record_file() {
+  local source_rel="$1"
+  local dest_rel="$2"
+  printf '%s\t%s\n' "${source_rel}" "${dest_rel}" >> "${INDEX}"
 }
 
 copy_skill() {
   local id="$1"
-  local prefix="$2"
+  local src="$2"
   local dest_dir="${DEST}/${id}"
+  local src_rel="${src#"${SOURCE}/"}"
   mkdir -p "${dest_dir}"
-  local copied=0
-  local path rel dest_path
-  while IFS= read -r path; do
-    [[ -n "${path}" ]] || continue
-    rel="${path#"${prefix}/"}"
-    should_copy "${rel}" || continue
-    dest_path="${dest_dir}/${rel}"
-    mkdir -p "$(dirname "${dest_path}")"
-    git -C "${SOURCE}" show "${PINNED_REVISION}:${path}" > "${dest_path}" || die "copy fail: ${id}/${rel}"
-    copied=1
-  done < <(git -C "${SOURCE}" ls-tree -r --name-only "${PINNED_REVISION}" "${prefix}")
-  [[ "${copied}" -eq 1 ]] || die "copy fail: ${id} (no files)"
-  [[ -f "${dest_dir}/SKILL.md" ]] || die "copy fail: ${id}/SKILL.md"
+  cp -f "${src}/SKILL.md" "${dest_dir}/SKILL.md" || die "copy fail: ${id}/SKILL.md"
+  record_file "${src_rel}/SKILL.md" "${id}/SKILL.md"
+  if [[ -d "${src}/references" ]]; then
+    rm -rf "${dest_dir}/references"
+    cp -R "${src}/references" "${dest_dir}/references" || die "copy fail: ${id}/references"
+    local f rel
+    while IFS= read -r -d '' f; do
+      rel="${f#"${src}/"}"
+      record_file "${src_rel}/${rel}" "${id}/${rel}"
+    done < <(find "${src}/references" -type f -print0)
+  fi
 }
 
 write_and_verify_manifest() {
-  python3 - "$DEST" "$PINNED_REVISION" "$PINNED_VERSION" "$SOURCE_ID" <<'PY'
-import hashlib, json, os, sys, pathlib
+  python3 - "$DEST" "$PINNED_REVISION" "$PINNED_VERSION" "$SOURCE_ID" "$INDEX" "$SOURCE" <<'PY'
+import hashlib, json, os, pathlib, sys
 
-dest, revision, version, source_id = sys.argv[1:5]
-files = []
+dest, revision, version, source_id, index_path, source_root = sys.argv[1:7]
+mapped = []
+with open(index_path, encoding="utf-8") as fh:
+    for raw in fh:
+        line = raw.rstrip("\n")
+        if not line:
+            continue
+        source_path, dest_rel = line.split("\t", 1)
+        source_path = source_path.replace("\\", "/")
+        dest_rel = dest_rel.replace("\\", "/")
+        if not (
+            "/templates/skills/" in f"/{source_path}"
+            or "/assets/external-skills/stable/skills/" in f"/{source_path}"
+        ):
+            raise SystemExit(f"sync-manuals: checksum fail: sourcePath outside search roots: {source_path}")
+        source_file = os.path.join(source_root, source_path)
+        dest_file = os.path.join(dest, dest_rel)
+        if os.path.islink(source_file) or not os.path.isfile(source_file):
+            raise SystemExit(f"sync-manuals: checksum fail: missing source file {source_path}")
+        if os.path.islink(dest_file) or not os.path.isfile(dest_file):
+            raise SystemExit(f"sync-manuals: checksum fail: non-regular file {dest_file}")
+        source_digest = hashlib.sha256(pathlib.Path(source_file).read_bytes()).hexdigest()
+        dest_digest = hashlib.sha256(pathlib.Path(dest_file).read_bytes()).hexdigest()
+        if dest_digest != source_digest:
+            raise SystemExit(f"sync-manuals: checksum fail: dest does not match source: {dest_rel}")
+        mapped.append(
+            {
+                "sourcePath": source_path,
+                "sha256": source_digest,
+                "sourceRevision": revision,
+                "_dest": dest_rel,
+            }
+        )
+
+if not mapped:
+    raise SystemExit("sync-manuals: checksum fail: no files copied")
+
+on_disk = {}
 for dirpath, dirnames, filenames in os.walk(dest):
     dirnames.sort()
     for name in sorted(filenames):
-        if name == "MANIFEST.json":
+        if name in {"MANIFEST.json", ".sync-index.tsv"}:
             continue
         path = os.path.join(dirpath, name)
-        if os.path.islink(path) or not os.path.isfile(path):
-            raise SystemExit(f"sync-manuals: checksum fail: non-regular file {path}")
         rel = os.path.relpath(path, dest).replace(os.sep, "/")
-        digest = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
-        files.append({"path": rel, "sha256": digest})
+        on_disk[rel] = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
 
-files.sort(key=lambda item: item["path"])
-if not files:
-    raise SystemExit("sync-manuals: checksum fail: no files copied")
+expected = {item["_dest"]: item["sha256"] for item in mapped}
+if on_disk != expected:
+    raise SystemExit("sync-manuals: checksum fail: dest does not match MANIFEST")
 
+files = [
+    {
+        "sourcePath": item["sourcePath"],
+        "sha256": item["sha256"],
+        "sourceRevision": item["sourceRevision"],
+    }
+    for item in sorted(mapped, key=lambda item: item["sourcePath"])
+]
 manifest = {
     "source": source_id,
     "version": version,
-    "revision": revision,
+    "sourceRevision": revision,
     "files": files,
 }
 manifest_path = os.path.join(dest, "MANIFEST.json")
 with open(manifest_path, "w", encoding="utf-8") as fh:
     json.dump(manifest, fh, indent=2, ensure_ascii=False)
     fh.write("\n")
-
-on_disk = {}
-for dirpath, dirnames, filenames in os.walk(dest):
-    dirnames.sort()
-    for name in sorted(filenames):
-        if name == "MANIFEST.json":
-            continue
-        path = os.path.join(dirpath, name)
-        rel = os.path.relpath(path, dest).replace(os.sep, "/")
-        on_disk[rel] = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
-
-expected = {item["path"]: item["sha256"] for item in files}
-if on_disk != expected:
-    raise SystemExit("sync-manuals: checksum fail: dest does not match MANIFEST")
 PY
 }
 
 resolve_source "${1:-}"
 [[ -d "${DEST}" ]] || mkdir -p "${DEST}"
+INDEX="${DEST}/.sync-index.tsv"
 
 find "${DEST}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+: > "${INDEX}"
 
 for id in "${WHITELIST[@]}"; do
-  prefix="$(find_skill_prefix "${id}")"
-  copy_skill "${id}" "${prefix}"
+  src_dir="$(find_skill_dir "${id}")"
+  copy_skill "${id}" "${src_dir}"
 done
 
 if find "${DEST}" \( -name 'install.sh' -o -name 'onboard.py' \) | grep -q .; then
@@ -187,4 +205,4 @@ if find "${DEST}" \( -name 'install.sh' -o -name 'onboard.py' \) | grep -q .; th
 fi
 
 write_and_verify_manifest
-echo "sync-manuals: wrote ${DEST}/MANIFEST.json revision ${PINNED_REVISION}"
+echo "sync-manuals: wrote ${DEST}/MANIFEST.json sourceRevision ${PINNED_REVISION}"

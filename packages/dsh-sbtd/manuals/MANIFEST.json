@@ -1,63 +1,67 @@
 {
   "source": "KunoLu/640-skills",
   "version": "1.0.13",
-  "revision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630",
+  "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630",
   "files": [
     {
-      "path": "book-ddd-distilled-modeling/SKILL.md",
-      "sha256": "b8006abc3f2e61c5b62ed7a1a79fad517bbcc614da8156e7157092ebdc20f62a"
+      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
+      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "book-ddia-data-design/SKILL.md",
-      "sha256": "87e63a9595d66343ad6e64813b701fbfea74479a7ee986230592664f289a3d2b"
+      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/grill-me/SKILL.md",
+      "sha256": "caaf8b8de1684f96e26b28f3c29189db5c89cce4b73e1c93d86164f66ef88637",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "book-legacy-change-safety/SKILL.md",
-      "sha256": "f3ade56807980d58874bd92694ebd5f26df7e836ace609c65e0aaf355d08fcea"
+      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/grill-with-docs/SKILL.md",
+      "sha256": "7de372c13488f1ee96cc11cd8907b56b6809cc93eef776eeddd37de6b6cbe3fe",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "book-refactoring-pass/SKILL.md",
-      "sha256": "36a255121e040b962d7019c642fdd9962979a1dd3fc600e5ce0d6cd897faad7f"
+      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/grilling/SKILL.md",
+      "sha256": "10ff989e7498b23b5acb49d5048f11dcd906757d2f79c5cdf8a00001381296f2",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "book-release-readiness/SKILL.md",
-      "sha256": "1c572b8c31a0411d4be956ea17fb3a8b709b2d84c66385502092a61399e58fa5"
+      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/to-spec/SKILL.md",
+      "sha256": "43ad9cf318e5e7d3d1fa360253a37021796dc87a0c2e595ad262661a10f85088",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "domain-modeling/ADR-FORMAT.md",
-      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
+      "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/to-tickets/SKILL.md",
+      "sha256": "5c9fba69845c2519b9b35b9af42ae5142c21f8ca15ac2123dc2722002c8058ae",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "domain-modeling/CONTEXT-FORMAT.md",
-      "sha256": "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/book-ddd-distilled-modeling/SKILL.md",
+      "sha256": "b8006abc3f2e61c5b62ed7a1a79fad517bbcc614da8156e7157092ebdc20f62a",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "domain-modeling/SKILL.md",
-      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/book-ddia-data-design/SKILL.md",
+      "sha256": "87e63a9595d66343ad6e64813b701fbfea74479a7ee986230592664f289a3d2b",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "grill-me/SKILL.md",
-      "sha256": "caaf8b8de1684f96e26b28f3c29189db5c89cce4b73e1c93d86164f66ef88637"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/book-legacy-change-safety/SKILL.md",
+      "sha256": "f3ade56807980d58874bd92694ebd5f26df7e836ace609c65e0aaf355d08fcea",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "grill-with-docs/SKILL.md",
-      "sha256": "7de372c13488f1ee96cc11cd8907b56b6809cc93eef776eeddd37de6b6cbe3fe"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/book-refactoring-pass/SKILL.md",
+      "sha256": "36a255121e040b962d7019c642fdd9962979a1dd3fc600e5ce0d6cd897faad7f",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "grilling/SKILL.md",
-      "sha256": "10ff989e7498b23b5acb49d5048f11dcd906757d2f79c5cdf8a00001381296f2"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/book-release-readiness/SKILL.md",
+      "sha256": "1c572b8c31a0411d4be956ea17fb3a8b709b2d84c66385502092a61399e58fa5",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     },
     {
-      "path": "to-spec/SKILL.md",
-      "sha256": "43ad9cf318e5e7d3d1fa360253a37021796dc87a0c2e595ad262661a10f85088"
-    },
-    {
-      "path": "to-tickets/SKILL.md",
-      "sha256": "5c9fba69845c2519b9b35b9af42ae5142c21f8ca15ac2123dc2722002c8058ae"
-    },
-    {
-      "path": "trellis-workflow/SKILL.md",
-      "sha256": "3d6589cb346649886eed7d2e86be7e2650f2f0dda909d76704284e17f765f77e"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/trellis-workflow/SKILL.md",
+      "sha256": "3d6589cb346649886eed7d2e86be7e2650f2f0dda909d76704284e17f765f77e",
+      "sourceRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630"
     }
   ]
 }

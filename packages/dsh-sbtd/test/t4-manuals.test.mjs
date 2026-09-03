@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -22,37 +22,67 @@ const WHITELIST = [
   "to-tickets",
   "trellis-workflow",
 ];
+const SOURCE_PATH_RE =
+  /(?:templates|assets\/external-skills\/stable)\/skills\/([^/]+)\/(.+)$/;
 
-function walkFiles(root, prefix, out) {
-  for (const ent of readdirSync(root, { withFileTypes: true })) {
-    const rel = prefix ? `${prefix}/${ent.name}` : ent.name;
-    const p = join(root, ent.name);
-    if (ent.isDirectory()) walkFiles(p, rel, out);
-    else if (ent.name !== "MANIFEST.json") {
-      out[rel] = createHash("sha256").update(readFileSync(p)).digest("hex");
-    }
+function destFromSourcePath(sourcePath) {
+  const match = sourcePath.match(SOURCE_PATH_RE);
+  assert.ok(match, `sourcePath must be under a search root: ${sourcePath}`);
+  return join(manuals, match[1], match[2]);
+}
+
+function collectFilenames(dir, names = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === "node_modules" || entry.name === "dist") continue;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) collectFilenames(path, names);
+    else names.push(entry.name);
   }
+  return names;
 }
 
 test("manuals whitelist and MANIFEST checksums", () => {
   const manifest = JSON.parse(readFileSync(join(manuals, "MANIFEST.json"), "utf8"));
-  assert.equal(manifest.revision, PIN);
+  assert.equal(manifest.sourceRevision, PIN);
   assert.equal(manifest.source, "KunoLu/640-skills");
   assert.equal(manifest.version, "1.0.13");
+  assert.equal("revision" in manifest, false);
+
   const dirs = readdirSync(manuals, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
-    .map((e) => e.name)
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
     .sort();
   assert.deepEqual(dirs, [...WHITELIST].sort());
-  const onDisk = {};
-  walkFiles(manuals, "", onDisk);
-  const expected = Object.fromEntries(manifest.files.map((f) => [f.path, f.sha256]));
-  assert.deepEqual(onDisk, expected);
-  assert.ok(existsSync(join(manuals, "domain-modeling", "CONTEXT-FORMAT.md")));
-  assert.ok(existsSync(join(manuals, "domain-modeling", "ADR-FORMAT.md")));
-  assert.equal(existsSync(join(manuals, "install.sh")), false);
+
+  const hashedDest = new Set();
+  for (const file of manifest.files) {
+    assert.equal(file.sourceRevision, PIN);
+    assert.equal(typeof file.sourcePath, "string");
+    assert.equal(typeof file.sha256, "string");
+    assert.equal("path" in file, false);
+    const dest = destFromSourcePath(file.sourcePath);
+    assert.equal(existsSync(dest), true);
+    assert.equal(statSync(dest).isFile(), true);
+    const digest = createHash("sha256").update(readFileSync(dest)).digest("hex");
+    assert.equal(digest, file.sha256);
+    hashedDest.add(dest);
+  }
+
+  for (const id of dirs) {
+    const skill = join(manuals, id, "SKILL.md");
+    assert.equal(hashedDest.has(skill), true);
+    assert.equal(existsSync(join(manuals, id, "ADR-FORMAT.md")), false);
+    assert.equal(existsSync(join(manuals, id, "CONTEXT-FORMAT.md")), false);
+    assert.equal(existsSync(join(manuals, id, "agents")), false);
+  }
+
+  const names = collectFilenames(pkgRoot);
+  assert.equal(names.includes("install.sh"), false);
+  assert.equal(names.includes("onboard.py"), false);
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /不要手改/);
   assert.match(readme, /f8aa0d7225a26c5e00b81d2f1b05121108e63630/);
+  assert.match(readme, /sourcePath/);
+  assert.match(readme, /sourceRevision/);
   assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), ["plan.ts"]);
 });

@@ -20,6 +20,12 @@ dsh plugin --profile web add @kunolu/dsh-sbtd@next
 
 ## manuals
 
-`manuals/` 是从 `KunoLu/640-skills` v1.0.13（revision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`）只读同步的 skill 正文。每个 skill 只拷贝 `SKILL.md` 和该 skill 自己的 `references/`。不要手改 manuals 正文。
+`manuals/` 是从 `KunoLu/640-skills` v1.0.13（sourceRevision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`）只读同步的 skill 正文。每个 skill 只拷贝 `SKILL.md` 和该 skill 自己的 `references/`。不要手改 manuals 正文。
 
-重新同步：给本地 SOURCE 目录，或省略参数让脚本 clone 到钉死 SHA。`packages/dsh-sbtd/scripts/sync-manuals.sh`。`manuals/MANIFEST.json` 记录 path、sha256 与 revision。源缺失、SHA 不匹配、拷贝失败或 checksum 失败时退出非 0。
+重新同步：给本地 SOURCE 目录，或省略参数让脚本 clone 到钉死 SHA。
+
+```bash
+packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
+```
+
+`manuals/MANIFEST.json` 每条记录含 `sourcePath`（640-skills 仓相对源路径）、`sha256` 与 `sourceRevision`。源缺失、SHA 不匹配、拷贝失败或 checksum 失败时退出非 0。
