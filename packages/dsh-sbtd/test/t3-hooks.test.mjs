@@ -44,12 +44,13 @@ function writeSrc(sessionId, file = "src/foo.ts") {
   };
 }
 
-test("apply 注册 pre-execute 与 pre-step，且不增加 sbtd_* tool", () => {
+test("apply 注册 pre-execute 与 pre-step，且仅两个 sbtd_* tool", () => {
   const { tools, hooks } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 1);
+  assert.equal(tools.length, 2);
   assert.equal(tools[0].name, "sbtd_plan");
+  assert.equal(tools[1].name, "sbtd_review");
   assert.equal(typeof hooks.get(PRE_EXECUTE_EVENT), "function");
   assert.equal(typeof hooks.get(PRE_STEP_EVENT), "function");
 });

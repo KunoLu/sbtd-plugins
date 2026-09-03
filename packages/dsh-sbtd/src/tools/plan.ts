@@ -44,7 +44,7 @@ export type PlanToolDefinition = {
 
 export type ToolsHost = {
   tools: {
-    register: (definition: PlanToolDefinition) => unknown;
+    register: (definition: { name: string }) => unknown;
   };
 };
 

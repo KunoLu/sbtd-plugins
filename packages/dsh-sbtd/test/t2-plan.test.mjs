@@ -187,8 +187,9 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
 
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 1);
+  assert.equal(tools.length, 2);
   assert.equal(tools[0].name, SBTD_PLAN_TOOL_NAME);
+  assert.equal(tools[1].name, "sbtd_review");
   assert.equal(sections[0].name, "sbtd");
   assert.equal(tools[0].isConcurrencySafe({}), false);
   assert.equal(tools[0].parameters.type, "object");

@@ -1,6 +1,6 @@
 # @kunolu/dsh-sbtd
 
-DSH 宿主上的 SBTD workflow 适配器。当前为 T4：注册短中文 sbtd section、进程内会话状态、`sbtd_plan`、`tools/pre-execute` / `agent/pre-step` hooks 门禁，以及从 640-skills 只读同步的 `manuals/`。
+DSH 宿主上的 SBTD workflow 适配器。当前为 T5：注册短中文 sbtd section、进程内会话状态、`sbtd_plan`、`sbtd_review`、`tools/pre-execute` / `agent/pre-step` hooks 门禁，以及从 640-skills 只读同步的 `manuals/`。
 
 目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
 
@@ -16,7 +16,7 @@ DSH 宿主上的 SBTD workflow 适配器。当前为 T4：注册短中文 sbtd s
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
 ```
 
-加载时 `apply()` 打印 `[dsh-sbtd] plugin loaded (T0 stub)`，注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。
+加载时 `apply()` 打印 `[dsh-sbtd] plugin loaded (T0 stub)`，注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan` 与 `sbtd_review`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。命中 book gate 须 `sbtd_review` 到通过态。
 
 ## manuals
 

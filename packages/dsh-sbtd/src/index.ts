@@ -1,6 +1,7 @@
 import { type HooksHost, registerHooks } from "./hooks.js";
 import { registerSection, type SectionHost } from "./section.js";
 import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
+import { registerReviewTool } from "./tools/review.js";
 
 export const name = "dsh-sbtd";
 export const inject = ["tools", "systemPrompt"] as const;
@@ -28,10 +29,19 @@ export {
   sessionIdFromExec,
   taskIdFromSummary,
 } from "./tools/plan.js";
+export {
+  createReviewTool,
+  REVIEW_KINDS,
+  REVIEW_TITLES,
+  registerReviewTool,
+  SBTD_REVIEW_TOOL_NAME,
+  sbtdReview,
+} from "./tools/review.js";
 
 export function apply(ctx: PluginHost): void {
   console.log("[dsh-sbtd] plugin loaded (T0 stub)");
   registerSection(ctx);
   registerPlanTool(ctx);
+  registerReviewTool(ctx);
   registerHooks(ctx);
 }

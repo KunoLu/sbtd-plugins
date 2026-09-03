@@ -87,7 +87,10 @@ test("manuals whitelist and MANIFEST checksums", () => {
   assert.match(readme, /SKILL\.md/);
   assert.match(readme, /references\//);
   assert.doesNotMatch(readme, /skill-root markdown/);
-  assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), ["plan.ts"]);
+  assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), [
+    "plan.ts",
+    "review.ts",
+  ]);
   const trellis = readFileSync(join(manuals, "trellis-workflow", "SKILL.md"));
   assert.notEqual(trellis.length, 0);
   assert.notEqual(trellis[trellis.length - 1], 0x0a, "trellis-workflow SKILL.md must match pin blob (no trailing newline)");
