@@ -18,12 +18,17 @@ const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 const fixtures = join(pkgRoot, "test", "fixtures", "sync-manuals");
 const PIN = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
-const scriptBody = readFileSync(script, "utf8");
-const WHITELIST = scriptBody
-  .match(/WHITELIST=\(([\s\S]*?)\)/)[1]
-  .split("\n")
-  .map((line) => line.trim())
-  .filter((line) => line && !line.startsWith("#"));
+function whitelistFromScript(scriptPath) {
+  const body = readFileSync(scriptPath, "utf8");
+  const match = body.match(/^WHITELIST=\([\s\S]*?^\)/m);
+  assert.ok(match, "WHITELIST assignment missing");
+  const result = spawnSync("bash", ["-c", match[0] + '\nprintf "%s\\n" "${WHITELIST[@]}"'], {
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr || "whitelist parse failed");
+  return result.stdout.split("\n").filter(Boolean);
+}
+const WHITELIST = whitelistFromScript(script);
 
 test("sync-manuals exits non-zero on missing source or SHA mismatch", () => {
   const missing = spawnSync("bash", [script, "/no/such/640-skills"], { encoding: "utf8" });
@@ -70,24 +75,25 @@ function layoutSkills(sourceRoot, extraRel, extraSrc) {
   }
 }
 
-function initSourceRepo(label, extraRel, extraSrc, tweak) {
+function initSourceRepo(t, label, extraRel, extraSrc, tweak) {
   const root = mkdtempSync(join(tmpdir(), `dsh-sbtd-${label}-`));
-  try {
-    git(root, ["init", "-q"]);
-    layoutSkills(root, extraRel, extraSrc);
-    if (tweak) tweak(root);
-    git(root, ["add", "."]);
-    git(root, ["commit", "-q", "-m", label]);
-    const sha = git(root, ["rev-parse", "HEAD"]);
-    return { root, sha };
-  } catch (err) {
+  t.after(() => {
     rmSync(root, { recursive: true, force: true });
-    throw err;
-  }
+  });
+  git(root, ["init", "-q"]);
+  layoutSkills(root, extraRel, extraSrc);
+  if (tweak) tweak(root);
+  git(root, ["add", "."]);
+  git(root, ["commit", "-q", "-m", label]);
+  const sha = git(root, ["rev-parse", "HEAD"]);
+  return { root, sha };
 }
 
-function isolatedPkg(pin, corruptRel, { destAbsent = false } = {}) {
+function isolatedPkg(t, pin, corruptRel, { destAbsent = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), "dsh-sbtd-pkg-"));
+  t.after(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
   try {
     mkdirSync(join(root, "scripts"), { recursive: true });
     if (!destAbsent) {
@@ -110,13 +116,14 @@ function isolatedPkg(pin, corruptRel, { destAbsent = false } = {}) {
   }
 }
 
-test("sync-manuals exits non-zero on copy-fail from in-repo fixture", () => {
+test("sync-manuals exits non-zero on copy-fail from in-repo fixture", (t) => {
   const source = initSourceRepo(
+    t,
     "copy-fail",
     "sbtd-workflow-onboard/assets/external-skills/stable/skills/grill-me/references/install.sh",
     join(fixtures, "blocked-install.sh"),
   );
-  const pkg = isolatedPkg(source.sha);
+  const pkg = isolatedPkg(t, source.sha);
   try {
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.notEqual(result.status, 0);
@@ -128,9 +135,9 @@ test("sync-manuals exits non-zero on copy-fail from in-repo fixture", () => {
   }
 });
 
-test("sync-manuals exits non-zero on checksum-fail from in-repo fixture", () => {
-  const source = initSourceRepo("checksum-fail");
-  const pkg = isolatedPkg(source.sha, "grill-me/SKILL.md");
+test("sync-manuals exits non-zero on checksum-fail from in-repo fixture", (t) => {
+  const source = initSourceRepo(t, "checksum-fail");
+  const pkg = isolatedPkg(t, source.sha, "grill-me/SKILL.md");
   try {
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.notEqual(result.status, 0);
@@ -142,9 +149,9 @@ test("sync-manuals exits non-zero on checksum-fail from in-repo fixture", () => 
   }
 });
 
-test("sync-manuals copies fixture blobs with and without trailing newline", () => {
+test("sync-manuals copies fixture blobs with and without trailing newline", (t) => {
   const nonewline = join(fixtures, "SKILL.nonewline.md");
-  const source = initSourceRepo("ok-bytes", undefined, undefined, (root) => {
+  const source = initSourceRepo(t, "ok-bytes", undefined, undefined, (root) => {
     const trellis = join(
       root,
       "sbtd-workflow-onboard",
@@ -155,7 +162,7 @@ test("sync-manuals copies fixture blobs with and without trailing newline", () =
     );
     cpSync(nonewline, trellis);
   });
-  const pkg = isolatedPkg(source.sha);
+  const pkg = isolatedPkg(t, source.sha);
   try {
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
@@ -182,9 +189,9 @@ test("sync-manuals copies fixture blobs with and without trailing newline", () =
   }
 });
 
-test("sync-manuals promotes when manuals dest is absent", () => {
-  const source = initSourceRepo("dest-absent");
-  const pkg = isolatedPkg(source.sha, undefined, { destAbsent: true });
+test("sync-manuals promotes when manuals dest is absent", (t) => {
+  const source = initSourceRepo(t, "dest-absent");
+  const pkg = isolatedPkg(t, source.sha, undefined, { destAbsent: true });
   try {
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);

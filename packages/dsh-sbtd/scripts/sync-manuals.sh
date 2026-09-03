@@ -192,8 +192,10 @@ with open(os.path.join(dest, "MANIFEST.json"), "w", encoding="utf-8") as fh:
 PY
 }
 
-# POSIX: os.rename fails closed if dest exists (no GNU mv -T). Callers must
-# free ORIG_DEST first. Never rmdir the mktemp backup dir (name hole).
+# Portable substitute for GNU mv -T: do not move *into* dest. Callers must
+# free ORIG_DEST first. lexists refuses dest at check time; os.rename still
+# replaces an empty dest (TOCTTOU). Not a no-clobber primitive. Never rmdir
+# the mktemp backup dir (name hole).
 rename_into() {
   python3 - "$1" "$2" <<'PY'
 import os, sys
@@ -226,10 +228,6 @@ rm -f "${DEST}/.sync-list"
 write_and_verify_manifest
 rm -f "${INDEX}"
 
-command -v python3 >/dev/null || die "replace fail: python3 required for portable rename"
-if ! python3 -c "import os; os.rename"; then
-  die "replace fail: python rename unavailable"
-fi
 [[ -d "${STAGE}" && ! -L "${STAGE}" ]] || die "replace fail: missing stage"
 
 if [[ -e "${ORIG_DEST}" ]]; then
@@ -240,7 +238,6 @@ if [[ -e "${ORIG_DEST}" ]]; then
     die "replace fail: backup slot occupied"
   fi
   if ! rename_into "${ORIG_DEST}" "${BACKUP}"; then
-    rmdir "${BACKUP_DIR}" 2>/dev/null || true
     die "replace fail: could not move last-known-good manuals"
   fi
   if ! rename_into "${STAGE}" "${ORIG_DEST}"; then
