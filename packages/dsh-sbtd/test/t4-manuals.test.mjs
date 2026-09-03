@@ -8,20 +8,12 @@ import { fileURLToPath } from "node:url";
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const manuals = join(pkgRoot, "manuals");
 const PIN = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
-const WHITELIST = [
-  "book-ddd-distilled-modeling",
-  "book-ddia-data-design",
-  "book-legacy-change-safety",
-  "book-refactoring-pass",
-  "book-release-readiness",
-  "grill-with-docs",
-  "grill-me",
-  "grilling",
-  "domain-modeling",
-  "to-spec",
-  "to-tickets",
-  "trellis-workflow",
-];
+const script = join(pkgRoot, "scripts", "sync-manuals.sh");
+const WHITELIST = readFileSync(script, "utf8")
+  .match(/WHITELIST=\(([\s\S]*?)\)/)[1]
+  .split("\n")
+  .map((line) => line.trim())
+  .filter((line) => line && !line.startsWith("#"));
 const SOURCE_PATH_RE =
   /(?:templates|assets\/external-skills\/stable)\/skills\/([^/]+)\/(.+)$/;
 

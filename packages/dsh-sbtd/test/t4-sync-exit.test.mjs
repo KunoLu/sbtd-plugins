@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -17,20 +18,12 @@ const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 const fixtures = join(pkgRoot, "test", "fixtures", "sync-manuals");
 const PIN = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
-const WHITELIST = [
-  "book-ddd-distilled-modeling",
-  "book-ddia-data-design",
-  "book-legacy-change-safety",
-  "book-refactoring-pass",
-  "book-release-readiness",
-  "grill-with-docs",
-  "grill-me",
-  "grilling",
-  "domain-modeling",
-  "to-spec",
-  "to-tickets",
-  "trellis-workflow",
-];
+const scriptBody = readFileSync(script, "utf8");
+const WHITELIST = scriptBody
+  .match(/WHITELIST=\(([\s\S]*?)\)/)[1]
+  .split("\n")
+  .map((line) => line.trim())
+  .filter((line) => line && !line.startsWith("#"));
 
 test("sync-manuals exits non-zero on missing source or SHA mismatch", () => {
   const missing = spawnSync("bash", [script, "/no/such/640-skills"], { encoding: "utf8" });
@@ -79,30 +72,42 @@ function layoutSkills(sourceRoot, extraRel, extraSrc) {
 
 function initSourceRepo(label, extraRel, extraSrc, tweak) {
   const root = mkdtempSync(join(tmpdir(), `dsh-sbtd-${label}-`));
-  git(root, ["init", "-q"]);
-  layoutSkills(root, extraRel, extraSrc);
-  if (tweak) tweak(root);
-  git(root, ["add", "."]);
-  git(root, ["commit", "-q", "-m", label]);
-  const sha = git(root, ["rev-parse", "HEAD"]);
-  return { root, sha };
+  try {
+    git(root, ["init", "-q"]);
+    layoutSkills(root, extraRel, extraSrc);
+    if (tweak) tweak(root);
+    git(root, ["add", "."]);
+    git(root, ["commit", "-q", "-m", label]);
+    const sha = git(root, ["rev-parse", "HEAD"]);
+    return { root, sha };
+  } catch (err) {
+    rmSync(root, { recursive: true, force: true });
+    throw err;
+  }
 }
 
-function isolatedPkg(pin, corruptRel) {
+function isolatedPkg(pin, corruptRel, { destAbsent = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), "dsh-sbtd-pkg-"));
-  mkdirSync(join(root, "scripts"), { recursive: true });
-  mkdirSync(join(root, "manuals"), { recursive: true });
-  writeFileSync(join(root, "manuals", ".keep"), "\n");
-  let body = readFileSync(script, "utf8").replace(`PINNED_REVISION="${PIN}"`, `PINNED_REVISION="${pin}"`);
-  if (corruptRel) {
-    body = body.replace(
-      "rm -f \"${DEST}/.sync-list\"\nwrite_and_verify_manifest",
-      `rm -f "\${DEST}/.sync-list"\nprintf x >> "\${DEST}/${corruptRel}"\nwrite_and_verify_manifest`,
-    );
+  try {
+    mkdirSync(join(root, "scripts"), { recursive: true });
+    if (!destAbsent) {
+      mkdirSync(join(root, "manuals"), { recursive: true });
+      writeFileSync(join(root, "manuals", ".keep"), "\n");
+    }
+    let body = readFileSync(script, "utf8").replace(`PINNED_REVISION="${PIN}"`, `PINNED_REVISION="${pin}"`);
+    if (corruptRel) {
+      body = body.replace(
+        "rm -f \"${DEST}/.sync-list\"\nwrite_and_verify_manifest",
+        `rm -f "\${DEST}/.sync-list"\nprintf x >> "\${DEST}/${corruptRel}"\nwrite_and_verify_manifest`,
+      );
+    }
+    const isolatedScript = join(root, "scripts", "sync-manuals.sh");
+    writeFileSync(isolatedScript, body, { mode: 0o755 });
+    return { root, script: isolatedScript };
+  } catch (err) {
+    rmSync(root, { recursive: true, force: true });
+    throw err;
   }
-  const isolatedScript = join(root, "scripts", "sync-manuals.sh");
-  writeFileSync(isolatedScript, body, { mode: 0o755 });
-  return { root, script: isolatedScript };
 }
 
 test("sync-manuals exits non-zero on copy-fail from in-repo fixture", () => {
@@ -171,6 +176,20 @@ test("sync-manuals copies fixture blobs with and without trailing newline", () =
     assert.equal(blob.status, 0);
     assert.deepEqual(destTrellis, blob.stdout);
     assert.equal(source.root.includes("/tmp/640-skills"), false);
+  } finally {
+    rmSync(source.root, { recursive: true, force: true });
+    rmSync(pkg.root, { recursive: true, force: true });
+  }
+});
+
+test("sync-manuals promotes when manuals dest is absent", () => {
+  const source = initSourceRepo("dest-absent");
+  const pkg = isolatedPkg(source.sha, undefined, { destAbsent: true });
+  try {
+    const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(existsSync(join(pkg.root, "manuals", "MANIFEST.json")), true);
+    assert.equal(existsSync(join(pkg.root, "manuals", "grill-me", "SKILL.md")), true);
   } finally {
     rmSync(source.root, { recursive: true, force: true });
     rmSync(pkg.root, { recursive: true, force: true });
