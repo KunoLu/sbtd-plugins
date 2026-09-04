@@ -42,3 +42,31 @@
 - T6 `sbtd_clarify` 及任何第三个 `sbtd_*` tool
 - 改 hooks 分类规则（本轮只通过 review 推进 gate）
 - 发布 / 翻 private / 跟 0.1.2-alpha
+
+## Known gaps / follow-ups (accepted deferred)
+
+These two items are **parked as follow-ups only**. They are **not** CLEAN concealment: they remain known product gaps on this head, out of this T5 docs pass, and must not be treated as shipped or as Security/CLEAN-pass evidence.
+
+Do **not** implement them in this task / this PR. Host pin remains `@deepseek-ai/dsh@0.1.1-rc.2`. No T6.
+
+### Locked fixed on this head (Security already passed)
+
+Head `87572c5e5cde9ef23a65bd19ff369530978e6f97` (`feat/dsh-sbtd-t5`). These holes are **fixed**; mention them so follow-ups are not confused with them:
+
+- On-demand → required promotion resets an inherited pass.
+- Required + passed resets when the catalog trigger fact changes.
+- A → B → C catalog-fact keep-pass hole is closed: catalog fact is retained on the gate across reset / review.
+
+### Follow-up (a) — remediation deadlock (`seam-required` / `refactor-first`)
+
+- Mapping (T5, as specified): `seam-required` and `refactor-first` map to gate state `running`.
+- Enforcement (T3): `gatePreExecute` still requires `passed` before production writes.
+- Effect: the designed remediation loop cannot write the safety seam / minimal refactor while the gate is `running` → deadlock.
+- Intended fix (not this PR): hook exception / `safety-seam-only` per design section 3.4. Separate follow-up task.
+
+### Follow-up (b) — `sbtd_review` does not enforce legacy-before-refactor
+
+- When both legacy and refactoring are `required`, `sbtd_review` does not enforce “legacy first, then refactor”.
+- T3 deny still points at legacy first; order is not a T5 review-tool invariant.
+- Park as follow-up. Do not treat T3 deny copy as `sbtd_review` enforcement.
+
