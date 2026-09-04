@@ -260,10 +260,8 @@ test("on-demand ddia confirmed 提升 required 重置 planned 并拦 schema.sql"
   assert.equal(promoted.plan.gates.ddia.state, "planned");
   assert.notEqual(promoted.plan.gates.ddia.state, "passed");
   assert.equal(promoted.plan.gates.ddia.reviewStatus, undefined);
-  assert.equal(
-    promoted.plan.gates.ddia.fact,
-    "promoted from on-demand; reset inherited pass",
-  );
+  assert.equal(promoted.plan.gates.ddia.fact, "persistence");
+  assert.match(promoted.markdown, /promoted from on-demand; reset inherited pass/);
 
   const { hooks } = loadPlugin();
   const data = await hooks.get(PRE_EXECUTE_EVENT)(
@@ -296,9 +294,10 @@ test("required+passed ddia persist 再 plan schema 重置并拦 schema.sql", asy
   assert.equal(reset.plan.gates.ddia.state, "planned");
   assert.notEqual(reset.plan.gates.ddia.state, "passed");
   assert.equal(reset.plan.gates.ddia.reviewStatus, undefined);
-  assert.match(reset.plan.gates.ddia.fact ?? "", /trigger fact changed/);
-  assert.match(reset.plan.gates.ddia.fact ?? "", /persistence/);
-  assert.match(reset.plan.gates.ddia.fact ?? "", /database\/schema/);
+  assert.equal(reset.plan.gates.ddia.fact, "database/schema");
+  assert.match(reset.markdown, /trigger fact changed/);
+  assert.match(reset.markdown, /persistence/);
+  assert.match(reset.markdown, /database\/schema/);
 
   const { hooks } = loadPlugin();
   const data = await hooks.get(PRE_EXECUTE_EVENT)(
@@ -311,6 +310,57 @@ test("required+passed ddia persist 再 plan schema 重置并拦 schema.sql", asy
   );
   assert.equal(data.kind, "deny");
   assert.match(data.reason, /sbtd_review kind=ddia/);
+});
+
+test("A→B reviewed →C 必须 planned 并继续拦 schema.sql；同触发可保持 passed", async () => {
+  const id = "t5-abc-fact-chain-ddia";
+  const summary = "abc catalog chain with review";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+  sbtdReview(id, { kind: "ddia", status: "confirmed", conclusions: "" });
+  assert.equal(live.plan.gates.ddia.state, "passed");
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+
+  const toB = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(toB.plan.gates.ddia.state, "planned");
+  assert.equal(toB.plan.gates.ddia.fact, "database/schema");
+  assert.match(toB.markdown, /trigger fact changed/);
+
+  sbtdReview(id, { kind: "ddia", status: "confirmed", conclusions: "B ok" });
+  assert.equal(live.plan.gates.ddia.state, "passed");
+  assert.equal(live.plan.gates.ddia.fact, "database/schema");
+
+  const toC = sbtdPlan(id, { task_summary: summary, facts: ["cache"] });
+  assert.equal(toC.plan.gates.ddia.requirement, "required");
+  assert.equal(toC.plan.gates.ddia.state, "planned");
+  assert.notEqual(toC.plan.gates.ddia.state, "passed");
+  assert.equal(toC.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(toC.plan.gates.ddia.fact, "cache");
+  assert.match(toC.markdown, /trigger fact changed/);
+  assert.match(toC.markdown, /database\/schema/);
+  assert.match(toC.markdown, /cache/);
+
+  const { hooks } = loadPlugin();
+  const denied = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "str_replace_editor",
+      arguments: { filePath: "src/schema.sql" },
+      agent: { id },
+    },
+    nextAllow,
+  );
+  assert.equal(denied.kind, "deny");
+  assert.match(denied.reason, /sbtd_review kind=ddia/);
+
+  sbtdReview(id, { kind: "ddia", status: "confirmed", conclusions: "C ok" });
+  assert.equal(live.plan.gates.ddia.state, "passed");
+  assert.equal(live.plan.gates.ddia.fact, "cache");
+
+  const same = sbtdPlan(id, { task_summary: summary, facts: ["cache"] });
+  assert.equal(same.plan.gates.ddia.state, "passed");
+  assert.equal(same.plan.gates.ddia.fact, "cache");
+  assert.equal(same.plan.gates.ddia.reviewStatus, "confirmed");
 });
 
 test("独特结论只在返回值不落盘", () => {

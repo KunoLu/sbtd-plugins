@@ -66,7 +66,8 @@ Feature: DSH T5 sbtd_review 五项 book gate
     And 同一 task_summary 再次 sbtd_plan 并给出 persist facts
     Then ddia 为 required 且 state 为 planned 而非 passed
     And reviewStatus 已清除
-    And fact 写明 promoted from on-demand; reset inherited pass
+    And fact 为 persistence catalog 触发事实
+    And markdown 写明 promoted from on-demand; reset inherited pass
     When 模型用 str_replace_editor 改 src/schema.sql
     Then 因 ddia 被 deny
 
@@ -76,9 +77,23 @@ Feature: DSH T5 sbtd_review 五项 book gate
     When 同一 task_summary 再次 sbtd_plan 并给出 schema facts
     Then ddia 为 required 且 state 为 planned 而非 passed
     And reviewStatus 已清除
-    And fact 写明 trigger fact changed 及旧到新
+    And fact 为 database/schema catalog 触发事实
+    And markdown 写明 trigger fact changed 及旧到新
     When 模型用 str_replace_editor 改 src/schema.sql
     Then 因 ddia 被 deny
+
+  Scenario: A→B reviewed →C 不得绕过 fact 重置
+    Given persist 触发的 required ddia 已 passed
+    When 同一 task_summary 再次 sbtd_plan 并给出 schema facts
+    And 模型以 confirmed 完成 sbtd_review kind=ddia
+    And 同一 task_summary 再次 sbtd_plan 并给出 cache facts
+    Then ddia 为 required 且 state 为 planned 而非 passed
+    And fact 为 cache catalog 触发事实
+    When 模型用 str_replace_editor 改 src/schema.sql
+    Then 因 ddia 被 deny
+    When 模型以 confirmed 完成 sbtd_review kind=ddia
+    And 同一 task_summary 再次 sbtd_plan 并给出 cache facts
+    Then ddia 保持 passed
 
   Scenario: 独特结论只在返回值不落盘
     Given session 已有 plan

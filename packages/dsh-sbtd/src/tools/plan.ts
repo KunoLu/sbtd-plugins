@@ -155,19 +155,15 @@ export function inferRequirements(
   return out;
 }
 
-function isReasonFact(fact: string | undefined): boolean {
-  return (
-    fact !== undefined &&
-    (fact.startsWith("promoted from on-demand") ||
-      fact.startsWith("trigger fact disappeared") ||
-      fact.startsWith("trigger fact changed"))
-  );
-}
+type MergeResult = {
+  gate: BookGatePlan["gates"][GateKind];
+  note?: string;
+};
 
 function mergeGate(
   previous: BookGatePlan["gates"][GateKind] | undefined,
   inferred: InferredGate,
-): BookGatePlan["gates"][GateKind] {
+): MergeResult {
   if (inferred.requirement === "required") {
     if (
       previous !== undefined &&
@@ -177,13 +173,15 @@ function mergeGate(
       if (
         previous.fact !== undefined &&
         inferred.fact !== undefined &&
-        previous.fact !== inferred.fact &&
-        !isReasonFact(previous.fact)
+        previous.fact !== inferred.fact
       ) {
         return {
-          requirement: "required",
-          state: "planned",
-          fact: `trigger fact changed; reset inherited pass (${previous.fact} → ${inferred.fact})`,
+          gate: {
+            requirement: "required",
+            state: "planned",
+            fact: inferred.fact,
+          },
+          note: `trigger fact changed; reset inherited pass (${previous.fact} → ${inferred.fact})`,
         };
       }
       const kept: BookGatePlan["gates"][GateKind] = {
@@ -197,17 +195,23 @@ function mergeGate(
       if (previous.reviewStatus !== undefined) {
         kept.reviewStatus = previous.reviewStatus;
       }
-      return kept;
+      return { gate: kept };
     }
     if (
       previous !== undefined &&
       previous.requirement === "on-demand" &&
       previous.state === "passed"
     ) {
-      return {
+      const gate: BookGatePlan["gates"][GateKind] = {
         requirement: "required",
         state: "planned",
-        fact: "promoted from on-demand; reset inherited pass",
+      };
+      if (inferred.fact !== undefined) {
+        gate.fact = inferred.fact;
+      }
+      return {
+        gate,
+        note: "promoted from on-demand; reset inherited pass",
       };
     }
     if (
@@ -227,7 +231,7 @@ function mergeGate(
       if (previous.reviewStatus !== undefined) {
         kept.reviewStatus = previous.reviewStatus;
       }
-      return kept;
+      return { gate: kept };
     }
     const next: BookGatePlan["gates"][GateKind] = {
       requirement: "required",
@@ -236,14 +240,16 @@ function mergeGate(
     if (inferred.fact !== undefined) {
       next.fact = inferred.fact;
     }
-    return next;
+    return { gate: next };
   }
 
   if (previous !== undefined && previous.state === "passed") {
     return {
-      requirement: "on-demand",
-      state: "not-required",
-      fact: "trigger fact disappeared; reset passed",
+      gate: {
+        requirement: "on-demand",
+        state: "not-required",
+      },
+      note: "trigger fact disappeared; reset passed",
     };
   }
 
@@ -254,16 +260,19 @@ function mergeGate(
   if (inferred.fact !== undefined) {
     optional.fact = inferred.fact;
   }
-  return optional;
+  return { gate: optional };
 }
 
-export function formatPlanMarkdown(plan: BookGatePlan): string {
+export function formatPlanMarkdown(
+  plan: BookGatePlan,
+  notes: string[] = [],
+): string {
   const rows = GATE_KINDS.map((kind) => {
     const gate = plan.gates[kind];
     const fact = gate.fact ?? "";
     return `| ${kind} | ${gate.requirement} | ${gate.state} | ${fact} |`;
   });
-  return [
+  const parts = [
     "# Book Gate Plan",
     "",
     `taskId: ${plan.taskId}`,
@@ -273,7 +282,14 @@ export function formatPlanMarkdown(plan: BookGatePlan): string {
     "| Gate | Requirement | State | Fact |",
     "|---|---|---|---|",
     ...rows,
-  ].join("\n");
+  ];
+  if (notes.length > 0) {
+    parts.push("", "## Reset notes", "");
+    for (const note of notes) {
+      parts.push(`- ${note}`);
+    }
+  }
+  return parts.join("\n");
 }
 
 export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
@@ -289,9 +305,14 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
   const sameGoal = existing !== undefined && existing.taskId === taskId;
 
   const gates = {} as BookGatePlan["gates"];
+  const notes: string[] = [];
   for (const kind of GATE_KINDS) {
     const previous = sameGoal ? existing.gates[kind] : undefined;
-    gates[kind] = mergeGate(previous, inferred[kind]);
+    const merged = mergeGate(previous, inferred[kind]);
+    gates[kind] = merged.gate;
+    if (merged.note !== undefined) {
+      notes.push(`${kind}: ${merged.note}`);
+    }
   }
 
   const plan: BookGatePlan = {
@@ -300,7 +321,7 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
     gates,
   };
   session.plan = plan;
-  return { plan, markdown: formatPlanMarkdown(plan) };
+  return { plan, markdown: formatPlanMarkdown(plan, notes) };
 }
 
 export const SBTD_PLAN_DESCRIPTION =

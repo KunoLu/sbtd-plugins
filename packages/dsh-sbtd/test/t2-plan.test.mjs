@@ -112,7 +112,8 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
     facts: ["this feels high risk"],
   });
   assert.equal(third.plan.gates.ddia.state, "not-required");
-  assert.match(third.plan.gates.ddia.fact, /disappeared/);
+  assert.equal(third.plan.gates.ddia.fact, undefined);
+  assert.match(third.markdown, /disappeared/);
 });
 
 test("mergeGate 仅在先前已是 required 时保留 passed", () => {
@@ -142,31 +143,56 @@ test("required+passed ddia persist 后 schema 重置 planned", () => {
   assert.equal(reset.plan.gates.ddia.requirement, "required");
   assert.equal(reset.plan.gates.ddia.state, "planned");
   assert.equal(reset.plan.gates.ddia.reviewStatus, undefined);
-  assert.match(reset.plan.gates.ddia.fact ?? "", /trigger fact changed/);
-  assert.match(reset.plan.gates.ddia.fact ?? "", /persistence/);
-  assert.match(reset.plan.gates.ddia.fact ?? "", /database\/schema/);
+  assert.equal(reset.plan.gates.ddia.fact, "database/schema");
+  assert.match(reset.markdown, /trigger fact changed/);
+  assert.match(reset.markdown, /persistence/);
+  assert.match(reset.markdown, /database\/schema/);
 });
 
-test("mergeGate 不把 reason fact 当作触发事实变化", () => {
-  const summary = "reason fact is not a trigger";
-  for (const reason of [
-    "promoted from on-demand; reset inherited pass",
-    "trigger fact disappeared; reset passed",
-    "trigger fact changed; reset inherited pass",
-  ]) {
-    const id = `plan-merge-reason-fact-${reason.slice(0, 16).replace(/\s+/g, "-")}`;
-    sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
-    const live = getSession(id);
-    live.plan.gates.ddia.state = "passed";
-    live.plan.gates.ddia.reviewStatus = "confirmed";
-    live.plan.gates.ddia.fact = reason;
+test("A→B reviewed →C 必须再次重置 planned", () => {
+  const id = "plan-merge-abc-fact-chain";
+  const summary = "abc catalog fact chain";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
 
-    const kept = sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
-    assert.equal(kept.plan.gates.ddia.requirement, "required");
-    assert.equal(kept.plan.gates.ddia.state, "passed");
-    assert.equal(kept.plan.gates.ddia.reviewStatus, "confirmed");
-    assert.equal(kept.plan.gates.ddia.fact, "persistence");
-  }
+  const toB = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(toB.plan.gates.ddia.state, "planned");
+  assert.equal(toB.plan.gates.ddia.fact, "database/schema");
+
+  // simulate sbtd_review pass without overwriting catalog fact
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "database/schema");
+
+  const toC = sbtdPlan(id, { task_summary: summary, facts: ["cache"] });
+  assert.equal(toC.plan.gates.ddia.requirement, "required");
+  assert.equal(toC.plan.gates.ddia.state, "planned");
+  assert.notEqual(toC.plan.gates.ddia.state, "passed");
+  assert.equal(toC.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(toC.plan.gates.ddia.fact, "cache");
+  assert.match(toC.markdown, /trigger fact changed/);
+  assert.match(toC.markdown, /database\/schema/);
+  assert.match(toC.markdown, /cache/);
+});
+
+test("同一 B 重置后再 plan 同触发不循环重置", () => {
+  const id = "plan-merge-same-b-no-loop";
+  const summary = "same B after reset stays planned";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const reset = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(reset.plan.gates.ddia.state, "planned");
+  assert.equal(reset.plan.gates.ddia.fact, "database/schema");
+
+  const again = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(again.plan.gates.ddia.state, "planned");
+  assert.equal(again.plan.gates.ddia.fact, "database/schema");
 });
 
 test("mergeGate 将 on-demand passed 提升 required 重置为 planned", () => {
@@ -185,10 +211,8 @@ test("mergeGate 将 on-demand passed 提升 required 重置为 planned", () => {
   assert.equal(promoted.plan.gates.ddia.requirement, "required");
   assert.equal(promoted.plan.gates.ddia.state, "planned");
   assert.equal(promoted.plan.gates.ddia.reviewStatus, undefined);
-  assert.equal(
-    promoted.plan.gates.ddia.fact,
-    "promoted from on-demand; reset inherited pass",
-  );
+  assert.equal(promoted.plan.gates.ddia.fact, "persistence");
+  assert.match(promoted.markdown, /promoted from on-demand; reset inherited pass/);
 });
 
 test("mergeGate 提升 required 时保留 running blocked planned", () => {
