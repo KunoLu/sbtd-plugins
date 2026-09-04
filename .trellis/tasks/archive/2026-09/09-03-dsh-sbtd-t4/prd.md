@@ -59,6 +59,8 @@ Refactoring Review: `proceed`（见 `implement.md`）。无结构提取。MANIFE
 
 ## Acceptance criteria
 
+Merged on main via PR #26 (`3252b8d`, 2026-09-03); follow-up sync/portable/TOCTTOU nits via #27/#28/#29.
+
 - [x] 12 个白名单目录均在 `manuals/<id>/` 且各有 `SKILL.md`，含 external-skills 来源的 grill/domain/to-*。
 - [x] MANIFEST `sourceRevision` 等于钉死 SHA；每条 `sourcePath` 能映射 dest 且 sha256 与文件字节一致。
 - [x] 跑 `scripts/sync-manuals.sh /workspace/640-skills` 成功。

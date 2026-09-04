@@ -1,4 +1,0 @@
-{"file": ".trellis/spec/dsh-sbtd/frontend/host-contract.md", "reason": "host-facing contract check"}
-{"file": "packages/dsh-sbtd/README.md", "reason": "README @next contract"}
-{"file": "packages/dsh-sbtd/features/t0-installable-stub.feature", "reason": "BDD vs README vs test"}
-{"file": ".trellis/tasks/09-02-pr10-t0-retro-review/research/review-result.md", "reason": "required-check evidence"}

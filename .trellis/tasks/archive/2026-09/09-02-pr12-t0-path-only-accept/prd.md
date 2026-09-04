@@ -29,6 +29,8 @@ Grill Q/A: none.
 
 ## Acceptance criteria
 
+Merged on main via PR #12 (`16acd38`, 2026-09-02) on `docs/dsh-sbtd-v1.2-facts`.
+
 - [x] T0 live-accept text is local path + dump-config `id: sbtd`; GitHub add is stated not T0-accepted.
 - [x] T0 验收 `plugin add` uses `/absolute/path/to/sbtd-plugins/packages/dsh-sbtd` (never `/workspace`, never `<path-or-github>`).
 - [x] Scheme 2a and T1–T16 graph unchanged.
