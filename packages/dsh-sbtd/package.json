@@ -1,9 +1,16 @@
 {
   "name": "@kunolu/dsh-sbtd",
-  "version": "0.1.0-rc.0",
-  "private": true,
+  "version": "0.1.0-rc.1",
+  "private": false,
   "license": "Apache-2.0",
   "type": "module",
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "sbtd",
+    "deepseek",
+    "workflow"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [

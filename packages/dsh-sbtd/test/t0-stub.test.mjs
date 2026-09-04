@@ -51,15 +51,17 @@ test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   assert.deepEqual(pkg.files, ["dist/", "cordis.patch.yml", "manuals/"]);
 });
 
-test("README 声明尚未发布且复制粘贴会失败", () => {
+test("README 声明已发布 0.1.0-rc.1 到 dist-tag next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 
-  assert.match(readme, /尚未发布到 npm/);
-  assert.match(readme, /复制粘贴.*会失败/);
-  assert.doesNotMatch(readme, /已发布|已作为.*发布/);
-  assert.doesNotMatch(readme, /可安装/);
-  assert.equal(pkg.private, true);
+  assert.match(readme, /0\.1\.0-rc\.1/);
+  assert.match(readme, /dist-tag `next`/);
+  assert.doesNotMatch(readme, /尚未发布到 npm/);
+  assert.doesNotMatch(readme, /复制粘贴.*会失败/);
+  assert.equal(pkg.private, false);
+  assert.equal(pkg.version, "0.1.0-rc.1");
+  assert.ok(pkg.keywords.includes("dsh-plugin"));
 });
 
 test("cordis patch name 使用已安装的 npm 包名", () => {

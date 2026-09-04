@@ -21,7 +21,7 @@ SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH host adapters.
 | Package | Path | Role |
 | --- | --- | --- |
 | `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Version **0.1.0-rc.14** on the `next` tag. |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter. Current stub is **T0**. No tools or hooks yet. Target host `@deepseek-ai/dsh@0.1.1-rc.2`. |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter (T5): sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Version **0.1.0-rc.1** on the `next` tag. Host pin `@deepseek-ai/dsh@0.1.1-rc.2`. |
 | `@kunolu/sbtd-workflow-kit` | [`packages/sbtd-workflow-kit`](packages/sbtd-workflow-kit) | Shared kit / projection layer. **Not** a host plugin. |
 
 ## Install
@@ -36,7 +36,7 @@ This is 0.1.0-rc.14 on dist-tag next. Never recommend @latest. **published** is 
 
 DSH host pin: @deepseek-ai/dsh@0.1.1-rc.2.
 
-`@kunolu/dsh-sbtd` is a T0 stub and is **not yet published** to npm. After it is published, install with dist-tag @next, not the bare package name. The commands below will fail on copy-paste until the package is published.
+DSH plugin is **0.1.0-rc.1** on dist-tag `next`. Install with `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.1.1-rc.2`. Never `@latest` or a github path.
 
 ```bash
 npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
@@ -62,7 +62,7 @@ Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](do
 This repository ships **two host plugins** only: `omp-sbtd` and `dsh-sbtd`.
 
 - **omp-sbtd** is published on `next` as `0.1.0-rc.14`. The embedded kit is locked to **640-skills v1.0.13**. Compatibility certification is decoupled from publish.
-- **dsh-sbtd** uses shell plugin scheme **2a**. **T0** is a stub: `dsh plugin add` plus `dump-config` reports `id: sbtd`. **T1–T16** are not done. Details: [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md).
+- **dsh-sbtd** uses shell plugin scheme **2a**. **T0–T5** are done on `main` (section, state, `sbtd_plan`, `sbtd_review`, hooks, manuals). Later tasks remain. Details: [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md).
 
 ## Development
 
