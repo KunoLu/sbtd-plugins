@@ -2,15 +2,11 @@
 
 DSH 宿主上的 SBTD workflow 适配器。当前为 T5：注册短中文 sbtd section、进程内会话状态、`sbtd_plan`、`sbtd_review`、`tools/pre-execute` / `agent/pre-step` hooks 门禁，以及从 640-skills 只读同步的 `manuals/`。
 
-目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
+版本 **0.1.0-rc.1**，发布在 dist-tag `next`。目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
 
 ## 安装
 
-
-
-> ⚠️ `@kunolu/dsh-sbtd` 尚未发布到 npm，当前无法从 registry 安装；在发布之前复制粘贴下面的命令会失败。
->
-> 发布之后使用 dist-tag `@next`，不要使用裸包名或本地路径：
+使用 dist-tag `@next` 安装，不要使用裸包名、`@latest` 或 github 路径：
 
 ```bash
 dsh plugin --profile web add @kunolu/dsh-sbtd@next

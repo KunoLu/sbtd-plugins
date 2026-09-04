@@ -21,7 +21,7 @@ SBTD 宿主插件 monorepo：共享 workflow kit，以及 OMP / DSH 宿主适配
 | 包 | 路径 | 说明 |
 | --- | --- | --- |
 | `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow 插件。提供 `/sbtd`、内嵌 kit、`doctor` 与 `onboard`。版本 **0.1.0-rc.14**，发布在 `next` tag。 |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器。当前 stub 为 **T0**。尚无 tools / hooks。目标宿主 `@deepseek-ai/dsh@0.1.1-rc.2`。 |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。版本 **0.1.0-rc.1**，发布在 `next` tag。宿主钉 `@deepseek-ai/dsh@0.1.1-rc.2`。 |
 | `@kunolu/sbtd-workflow-kit` | [`packages/sbtd-workflow-kit`](packages/sbtd-workflow-kit) | 共享 kit / 投影层。**不是**宿主插件。 |
 
 ## 安装
@@ -36,7 +36,7 @@ omp plugin install @kunolu/omp-sbtd@next
 
 DSH 宿主固定 @deepseek-ai/dsh@0.1.1-rc.2。
 
-`@kunolu/dsh-sbtd` 当前为 T0 stub，**尚未发布**到 npm。发布之后使用 dist-tag @next 安装，不要使用裸包名。在包发布到 npm 之前，复制粘贴下面的命令会失败。
+DSH 插件版本 **0.1.0-rc.1**，发布在 dist-tag `next`。使用 `@kunolu/dsh-sbtd@next` 与宿主 `@deepseek-ai/dsh@0.1.1-rc.2` 安装。不要使用 `@latest` 或 github 路径。
 
 ```bash
 npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
@@ -62,7 +62,7 @@ dsh web --no-open
 本仓库只交付 **两个宿主插件**：`omp-sbtd` 与 `dsh-sbtd`。
 
 - **omp-sbtd** 已发布到 `next`，版本 `0.1.0-rc.14`。内嵌 kit 锁定 **640-skills v1.0.13**。兼容性认证与发布解耦。
-- **dsh-sbtd** 采用 shell plugin scheme **2a**。**T0** 为 stub：`dsh plugin add`，且 `dump-config` 含 `id: sbtd`。**T1–T16** 尚未完成。细节见 [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md)。
+- **dsh-sbtd** 采用 shell plugin scheme **2a**。**T0–T5** 已在 `main` 完成（section、state、`sbtd_plan`、`sbtd_review`、hooks、manuals）。后续任务仍待做。细节见 [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md)。
 
 ## 开发
 

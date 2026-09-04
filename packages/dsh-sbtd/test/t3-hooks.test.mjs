@@ -427,15 +427,15 @@ test("门禁按 sessionIdFromExec 隔离", async () => {
   assert.match(other.reason, /sbtd_plan/);
 });
 
-test("README 提到 hooks 并保持钉版本与 @next 未发布", () => {
+test("README 提到 hooks 并保持钉版本与 @next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const src = readFileSync(join(pkgRoot, "src/hooks.ts"), "utf8");
   const index = readFileSync(join(pkgRoot, "src/index.ts"), "utf8");
   assert.match(readme, /hooks/);
   assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
   assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
-  assert.match(readme, /尚未发布到 npm/);
-  assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
+  assert.match(readme, /0\.1\.0-rc\.1|next/);
+  assert.doesNotMatch(readme, /尚未发布到 npm/);
   assert.doesNotMatch(
     readme,
     /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/,

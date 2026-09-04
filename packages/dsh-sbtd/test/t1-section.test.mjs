@@ -88,5 +88,5 @@ test("README 钉 0.1.1-rc.2、@next 安装并提到短中文 sbtd section", () =
   );
   assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
   assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
-  assert.equal(pkg.private, true);
+  assert.equal(pkg.private, false);
 });
