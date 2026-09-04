@@ -45,7 +45,7 @@
 
 ## Known gaps / follow-ups (accepted deferred)
 
-These two items are **parked as follow-ups only**. They are **not** CLEAN concealment: they remain known product gaps on this head, out of this T5 docs pass, and must not be treated as shipped or as Security/CLEAN-pass evidence.
+These three items are **parked as follow-ups only**. They are **not** CLEAN concealment: they remain known product gaps on this head, out of this T5 docs pass, and must not be treated as shipped or as Security/CLEAN-pass evidence.
 
 Do **not** implement them in this task / this PR. Host pin remains `@deepseek-ai/dsh@0.1.1-rc.2`. No T6.
 
@@ -69,4 +69,11 @@ Head `87572c5e5cde9ef23a65bd19ff369530978e6f97` (`feat/dsh-sbtd-t5`). These hole
 - When both legacy and refactoring are `required`, `sbtd_review` does not enforce “legacy first, then refactor”.
 - T3 deny still points at legacy first; order is not a T5 review-tool invariant.
 - Park as follow-up. Do not treat T3 deny copy as `sbtd_review` enforcement.
+
+### Follow-up (c) — multi-fact / `PREDICATES[kind].find` first-match
+
+- When facts accumulate (e.g. persist then persist+schema), only the first catalog fact is stored via `PREDICATES[kind].find`.
+- Expanded triggers may therefore not reset a required pass.
+- Deferred follow-up; locked T5 tests replace facts arrays per re-plan.
+- Adjudicated **not** a merge blocker this round. No code change to `plan.ts` in this docs pass.
 
