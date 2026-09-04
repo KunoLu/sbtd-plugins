@@ -427,6 +427,112 @@ test("门禁按 sessionIdFromExec 隔离", async () => {
   assert.match(other.reason, /sbtd_plan/);
 });
 
+test("Loop1 legacy required running seam-required 允许生产 write（whole-window allow, no classifier）", async () => {
+  // Known limitation: no byte-level seam-vs-feature classifier.
+  // Opening the window allows ALL production-class writes while reviewStatus
+  // is seam-required. Q4A still-deny-non-remediation is prompt/honor only.
+  const id = "t3-fu1-loop1";
+  sbtdPlan(id, {
+    task_summary: "fix existing behavior",
+    facts: ["existing behavior"],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "running";
+  gates.legacy.reviewStatus = "seam-required";
+  const { hooks } = loadPlugin();
+  let nextCalled = false;
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(
+    writeSrc(id),
+    async () => {
+      nextCalled = true;
+      return { kind: "allow" };
+    },
+  );
+  assert.equal(nextCalled, true);
+  assert.equal(result.kind, "allow");
+});
+
+test("Loop2 legacy passed; refactor required running refactor-first 允许生产 write（whole-window allow, no classifier）", async () => {
+  // Known limitation: no byte-level seam-vs-feature classifier.
+  // Opening the window allows ALL production-class writes while reviewStatus
+  // is refactor-first. Q4A still-deny-non-remediation is prompt/honor only.
+  const id = "t3-fu1-loop2";
+  sbtdPlan(id, {
+    task_summary: "change existing production",
+    facts: ["existing behavior", "existing production"],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "passed";
+  gates.refactor.state = "running";
+  gates.refactor.reviewStatus = "refactor-first";
+  const { hooks } = loadPlugin();
+  let nextCalled = false;
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(
+    writeSrc(id),
+    async () => {
+      nextCalled = true;
+      return { kind: "allow" };
+    },
+  );
+  assert.equal(nextCalled, true);
+  assert.equal(result.kind, "allow");
+});
+
+test("legacy required running needs-clarification 仍 deny legacy", async () => {
+  const id = "t3-fu1-needs";
+  sbtdPlan(id, {
+    task_summary: "fix existing behavior",
+    facts: ["existing behavior"],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "running";
+  gates.legacy.reviewStatus = "needs-clarification";
+  const { hooks } = loadPlugin();
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+  assert.equal(result.kind, "deny");
+  assert.match(result.reason, /sbtd_review kind=legacy/);
+});
+
+test("legacy 未 remediation 且 refactor refactor-first 仍先 deny legacy", async () => {
+  const id = "t3-fu1-legacy-first";
+  sbtdPlan(id, {
+    task_summary: "change existing production",
+    facts: ["existing behavior", "existing production"],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "running";
+  gates.refactor.state = "running";
+  gates.refactor.reviewStatus = "refactor-first";
+  const { hooks } = loadPlugin();
+  const result = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+  assert.equal(result.kind, "deny");
+  assert.match(result.reason, /sbtd_review kind=legacy/);
+});
+
+test("EXEMPT 在 legacy 未 passed 时仍放行", async () => {
+  const id = "t3-fu1-exempt";
+  sbtdPlan(id, {
+    task_summary: "fix existing behavior",
+    facts: ["existing behavior"],
+  });
+  const { hooks } = loadPlugin();
+  const pre = hooks.get(PRE_EXECUTE_EVENT);
+  let nextCalled = false;
+  const result = await pre(
+    {
+      name: "write",
+      arguments: { path: "src/foo.test.ts" },
+      agent: { id },
+    },
+    async () => {
+      nextCalled = true;
+      return { kind: "allow" };
+    },
+  );
+  assert.equal(nextCalled, true);
+  assert.equal(result.kind, "allow");
+});
+
 test("README 提到 hooks 并保持钉版本与 @next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const src = readFileSync(join(pkgRoot, "src/hooks.ts"), "utf8");

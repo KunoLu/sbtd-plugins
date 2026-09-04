@@ -176,6 +176,13 @@ function unpassedRequired(
   return gate?.requirement === "required" && gate.state !== "passed";
 }
 
+function remediationAllow(
+  gate: { reviewStatus?: string } | undefined,
+  status: string,
+): boolean {
+  return gate?.reviewStatus === status;
+}
+
 function isGitAllow(command: string): boolean {
   return GIT_ALLOW.test(command) && !GIT_CHAIN.test(command);
 }
@@ -295,10 +302,16 @@ export function gatePreExecute(exec: ToolExec): PreToolDecision | undefined {
     return undefined;
   }
 
-  if (unpassedRequired(plan.gates.legacy)) {
+  if (
+    unpassedRequired(plan.gates.legacy) &&
+    !remediationAllow(plan.gates.legacy, "seam-required")
+  ) {
     return denyReview("legacy");
   }
-  if (unpassedRequired(plan.gates.refactor)) {
+  if (
+    unpassedRequired(plan.gates.refactor) &&
+    !remediationAllow(plan.gates.refactor, "refactor-first")
+  ) {
     return denyReview("refactor");
   }
   if (unpassedRequired(plan.gates.ddd)) {

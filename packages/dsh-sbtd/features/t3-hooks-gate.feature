@@ -84,3 +84,37 @@ Feature: DSH T3 hooks 门禁
     When 仅其中一个调用了 sbtd_plan
     Then 未计划 session 的生产 write 被 ask
     And 已计划但 required 未过的 session 被 deny
+
+  Scenario: Loop1 legacy required running seam-required 允许生产 write
+    Given session 已有 plan 且 legacy 为 required running 且 reviewStatus 为 seam-required
+    When 模型对 src/foo.ts 调用 write
+    Then pre-execute 调用 next 放行
+    # Known limitation: no byte-level seam-vs-feature classifier.
+    # Whole-window scoped allow: all production-class writes are allowed
+    # while this reviewStatus is set. Q4A still-deny-non-remediation is honor-only.
+
+  Scenario: Loop2 refactor required running refactor-first 允许生产 write
+    Given session 已有 plan 且 legacy 已 passed
+    And refactor 为 required running 且 reviewStatus 为 refactor-first
+    When 模型对 src/foo.ts 调用 write
+    Then pre-execute 调用 next 放行
+    # Known limitation: no byte-level seam-vs-feature classifier.
+    # Whole-window scoped allow: all production-class writes are allowed
+    # while this reviewStatus is set. Q4A still-deny-non-remediation is honor-only.
+
+  Scenario: legacy required running needs-clarification 仍 deny
+    Given session 已有 plan 且 legacy 为 required running 且 reviewStatus 为 needs-clarification
+    When 模型对 src/foo.ts 调用 write
+    Then pre-execute 返回 kind deny
+    And reason 指出先调用 sbtd_review kind=legacy
+
+  Scenario: legacy 未 remediation 时 refactor-first 仍先因 legacy deny
+    Given plan 中 legacy 为 required 未 passed 且无 seam-required
+    And refactor 为 required running 且 reviewStatus 为 refactor-first
+    When 模型对 src/foo.ts 调用 write
+    Then 先因 legacy 被 deny
+
+  Scenario: EXEMPT 在 legacy 未 passed 时仍放行
+    Given session 已有 plan 且 legacy 为 required 未 passed
+    When 模型写 test/foo.test.ts 或 features 或 maestro/flow 或 .trellis 文档
+    Then pre-execute 调用 next 放行
