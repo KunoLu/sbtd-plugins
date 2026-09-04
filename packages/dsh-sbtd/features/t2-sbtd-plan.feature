@@ -38,7 +38,27 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     Given 同一 taskId 的 plan 中某 required gate 已 passed
     When 再次调用 sbtd_plan 且触发事实仍在
     Then 该 gate 保持 passed
-    And 若触发事实消失则写明原因并不再当作 required
+    And 若触发事实消失则 markdown 写明原因并不再当作 required
+
+
+  Scenario: required passed 触发事实变化则重置 planned
+    Given 同一 taskId 的 required gate 已 passed
+    When 再次调用 sbtd_plan 且触发事实字符串已变
+    Then 该 gate 为 required planned
+    And reviewStatus 已清除
+    And fact 保持为当前推断的 catalog 触发事实
+    And markdown 写明 trigger fact changed 及旧到新
+    And 若触发事实字符串相同则保持 passed 与 reviewStatus
+    And A 通过后改 B 再 review 再改 C 必须再次重置 planned
+
+  Scenario: on-demand passed 提升 required 时重置 planned
+    Given 同一 taskId 的 on-demand gate 已 passed
+    When 再次调用 sbtd_plan 且该 gate 现为 required
+    Then 该 gate 为 required planned
+    And 不继承 on-demand 的 passed
+    And fact 为当前推断的 catalog 触发事实
+    And markdown 写明 promoted from on-demand; reset inherited pass
+    And 若先前已是 required 的 running blocked 或 planned 则保持该 state
 
   Scenario: 宿主看到的 sbtd_plan 参数是 JSON Schema 对象根
     Given 插件已向宿主注册 sbtd_plan

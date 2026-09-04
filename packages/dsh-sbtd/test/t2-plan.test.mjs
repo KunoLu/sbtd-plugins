@@ -101,7 +101,7 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
   live.plan.gates.ddia.state = "passed";
   live.plan.gates.ddia.reviewStatus = "confirmed";
 
-  const second = sbtdPlan(id, { task_summary: summary, facts: ["持久化"] });
+  const second = sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
   assert.equal(second.plan.gates.ddia.state, "passed");
   assert.equal(second.plan.gates.ddia.reviewStatus, "confirmed");
   assert.equal(second.plan.gates.legacy.requirement, "on-demand");
@@ -112,7 +112,126 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
     facts: ["this feels high risk"],
   });
   assert.equal(third.plan.gates.ddia.state, "not-required");
-  assert.match(third.plan.gates.ddia.fact, /disappeared/);
+  assert.equal(third.plan.gates.ddia.fact, undefined);
+  assert.match(third.markdown, /disappeared/);
+});
+
+test("mergeGate 仅在先前已是 required 时保留 passed", () => {
+  const id = "plan-merge-keep-required-pass";
+  const summary = "keep required pass";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const kept = sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  assert.equal(kept.plan.gates.ddia.requirement, "required");
+  assert.equal(kept.plan.gates.ddia.state, "passed");
+  assert.equal(kept.plan.gates.ddia.reviewStatus, "confirmed");
+});
+
+test("required+passed ddia persist 后 schema 重置 planned", () => {
+  const id = "plan-merge-fact-change-reset";
+  const summary = "keep required pass until fact changes";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+
+  const reset = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(reset.plan.gates.ddia.requirement, "required");
+  assert.equal(reset.plan.gates.ddia.state, "planned");
+  assert.equal(reset.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(reset.plan.gates.ddia.fact, "database/schema");
+  assert.match(reset.markdown, /trigger fact changed/);
+  assert.match(reset.markdown, /persistence/);
+  assert.match(reset.markdown, /database\/schema/);
+});
+
+test("A→B reviewed →C 必须再次重置 planned", () => {
+  const id = "plan-merge-abc-fact-chain";
+  const summary = "abc catalog fact chain";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+
+  const toB = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(toB.plan.gates.ddia.state, "planned");
+  assert.equal(toB.plan.gates.ddia.fact, "database/schema");
+
+  // simulate sbtd_review pass without overwriting catalog fact
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "database/schema");
+
+  const toC = sbtdPlan(id, { task_summary: summary, facts: ["cache"] });
+  assert.equal(toC.plan.gates.ddia.requirement, "required");
+  assert.equal(toC.plan.gates.ddia.state, "planned");
+  assert.notEqual(toC.plan.gates.ddia.state, "passed");
+  assert.equal(toC.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(toC.plan.gates.ddia.fact, "cache");
+  assert.match(toC.markdown, /trigger fact changed/);
+  assert.match(toC.markdown, /database\/schema/);
+  assert.match(toC.markdown, /cache/);
+});
+
+test("同一 B 重置后再 plan 同触发不循环重置", () => {
+  const id = "plan-merge-same-b-no-loop";
+  const summary = "same B after reset stays planned";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const reset = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(reset.plan.gates.ddia.state, "planned");
+  assert.equal(reset.plan.gates.ddia.fact, "database/schema");
+
+  const again = sbtdPlan(id, { task_summary: summary, facts: ["schema"] });
+  assert.equal(again.plan.gates.ddia.state, "planned");
+  assert.equal(again.plan.gates.ddia.fact, "database/schema");
+});
+
+test("mergeGate 将 on-demand passed 提升 required 重置为 planned", () => {
+  const id = "plan-merge-promote-ondemand";
+  const summary = "hello world plan";
+  sbtdPlan(id, { task_summary: summary });
+  const live = getSession(id);
+  assert.equal(live.plan.gates.ddia.requirement, "on-demand");
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const promoted = sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["persist"],
+  });
+  assert.equal(promoted.plan.gates.ddia.requirement, "required");
+  assert.equal(promoted.plan.gates.ddia.state, "planned");
+  assert.equal(promoted.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(promoted.plan.gates.ddia.fact, "persistence");
+  assert.match(promoted.markdown, /promoted from on-demand; reset inherited pass/);
+});
+
+test("mergeGate 提升 required 时保留 running blocked planned", () => {
+  const summary = "hello world plan keep progress";
+  for (const state of ["running", "blocked", "planned"]) {
+    const id = `plan-merge-keep-${state}`;
+    sbtdPlan(id, { task_summary: summary });
+    const live = getSession(id);
+    live.plan.gates.ddia.state = state;
+    live.plan.gates.ddia.reviewStatus = "needs-design-change";
+
+    const next = sbtdPlan(id, {
+      task_summary: summary,
+      facts: ["persist"],
+    });
+    assert.equal(next.plan.gates.ddia.requirement, "required");
+    assert.equal(next.plan.gates.ddia.state, state);
+    assert.equal(next.plan.gates.ddia.reviewStatus, "needs-design-change");
+  }
 });
 
 test("新 taskId 开新 plan，不保留上一目标的 passed", () => {
@@ -187,8 +306,9 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
 
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 1);
+  assert.equal(tools.length, 2);
   assert.equal(tools[0].name, SBTD_PLAN_TOOL_NAME);
+  assert.equal(tools[1].name, "sbtd_review");
   assert.equal(sections[0].name, "sbtd");
   assert.equal(tools[0].isConcurrencySafe({}), false);
   assert.equal(tools[0].parameters.type, "object");
