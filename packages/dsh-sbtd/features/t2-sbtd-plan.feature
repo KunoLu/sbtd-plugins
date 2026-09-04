@@ -40,6 +40,16 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     Then 该 gate 保持 passed
     And 若触发事实消失则写明原因并不再当作 required
 
+
+  Scenario: required passed 触发事实变化则重置 planned
+    Given 同一 taskId 的 required gate 已 passed
+    When 再次调用 sbtd_plan 且触发事实字符串已变
+    Then 该 gate 为 required planned
+    And reviewStatus 已清除
+    And fact 写明 trigger fact changed 及旧到新
+    And 若触发事实字符串相同则保持 passed 与 reviewStatus
+    And 若先前 fact 是 reason 字符串则保持 passed 并可更新为推断 fact
+
   Scenario: on-demand passed 提升 required 时重置 planned
     Given 同一 taskId 的 on-demand gate 已 passed
     When 再次调用 sbtd_plan 且该 gate 现为 required

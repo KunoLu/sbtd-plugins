@@ -155,6 +155,15 @@ export function inferRequirements(
   return out;
 }
 
+function isReasonFact(fact: string | undefined): boolean {
+  return (
+    fact !== undefined &&
+    (fact.startsWith("promoted from on-demand") ||
+      fact.startsWith("trigger fact disappeared") ||
+      fact.startsWith("trigger fact changed"))
+  );
+}
+
 function mergeGate(
   previous: BookGatePlan["gates"][GateKind] | undefined,
   inferred: InferredGate,
@@ -165,6 +174,18 @@ function mergeGate(
       previous.requirement === "required" &&
       previous.state === "passed"
     ) {
+      if (
+        previous.fact !== undefined &&
+        inferred.fact !== undefined &&
+        previous.fact !== inferred.fact &&
+        !isReasonFact(previous.fact)
+      ) {
+        return {
+          requirement: "required",
+          state: "planned",
+          fact: `trigger fact changed; reset inherited pass (${previous.fact} → ${inferred.fact})`,
+        };
+      }
       const kept: BookGatePlan["gates"][GateKind] = {
         requirement: "required",
         state: "passed",
@@ -283,7 +304,7 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
 }
 
 export const SBTD_PLAN_DESCRIPTION =
-  "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal keep passed gates only while their requirement remains required; reset a pass when a trigger disappears or the gate is promoted from on-demand.";
+  "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal keep passed gates only while their requirement remains required and the trigger fact is unchanged; reset a pass when a trigger disappears, the trigger fact changes, or the gate is promoted from on-demand.";
 
 export function createPlanTool(): PlanToolDefinition {
   return {

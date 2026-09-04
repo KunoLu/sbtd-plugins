@@ -70,6 +70,16 @@ Feature: DSH T5 sbtd_review 五项 book gate
     When 模型用 str_replace_editor 改 src/schema.sql
     Then 因 ddia 被 deny
 
+
+  Scenario: required passed ddia 触发事实从 persist 变为 schema 后拦数据路径
+    Given persist 触发的 required ddia 已 passed
+    When 同一 task_summary 再次 sbtd_plan 并给出 schema facts
+    Then ddia 为 required 且 state 为 planned 而非 passed
+    And reviewStatus 已清除
+    And fact 写明 trigger fact changed 及旧到新
+    When 模型用 str_replace_editor 改 src/schema.sql
+    Then 因 ddia 被 deny
+
   Scenario: 独特结论只在返回值不落盘
     Given session 已有 plan
     When 模型提交带独特结论的 sbtd_review

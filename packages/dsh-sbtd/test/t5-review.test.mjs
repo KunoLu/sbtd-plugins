@@ -278,6 +278,41 @@ test("on-demand ddia confirmed 提升 required 重置 planned 并拦 schema.sql"
   assert.match(data.reason, /sbtd_review kind=ddia/);
 });
 
+test("required+passed ddia persist 再 plan schema 重置并拦 schema.sql", async () => {
+  const id = "t5-fact-change-ddia";
+  const summary = "data path after first pass";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  assert.equal(live.plan.gates.ddia.requirement, "required");
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+
+  const reset = sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["schema"],
+  });
+  assert.equal(reset.plan.gates.ddia.requirement, "required");
+  assert.equal(reset.plan.gates.ddia.state, "planned");
+  assert.notEqual(reset.plan.gates.ddia.state, "passed");
+  assert.equal(reset.plan.gates.ddia.reviewStatus, undefined);
+  assert.match(reset.plan.gates.ddia.fact ?? "", /trigger fact changed/);
+  assert.match(reset.plan.gates.ddia.fact ?? "", /persistence/);
+  assert.match(reset.plan.gates.ddia.fact ?? "", /database\/schema/);
+
+  const { hooks } = loadPlugin();
+  const data = await hooks.get(PRE_EXECUTE_EVENT)(
+    {
+      name: "str_replace_editor",
+      arguments: { filePath: "src/schema.sql" },
+      agent: { id },
+    },
+    nextAllow,
+  );
+  assert.equal(data.kind, "deny");
+  assert.match(data.reason, /sbtd_review kind=ddia/);
+});
+
 test("独特结论只在返回值不落盘", () => {
   const id = "t5-conclusion";
   const unique = "CONCLUSION-ZX9Q-NOT-PERSIST";
