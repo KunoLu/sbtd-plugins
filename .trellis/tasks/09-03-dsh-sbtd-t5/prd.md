@@ -45,9 +45,9 @@
 
 ## Known gaps / follow-ups (accepted deferred)
 
-These three items are **parked as follow-ups only**. They are **not** CLEAN concealment: they remain known product gaps on this head, out of this T5 docs pass, and must not be treated as shipped or as Security/CLEAN-pass evidence.
+Follow-up (a) is **resolved by PR #33**. Follow-ups (b) and (c) remain **parked as follow-ups only**. They are **not** CLEAN concealment: (b) and (c) remain known product gaps on this head, out of this T5 docs pass, and must not be treated as shipped or as Security/CLEAN-pass evidence.
 
-Do **not** implement them in this task / this PR. Host pin remains `@deepseek-ai/dsh@0.1.1-rc.2`. No T6.
+Do **not** implement (b) or (c) in this task / this PR. Host pin remains `@deepseek-ai/dsh@0.1.1-rc.2`. No T6.
 
 ### Locked fixed on this head (Security already passed)
 
@@ -57,12 +57,12 @@ Head `87572c5e5cde9ef23a65bd19ff369530978e6f97` (`feat/dsh-sbtd-t5`). These hole
 - Required + passed resets when the catalog trigger fact changes.
 - A → B → C catalog-fact keep-pass hole is closed: catalog fact is retained on the gate across reset / review.
 
-### Follow-up (a) — remediation deadlock (`seam-required` / `refactor-first`)
+### Follow-up (a) — remediation deadlock (`seam-required` / `refactor-first`) — resolved by PR #33
 
-- Mapping (T5, as specified): `seam-required` and `refactor-first` map to gate state `running`.
-- Enforcement (T3): `gatePreExecute` still requires `passed` before production writes.
-- Effect: the designed remediation loop cannot write the safety seam / minimal refactor while the gate is `running` → deadlock.
-- Intended fix (not this PR): hook exception / `safety-seam-only` per design section 3.4. Separate follow-up task.
+- Mapping (T5, as specified; **unchanged**): `seam-required` and `refactor-first` map to gate state `running`. `mapGateState` / `RUNNING_STATUS` / `requirement` / `review.ts` untouched.
+- Enforcement (PR #33): hooks now scoped-allow production writes when `reviewStatus` is `seam-required` (legacy) or `refactor-first` (refactor).
+- Whole-window allow: no byte-level seam-vs-feature classifier. Opening the window allows all production-class writes while that `reviewStatus` is set.
+- Q4A still-deny-non-remediation is honor/prompt only (not hook-enforced).
 
 ### Follow-up (b) — `sbtd_review` does not enforce legacy-before-refactor
 

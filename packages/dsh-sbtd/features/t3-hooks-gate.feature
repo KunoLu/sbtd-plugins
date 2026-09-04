@@ -118,3 +118,44 @@ Feature: DSH T3 hooks 门禁
     Given session 已有 plan 且 legacy 为 required 未 passed
     When 模型写 test/foo.test.ts 或 features 或 maestro/flow 或 .trellis 文档
     Then pre-execute 调用 next 放行
+
+  Scenario: Loop 窗口开启时 ddd required unpassed 仍 deny 生产 write
+    Given session 已有 plan 且 ddd 为 required 未 passed
+    And legacy 为 required running 且 reviewStatus 为 seam-required
+    And refactor 已 passed 不挡
+    When 模型对 src/foo.ts 调用 write
+    Then pre-execute 返回 kind deny
+    And reason 指出先调用 sbtd_review kind=ddd
+    # Known limitation: no byte-level seam-vs-feature classifier.
+    # Whole-window scoped allow does not skip other required unpassed gates.
+    # Q4A still-deny-non-remediation is honor-only.
+    Given legacy 已 passed 且 refactor 为 required running 且 reviewStatus 为 refactor-first
+    When 模型对 src/foo.ts 调用 write
+    Then pre-execute 返回 kind deny
+    And reason 指出先调用 sbtd_review kind=ddd
+
+  Scenario: Loop 窗口开启时 ddia required unpassed 仍 deny 数据路径
+    Given session 已有 plan 且 ddia 为 required 未 passed
+    And legacy 为 required running 且 reviewStatus 为 seam-required
+    And refactor 已 passed 不挡
+    When 模型写 src/schema.sql
+    Then pre-execute 返回 deny 并指出 sbtd_review kind=ddia
+    # Known limitation: no byte-level seam-vs-feature classifier.
+    # Whole-window scoped allow does not skip other required unpassed gates.
+    # Q4A still-deny-non-remediation is honor-only.
+    Given legacy 已 passed 且 refactor 为 required running 且 reviewStatus 为 refactor-first
+    When 模型写 src/schema.sql
+    Then pre-execute 返回 deny 并指出 sbtd_review kind=ddia
+
+  Scenario: Loop 窗口开启时 release required unpassed 仍 deny publish bash
+    Given session 已有 plan 且 release 为 required 未 passed
+    And legacy 为 required running 且 reviewStatus 为 seam-required
+    And refactor 已 passed 不挡
+    When 模型执行 bash npm publish
+    Then pre-execute 返回 deny 并指出 sbtd_review kind=release
+    # Known limitation: no byte-level seam-vs-feature classifier.
+    # Whole-window scoped allow does not skip other required unpassed gates.
+    # Q4A still-deny-non-remediation is honor-only.
+    Given legacy 已 passed 且 refactor 为 required running 且 reviewStatus 为 refactor-first
+    When 模型执行 bash npm publish
+    Then pre-execute 返回 deny 并指出 sbtd_review kind=release

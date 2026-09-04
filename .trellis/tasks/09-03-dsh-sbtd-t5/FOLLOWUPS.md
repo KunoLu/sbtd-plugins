@@ -1,9 +1,9 @@
 # T5 known gaps / follow-ups (accepted deferred)
 
-Park-as-follow-ups-only. **Not** CLEAN concealment. Do **not** implement in this T5 task / PR 30 docs pass.
+Park-as-follow-ups-only except Follow-up (a), which is **resolved by PR #33**.
+**Not** CLEAN concealment. Do **not** implement (b) or (c) in this T5 task / PR 30 docs pass.
 
 Head: `87572c5e5cde9ef23a65bd19ff369530978e6f97` on `feat/dsh-sbtd-t5`.
-Host pin: `@deepseek-ai/dsh@0.1.1-rc.2`. No T6.
 
 Same content as `prd.md` section **Known gaps / follow-ups (accepted deferred)**.
 
@@ -15,11 +15,14 @@ Do not reopen as T5 product work:
 - Required + passed resets when the catalog trigger fact changes.
 - A → B → C catalog-fact keep-pass hole is closed: catalog fact is retained on the gate across reset / review.
 
-## Follow-up (a) — remediation deadlock
+## Follow-up (a) — remediation deadlock — resolved by PR #33
 
-`seam-required` / `refactor-first` map to gate state `running`, while T3 `gatePreExecute` still requires `passed` for production writes.
+Resolved by PR #33 on `feat/dsh-sbtd-fu1-remediation-write`.
 
-That deadlock blocks the designed remediation loop. Needs a hook exception / `safety-seam-only` per design section 3.4. Follow-up task. Not this PR.
+- Hooks now scoped-allow production writes when `reviewStatus` is `seam-required` (legacy) or `refactor-first` (refactor).
+- Gate stays `running`: `mapGateState` / `RUNNING_STATUS` / `requirement` / `review.ts` untouched.
+- Whole-window allow: no byte-level seam-vs-feature classifier. Opening the window allows all production-class writes while that `reviewStatus` is set.
+- Q4A still-deny-non-remediation is honor/prompt only (not hook-enforced).
 
 ## Follow-up (b) — review order not enforced
 

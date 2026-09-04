@@ -533,6 +533,97 @@ test("EXEMPT 在 legacy 未 passed 时仍放行", async () => {
   assert.equal(result.kind, "allow");
 });
 
+test("Loop 窗口开启时 ddd required unpassed 仍 deny 生产 write（whole-window, no classifier）", async () => {
+  // Known limitation: no byte-level seam-vs-feature classifier.
+  // Whole-window allow does not skip other required unpassed gates.
+  // Q4A still-deny-non-remediation is prompt/honor only.
+  const id = "t3-fu1-win-ddd";
+  sbtdPlan(id, {
+    task_summary: "change existing production after completed grill-with-docs",
+    facts: [
+      "existing behavior",
+      "existing production",
+      "completed grill-with-docs",
+    ],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "running";
+  gates.legacy.reviewStatus = "seam-required";
+  gates.refactor.state = "passed";
+  const { hooks } = loadPlugin();
+  const pre = hooks.get(PRE_EXECUTE_EVENT);
+  const seam = await pre(writeSrc(id), nextAllow);
+  assert.equal(seam.kind, "deny");
+  assert.match(seam.reason, /sbtd_review kind=ddd/);
+
+  gates.legacy.state = "passed";
+  gates.refactor.state = "running";
+  gates.refactor.reviewStatus = "refactor-first";
+  const refactorFirst = await pre(writeSrc(id), nextAllow);
+  assert.equal(refactorFirst.kind, "deny");
+  assert.match(refactorFirst.reason, /sbtd_review kind=ddd/);
+});
+
+test("Loop 窗口开启时 ddia required unpassed 仍 deny 数据路径（whole-window, no classifier）", async () => {
+  // Known limitation: no byte-level seam-vs-feature classifier.
+  // Whole-window allow does not skip other required unpassed gates.
+  // Q4A still-deny-non-remediation is prompt/honor only.
+  const id = "t3-fu1-win-ddia";
+  sbtdPlan(id, {
+    task_summary: "persist schema cache",
+    facts: ["existing behavior", "existing production"],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "running";
+  gates.legacy.reviewStatus = "seam-required";
+  gates.refactor.state = "passed";
+  const { hooks } = loadPlugin();
+  const pre = hooks.get(PRE_EXECUTE_EVENT);
+  const schema = writeSrc(id, "src/schema.sql");
+  const seam = await pre(schema, nextAllow);
+  assert.equal(seam.kind, "deny");
+  assert.match(seam.reason, /sbtd_review kind=ddia/);
+
+  gates.legacy.state = "passed";
+  gates.refactor.state = "running";
+  gates.refactor.reviewStatus = "refactor-first";
+  const refactorFirst = await pre(schema, nextAllow);
+  assert.equal(refactorFirst.kind, "deny");
+  assert.match(refactorFirst.reason, /sbtd_review kind=ddia/);
+});
+
+test("Loop 窗口开启时 release required unpassed 仍 deny publish bash（whole-window, no classifier）", async () => {
+  // Known limitation: no byte-level seam-vs-feature classifier.
+  // Whole-window allow does not skip other required unpassed gates.
+  // Q4A still-deny-non-remediation is prompt/honor only.
+  const id = "t3-fu1-win-release";
+  sbtdPlan(id, {
+    task_summary: "deploy production path job",
+    facts: ["existing behavior", "existing production"],
+  });
+  const gates = getSession(id).plan.gates;
+  gates.legacy.state = "running";
+  gates.legacy.reviewStatus = "seam-required";
+  gates.refactor.state = "passed";
+  const { hooks } = loadPlugin();
+  const pre = hooks.get(PRE_EXECUTE_EVENT);
+  const publish = {
+    name: "bash",
+    arguments: { command: "npm publish" },
+    agent: { id },
+  };
+  const seam = await pre(publish, nextAllow);
+  assert.equal(seam.kind, "deny");
+  assert.match(seam.reason, /sbtd_review kind=release/);
+
+  gates.legacy.state = "passed";
+  gates.refactor.state = "running";
+  gates.refactor.reviewStatus = "refactor-first";
+  const refactorFirst = await pre(publish, nextAllow);
+  assert.equal(refactorFirst.kind, "deny");
+  assert.match(refactorFirst.reason, /sbtd_review kind=release/);
+});
+
 test("README 提到 hooks 并保持钉版本与 @next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const src = readFileSync(join(pkgRoot, "src/hooks.ts"), "utf8");
