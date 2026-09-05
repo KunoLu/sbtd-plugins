@@ -43,12 +43,14 @@ Review + docs/test/feature fix。不改 `apply()` 生产逻辑。
 
 ## Acceptance criteria
 
+Retro FINDINGS fixed and merged: PR #14 / #15 on main.
+
 - [x] Required checks executed against `packages/dsh-sbtd` + root README EN/ZH + live dump-config.
 - [x] Grill Q/A recorded (none).
 - [x] Package README documents `dsh plugin --profile web add @kunolu/dsh-sbtd@next`. No local path. No bare package add.
 - [x] Feature + `t0-stub.test.mjs` lock the `@next` contract.
 - [x] `node --test packages/dsh-sbtd/test/t0-stub.test.mjs` passes.
-- [ ] Fix PR opened. No T1 started. No merge.
+- [x] Fix PR opened as #14 (`0df41e0`); follow-up unpublished claim #15 (`286e0ec`). No T1 started by this task.
 
 ## Out of scope
 

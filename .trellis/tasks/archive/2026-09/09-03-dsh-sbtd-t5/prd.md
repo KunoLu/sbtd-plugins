@@ -28,14 +28,16 @@
 
 ## Acceptance criteria
 
-- [ ] `apply` 注册恰好 `sbtd_plan` 与 `sbtd_review`；`inject` 仍为 tools + systemPrompt。
-- [ ] 非法 kind / skill-id / 别名被拒绝，不推进 gate。
-- [ ] 无 plan 时指向 `sbtd_plan`，不 fake pass。
-- [ ] 通过态、running、blocked 映射正确；requirement 不变。
-- [ ] 返回含规定标题、requirement、state；结论只在返回值；`reviewStatus` 已存。
-- [ ] legacy characterized 后生产 write 放行；其余 required unpassed 门禁仍生效。
-- [ ] `packages/dsh-sbtd` lint / typecheck / node test 通过。
-- [ ] 一笔 commit，push `feat/dsh-sbtd-t5`，对 main 开 PR，不 merge，不做 T6。
+Merged on main via PR #30 (`b23b0f9`, 2026-09-04). FOLLOWUPS(a) remediation window later merged via PR #33 (`7352071`).
+
+- [x] `apply` 注册恰好 `sbtd_plan` 与 `sbtd_review`；`inject` 仍为 tools + systemPrompt。（#30）
+- [x] 非法 kind / skill-id / 别名被拒绝，不推进 gate。（#30）
+- [x] 无 plan 时指向 `sbtd_plan`，不 fake pass。（#30）
+- [x] 通过态、running、blocked 映射正确；requirement 不变。（#30）
+- [x] 返回含规定标题、requirement、state；结论只在返回值；`reviewStatus` 已存。（#30）
+- [x] legacy characterized 后生产 write 放行；其余 required unpassed 门禁仍生效。（#30；seam-required/refactor-first window via #33）
+- [x] `packages/dsh-sbtd` lint / typecheck / node test 通过。（#30）
+- [x] PR opened and merged as #30 on `feat/dsh-sbtd-t5`; no T6.
 
 ## Out of scope
 
