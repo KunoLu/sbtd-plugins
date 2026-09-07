@@ -1,0 +1,28 @@
+{
+  "id": "dsh-sbtd-t6-sbtd-clarify",
+  "name": "dsh-sbtd-t6-sbtd-clarify",
+  "title": "dsh-sbtd T6 sbtd_clarify",
+  "description": "Implement sbtd_clarify per locked Q1B-Q11B: Clarify Mode bind, Complete dual gate, Forced Docs DDD via shared sbtdReview + haystack, persist mode+clarifyStatus, Interview Reset flag. Fence: no T7/T8/FU3/hooks rewrite/CONTEXT/ADR/publish.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": "dsh-sbtd",
+  "priority": "P1",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-07",
+  "completedAt": "2026-09-07",
+  "branch": "feat/dsh-sbtd-t6-sbtd-clarify",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/39",
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/39"
+  }
+}

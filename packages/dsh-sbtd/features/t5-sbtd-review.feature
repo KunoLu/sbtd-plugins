@@ -2,10 +2,10 @@ Feature: DSH T5 sbtd_review 五项 book gate
   模型通过 sbtd_review 提交规定标题的 Review，按源 skill 状态枚举推进 gate。
   不替代项目规范或测试。结论只在返回值。
 
-  Scenario: apply 只注册 sbtd_plan 与 sbtd_review
+  Scenario: apply 注册 sbtd_plan、sbtd_review 与 sbtd_clarify
     Given 插件已加载
     When 宿主枚举已注册 tools
-    Then tools 恰好两个：sbtd_plan 与 sbtd_review
+    Then tools 为 sbtd_plan、sbtd_review 与 sbtd_clarify
     And inject 仍为 tools 与 systemPrompt
 
   Scenario: 五个规范 kind 成功且拒绝别名

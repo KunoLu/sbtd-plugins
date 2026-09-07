@@ -1,6 +1,6 @@
 # @kunolu/dsh-sbtd
 
-DSH 宿主上的 SBTD workflow 适配器。当前为 T5：注册短中文 sbtd section、进程内会话状态、`sbtd_plan`、`sbtd_review`、`tools/pre-execute` / `agent/pre-step` hooks 门禁，以及从 640-skills 只读同步的 `manuals/`。
+DSH 宿主上的 SBTD workflow 适配器。当前为 T6：注册短中文 sbtd section、进程内会话状态、`sbtd_plan`、`sbtd_review`、`sbtd_clarify`、`tools/pre-execute` / `agent/pre-step` hooks 门禁，以及从 640-skills 只读同步的 `manuals/`。
 
 版本 **0.1.0-rc.1**，发布在 dist-tag `next`。目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
 
@@ -12,7 +12,14 @@ DSH 宿主上的 SBTD workflow 适配器。当前为 T5：注册短中文 sbtd s
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
 ```
 
-加载时 `apply()` 注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan` 与 `sbtd_review`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。命中 book gate 须 `sbtd_review` 到通过态。
+加载时 `apply()` 注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan`、`sbtd_review` 与 `sbtd_clarify`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。命中 book gate 须 `sbtd_review` 到通过态。仅 docs 模式 Clarify Complete 强制 DDD 复审。
+
+
+## sbtd_clarify
+
+首次调用必须传 `mode`：`docs`（grill-with-docs）或 `generic`（grill-me）；之后省略则继承。换 mode 会抛错，直到 `reset: true`（Interview Reset）。compaction 还原 mode 与 `clarifyStatus`，不是 Reset。
+
+每轮只问一个 `question`。`clarifyStatus=complete` 仅当 `frontier_empty` 且 `user_confirmed` 同时为真；只读 manuals 不是 Complete。Partial 可以没有 plan；Complete 必须先 `sbtd_plan`。docs Complete 通过 haystack 事实 `完整执行 grill-with-docs` 把 `ddd` 升为 required，并调用共享 `sbtd_review kind=ddd`。generic Complete 不自动要求 DDD。Complete 且 required DDD 未 `confirmed` 时一次性 blocked，不再建议 PRD/实现。
 
 ## sbtd_review
 
