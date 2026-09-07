@@ -136,3 +136,39 @@ Feature: DSH T5 sbtd_review 五项 book gate
     Then 放行
     When 模型执行 bash npm publish
     Then 因 release 被 deny
+
+  Scenario: 双 required 且 legacy 未 passed 时拒绝记录 refactor proceed
+    Given plan 中 legacy 与 refactor 均为 required
+    And 尚未记录 legacy review
+    When 模型调用 sbtd_review kind=refactor status=proceed
+    Then tool 抛错
+    And 不推进任何 gate
+
+  Scenario: 双 required 且 legacy 已 passed 时允许 refactor proceed
+    Given plan 中 legacy 与 refactor 均为 required
+    And legacy 已 characterized
+    When 模型调用 sbtd_review kind=refactor status=proceed
+    Then refactor gate state 为 passed
+    And reviewStatus 为 proceed
+
+  Scenario: 双 required 且 legacy 为 seam-required 时只允许 refactor-first
+    Given plan 中 legacy 与 refactor 均为 required
+    And legacy 已 seam-required
+    When 模型调用 sbtd_review kind=refactor status=refactor-first
+    Then refactor gate state 为 running
+    When 模型在另一 session 于 seam-required 下调用 kind=refactor status=proceed
+    Then tool 抛错
+    And legacy gate 不变
+
+  Scenario: 仅 refactor required 时 proceed 仍成功
+    Given plan 中仅 refactor 为 required
+    When 模型调用 sbtd_review kind=refactor status=proceed
+    Then refactor gate state 为 passed
+
+  Scenario: 记录顺序错误文案含 live legacy 状态并指向 kind=legacy
+    Given plan 中 legacy 与 refactor 均为 required
+    And 尚未记录 legacy review
+    When 模型调用 sbtd_review kind=refactor status=proceed
+    Then 错误含 live legacy.state 与 legacy.reviewStatus
+    And 错误指向 sbtd_review kind=legacy
+    And 错误不含 skill-id

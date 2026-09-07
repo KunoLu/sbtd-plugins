@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-05（上海） |
-| 同步时 main | `69a6acf`（#34 archive 合入后） |
+| 上次同步 | 2026-09-07（上海） |
+| 同步时 main | `226d4e3`（#35 TODO.md 合入后） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -67,7 +67,7 @@
 | ID | 内容 | 状态 | 备注 |
 |---|---|---|---|
 | FU1 | Remediation Write：`seam-required` / `refactor-first` ↔ T3 `passed` 死锁 | ✅ | #33 → `7352071`；整窗 scoped allow；无字节级 seam/feature 分类器（Q4A honor） |
-| FU2 | `sbtd_review` 强制 legacy-before-refactor | 🔄 **进行中** | 用户 2026-09-05 拍板；grill-with-docs 中 |
+| FU2 | `sbtd_review` 强制 legacy-before-refactor | 🔄 **进行中** | Review Recording Order 编码中；branch `feat/dsh-sbtd-fu2-legacy-before-refactor`；PR 待开 |
 | FU3 | multi-fact：`PREDICATES.find` 匹配集合 / 集合扩展重置 | ⬜ 未开 | T5 advisor 采纳后置 |
 
 ---
@@ -108,4 +108,5 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-07 | FU2 进入编码：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |
 | 2026-09-05 | 初版：自群进度表落地；含 P0–P3、FU1–FU3、发布与约定；FU2 进行中 |

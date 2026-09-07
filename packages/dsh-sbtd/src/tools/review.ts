@@ -143,7 +143,24 @@ export function sbtdReview(
     throw new Error("尚未 sbtd_plan，请先调用 sbtd_plan。");
   }
 
-  const gate = session.plan.gates[kind];
+  const gates = session.plan.gates;
+  if (
+    kind === "refactor" &&
+    gates.legacy.requirement === "required" &&
+    gates.refactor.requirement === "required"
+  ) {
+    const legacy = gates.legacy;
+    const predecessorPassed = legacy.state === "passed";
+    const seamException =
+      legacy.reviewStatus === "seam-required" && status === "refactor-first";
+    if (!predecessorPassed && !seamException) {
+      throw new Error(
+        `sbtd_review: refactor recording is blocked until legacy.state is passed (live legacy.state=${legacy.state}, legacy.reviewStatus=${legacy.reviewStatus}). Call sbtd_review kind=legacy first.`,
+      );
+    }
+  }
+
+  const gate = gates[kind];
   gate.state = mapGateState(status);
   gate.reviewStatus = status;
 
