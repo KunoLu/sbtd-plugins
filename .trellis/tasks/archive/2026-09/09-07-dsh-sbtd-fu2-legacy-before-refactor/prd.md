@@ -55,10 +55,13 @@ Dedicated sentence, distinct from T3 `required gate 未 passed，请先调用 sb
 
 ## Acceptance
 
-- [x] Both required, legacy planned / no review → `kind=refactor status=proceed` throws; both kinds' `state`/`reviewStatus` unchanged
-- [x] Both required, legacy passed/characterized → refactor proceed OK
-- [x] Both required, legacy seam-required → refactor-first OK (`state=running`); proceed throws; legacy row unchanged on reject
-- [x] Only refactor required (legacy on-demand) → proceed still OK
-- [x] Error contains live `legacy.state` + `legacy.reviewStatus` and `kind=legacy`, not skill ids
-- [x] Existing T5 regressions green
-- [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` **88/88**
+- [x] Both required, legacy planned / no review → `kind=refactor status=proceed` throws; both kinds' `state`/`reviewStatus` unchanged (covered in `t5-review.test.mjs` / `t5-sbtd-review.feature`).
+- [x] Both required, legacy passed/characterized → refactor proceed OK (covered).
+- [x] Both required, legacy seam-required → refactor-first OK (`state=running`); proceed throws; legacy row unchanged on reject (covered).
+- [x] Only refactor required (legacy on-demand) → proceed still OK (covered).
+- [x] Error contains live `legacy.state` + `legacy.reviewStatus` and `kind=legacy`, not skill ids (covered).
+- [x] `kind=refactor status=blocked` also out of order when both required and outside Q3 window (covered).
+- [x] Existing T5 regressions green; `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` **88/88** (verified on PR head).
+- [x] PR #37 `/review` **CLEAN** — Combined verdict pass; Quality=pass; Security=pass; Advisor process notes non-blocking; head `ded322caf289d6bd59b701ebbd5dddb4fa29edbc`; no required changes.
+- [x] CI `omp-runtime-linux-probe` green on PR head.
+- [x] No hooks/mapGateState/FU1 remediationAllow change; no registry publish; no omp-config edits; host pin `@deepseek-ai/dsh@0.1.1-rc.2`.
