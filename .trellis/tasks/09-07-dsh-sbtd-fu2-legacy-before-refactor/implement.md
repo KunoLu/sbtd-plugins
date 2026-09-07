@@ -36,6 +36,19 @@ Rollout / migration / rollback / cleanup: revert this PR. No repair of already-r
 Required validation and result: `biome check src` pass; `tsc --noEmit` pass; `node --test test/*.test.mjs` **88/88**.
 Optional checks, accountable owner acceptance, and residual risk: CLI `node .gitnexus/run.cjs analyze --index-only` succeeded this session; MCP `impact` still reported commitsBehind=3 (session cache). `detect_changes` after CLI refresh: risk low, `sbtdReview` touched. `rtk` missing → fallback-native. No registry publish. GitNexus is advisory relative to 88/88 tests.
 
+## Code Readability Review
+
+Scope: modified hand-written production code and tests (`review.ts`, `t5-review.test.mjs`, `t5-sbtd-review.feature`)
+Findings: none
+Ponytail conflicts resolved: none (`ponytail` / `ponytail-review` Skills not visible this host)
+Changes applied: none
+Revalidation required: no
+
+## Phase 3.3 spec update
+
+No durable `.trellis/spec` change. Review Recording Order is adapter-local; CONTEXT.md language remains Lord-paste / docs-sync later.
+
+
 
 ## Checklist
 
