@@ -33,7 +33,7 @@ Canonical names: **Clarify Mode**, **Interview Reset**, **Clarify Complete**, **
 - `hooks.ts` write-order / `mapGateState` / FU1 `remediationAllow`
 - Weaken T3 ddd deny
 - `docs/CONTEXT.md` / ADR disk writes
-- Registry publish, omp settings, host retarget, merge, `/review`
+- Registry publish, omp settings, host retarget
 
 ## Locked Q1–Q11
 
@@ -53,15 +53,16 @@ Canonical names: **Clarify Mode**, **Interview Reset**, **Clarify Complete**, **
 
 ## Acceptance
 
-- [ ] First call omit `mode` throws; bind `docs` then omit inherits
-- [ ] Later `generic` while bound `docs` throws until explicit reset; after reset rebind allowed
-- [ ] Compaction/restore keeps mode bind and `clarifyStatus`
-- [ ] Docs Complete forces DDD via mapper **and** haystack elevate (`ddd` required)
-- [ ] Generic Complete does not auto-require DDD and does not emit grill-with-docs fact
-- [ ] Return shape is one Current Question
-- [ ] Empty frontier without user confirm stays Partial; manuals-only is not Complete
-- [ ] Partial without plan OK; Complete without plan throws
-- [ ] Complete ∧ DDD ≠ confirmed → one-shot blocked; further clarify not resume
-- [ ] T3 still denies production writes when required `ddd` is unpassed
-- [ ] Section prose is docs-Complete only
-- [ ] `biome check src`; typecheck; package tests green
+- [x] First call omit `mode` throws; bind `docs` then omit inherits (`t6-clarify.test.mjs` / `t6-sbtd-clarify.feature`)
+- [x] Later `generic` while bound `docs` throws until explicit reset; after reset rebind allowed (covered)
+- [x] Compaction/restore keeps mode bind and `clarifyStatus` (covered)
+- [x] Docs Complete forces DDD via mapper **and** haystack elevate (`ddd` required) (covered)
+- [x] Generic Complete does not auto-require DDD and does not emit grill-with-docs fact (covered)
+- [x] Return shape is one Current Question (covered)
+- [x] Empty frontier without user confirm stays Partial; manuals-only is not Complete (covered)
+- [x] Partial without plan OK; Complete without plan throws (covered)
+- [x] Complete ∧ DDD ≠ confirmed → one-shot blocked; further clarify not resume (covered)
+- [x] T3 still denies production writes when required `ddd` is unpassed (covered; T3 deny unchanged)
+- [x] Section prose is docs-Complete only (covered)
+- [x] `biome check src`; typecheck; package tests **105/105** (verified on PR head `d2510c9`)
+- [x] PR https://github.com/KunoLu/sbtd-plugins/pull/39 — scheme A same-PR finish; group vote **A**; `REQUIRED_CHANGES=none`; review concerns → FU3 persist-across-replans / mergeGate demote; host pin `@deepseek-ai/dsh@0.1.1-rc.2`; Q1–Q11 locked; package not published

@@ -30,9 +30,15 @@ Deferred: none.
 4. Narrow `section.ts` + snapshot
 5. Tests `t6-clarify.test.mjs`; update t2/t3/t5 tool-count; T3 ddd deny still green
 6. README mention `sbtd_clarify` (keep host pin / 0.1.0-rc.1)
-7. `docs/TODO.md` T6 in progress + changelog 2026-09-07 + live main SHA `ba72c75`
-8. Verify: `biome check src`; `tsc --noEmit`; build; `node --test test/*.test.mjs`
-9. PR; set-branch / pr_url; do not finish-work; do not merge
+7. `docs/TODO.md` T6 done pending squash SHA; FU3 persist-across-replans noted
+8. Verify: `biome check src`; `tsc --noEmit`; build; `node --test test/*.test.mjs` **105/105**
+9. PR #39; scheme A `/trellis-finish-work`; review concerns → FU3; vote A; `REQUIRED_CHANGES=none`
+
+## Phase 3.3 Spec update
+
+Skill `trellis-update-spec` is not installed. Decision: update `.trellis/spec/dsh-sbtd/backend/index.md` Current State from T4 (false “No extra sbtd_* tools”) to T6 (`sbtd_plan` / `sbtd_review` / `sbtd_clarify`).
+
+FU3 persist-across-replans / `mergeGate` demote stays task-scoped debt (`docs/TODO.md` + this task `FOLLOWUPS.md`). Do not encode unimplemented FU3 behavior as a shipped convention. Q8 remains one-shot haystack on this head.
 
 ## Validation
 
@@ -45,4 +51,4 @@ pnpm --filter @kunolu/dsh-sbtd test
 
 ## Fence
 
-No T7/T8, FU3, hooks rewrite, CONTEXT/ADR, omp settings, publish, host retarget, `/review`, merge.
+No T7/T8, FU3 coding, hooks rewrite, CONTEXT/ADR, omp settings, publish, host retarget. Merge is parent-owned after this finish commit.

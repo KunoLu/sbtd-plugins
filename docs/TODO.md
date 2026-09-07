@@ -18,7 +18,7 @@
 | 层级 | 范围 | 状态 |
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
-| **P1** | T4–T8 核心闭环 | 🟡 T4–T5 完成；T6 进行中；T7–T8 未开；FU2 ✅ |
+| **P1** | T4–T8 核心闭环 | 🟡 T4–T6 完成（T6 pending squash SHA）；T7–T8 未开；FU2 ✅；FU3 ⬜ |
 | **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
@@ -41,7 +41,7 @@
 |---|---|---|---|
 | T4 | manuals 同步（640-skills v1.0.13 / `f8aa0d7`） | ✅ | #26–#29 |
 | T5 | `sbtd_review` | ✅ | #30 → `b23b0f9` |
-| T6 | `sbtd_clarify` | 🟡 进行中 | #39；依赖 T5；host `@deepseek-ai/dsh@0.1.1-rc.2` |
+| T6 | `sbtd_clarify` | ✅ 完成 pending merge | #39；scheme A finish；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T7 | Trellis 后端 | ⬜ 未开 | |
 | T8 | `sbtd_spec` / tickets | ⬜ 未开 | 依赖 T6 / T7 |
 
@@ -68,7 +68,7 @@
 |---|---|---|---|
 | FU1 | Remediation Write：`seam-required` / `refactor-first` ↔ T3 `passed` 死锁 | ✅ | #33 → `7352071`；整窗 scoped allow；无字节级 seam/feature 分类器（Q4A honor） |
 | FU2 | `sbtd_review` 强制 legacy-before-refactor | ✅ | #37 → `f039a99`；Review Recording Order on `sbtd_review` only；88/88；archive `09-07-dsh-sbtd-fu2-legacy-before-refactor` |
-| FU3 | multi-fact：`PREDICATES.find` 匹配集合 / 集合扩展重置 | ⬜ 未开 | T5 advisor 采纳后置 |
+| FU3 | multi-fact `PREDICATES.find` + persist-across-replans（Clarify Complete 后 `mergeGate` demote） | ⬜ 未开 | T5 first-match 集合扩展；T6 Advise2/vote A：同 summary 省略 facts 可将 required+blocked Forced Docs DDD 降为 on-demand，T3 可写而 `clarifyStatus` 仍 complete；Q8 一次性 haystack；#39 不改 `mergeGate` |
 
 ---
 
@@ -97,10 +97,10 @@
 
 | 顺序 | 项 | 状态 |
 |---|---|---|
-| 1 | **FU2** legacy-before-refactor（grill → 群投 → DDD → 编码 → review → 同 PR finish → 合） | ✅ #37 → `f039a99` |
-| 2 | **T6** `sbtd_clarify` | 🟡 进行中（#39） |
-| 3 | **FU3** multi-fact 匹配集合 | ⬜ |
-| 4 | T7 → T8 → P2 → P3 | ⬜ |
+| 1 | **T6** `sbtd_clarify` | ✅ #39（pending squash SHA） |
+| 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | ⬜ |
+| 3 | T7 Trellis 后端 | ⬜ |
+| 4 | T8 `sbtd_spec` / tickets → P2 → P3 | ⬜ |
 
 ---
 
@@ -108,7 +108,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-07 | T6 `sbtd_clarify` 开 PR #39：Clarify Mode bind、docs Complete Forced DDD、persist+Reset；main `ba72c75` |
+| 2026-09-07 | T6 scheme A finish on #39（pending squash）；FU3 增 persist-across-replans / mergeGate demote 债；不改 `plan.ts` |
 | 2026-09-07 | FU2 合入 #37 → `f039a99`；Trellis archive + TODO 回填 merge SHA |
 | 2026-09-07 | FU2 开 PR #37：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |
 | 2026-09-05 | 初版：自群进度表落地；含 P0–P3、FU1–FU3、发布与约定；FU2 进行中 |
