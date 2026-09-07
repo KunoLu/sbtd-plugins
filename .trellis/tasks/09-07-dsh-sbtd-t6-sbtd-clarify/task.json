@@ -16,11 +16,13 @@
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
-  "pr_url": null,
+  "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/39",
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
   "notes": "",
-  "meta": {}
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/39"
+  }
 }

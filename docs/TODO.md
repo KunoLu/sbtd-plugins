@@ -41,7 +41,7 @@
 |---|---|---|---|
 | T4 | manuals 同步（640-skills v1.0.13 / `f8aa0d7`） | ✅ | #26–#29 |
 | T5 | `sbtd_review` | ✅ | #30 → `b23b0f9` |
-| T6 | `sbtd_clarify` | 🟡 进行中 | 本 PR；依赖 T5；host `@deepseek-ai/dsh@0.1.1-rc.2` |
+| T6 | `sbtd_clarify` | 🟡 进行中 | #39；依赖 T5；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T7 | Trellis 后端 | ⬜ 未开 | |
 | T8 | `sbtd_spec` / tickets | ⬜ 未开 | 依赖 T6 / T7 |
 
@@ -98,7 +98,7 @@
 | 顺序 | 项 | 状态 |
 |---|---|---|
 | 1 | **FU2** legacy-before-refactor（grill → 群投 → DDD → 编码 → review → 同 PR finish → 合） | ✅ #37 → `f039a99` |
-| 2 | **T6** `sbtd_clarify` | 🟡 进行中（本 PR） |
+| 2 | **T6** `sbtd_clarify` | 🟡 进行中（#39） |
 | 3 | **FU3** multi-fact 匹配集合 | ⬜ |
 | 4 | T7 → T8 → P2 → P3 | ⬜ |
 
@@ -108,7 +108,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-07 | T6 `sbtd_clarify` 开工：Clarify Mode bind、docs Complete Forced DDD、persist+Reset；main `ba72c75` |
+| 2026-09-07 | T6 `sbtd_clarify` 开 PR #39：Clarify Mode bind、docs Complete Forced DDD、persist+Reset；main `ba72c75` |
 | 2026-09-07 | FU2 合入 #37 → `f039a99`；Trellis archive + TODO 回填 merge SHA |
 | 2026-09-07 | FU2 开 PR #37：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |
 | 2026-09-05 | 初版：自群进度表落地；含 P0–P3、FU1–FU3、发布与约定；FU2 进行中 |
