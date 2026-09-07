@@ -74,6 +74,38 @@ function renderedText(tool, value) {
     .join("\n");
 }
 
+function planBothRequired(id) {
+  sbtdPlan(id, {
+    task_summary: "change existing production after completed grill-with-docs",
+    facts: [
+      "existing behavior",
+      "existing production",
+      "completed grill-with-docs",
+    ],
+  });
+  const gates = getSession(id).plan.gates;
+  assert.equal(gates.legacy.requirement, "required");
+  assert.equal(gates.refactor.requirement, "required");
+  return gates;
+}
+
+function assertRefactorOrderError(fn, expectedState, expectedReviewStatus) {
+  assert.throws(fn, (err) => {
+    assert.ok(err instanceof Error);
+    assert.match(err.message, /refactor recording is blocked/);
+    assert.match(err.message, new RegExp(`legacy\\.state=${expectedState}`));
+    assert.match(
+      err.message,
+      new RegExp(`legacy\\.reviewStatus=${expectedReviewStatus}`),
+    );
+    assert.match(err.message, /sbtd_review kind=legacy/);
+    assert.doesNotMatch(err.message, /book-legacy-change-safety/);
+    assert.doesNotMatch(err.message, /required gate 未 passed/);
+    return true;
+  });
+}
+
+
 test("apply 注册恰好 sbtd_plan 与 sbtd_review", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
@@ -554,4 +586,82 @@ test("README 提到 sbtd_review 并保持钉版本", () => {
   assert.match(readme, /proceed/);
   assert.match(readme, /confirmed/);
   assert.match(readme, /ready/);
+});
+
+test("双 required 且 legacy 未 passed 时拒绝记录 refactor proceed", () => {
+  const id = "t5-order-planned";
+  planBothRequired(id);
+  assertRefactorOrderError(
+    () => sbtdReview(id, { kind: "refactor", status: "proceed" }),
+    "planned",
+    "undefined",
+  );
+  const gates = getSession(id).plan.gates;
+  assert.equal(gates.legacy.state, "planned");
+  assert.equal(gates.legacy.reviewStatus, undefined);
+  assert.equal(gates.refactor.state, "planned");
+  assert.equal(gates.refactor.reviewStatus, undefined);
+});
+
+test("双 required 且 legacy 已 passed 时允许 refactor proceed", () => {
+  const id = "t5-order-legacy-passed";
+  planBothRequired(id);
+  sbtdReview(id, { kind: "legacy", status: "characterized" });
+  const result = sbtdReview(id, { kind: "refactor", status: "proceed" });
+  assert.equal(result.state, "passed");
+  assert.equal(result.reviewStatus, "proceed");
+  assert.equal(getSession(id).plan.gates.refactor.state, "passed");
+  assert.equal(getSession(id).plan.gates.refactor.reviewStatus, "proceed");
+});
+
+test("双 required 且 legacy 为 seam-required 时只允许 refactor-first", () => {
+  const firstId = "t5-order-seam-first";
+  planBothRequired(firstId);
+  sbtdReview(firstId, { kind: "legacy", status: "seam-required" });
+  const allowed = sbtdReview(firstId, {
+    kind: "refactor",
+    status: "refactor-first",
+  });
+  assert.equal(allowed.state, "running");
+  assert.equal(
+    getSession(firstId).plan.gates.refactor.reviewStatus,
+    "refactor-first",
+  );
+
+  const rejectId = "t5-order-seam-proceed";
+  planBothRequired(rejectId);
+  sbtdReview(rejectId, { kind: "legacy", status: "seam-required" });
+  assertRefactorOrderError(
+    () => sbtdReview(rejectId, { kind: "refactor", status: "proceed" }),
+    "running",
+    "seam-required",
+  );
+  const gates = getSession(rejectId).plan.gates;
+  assert.equal(gates.legacy.state, "running");
+  assert.equal(gates.legacy.reviewStatus, "seam-required");
+  assert.equal(gates.refactor.state, "planned");
+  assert.equal(gates.refactor.reviewStatus, undefined);
+});
+
+test("仅 refactor required 时 proceed 仍成功", () => {
+  const id = "t5-order-refactor-only";
+  sbtdPlan(id, { task_summary: "edit existing production module" });
+  const gates = getSession(id).plan.gates;
+  assert.equal(gates.refactor.requirement, "required");
+  assert.equal(gates.legacy.requirement, "on-demand");
+  const result = sbtdReview(id, { kind: "refactor", status: "proceed" });
+  assert.equal(result.state, "passed");
+  assert.equal(getSession(id).plan.gates.refactor.reviewStatus, "proceed");
+});
+
+test("记录顺序错误文案含 live legacy 状态并指向 kind=legacy", () => {
+  const id = "t5-order-copy";
+  planBothRequired(id);
+  assertRefactorOrderError(
+    () => sbtdReview(id, { kind: "refactor", status: "blocked" }),
+    "planned",
+    "undefined",
+  );
+  assert.equal(getSession(id).plan.gates.refactor.state, "planned");
+  assert.equal(getSession(id).plan.gates.refactor.reviewStatus, undefined);
 });

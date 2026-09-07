@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-05（上海） |
-| 同步时 main | `69a6acf`（#34 archive 合入后） |
+| 上次同步 | 2026-09-07（上海） |
+| 同步时 main | `226d4e3`（#35；FU2 #37 待 squash 合入后更新 SHA） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -18,7 +18,7 @@
 | 层级 | 范围 | 状态 |
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
-| **P1** | T4–T8 核心闭环 | 🟡 T4–T5 完成；T6–T8 未开；FU2 进行中 |
+| **P1** | T4–T8 核心闭环 | 🟡 T4–T5 完成；T6–T8 未开；FU2 ✅（#37 待 squash merge SHA） |
 | **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
@@ -67,7 +67,7 @@
 | ID | 内容 | 状态 | 备注 |
 |---|---|---|---|
 | FU1 | Remediation Write：`seam-required` / `refactor-first` ↔ T3 `passed` 死锁 | ✅ | #33 → `7352071`；整窗 scoped allow；无字节级 seam/feature 分类器（Q4A honor） |
-| FU2 | `sbtd_review` 强制 legacy-before-refactor | 🔄 **进行中** | 用户 2026-09-05 拍板；grill-with-docs 中 |
+| FU2 | `sbtd_review` 强制 legacy-before-refactor | ✅ | #37 CLEAN → squash merge SHA **pending**；Review Recording Order on `sbtd_review` only；88/88；archive `09-07-dsh-sbtd-fu2-legacy-before-refactor` |
 | FU3 | multi-fact：`PREDICATES.find` 匹配集合 / 集合扩展重置 | ⬜ 未开 | T5 advisor 采纳后置 |
 
 ---
@@ -97,7 +97,7 @@
 
 | 顺序 | 项 | 状态 |
 |---|---|---|
-| 1 | **FU2** legacy-before-refactor（grill → 群投 → DDD → 编码 → review → 同 PR finish → 合） | 🔄 |
+| 1 | **FU2** legacy-before-refactor（grill → 群投 → DDD → 编码 → review → 同 PR finish → 合） | ✅ #37 pending merge SHA |
 | 2 | **FU3** multi-fact 匹配集合 | ⬜ |
 | 3 | **T6** `sbtd_clarify` | ⬜ |
 | 4 | T7 → T8 → P2 → P3 | ⬜ |
@@ -108,4 +108,6 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-07 | FU2 finish：PR #37 CLEAN + Trellis archive；状态 ✅，squash merge SHA 待合入后回填 |
+| 2026-09-07 | FU2 开 PR #37：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |
 | 2026-09-05 | 初版：自群进度表落地；含 P0–P3、FU1–FU3、发布与约定；FU2 进行中 |
