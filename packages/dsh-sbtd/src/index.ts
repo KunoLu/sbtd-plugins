@@ -1,5 +1,6 @@
 import { type HooksHost, registerHooks } from "./hooks.js";
 import { registerSection, type SectionHost } from "./section.js";
+import { registerClarifyTool } from "./tools/clarify.js";
 import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
 
@@ -20,6 +21,14 @@ export {
   SBTD_SECTION_TEXT,
 } from "./section.js";
 export { getSession, restore, serialize } from "./state.js";
+export {
+  CLARIFY_MODES,
+  createClarifyTool,
+  GRILL_WITH_DOCS_FACT,
+  registerClarifyTool,
+  SBTD_CLARIFY_TOOL_NAME,
+  sbtdClarify,
+} from "./tools/clarify.js";
 export {
   createPlanTool,
   inferRequirements,
@@ -43,5 +52,6 @@ export function apply(ctx: PluginHost): void {
   registerSection(ctx);
   registerPlanTool(ctx);
   registerReviewTool(ctx);
+  registerClarifyTool(ctx);
   registerHooks(ctx);
 }

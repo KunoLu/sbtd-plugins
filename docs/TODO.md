@@ -7,7 +7,7 @@
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-07（上海） |
-| 同步时 main | `f039a99`（#37 FU2 squash） |
+| 同步时 main | `ba72c75`（#38 FU2 TODO） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -18,7 +18,7 @@
 | 层级 | 范围 | 状态 |
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
-| **P1** | T4–T8 核心闭环 | 🟡 T4–T5 完成；T6–T8 未开；FU2 ✅ |
+| **P1** | T4–T8 核心闭环 | 🟡 T4–T5 完成；T6 进行中；T7–T8 未开；FU2 ✅ |
 | **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
@@ -41,7 +41,7 @@
 |---|---|---|---|
 | T4 | manuals 同步（640-skills v1.0.13 / `f8aa0d7`） | ✅ | #26–#29 |
 | T5 | `sbtd_review` | ✅ | #30 → `b23b0f9` |
-| T6 | `sbtd_clarify` | ⬜ 未开 | 依赖 T5；FU2 不挡澄清闭环 |
+| T6 | `sbtd_clarify` | 🟡 进行中 | 本 PR；依赖 T5；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T7 | Trellis 后端 | ⬜ 未开 | |
 | T8 | `sbtd_spec` / tickets | ⬜ 未开 | 依赖 T6 / T7 |
 
@@ -98,8 +98,8 @@
 | 顺序 | 项 | 状态 |
 |---|---|---|
 | 1 | **FU2** legacy-before-refactor（grill → 群投 → DDD → 编码 → review → 同 PR finish → 合） | ✅ #37 → `f039a99` |
-| 2 | **FU3** multi-fact 匹配集合 | ⬜ |
-| 3 | **T6** `sbtd_clarify` | ⬜ |
+| 2 | **T6** `sbtd_clarify` | 🟡 进行中（本 PR） |
+| 3 | **FU3** multi-fact 匹配集合 | ⬜ |
 | 4 | T7 → T8 → P2 → P3 | ⬜ |
 
 ---
@@ -108,6 +108,7 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-07 | T6 `sbtd_clarify` 开工：Clarify Mode bind、docs Complete Forced DDD、persist+Reset；main `ba72c75` |
 | 2026-09-07 | FU2 合入 #37 → `f039a99`；Trellis archive + TODO 回填 merge SHA |
 | 2026-09-07 | FU2 开 PR #37：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |
 | 2026-09-05 | 初版：自群进度表落地；含 P0–P3、FU1–FU3、发布与约定；FU2 进行中 |

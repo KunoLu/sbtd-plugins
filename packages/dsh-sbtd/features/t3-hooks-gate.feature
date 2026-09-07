@@ -1,6 +1,6 @@
 Feature: DSH T3 hooks 门禁
   模型在没有 Book Gate Plan 或强制 gate 未通过时，不能改生产代码。
-  门禁走 tools/pre-execute 与 agent/pre-step，不新增 sbtd_* tool。
+  门禁走 tools/pre-execute 与 agent/pre-step。T6 另注册 sbtd_clarify，不改 hooks 写序。
 
   Scenario: 无 plan 时写 src 被 ask 去 sbtd_plan
     Given 当前 session 没有 plan

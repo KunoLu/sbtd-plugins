@@ -5,6 +5,10 @@ export type GateState =
   | "blocked"
   | "not-required";
 
+export type ClarifyMode = "docs" | "generic";
+
+export type ClarifyStatus = "partial" | "complete";
+
 export interface BookGatePlan {
   taskId: string;
   summary: string;
@@ -32,11 +36,15 @@ export interface SbtdSessionState {
     lastPreflight?: "ok" | "blocked";
     missing: string[];
   };
+  clarifyMode?: ClarifyMode;
+  clarifyStatus?: ClarifyStatus;
 }
 
 export interface SbtdHandoffSnapshot {
   plan?: BookGatePlan;
   maestro?: { missing: string[] };
+  clarifyMode?: ClarifyMode;
+  clarifyStatus?: ClarifyStatus;
 }
 
 const sessions = new Map<string, SbtdSessionState>();
@@ -63,6 +71,12 @@ export function serialize(sessionId: string): SbtdHandoffSnapshot {
   if (state.maestro !== undefined) {
     snapshot.maestro = { missing: [...state.maestro.missing] };
   }
+  if (state.clarifyMode !== undefined) {
+    snapshot.clarifyMode = state.clarifyMode;
+  }
+  if (state.clarifyStatus !== undefined) {
+    snapshot.clarifyStatus = state.clarifyStatus;
+  }
   return snapshot;
 }
 
@@ -81,5 +95,15 @@ export function restore(
     state.maestro = { missing: [...cloned.maestro.missing] };
   } else {
     delete state.maestro;
+  }
+  if (cloned.clarifyMode !== undefined) {
+    state.clarifyMode = cloned.clarifyMode;
+  } else {
+    delete state.clarifyMode;
+  }
+  if (cloned.clarifyStatus !== undefined) {
+    state.clarifyStatus = cloned.clarifyStatus;
+  } else {
+    delete state.clarifyStatus;
   }
 }
