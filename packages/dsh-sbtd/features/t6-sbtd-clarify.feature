@@ -75,3 +75,18 @@ Feature: DSH T6 sbtd_clarify 澄清适配器
     Given docs Complete 已把 ddd 升为 required 且未 confirmed
     When 模型写 src/foo.ts
     Then 因 ddd 被 deny
+    And 同摘要省略 grill facts 再 plan 后 ddd 仍为 required blocked
+    And 生产 write 仍因 ddd 被 deny
+
+  Scenario: Interview Reset 后省略 facts 允许 demote Forced Docs DDD
+    Given docs Complete 后 ddd 为 required
+    When 模型传入 reset=true
+    And 以同一摘要省略 grill facts 调用 sbtd_plan
+    Then ddd 可降为 on-demand
+
+  Scenario: docs Complete 只粘滞完成澄清的那份任务
+    Given 任务 A 已 docs Clarify Complete
+    When 切换到任务 B 并先带 grill-with-docs 事实再省略
+    Then B 的 Forced Docs DDD 可撤回
+    And 生产 write 不因 A 的 Complete 被 deny
+

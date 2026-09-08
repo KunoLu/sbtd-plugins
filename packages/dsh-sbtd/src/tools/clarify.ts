@@ -200,6 +200,7 @@ export function sbtdClarify(
   if (input.reset === true) {
     delete session.clarifyMode;
     delete session.clarifyStatus;
+    delete session.clarifyCompleteTaskId;
   } else if (session.clarifyStatus === "complete") {
     throw new Error(
       "sbtd_clarify: Clarify Complete is terminal; further sbtd_clarify is not the resume path. Pass reset to Interview Reset.",
@@ -238,9 +239,11 @@ export function sbtdClarify(
     if (mode === "docs") {
       elevateDocsDdd(sessionId);
       recordDocsDdd(sessionId, input);
+      session.clarifyCompleteTaskId = session.plan.taskId;
     }
 
     session.clarifyStatus = "complete";
+
     const ddd = dddSnapshot(sessionId);
     const result: ClarifyToolResult = {
       clarifyStatus: "complete",

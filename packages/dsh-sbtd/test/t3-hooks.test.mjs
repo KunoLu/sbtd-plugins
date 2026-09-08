@@ -5,7 +5,9 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
 import { getSession } from "../dist/state.js";
+import { sbtdClarify } from "../dist/tools/clarify.js";
 import { sbtdPlan } from "../dist/tools/plan.js";
+
 import {
   PRE_EXECUTE_EVENT,
   PRE_STEP_EVENT,
@@ -624,6 +626,43 @@ test("Loop 窗口开启时 release required unpassed 仍 deny publish bash（who
   assert.equal(refactorFirst.kind, "deny");
   assert.match(refactorFirst.reason, /sbtd_review kind=release/);
 });
+
+test("docs Complete 后省略 grill facts 再 plan 仍因 ddd deny 生产 write", async () => {
+  const id = "t3-fu3-sticky-omit-deny";
+  sbtdPlan(id, { task_summary: "hello world clarify" });
+  sbtdClarify(id, { mode: "docs", question: "Q?" });
+  sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+  sbtdPlan(id, { task_summary: "hello world clarify" });
+  assert.equal(getSession(id).plan.gates.ddd.requirement, "required");
+  assert.notEqual(getSession(id).plan.gates.ddd.state, "passed");
+
+  const { hooks } = loadPlugin();
+  const denied = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+  assert.equal(denied.kind, "deny");
+  assert.match(denied.reason, /sbtd_review kind=ddd/);
+});
+
+test("他任务 docs Complete 后新任务省略 grill 不因陈旧 Complete deny", async () => {
+  const id = "t3-fu3-stale-complete-cross-task";
+  sbtdPlan(id, { task_summary: "task alpha docs complete" });
+  sbtdClarify(id, { mode: "docs", question: "Q?" });
+  sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+
+  const summaryB = "task beta grill then omit";
+  sbtdPlan(id, {
+    task_summary: summaryB,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const omitted = sbtdPlan(id, { task_summary: summaryB });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+
+  const { hooks } = loadPlugin();
+  const allowed = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+  assert.equal(allowed.kind, "allow");
+});
+
+
 
 test("README 提到 hooks 并保持钉版本与 @next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");

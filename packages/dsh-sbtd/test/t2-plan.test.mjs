@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
-import { getSession, restore } from "../dist/state.js";
+import { getSession, restore, serialize } from "../dist/state.js";
 import {
   createPlanTool,
   GATE_KINDS,
@@ -92,7 +92,7 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
   const summary = "implement feature x";
   const first = sbtdPlan(id, {
     task_summary: summary,
-    facts: ["persist shared data", "fix existing behavior bug"],
+    facts: ["persist", "fix existing behavior bug"],
   });
   assert.equal(first.plan.gates.ddia.requirement, "required");
   assert.equal(first.plan.gates.legacy.requirement, "required");
@@ -195,6 +195,117 @@ test("同一 B 重置后再 plan 同触发不循环重置", () => {
   assert.equal(again.plan.gates.ddia.fact, "database/schema");
 });
 
+test("matching-set persist 后再加 schema 重置 inherited pass", () => {
+  const id = "plan-fu3-expand-persist-schema";
+  const summary = "expand matching set step one";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+
+  const expanded = sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["persist", "schema"],
+  });
+  assert.equal(expanded.plan.gates.ddia.requirement, "required");
+  assert.equal(expanded.plan.gates.ddia.state, "planned");
+  assert.equal(expanded.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(expanded.plan.gates.ddia.fact, "database/schema + persistence");
+  assert.match(expanded.markdown, /trigger fact changed/);
+});
+
+test("matching-set 额外 ddd EN/zh 别名不重置 pass", () => {
+  const id = "plan-fu3-ddd-alias-no-reset";
+  const summary = "ddd alias collapse";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["completed grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "passed";
+  live.plan.gates.ddd.reviewStatus = "confirmed";
+
+  const aliased = sbtdPlan(id, {
+    task_summary: summary,
+    facts: [
+      "completed grill-with-docs",
+      "完整执行 grill-with-docs",
+      "fully executed grill-with-docs",
+    ],
+  });
+  assert.equal(aliased.plan.gates.ddd.requirement, "required");
+  assert.equal(aliased.plan.gates.ddd.state, "passed");
+  assert.equal(aliased.plan.gates.ddd.reviewStatus, "confirmed");
+  assert.equal(aliased.plan.gates.ddd.fact, "完整执行 grill-with-docs");
+});
+
+test("先前版本 passed 的英文 DDD 别名 fact 不变重 plan 保持 pass", () => {
+  const summary = "legacy english ddd fact keep pass";
+  for (const [idSuffix, alias] of [
+    ["completed", "completed grill-with-docs"],
+    ["fully-executed", "fully executed grill-with-docs"],
+  ]) {
+    const id = `plan-fu3-prior-ddd-${idSuffix}`;
+    sbtdPlan(id, {
+      task_summary: summary,
+      facts: [alias],
+    });
+    const live = getSession(id);
+    live.plan.gates.ddd.state = "passed";
+    live.plan.gates.ddd.reviewStatus = "confirmed";
+    live.plan.gates.ddd.fact = alias;
+
+    const replanned = sbtdPlan(id, {
+      task_summary: summary,
+      facts: [alias],
+    });
+    assert.equal(replanned.plan.gates.ddd.requirement, "required");
+    assert.equal(replanned.plan.gates.ddd.state, "passed");
+    assert.equal(replanned.plan.gates.ddd.reviewStatus, "confirmed");
+  }
+});
+
+test("matching-set legacy 与 release 扩张仍重置 pass", () => {
+  const legacyId = "plan-fu3-legacy-expand";
+  const legacySummary = "legacy matching-set expand";
+  sbtdPlan(legacyId, {
+    task_summary: legacySummary,
+    facts: ["fix existing behavior bug"],
+  });
+  const legacyLive = getSession(legacyId);
+  legacyLive.plan.gates.legacy.state = "passed";
+  legacyLive.plan.gates.legacy.reviewStatus = "characterized";
+
+  const legacyExpanded = sbtdPlan(legacyId, {
+    task_summary: legacySummary,
+    facts: ["fix existing behavior bug", "弱测试"],
+  });
+  assert.equal(legacyExpanded.plan.gates.legacy.state, "planned");
+  assert.equal(legacyExpanded.plan.gates.legacy.reviewStatus, undefined);
+  assert.match(legacyExpanded.markdown, /trigger fact changed/);
+
+  const releaseId = "plan-fu3-release-expand";
+  const releaseSummary = "release matching-set expand";
+  sbtdPlan(releaseId, {
+    task_summary: releaseSummary,
+    facts: ["production path"],
+  });
+  const releaseLive = getSession(releaseId);
+  releaseLive.plan.gates.release.state = "passed";
+  releaseLive.plan.gates.release.reviewStatus = "ready";
+
+  const releaseExpanded = sbtdPlan(releaseId, {
+    task_summary: releaseSummary,
+    facts: ["production path", "deploy"],
+  });
+  assert.equal(releaseExpanded.plan.gates.release.state, "planned");
+  assert.equal(releaseExpanded.plan.gates.release.reviewStatus, undefined);
+  assert.match(releaseExpanded.markdown, /trigger fact changed/);
+});
+
+
+
 test("mergeGate 将 on-demand passed 提升 required 重置为 planned", () => {
   const id = "plan-merge-promote-ondemand";
   const summary = "hello world plan";
@@ -258,6 +369,115 @@ test("新 taskId 开新 plan，不保留上一目标的 passed", () => {
   assert.equal(next.plan.gates.ddia.state, "planned");
   assert.equal(next.plan.gates.ddia.reviewStatus, undefined);
 });
+
+test("Complete 且同 taskId 省略 grill facts 时 Forced Docs DDD 保持 required", () => {
+  const summary = "hello world sticky ddd";
+  for (const state of ["blocked", "running", "planned", "passed"]) {
+    const id = `plan-fu3-sticky-${state}`;
+    sbtdPlan(id, {
+      task_summary: summary,
+      facts: ["完整执行 grill-with-docs"],
+    });
+    const live = getSession(id);
+    live.plan.gates.ddd.state = state;
+    live.plan.gates.ddd.reviewStatus = "blocked";
+    live.clarifyStatus = "complete";
+    live.clarifyMode = "docs";
+    live.clarifyCompleteTaskId = live.plan.taskId;
+
+
+    const omitted = sbtdPlan(id, { task_summary: summary });
+    assert.equal(omitted.plan.gates.ddd.requirement, "required");
+    assert.equal(omitted.plan.gates.ddd.state, state);
+    assert.equal(omitted.plan.gates.ddd.reviewStatus, "blocked");
+    assert.equal(omitted.plan.gates.ddd.fact, "完整执行 grill-with-docs");
+  }
+});
+
+test("无 Complete 时省略 facts 仍可 demote ddd", () => {
+  const id = "plan-fu3-no-complete-demote";
+  const summary = "hello world no complete demote";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "blocked";
+  live.plan.gates.ddd.reviewStatus = "blocked";
+
+  const omitted = sbtdPlan(id, { task_summary: summary });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+test("新 taskId 丢弃 Forced Docs DDD 不粘滞", () => {
+  const id = "plan-fu3-new-summary-drop";
+  sbtdPlan(id, {
+    task_summary: "task alpha sticky ddd",
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  const previousTaskId = live.plan.taskId;
+  live.plan.gates.ddd.state = "blocked";
+  live.clarifyStatus = "complete";
+  live.clarifyMode = "docs";
+  live.clarifyCompleteTaskId = previousTaskId;
+
+  const firstB = sbtdPlan(id, {
+    task_summary: "task beta no grill",
+    facts: ["完整执行 grill-with-docs"],
+  });
+  assert.notEqual(firstB.plan.taskId, previousTaskId);
+  assert.equal(firstB.plan.gates.ddd.requirement, "required");
+
+  const omitted = sbtdPlan(id, { task_summary: "task beta no grill" });
+  assert.equal(omitted.plan.taskId, firstB.plan.taskId);
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+
+test("他任务 docs Complete 后新任务省略 grill 可 demote DDD", () => {
+  const id = "plan-fu3-stale-complete-cross-task";
+  const summaryA = "task alpha docs complete";
+  const summaryB = "task beta grill then omit";
+  sbtdPlan(id, {
+    task_summary: summaryA,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "blocked";
+  live.clarifyStatus = "complete";
+  live.clarifyMode = "docs";
+  live.clarifyCompleteTaskId = live.plan.taskId;
+
+  sbtdPlan(id, {
+    task_summary: summaryB,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const omitted = sbtdPlan(id, { task_summary: summaryB });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+
+test("restore 后 docs Complete 仅匹配绑定 taskId 才粘滞", () => {
+  const summary = "hello world restore sticky";
+  const id = "plan-fu3-restore-bind";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "blocked";
+  live.clarifyStatus = "complete";
+  live.clarifyMode = "docs";
+  live.clarifyCompleteTaskId = live.plan.taskId;
+  const snapshot = serialize(id);
+  restore("plan-fu3-restore-dst", snapshot);
+  const omitted = sbtdPlan("plan-fu3-restore-dst", { task_summary: summary });
+  assert.equal(omitted.plan.gates.ddd.requirement, "required");
+  assert.equal(omitted.plan.gates.ddd.state, "blocked");
+});
+
+
 
 test("空 task_summary 抛错", () => {
   assert.throws(

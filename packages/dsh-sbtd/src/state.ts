@@ -38,6 +38,7 @@ export interface SbtdSessionState {
   };
   clarifyMode?: ClarifyMode;
   clarifyStatus?: ClarifyStatus;
+  clarifyCompleteTaskId?: string;
 }
 
 export interface SbtdHandoffSnapshot {
@@ -45,6 +46,7 @@ export interface SbtdHandoffSnapshot {
   maestro?: { missing: string[] };
   clarifyMode?: ClarifyMode;
   clarifyStatus?: ClarifyStatus;
+  clarifyCompleteTaskId?: string;
 }
 
 const sessions = new Map<string, SbtdSessionState>();
@@ -77,6 +79,9 @@ export function serialize(sessionId: string): SbtdHandoffSnapshot {
   if (state.clarifyStatus !== undefined) {
     snapshot.clarifyStatus = state.clarifyStatus;
   }
+  if (state.clarifyCompleteTaskId !== undefined) {
+    snapshot.clarifyCompleteTaskId = state.clarifyCompleteTaskId;
+  }
   return snapshot;
 }
 
@@ -105,5 +110,10 @@ export function restore(
     state.clarifyStatus = cloned.clarifyStatus;
   } else {
     delete state.clarifyStatus;
+  }
+  if (cloned.clarifyCompleteTaskId !== undefined) {
+    state.clarifyCompleteTaskId = cloned.clarifyCompleteTaskId;
+  } else {
+    delete state.clarifyCompleteTaskId;
   }
 }
