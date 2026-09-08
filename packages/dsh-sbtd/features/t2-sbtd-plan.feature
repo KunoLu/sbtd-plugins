@@ -77,6 +77,13 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     When 使用不同 task_summary 再次调用 sbtd_plan
     Then 写入新 plan 且不保留上一目标的 required ddd
 
+  Scenario: 他任务 docs Complete 不能粘滞新任务省略后的 DDD
+    Given 任务 A 已 docs Clarify Complete
+    When 新任务 B 先写入 grill-with-docs 事实再以同一摘要省略该事实
+    Then B 的 ddd 降为 on-demand
+    And 不因 A 的 Complete 保持 required
+
+
   Scenario: 宿主看到的 sbtd_plan 参数是 JSON Schema 对象根
     Given 插件已向宿主注册 sbtd_plan
     When 宿主读取该 tool 的 parameters 与输出 schema

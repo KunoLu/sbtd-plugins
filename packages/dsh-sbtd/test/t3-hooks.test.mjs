@@ -642,6 +642,27 @@ test("docs Complete 后省略 grill facts 再 plan 仍因 ddd deny 生产 write"
   assert.match(denied.reason, /sbtd_review kind=ddd/);
 });
 
+test("他任务 docs Complete 后新任务省略 grill 不因陈旧 Complete deny", async () => {
+  const id = "t3-fu3-stale-complete-cross-task";
+  sbtdPlan(id, { task_summary: "task alpha docs complete" });
+  sbtdClarify(id, { mode: "docs", question: "Q?" });
+  sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+
+  const summaryB = "task beta grill then omit";
+  sbtdPlan(id, {
+    task_summary: summaryB,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const omitted = sbtdPlan(id, { task_summary: summaryB });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+
+  const { hooks } = loadPlugin();
+  const allowed = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+  assert.equal(allowed.kind, "allow");
+});
+
+
 
 test("README 提到 hooks 并保持钉版本与 @next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");

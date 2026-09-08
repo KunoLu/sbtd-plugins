@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
-import { getSession, restore } from "../dist/state.js";
+import { getSession, restore, serialize } from "../dist/state.js";
 import {
   createPlanTool,
   GATE_KINDS,
@@ -383,6 +383,8 @@ test("Complete 且同 taskId 省略 grill facts 时 Forced Docs DDD 保持 requi
     live.plan.gates.ddd.reviewStatus = "blocked";
     live.clarifyStatus = "complete";
     live.clarifyMode = "docs";
+    live.clarifyCompleteTaskId = live.plan.taskId;
+
 
     const omitted = sbtdPlan(id, { task_summary: summary });
     assert.equal(omitted.plan.gates.ddd.requirement, "required");
@@ -417,12 +419,64 @@ test("新 taskId 丢弃 Forced Docs DDD 不粘滞", () => {
   const previousTaskId = live.plan.taskId;
   live.plan.gates.ddd.state = "blocked";
   live.clarifyStatus = "complete";
+  live.clarifyMode = "docs";
+  live.clarifyCompleteTaskId = previousTaskId;
 
-  const next = sbtdPlan(id, { task_summary: "task beta no grill" });
-  assert.notEqual(next.plan.taskId, previousTaskId);
-  assert.equal(next.plan.gates.ddd.requirement, "on-demand");
-  assert.equal(next.plan.gates.ddd.state, "not-required");
+  const firstB = sbtdPlan(id, {
+    task_summary: "task beta no grill",
+    facts: ["完整执行 grill-with-docs"],
+  });
+  assert.notEqual(firstB.plan.taskId, previousTaskId);
+  assert.equal(firstB.plan.gates.ddd.requirement, "required");
+
+  const omitted = sbtdPlan(id, { task_summary: "task beta no grill" });
+  assert.equal(omitted.plan.taskId, firstB.plan.taskId);
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
 });
+
+test("他任务 docs Complete 后新任务省略 grill 可 demote DDD", () => {
+  const id = "plan-fu3-stale-complete-cross-task";
+  const summaryA = "task alpha docs complete";
+  const summaryB = "task beta grill then omit";
+  sbtdPlan(id, {
+    task_summary: summaryA,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "blocked";
+  live.clarifyStatus = "complete";
+  live.clarifyMode = "docs";
+  live.clarifyCompleteTaskId = live.plan.taskId;
+
+  sbtdPlan(id, {
+    task_summary: summaryB,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const omitted = sbtdPlan(id, { task_summary: summaryB });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+
+test("restore 后 docs Complete 仅匹配绑定 taskId 才粘滞", () => {
+  const summary = "hello world restore sticky";
+  const id = "plan-fu3-restore-bind";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "blocked";
+  live.clarifyStatus = "complete";
+  live.clarifyMode = "docs";
+  live.clarifyCompleteTaskId = live.plan.taskId;
+  const snapshot = serialize(id);
+  restore("plan-fu3-restore-dst", snapshot);
+  const omitted = sbtdPlan("plan-fu3-restore-dst", { task_summary: summary });
+  assert.equal(omitted.plan.gates.ddd.requirement, "required");
+  assert.equal(omitted.plan.gates.ddd.state, "blocked");
+});
+
 
 
 test("空 task_summary 抛错", () => {

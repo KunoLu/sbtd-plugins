@@ -365,7 +365,9 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
       kind === "ddd" &&
       sameGoal &&
       session.clarifyStatus === "complete" &&
-      session.clarifyMode === "docs";
+      session.clarifyMode === "docs" &&
+      session.clarifyCompleteTaskId === taskId;
+
     const merged = mergeGate(previous, inferred[kind], keepForcedDocsDdd);
     gates[kind] = merged.gate;
     if (merged.note !== undefined) {
@@ -383,7 +385,7 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
 }
 
 export const SBTD_PLAN_DESCRIPTION =
-  "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal keep passed gates only while their requirement remains required and the trigger fact is unchanged; reset a pass when a trigger disappears, the trigger fact changes, or the gate is promoted from on-demand.";
+  "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal keep passed gates only while their requirement remains required and the trigger fact is unchanged; reset a pass when a trigger disappears, the trigger fact changes, or the gate is promoted from on-demand. Exception: docs Clarify Complete stickies Forced Docs DDD only for the completing taskId; same-task omitted grill facts stay required, but a Complete from another task does not.";
 
 export function createPlanTool(): PlanToolDefinition {
   return {
