@@ -7,7 +7,7 @@
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-08（上海） |
-| 同步时 main | `86bcdce`（#42 trusted ledger） |
+| 同步时 main | `2a82e63`（#43 FU3） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
