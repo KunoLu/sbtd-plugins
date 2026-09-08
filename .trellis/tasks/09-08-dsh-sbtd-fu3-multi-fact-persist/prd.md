@@ -11,16 +11,16 @@ Separately, `inferRequirements` uses `PREDICATES[kind].find` first-match, so per
 - Package: `packages/dsh-sbtd` (`plan.ts` infer/merge, tests/features). `docs/TODO.md` + this Trellis implement task.
 - Host pin: `@deepseek-ai/dsh@0.1.1-rc.2` (do not retarget)
 - Branch: `feat/dsh-sbtd-fu3-multi-fact-persist`
-- Two commits in one PR (Q4B): (1) persist-across-replans sticky required; (2) multi-fact matching-set
+- Q4B (re-lock A): two *ordered feature* commits in one PR — (1) persist-across-replans sticky required; (2) multi-fact matching-set — plus permitted docs/review/fix commits (honest Codex fix trail). Do not rewrite history.
 
 ## Locked Q1–Q5
 
 | Q | Lock | One-line |
 |---|---|---|
-| Q1 | D | Trigger identity = matching-set of distinct catalog facts; ddd’s three grill-with-docs regexes collapse to one identity; set expansion resets `required+passed`; extra EN/中文 alias does not |
+| Q1 | D | Trigger identity = matching-set of distinct catalog facts; **only** ddd’s three grill-with-docs language aliases collapse to one identity; distinct ddia/legacy/release catalog rows stay distinct; set expansion resets `required+passed`; extra EN/中文 **ddd grill** alias does not |
 | Q2 | B | Omission ≠ withdraw. `clarifyStatus=complete` ∧ same `taskId` → Forced Docs DDD stays `required` (blocked/running/planned/passed). Withdraw = Interview Reset and/or new summary/`taskId` |
 | Q3 | A | T3 write deny stays Gate-only. No `clarifyStatus` / Complete write veto |
-| Q4 | B | Sequential: persist-across-replans first, multi-fact second; same PR |
+| Q4 | B | Sequential: two *feature* commits (persist-across-replans first, multi-fact second) in same PR; docs/review/fix additional commits allowed (re-lock A; no history rewrite) |
 | Q5 | A | Fence = `packages/dsh-sbtd` only. Hooks frozen. No T7/T8, omp config, publish, host retarget |
 
 ## Behavior
@@ -35,7 +35,7 @@ Withdraw still demotes/drops: `sbtd_clarify reset=true` and/or a new `task_summa
 
 ### Multi-fact matching-set (commit 2)
 
-For each `GateKind`, identity is the matching-set of distinct catalog facts, not first-match. Language aliases of one concept collapse to one member. Set expansion (persist→persist+schema) resets `required+passed`. Extra EN/zh alias wording does not reset pass. Distinct ddia/legacy/release catalog rows still reset on expansion of their matching-set.
+For each `GateKind`, identity is the matching-set of distinct catalog facts, not first-match. **Q1D alias collapse is DDD-only**: ddd’s three grill-with-docs regexes share one identity (`完整执行 grill-with-docs`). Do **not** treat persist/持久化 and schema/数据库 as one identity — those are distinct ddia catalog rows. Set expansion (persist→persist+schema, or persistence→database/schema) resets `required+passed`. Extra EN/zh **ddd grill** alias wording does not reset pass. Distinct ddia/legacy/release catalog rows still reset on expansion of their matching-set.
 
 Keep `fact?: string` backward-compatible when the set has one member.
 
@@ -55,7 +55,7 @@ Keep `fact?: string` backward-compatible when the set has one member.
 - [ ] After docs Complete, same-summary replan omitting grill facts: `ddd` stays `required` (including `blocked`); T3 still denies production writes
 - [ ] Interview Reset or new taskId/summary: demote/drop allowed
 - [ ] Expansion persist→persist+schema (or persistence→database/schema): inherited pass resets
-- [ ] Extra ddd alias EN/zh: pass does not reset
+- [ ] Extra **ddd grill** alias EN/zh: pass does not reset (not ddia persist/schema bilingual collapse)
 - [ ] Existing T5/T6 regressions green (string-change reset, Q8 elevate, Gate-only T3 deny)
 - [ ] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs`
-- [ ] Two commits, one PR, not merged, not finish-work
+- [ ] Two *feature* commits (+ permitted docs/review/fix commits), one PR, not merged, not finish-work

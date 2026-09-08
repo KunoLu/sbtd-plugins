@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/09-08-dsh-sbtd-fu3-multi-fact-persist/prd.md", "reason": "FU3 acceptance and Q1-Q5 locks incl Q4B re-lock"}
+{"file": ".trellis/tasks/09-08-dsh-sbtd-fu3-multi-fact-persist/design.md", "reason": "matching-set DDD-only alias and sticky merge design"}
+{"file": "docs/TODO.md", "reason": "FU3 progress row and Q4B re-lock note"}
+{"file": ".trellis/spec/dsh-sbtd/backend/quality-guidelines.md", "reason": "package quality guidelines for verify"}

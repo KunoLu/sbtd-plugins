@@ -33,7 +33,7 @@ Existing-code scope: `plan.ts` `inferRequirements` / `mergeGate` / `sbtdPlan`.
 Behavior that must remain unchanged: Q8 elevate; hooks `unpassedRequired`; T5 replacement reset; on-demand promotion reset.
 Structural friction: none. Sticky branch is a guard before existing merge; matching-set is local to infer.
 Decision and smallest safe step: no refactor needed.
-Safety net and validation: package tests 115/115.
+Safety net and validation: package tests 116/116 at tip b33641f.
 Deferred refactors: none.
 Timing breach: same as Legacy — written review persisted after both feature commits. Gate state: passed.
 
@@ -46,7 +46,7 @@ Failure modes and safeguards: omitted grill facts no longer open T3 writes while
 Capacity / backpressure / limits: not-applicable (in-process Map).
 Observability / alerts / runbook: markdown still records trigger-fact-changed notes on matching-set expansion.
 Rollout / migration / rollback / cleanup: revert the two commits. `fact?: string` encoding stays compatible for single-member sets.
-Required validation and result: `biome check src` pass; `tsc --noEmit` pass; `node --test test/*.test.mjs` **115/115**.
+Required validation and result: `biome check src` pass; `tsc --noEmit` pass; `node --test test/*.test.mjs` **116/116** at tip b33641f.
 Optional checks, accountable owner acceptance, and residual risk: GitNexus `detect-changes --scope all` risk medium (`inferRequirements`, `mergeGate`; SbtdClarify haystack/merge flows). Index refreshed this session. `rtk` missing → fallback-native. No registry publish. Host remains `@deepseek-ai/dsh@0.1.1-rc.2`.
 
 ## Code Readability Review
@@ -61,6 +61,15 @@ Revalidation required: no
 ```
 
 
+
+
+## Post-r2 verify / locks
+
+- Q4B re-lock A: two ordered feature commits + permitted docs/review/fix commits; no history rewrite. See FOLLOWUPS.md.
+- Q1D wording: DDD-only alias collapse in PRD/design (persist/schema remain distinct ddia rows).
+- Tip SHA: b33641f97f15d694ebe29ecfe740ad9d5e550839
+- Validation at tip: biome pass; typecheck pass; build pass; node --test 116/116
+- Context manifests: implement.jsonl / check.jsonl curated (safe whitelist paths).
 
 ## Checklist
 

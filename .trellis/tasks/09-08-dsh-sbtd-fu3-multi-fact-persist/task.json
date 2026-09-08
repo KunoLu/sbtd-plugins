@@ -15,13 +15,13 @@
   "branch": "feat/dsh-sbtd-fu3-multi-fact-persist",
   "base_branch": "main",
   "worktree_path": null,
-  "commit": null,
+  "commit": "b33641f97f15d694ebe29ecfe740ad9d5e550839",
   "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/43",
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
+  "notes": "Q4B re-lock A: 2 feature + docs/review/fix commits allowed; Q1D docs DDD-only; tip verify 116/116 at b33641f.",
   "meta": {
     "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/43"
   }
