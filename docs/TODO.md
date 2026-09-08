@@ -7,7 +7,7 @@
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-08（上海） |
-| 同步时 main | `4e76ae8`（#39 T6） |
+| 同步时 main | `86bcdce`（#42 trusted ledger） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -18,7 +18,7 @@
 | 层级 | 范围 | 状态 |
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
-| **P1** | T4–T8 核心闭环 | 🟡 T4–T6 完成（T6 `4e76ae8`）；T7–T8 未开；FU2 ✅；FU3 ⬜ |
+| **P1** | T4–T8 核心闭环 | 🟡 T4–T6 完成（T6 `4e76ae8`）；T7–T8 未开；FU2 ✅；FU3 🟡 persist-across-replans 进行中 |
 | **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
@@ -68,7 +68,7 @@
 |---|---|---|---|
 | FU1 | Remediation Write：`seam-required` / `refactor-first` ↔ T3 `passed` 死锁 | ✅ | #33 → `7352071`；整窗 scoped allow；无字节级 seam/feature 分类器（Q4A honor） |
 | FU2 | `sbtd_review` 强制 legacy-before-refactor | ✅ | #37 → `f039a99`；Review Recording Order on `sbtd_review` only；88/88；archive `09-07-dsh-sbtd-fu2-legacy-before-refactor` |
-| FU3 | multi-fact `PREDICATES.find` + persist-across-replans（Clarify Complete 后 `mergeGate` demote） | ⬜ 未开 | T5 first-match 集合扩展；T6 Advise2/vote A：同 summary 省略 facts 可将 required+blocked Forced Docs DDD 降为 on-demand，T3 可写而 `clarifyStatus` 仍 complete；Q8 一次性 haystack；#39 不改 `mergeGate` |
+| FU3 | multi-fact matching-set + persist-across-replans | 🟡 进行中 | Q1D/Q2B/Q3A/Q4B/Q5A；commit1 sticky Forced Docs DDD（docs Complete ∧ same taskId，hooks 冻结）；commit2 matching-set；main `86bcdce`；task `09-08-dsh-sbtd-fu3-multi-fact-persist` |
 
 ---
 
@@ -99,7 +99,7 @@
 | 顺序 | 项 | 状态 |
 |---|---|---|
 | 1 | **T6** `sbtd_clarify` | ✅ #39 → `4e76ae8` |
-| 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | ⬜ |
+| 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | 🟡 进行中 |
 | 3 | T7 Trellis 后端 | ⬜ |
 | 4 | T8 `sbtd_spec` / tickets → P2 → P3 | ⬜ |
 
@@ -110,6 +110,7 @@
 | 日期 | 说明 |
 |---|---|
 | 2026-09-08 | certification workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧 |
+| 2026-09-08 | FU3 开实现：main 同步 `86bcdce`（#42）；Q4B 先 persist-across-replans sticky required，后 multi-fact matching-set；hooks 冻结；不改 omp/不发布/不改宿主钉 |
 | 2026-09-07 | T6 scheme A finish on #39 → `4e76ae8`；FU3 增 persist-across-replans / mergeGate demote 债；不改 `plan.ts` |
 | 2026-09-07 | FU2 合入 #37 → `f039a99`；Trellis archive + TODO 回填 merge SHA |
 | 2026-09-07 | FU2 开 PR #37：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |

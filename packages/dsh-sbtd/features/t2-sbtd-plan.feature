@@ -60,6 +60,20 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     And markdown 写明 promoted from on-demand; reset inherited pass
     And 若先前已是 required 的 running blocked 或 planned 则保持该 state
 
+  Scenario: Complete 后同摘要省略 grill facts 时 Forced Docs DDD 保持 required
+    Given docs Clarify Complete 且同一 taskId 的 ddd 为 required blocked
+    When 再次调用 sbtd_plan 且 haystack 省略 grill-with-docs 事实
+    Then ddd 仍为 required
+    And state 与 reviewStatus 保持为 blocked
+    And 未 Complete 时省略 facts 仍可将 ddd 降为 on-demand
+
+  Scenario: Interview Reset 或新 taskId 允许撤回 Forced Docs DDD
+    Given docs Complete 后 ddd 为 required
+    When 模型传入 reset=true 后再以同一摘要省略 facts 调用 sbtd_plan
+    Then ddd 可降为 on-demand
+    When 使用不同 task_summary 再次调用 sbtd_plan
+    Then 写入新 plan 且不保留上一目标的 required ddd
+
   Scenario: 宿主看到的 sbtd_plan 参数是 JSON Schema 对象根
     Given 插件已向宿主注册 sbtd_plan
     When 宿主读取该 tool 的 parameters 与输出 schema

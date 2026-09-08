@@ -259,6 +259,61 @@ test("新 taskId 开新 plan，不保留上一目标的 passed", () => {
   assert.equal(next.plan.gates.ddia.reviewStatus, undefined);
 });
 
+test("Complete 且同 taskId 省略 grill facts 时 Forced Docs DDD 保持 required", () => {
+  const summary = "hello world sticky ddd";
+  for (const state of ["blocked", "running", "planned", "passed"]) {
+    const id = `plan-fu3-sticky-${state}`;
+    sbtdPlan(id, {
+      task_summary: summary,
+      facts: ["完整执行 grill-with-docs"],
+    });
+    const live = getSession(id);
+    live.plan.gates.ddd.state = state;
+    live.plan.gates.ddd.reviewStatus = "blocked";
+    live.clarifyStatus = "complete";
+    live.clarifyMode = "docs";
+
+    const omitted = sbtdPlan(id, { task_summary: summary });
+    assert.equal(omitted.plan.gates.ddd.requirement, "required");
+    assert.equal(omitted.plan.gates.ddd.state, state);
+    assert.equal(omitted.plan.gates.ddd.reviewStatus, "blocked");
+    assert.equal(omitted.plan.gates.ddd.fact, "完整执行 grill-with-docs");
+  }
+});
+
+test("无 Complete 时省略 facts 仍可 demote ddd", () => {
+  const id = "plan-fu3-no-complete-demote";
+  const summary = "hello world no complete demote";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "blocked";
+  live.plan.gates.ddd.reviewStatus = "blocked";
+
+  const omitted = sbtdPlan(id, { task_summary: summary });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+test("新 taskId 丢弃 Forced Docs DDD 不粘滞", () => {
+  const id = "plan-fu3-new-summary-drop";
+  sbtdPlan(id, {
+    task_summary: "task alpha sticky ddd",
+    facts: ["完整执行 grill-with-docs"],
+  });
+  const live = getSession(id);
+  const previousTaskId = live.plan.taskId;
+  live.plan.gates.ddd.state = "blocked";
+  live.clarifyStatus = "complete";
+
+  const next = sbtdPlan(id, { task_summary: "task beta no grill" });
+  assert.notEqual(next.plan.taskId, previousTaskId);
+  assert.equal(next.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(next.plan.gates.ddd.state, "not-required");
+});
+
+
 test("空 task_summary 抛错", () => {
   assert.throws(
     () => sbtdPlan("plan-empty", { task_summary: "" }),

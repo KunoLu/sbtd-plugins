@@ -240,6 +240,60 @@ test("docs Complete 后 required 未通过的 ddd 仍拦生产 write", async () 
   assert.match(denied.reason, /sbtd_review kind=ddd/);
 });
 
+test("docs Complete 后同摘要省略 grill facts 时 ddd 保持 required 且 T3 仍 deny", async () => {
+  const id = "t6-fu3-sticky-omit";
+  planHello(id);
+  sbtdClarify(id, { mode: "docs", question: "Q?" });
+  sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+  assert.equal(getSession(id).clarifyStatus, "complete");
+  assert.equal(getSession(id).plan.gates.ddd.requirement, "required");
+  assert.equal(getSession(id).plan.gates.ddd.state, "blocked");
+
+  const omitted = sbtdPlan(id, { task_summary: "hello world clarify" });
+  assert.equal(omitted.plan.gates.ddd.requirement, "required");
+  assert.equal(omitted.plan.gates.ddd.state, "blocked");
+  assert.equal(omitted.plan.gates.ddd.reviewStatus, "blocked");
+  assert.equal(omitted.plan.gates.ddd.fact, GRILL_WITH_DOCS_FACT);
+
+  const { hooks } = loadPlugin();
+  const denied = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+  assert.equal(denied.kind, "deny");
+  assert.match(denied.reason, /sbtd_review kind=ddd/);
+});
+
+test("Interview Reset 后同摘要省略 facts 允许 demote Forced Docs DDD", () => {
+  const id = "t6-fu3-reset-demote";
+  planHello(id);
+  sbtdClarify(id, { mode: "docs", question: "Q?" });
+  sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+  sbtdClarify(id, { reset: true });
+  assert.equal(getSession(id).clarifyStatus, undefined);
+
+  const omitted = sbtdPlan(id, { task_summary: "hello world clarify" });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+
+
+test("generic Complete 不粘滞独立 required ddd，省略 facts 可 demote", () => {
+  const id = "t6-fu3-generic-no-sticky";
+  const summary = "hello world generic no sticky";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: [GRILL_WITH_DOCS_FACT],
+  });
+  sbtdClarify(id, { mode: "generic", question: "Trade-off?" });
+  sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+  assert.equal(getSession(id).clarifyStatus, "complete");
+  assert.equal(getSession(id).clarifyMode, "generic");
+  assert.equal(getSession(id).plan.gates.ddd.requirement, "required");
+
+  const omitted = sbtdPlan(id, { task_summary: summary });
+  assert.equal(omitted.plan.gates.ddd.requirement, "on-demand");
+  assert.equal(omitted.plan.gates.ddd.state, "not-required");
+});
+
+
 test("createClarifyTool execute 复用 sessionIdFromExec", async () => {
   const tool = createClarifyTool();
   assert.equal(tool.name, SBTD_CLARIFY_TOOL_NAME);

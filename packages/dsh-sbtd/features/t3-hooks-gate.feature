@@ -159,3 +159,11 @@ Feature: DSH T3 hooks 门禁
     Given legacy 已 passed 且 refactor 为 required running 且 reviewStatus 为 refactor-first
     When 模型执行 bash npm publish
     Then pre-execute 返回 deny 并指出 sbtd_review kind=release
+
+  Scenario: docs Complete 后省略 grill facts 再 plan 仍因 ddd deny 生产 write
+    Given docs Clarify Complete 已把 ddd 升为 required 且未 confirmed
+    When 以同一摘要省略 grill facts 再次 sbtd_plan
+    Then ddd 仍为 required 未 passed
+    When 模型对 src/foo.ts 调用 write
+    Then pre-execute 返回 kind deny
+    And reason 指出先调用 sbtd_review kind=ddd

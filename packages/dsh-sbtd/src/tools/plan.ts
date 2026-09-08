@@ -163,7 +163,27 @@ type MergeResult = {
 function mergeGate(
   previous: BookGatePlan["gates"][GateKind] | undefined,
   inferred: InferredGate,
+  keepRequired = false,
 ): MergeResult {
+  if (
+    keepRequired &&
+    previous !== undefined &&
+    previous.requirement === "required" &&
+    inferred.requirement === "on-demand"
+  ) {
+    const kept: BookGatePlan["gates"][GateKind] = {
+      requirement: "required",
+      state: previous.state,
+    };
+    if (previous.fact !== undefined) {
+      kept.fact = previous.fact;
+    }
+    if (previous.reviewStatus !== undefined) {
+      kept.reviewStatus = previous.reviewStatus;
+    }
+    return { gate: kept };
+  }
+
   if (inferred.requirement === "required") {
     if (
       previous !== undefined &&
@@ -308,7 +328,12 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
   const notes: string[] = [];
   for (const kind of GATE_KINDS) {
     const previous = sameGoal ? existing.gates[kind] : undefined;
-    const merged = mergeGate(previous, inferred[kind]);
+    const keepForcedDocsDdd =
+      kind === "ddd" &&
+      sameGoal &&
+      session.clarifyStatus === "complete" &&
+      session.clarifyMode === "docs";
+    const merged = mergeGate(previous, inferred[kind], keepForcedDocsDdd);
     gates[kind] = merged.gate;
     if (merged.note !== undefined) {
       notes.push(`${kind}: ${merged.note}`);
