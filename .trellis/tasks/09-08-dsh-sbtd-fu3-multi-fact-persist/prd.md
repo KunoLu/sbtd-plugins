@@ -52,10 +52,11 @@ Keep `fact?: string` backward-compatible when the set has one member.
 
 ## Acceptance
 
-- [ ] After docs Complete, same-summary replan omitting grill facts: `ddd` stays `required` (including `blocked`); T3 still denies production writes
-- [ ] Interview Reset or new taskId/summary: demote/drop allowed
-- [ ] Expansion persist→persist+schema (or persistence→database/schema): inherited pass resets
-- [ ] Extra **ddd grill** alias EN/zh: pass does not reset (not ddia persist/schema bilingual collapse)
-- [ ] Existing T5/T6 regressions green (string-change reset, Q8 elevate, Gate-only T3 deny)
-- [ ] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs`
-- [ ] Two *feature* commits (+ permitted docs/review/fix commits), one PR, not merged, not finish-work
+- [x] After docs Complete, same-summary replan omitting grill facts: `ddd` stays `required` (including `blocked`); T3 still denies production writes
+- [x] Interview Reset or new taskId/summary: demote/drop allowed
+- [x] Expansion persist→persist+schema (or persistence→database/schema): inherited pass resets
+- [x] Extra **ddd grill** alias EN/zh: pass does not reset (not ddia persist/schema bilingual collapse)
+- [x] Existing T5/T6 regressions green (string-change reset, Q8 elevate, Gate-only T3 deny)
+- [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` (**116/116** at production tip `b33641f`)
+- [x] Two *feature* commits (+ permitted docs/review/fix commits), one PR (#43)
+- [ ] Closeout: not merged, not finish-work

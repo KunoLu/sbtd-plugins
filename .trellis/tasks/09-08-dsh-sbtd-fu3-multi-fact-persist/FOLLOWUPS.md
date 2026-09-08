@@ -23,3 +23,13 @@ Recorded on tip `b33641f97f15d694ebe29ecfe740ad9d5e550839` in `packages/dsh-sbtd
 - `node --test test/*.test.mjs` **116/116**
 
 No production logic change in the docs/verify follow-up.
+
+## Owner exception — Book-gate Legacy/Refactoring order (r3)
+
+Accountable owner: **640**. Exception accepted for this FU3 PR (#43) only.
+
+Original order was **not** compliant: feature commits edited `packages/dsh-sbtd/src/tools/plan.ts` while written `book-legacy-change-safety` / `book-refactoring-pass` reviews were persisted **after** both feature commits (admitted in `implement.md` Timing breach).
+
+Gates remain labeled `passed` with that honest timing-breach admission. `passed` after retrospective characterization is **not** a substitute for mandatory before-first-edit compliance.
+
+Prevention: persist Legacy/Refactoring written reviews **before** the first behavior edit when those gates are required. See `.trellis/lessons/topics/dsh-sbtd.md` `LESSON-20260908-book-gate-before-first-edit`.

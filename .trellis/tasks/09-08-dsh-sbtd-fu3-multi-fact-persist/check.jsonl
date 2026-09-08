@@ -2,3 +2,4 @@
 {"file": ".trellis/tasks/09-08-dsh-sbtd-fu3-multi-fact-persist/design.md", "reason": "design contract for DDD-only alias and sticky required"}
 {"file": ".trellis/tasks/09-08-dsh-sbtd-fu3-multi-fact-persist/FOLLOWUPS.md", "reason": "Q4B re-lock and tip verify record"}
 {"file": "docs/TODO.md", "reason": "progress sync for FU3"}
+{"file": ".trellis/spec/dsh-sbtd/backend/index.md", "reason": "FU3 delivered matching-set identity + mergeGate stickiness"}

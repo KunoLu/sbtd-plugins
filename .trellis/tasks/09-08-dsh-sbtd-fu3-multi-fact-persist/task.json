@@ -21,7 +21,7 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "Q4B re-lock A: 2 feature + docs/review/fix commits allowed; Q1D docs DDD-only; tip verify 116/116 at b33641f.",
+  "notes": "Q4B re-lock A: 2 feature + docs/review/fix commits allowed; Q1D docs DDD-only; tip verify 116/116 at b33641f. r3 docs remediation: spec FU3 delivered, Book-gate owner=640 exception+lesson, PRD/CR bind to b33641f.",
   "meta": {
     "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/43"
   }
