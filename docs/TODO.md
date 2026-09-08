@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-07（上海） |
-| 同步时 main | `ba72c75`（#38 FU2 TODO） |
+| 上次同步 | 2026-09-08（上海） |
+| 同步时 main | `4e76ae8`（#39 T6） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -18,7 +18,7 @@
 | 层级 | 范围 | 状态 |
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
-| **P1** | T4–T8 核心闭环 | 🟡 T4–T6 完成（T6 pending squash SHA）；T7–T8 未开；FU2 ✅；FU3 ⬜ |
+| **P1** | T4–T8 核心闭环 | 🟡 T4–T6 完成（T6 `4e76ae8`）；T7–T8 未开；FU2 ✅；FU3 ⬜ |
 | **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
@@ -41,7 +41,7 @@
 |---|---|---|---|
 | T4 | manuals 同步（640-skills v1.0.13 / `f8aa0d7`） | ✅ | #26–#29 |
 | T5 | `sbtd_review` | ✅ | #30 → `b23b0f9` |
-| T6 | `sbtd_clarify` | ✅ 完成 pending merge | #39；scheme A finish；host `@deepseek-ai/dsh@0.1.1-rc.2` |
+| T6 | `sbtd_clarify` | ✅ | #39 → `4e76ae8`；scheme A finish；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T7 | Trellis 后端 | ⬜ 未开 | |
 | T8 | `sbtd_spec` / tickets | ⬜ 未开 | 依赖 T6 / T7 |
 
@@ -81,6 +81,7 @@
 | `latest=0.1.0-rc.1` | 🟡 **保留**（npm 往往删不掉 `latest`）；文档/安装**只推** `@kunolu/dsh-sbtd@next` |
 | Trellis 历史积压 archive | ✅ #34 → `69a6acf`（T5/T4/pr10/pr12/v1.2） |
 | OMP 配置（provider / fallback / 模型别名） | 🔒 **只读**；未经用户明确允许不得改 |
+| `omp-compatibility-certification` | workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧（2026-09-08） |
 
 ---
 
@@ -97,7 +98,7 @@
 
 | 顺序 | 项 | 状态 |
 |---|---|---|
-| 1 | **T6** `sbtd_clarify` | ✅ #39（pending squash SHA） |
+| 1 | **T6** `sbtd_clarify` | ✅ #39 → `4e76ae8` |
 | 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | ⬜ |
 | 3 | T7 Trellis 后端 | ⬜ |
 | 4 | T8 `sbtd_spec` / tickets → P2 → P3 | ⬜ |
@@ -108,7 +109,8 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-07 | T6 scheme A finish on #39（pending squash）；FU3 增 persist-across-replans / mergeGate demote 债；不改 `plan.ts` |
+| 2026-09-08 | certification workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧 |
+| 2026-09-07 | T6 scheme A finish on #39 → `4e76ae8`；FU3 增 persist-across-replans / mergeGate demote 债；不改 `plan.ts` |
 | 2026-09-07 | FU2 合入 #37 → `f039a99`；Trellis archive + TODO 回填 merge SHA |
 | 2026-09-07 | FU2 开 PR #37：Review Recording Order 仅 `sbtd_review`；main 同步为 `226d4e3` |
 | 2026-09-05 | 初版：自群进度表落地；含 P0–P3、FU1–FU3、发布与约定；FU2 进行中 |

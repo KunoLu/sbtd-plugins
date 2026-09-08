@@ -2,7 +2,9 @@
 #
 # Trust boundary (packages/omp-sbtd/validation/p0/compatibility-trust-policy.v1.json):
 # - Runs only for KunoLu/sbtd-plugins on the protected refs/heads/main ref, triggered by
-#   workflow_dispatch or schedule; anything else fails closed in the guard job.
+#   workflow_dispatch only (no cron/schedule); anything else (including schedule if somehow
+#   triggered) fails closed in the guard job. Policy file may still list schedule historically
+#   but this workflow is dispatch-only.
 # - Only the certify job holds signing permissions (id-token/attestations)
 #   behind the protected environment `omp-compatibility-certification`; the
 #   PR-creation job holds only a job-scoped GITHUB_TOKEN and can push solely to
@@ -41,8 +43,6 @@ on:
           accepted into the public certification matrix.
         required: false
         type: string
-  schedule:
-    - cron: "23 4 * * *"
 
 permissions: {}
 
@@ -72,7 +72,7 @@ jobs:
             exit 1
           fi
           case "${EVENT_NAME}" in
-            workflow_dispatch|schedule) ;;
+            workflow_dispatch) ;;
             *)
               echo "blocked: event ${EVENT_NAME} is not allowlisted by compatibility-trust-policy.v1.json" >&2
               exit 1
