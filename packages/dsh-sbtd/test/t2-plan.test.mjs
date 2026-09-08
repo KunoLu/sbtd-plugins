@@ -240,6 +240,32 @@ test("matching-set 额外 ddd EN/zh 别名不重置 pass", () => {
   assert.equal(aliased.plan.gates.ddd.fact, "完整执行 grill-with-docs");
 });
 
+test("先前版本 passed 的英文 DDD 别名 fact 不变重 plan 保持 pass", () => {
+  const summary = "legacy english ddd fact keep pass";
+  for (const [idSuffix, alias] of [
+    ["completed", "completed grill-with-docs"],
+    ["fully-executed", "fully executed grill-with-docs"],
+  ]) {
+    const id = `plan-fu3-prior-ddd-${idSuffix}`;
+    sbtdPlan(id, {
+      task_summary: summary,
+      facts: [alias],
+    });
+    const live = getSession(id);
+    live.plan.gates.ddd.state = "passed";
+    live.plan.gates.ddd.reviewStatus = "confirmed";
+    live.plan.gates.ddd.fact = alias;
+
+    const replanned = sbtdPlan(id, {
+      task_summary: summary,
+      facts: [alias],
+    });
+    assert.equal(replanned.plan.gates.ddd.requirement, "required");
+    assert.equal(replanned.plan.gates.ddd.state, "passed");
+    assert.equal(replanned.plan.gates.ddd.reviewStatus, "confirmed");
+  }
+});
+
 test("matching-set legacy 与 release 扩张仍重置 pass", () => {
   const legacyId = "plan-fu3-legacy-expand";
   const legacySummary = "legacy matching-set expand";

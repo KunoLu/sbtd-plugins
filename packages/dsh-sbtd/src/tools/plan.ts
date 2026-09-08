@@ -133,6 +133,16 @@ function haystack(summary: string, facts: string[] | undefined): string {
 
 const DDD_GRILL_IDENTITY = "完整执行 grill-with-docs";
 
+function normalizeDddFact(fact: string | undefined): string | undefined {
+  if (
+    fact === "completed grill-with-docs" ||
+    fact === "fully executed grill-with-docs"
+  ) {
+    return DDD_GRILL_IDENTITY;
+  }
+  return fact;
+}
+
 function matchingSetFact(kind: GateKind, text: string): string | undefined {
   const seen = new Set<string>();
   const identities: string[] = [];
@@ -216,7 +226,7 @@ function mergeGate(
       if (
         previous.fact !== undefined &&
         inferred.fact !== undefined &&
-        previous.fact !== inferred.fact
+        normalizeDddFact(previous.fact) !== normalizeDddFact(inferred.fact)
       ) {
         return {
           gate: {
