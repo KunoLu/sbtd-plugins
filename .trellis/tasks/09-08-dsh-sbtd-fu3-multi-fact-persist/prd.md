@@ -60,3 +60,11 @@ Keep `fact?: string` backward-compatible when the set has one member.
 - [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` (**116/116** at production tip `b33641f`)
 - [x] Two *feature* commits (+ permitted docs/review/fix commits), one PR (#43)
 - [ ] Closeout: not merged, not finish-work
+
+Evidence at production tip `b33641f` (PR #43 Test plan already `[x]`; not 116/116 alone):
+
+- sticky omit + T3 deny: `t6-clarify.test.mjs` `docs Complete 后同摘要省略 grill facts 时 ddd 保持 required 且 T3 仍 deny`; `t3-hooks.test.mjs` `docs Complete 后省略 grill facts 再 plan 仍因 ddd deny 生产 write`; `t2-plan.test.mjs` `Complete 且同 taskId 省略 grill facts 时 Forced Docs DDD 保持 required`
+- Interview Reset demote: `t6-clarify.test.mjs` `Interview Reset 后同摘要省略 facts 允许 demote Forced Docs DDD`; `features/t2-sbtd-plan.feature` Interview Reset scenario
+- persist→persist+schema reset: `t2-plan.test.mjs` `matching-set persist 后再加 schema 重置 inherited pass`
+- extra ddd EN/zh alias no reset: `t2-plan.test.mjs` `matching-set 额外 ddd EN/zh 别名不重置 pass`
+- T5/T6 regressions + lint/typecheck/116/116: `FOLLOWUPS.md` tip verify at `b33641f`

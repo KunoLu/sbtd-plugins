@@ -48,7 +48,7 @@ Capacity / backpressure / limits: not-applicable (in-process Map).
 Observability / alerts / runbook: markdown still records trigger-fact-changed notes on matching-set expansion.
 Rollout / migration / rollback / cleanup: Q4B re-lock A — two ordered feature commits plus permitted docs/review/fix commits. Rollback = revert those feature commits and any dependent fix/docs commits as needed. Do not rewrite history. `fact?: string` encoding stays compatible for single-member sets.
 Required validation and result: `biome check src` pass; `tsc --noEmit` pass; `node --test test/*.test.mjs` **116/116** at production tip `b33641f97f15d694ebe29ecfe740ad9d5e550839`.
-Optional checks, accountable owner acceptance, and residual risk: GitNexus `detect-changes --scope all` risk medium (`inferRequirements`, `mergeGate`; SbtdClarify haystack/merge flows). Index refreshed this session. `rtk` missing → fallback-native. No registry publish. Host remains `@deepseek-ai/dsh@0.1.1-rc.2`.
+Optional checks, accountable owner acceptance, and residual risk: GitNexus `detect-changes --scope all` medium (`inferRequirements`, `mergeGate`; SbtdClarify haystack/merge flows) is a prior-session note. This r3 session `list_repos`: index lastCommit `b159070`, **2 commits behind HEAD**; no analyze / detect_changes this session — **stale/advisory**. `rtk` missing → fallback-native. No registry publish. Host remains `@deepseek-ai/dsh@0.1.1-rc.2`.
 
 ## Code Readability Review
 
