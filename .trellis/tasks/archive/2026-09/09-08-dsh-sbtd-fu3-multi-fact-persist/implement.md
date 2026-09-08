@@ -149,7 +149,8 @@ Production tip: b33641f97f15d694ebe29ecfe740ad9d5e550839
 4. `inferRequirements` matching-set (green) — commit 2
 5. `docs/TODO.md` FU3 in-progress + changelog + main SHA `86bcdce`
 6. `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs`
-7. Push, open PR (do not merge, do not finish-work, do not slash-review)
+7. Push, open PR #43; scheme A finish-work on same PR (do not start T7)
+8. scheme A `/trellis-finish-work` on PR #43 (CLEAN r5; 121/121; vote A; `REQUIRED_CHANGES=none`; archive with FOLLOWUPS)
 
 ## Validation
 
@@ -159,5 +160,27 @@ npm run typecheck
 npm run build
 node --test test/*.test.mjs
 ```
+
+
+## trellis-check (scheme A finish, this session)
+
+Executed 2026-09-08 before archive. Docs-only closeout; no production-path edits.
+
+- PRD AC bound to PR #43, CLEAN r5, tip `bdc25f3` / prod `d2194f5`, 121/121, locks Q1D–Q5A, vote A, `REQUIRED_CHANGES=none`. T6 Advisor Advise2 omit-demote hole recorded as **closed** by `keepRequired`.
+- `docs/TODO.md` FU3 ✅; next T7 then T8 (not started).
+- FOLLOWUPS.md kept; no new deferred coding debt.
+- Spec `.trellis/spec/dsh-sbtd/backend/index.md` already records FU3 delivered; Phase 3.3 no spec write.
+- BDD skipped: no new user-visible behavior this finish turn.
+- Quality Check: `npm run lint` pass; `npm run typecheck` pass; `npm run build` pass; `node --test test/*.test.mjs` **121/121**.
+- GitNexus skipped (docs-only finish; index not required).
+- `rtk`: fallback-native (`rtk` not found).
+- Chrome DevTools / Playwright / Maestro: not-needed.
+
+Code Readability Review
+Scope: finish docs only (prd/TODO/FOLLOWUPS/implement)
+Findings: none
+Ponytail conflicts resolved: none
+Changes applied: none
+Revalidation required: no
 
 cwd: `packages/dsh-sbtd`

@@ -59,9 +59,9 @@ Keep `fact?: string` backward-compatible when the set has one member.
 - [x] Expansion persist→persist+schema (or persistence→database/schema): inherited pass resets
 - [x] Extra **ddd grill** alias EN/zh: pass does not reset (not ddia persist/schema bilingual collapse)
 - [x] Existing T5/T6 regressions green (string-change reset, Q8 elevate, Gate-only T3 deny)
-- [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` (**121/121** at production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`)
+- [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` (**121/121** at production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`; docs tip `bdc25f337afaafdeb306ab69df83104841add096`)
 - [x] Two *feature* commits (+ permitted docs/review/fix commits), one PR (#43)
-- [ ] Closeout: not merged, not finish-work
+- [x] Closeout: scheme A same-PR `/trellis-finish-work` on https://github.com/KunoLu/sbtd-plugins/pull/43; CLEAN r5; tip `bdc25f3` / prod `d2194f5`; tests 121/121; locks Q1D Q2B Q3A Q4B Q5A; host pin `@deepseek-ai/dsh@0.1.1-rc.2`; group vote **A**; `REQUIRED_CHANGES=none`
 
 Evidence for r4 P2 at production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`:
 
@@ -69,5 +69,12 @@ Evidence for r4 P2 at production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`:
 - `t3-hooks.test.mjs` `他任务 docs Complete 后新任务省略 grill 不因陈旧 Complete deny`
 - `t6-clarify.test.mjs` `docs Complete 绑定 taskId；compaction restore 匹配；Reset 清除`; `他任务 docs Complete 后新任务省略 grill 可 demote 且 T3 不因陈旧 Complete deny`
 - features: t2/t3/t6 cross-task scenarios
+
+
+## Closeout (scheme A, 2026-09-08)
+
+PR https://github.com/KunoLu/sbtd-plugins/pull/43. CLEAN r5. Docs tip `bdc25f337afaafdeb306ab69df83104841add096`. Production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`. Tests **121/121**. Locks Q1D Q2B Q3A Q4B Q5A. Host pin `@deepseek-ai/dsh@0.1.1-rc.2`. Group vote **A** (lock merge). `REQUIRED_CHANGES=none`.
+
+T6 Advisor Advise2 hole: after docs Clarify Complete, a later `sbtd_plan` with the same summary and omitted facts could drop Forced Docs DDD via `mergeGate` (`plan.ts` then ~256–263): `required+blocked` → on-demand, so T3 allowed writes while `clarifyStatus` remained `complete`. Q8 remains one-shot haystack elevate. **This PR delivered** persist-across-replans (`keepRequired` / `keepForcedDocsDdd` at `mergeGate` ~201–218 + `sbtdPlan` ~364–371) and matching-set identity. Same-task omit now keeps `ddd` `required` (incl. `blocked`); T3 still Gate-only denies unpassed required `ddd`. Do not start T7.
 
 

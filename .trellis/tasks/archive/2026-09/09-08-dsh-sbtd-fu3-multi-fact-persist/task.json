@@ -3,7 +3,7 @@
   "name": "dsh-sbtd-fu3-multi-fact-persist",
   "title": "dsh-sbtd FU3 multi-fact + persist-across-replans",
   "description": "Q4B two-commit FU3: persist-across-replans sticky Forced Docs DDD first, then multi-fact matching-set identity. Fence packages/dsh-sbtd only; hooks frozen.",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": "dsh-sbtd",
@@ -11,7 +11,7 @@
   "creator": "640",
   "assignee": "640",
   "createdAt": "2026-09-08",
-  "completedAt": null,
+  "completedAt": "2026-09-08",
   "branch": "feat/dsh-sbtd-fu3-multi-fact-persist",
   "base_branch": "main",
   "worktree_path": null,
@@ -21,7 +21,7 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "Q4B re-lock A: 2 feature + docs/review/fix commits allowed; Q1D docs DDD-only; tip verify 116/116 at b33641f. r3 docs remediation: spec FU3 delivered, Book-gate owner=640 exception+lesson, PRD/CR bind to b33641f.",
+  "notes": "scheme A finish on PR #43; CLEAN r5; tip bdc25f3 / prod d2194f5; tests 121/121; locks Q1D Q2B Q3A Q4B Q5A; vote A; REQUIRED_CHANGES=none; host @deepseek-ai/dsh@0.1.1-rc.2",
   "meta": {
     "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/43"
   }

@@ -52,3 +52,10 @@ GitNexus `detect_changes` scope=all: `risk_level=high` (stale index + touched `s
 `rtk`: fallback-native (`rtk` not found).
 
 
+## Closeout (scheme A, 2026-09-08)
+
+No new deferred coding debt for FU3.
+
+T6 Advisor Advise2 hole (same-summary omit demoted Forced Docs DDD via `mergeGate`; T3 allowed writes while `clarifyStatus=complete`) is **closed** on PR #43. Q8 remains one-shot haystack elevate. Persist-across-replans + matching-set delivered. `REQUIRED_CHANGES=none`. Group vote **A**. CLEAN r5. Docs tip `bdc25f3` / prod `d2194f5`. Tests **121/121**. Locks Q1D Q2B Q3A Q4B Q5A. Do not start T7.
+
+
