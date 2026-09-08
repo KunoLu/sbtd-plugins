@@ -92,7 +92,7 @@ test("同一目标重复调用保留 passed，触发消失则写明原因", () =
   const summary = "implement feature x";
   const first = sbtdPlan(id, {
     task_summary: summary,
-    facts: ["persist shared data", "fix existing behavior bug"],
+    facts: ["persist", "fix existing behavior bug"],
   });
   assert.equal(first.plan.gates.ddia.requirement, "required");
   assert.equal(first.plan.gates.legacy.requirement, "required");
@@ -194,6 +194,91 @@ test("同一 B 重置后再 plan 同触发不循环重置", () => {
   assert.equal(again.plan.gates.ddia.state, "planned");
   assert.equal(again.plan.gates.ddia.fact, "database/schema");
 });
+
+test("matching-set persist 后再加 schema 重置 inherited pass", () => {
+  const id = "plan-fu3-expand-persist-schema";
+  const summary = "expand matching set step one";
+  sbtdPlan(id, { task_summary: summary, facts: ["persist"] });
+  const live = getSession(id);
+  live.plan.gates.ddia.state = "passed";
+  live.plan.gates.ddia.reviewStatus = "confirmed";
+  assert.equal(live.plan.gates.ddia.fact, "persistence");
+
+  const expanded = sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["persist", "schema"],
+  });
+  assert.equal(expanded.plan.gates.ddia.requirement, "required");
+  assert.equal(expanded.plan.gates.ddia.state, "planned");
+  assert.equal(expanded.plan.gates.ddia.reviewStatus, undefined);
+  assert.equal(expanded.plan.gates.ddia.fact, "database/schema + persistence");
+  assert.match(expanded.markdown, /trigger fact changed/);
+});
+
+test("matching-set 额外 ddd EN/zh 别名不重置 pass", () => {
+  const id = "plan-fu3-ddd-alias-no-reset";
+  const summary = "ddd alias collapse";
+  sbtdPlan(id, {
+    task_summary: summary,
+    facts: ["completed grill-with-docs"],
+  });
+  const live = getSession(id);
+  live.plan.gates.ddd.state = "passed";
+  live.plan.gates.ddd.reviewStatus = "confirmed";
+
+  const aliased = sbtdPlan(id, {
+    task_summary: summary,
+    facts: [
+      "completed grill-with-docs",
+      "完整执行 grill-with-docs",
+      "fully executed grill-with-docs",
+    ],
+  });
+  assert.equal(aliased.plan.gates.ddd.requirement, "required");
+  assert.equal(aliased.plan.gates.ddd.state, "passed");
+  assert.equal(aliased.plan.gates.ddd.reviewStatus, "confirmed");
+  assert.equal(aliased.plan.gates.ddd.fact, "完整执行 grill-with-docs");
+});
+
+test("matching-set legacy 与 release 扩张仍重置 pass", () => {
+  const legacyId = "plan-fu3-legacy-expand";
+  const legacySummary = "legacy matching-set expand";
+  sbtdPlan(legacyId, {
+    task_summary: legacySummary,
+    facts: ["fix existing behavior bug"],
+  });
+  const legacyLive = getSession(legacyId);
+  legacyLive.plan.gates.legacy.state = "passed";
+  legacyLive.plan.gates.legacy.reviewStatus = "characterized";
+
+  const legacyExpanded = sbtdPlan(legacyId, {
+    task_summary: legacySummary,
+    facts: ["fix existing behavior bug", "弱测试"],
+  });
+  assert.equal(legacyExpanded.plan.gates.legacy.state, "planned");
+  assert.equal(legacyExpanded.plan.gates.legacy.reviewStatus, undefined);
+  assert.match(legacyExpanded.markdown, /trigger fact changed/);
+
+  const releaseId = "plan-fu3-release-expand";
+  const releaseSummary = "release matching-set expand";
+  sbtdPlan(releaseId, {
+    task_summary: releaseSummary,
+    facts: ["production path"],
+  });
+  const releaseLive = getSession(releaseId);
+  releaseLive.plan.gates.release.state = "passed";
+  releaseLive.plan.gates.release.reviewStatus = "ready";
+
+  const releaseExpanded = sbtdPlan(releaseId, {
+    task_summary: releaseSummary,
+    facts: ["production path", "deploy"],
+  });
+  assert.equal(releaseExpanded.plan.gates.release.state, "planned");
+  assert.equal(releaseExpanded.plan.gates.release.reviewStatus, undefined);
+  assert.match(releaseExpanded.markdown, /trigger fact changed/);
+});
+
+
 
 test("mergeGate 将 on-demand passed 提升 required 重置为 planned", () => {
   const id = "plan-merge-promote-ondemand";

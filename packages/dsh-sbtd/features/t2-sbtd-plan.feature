@@ -50,6 +50,9 @@ Feature: DSH T2 sbtd_plan Book Gate Plan
     And markdown 写明 trigger fact changed 及旧到新
     And 若触发事实字符串相同则保持 passed 与 reviewStatus
     And A 通过后改 B 再 review 再改 C 必须再次重置 planned
+    And persist 后再加 schema 属于集合扩张并重置 inherited pass
+    And 额外 ddd EN/中文别名不算扩张且不重置 pass
+
 
   Scenario: on-demand passed 提升 required 时重置 planned
     Given 同一 taskId 的 on-demand gate 已 passed

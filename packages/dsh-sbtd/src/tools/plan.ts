@@ -131,6 +131,29 @@ function haystack(summary: string, facts: string[] | undefined): string {
   return `${summary}\n${extra}`;
 }
 
+const DDD_GRILL_IDENTITY = "完整执行 grill-with-docs";
+
+function matchingSetFact(kind: GateKind, text: string): string | undefined {
+  const seen = new Set<string>();
+  const identities: string[] = [];
+  for (const predicate of PREDICATES[kind]) {
+    if (!predicate.re.test(text)) {
+      continue;
+    }
+    const identity = kind === "ddd" ? DDD_GRILL_IDENTITY : predicate.fact;
+    if (seen.has(identity)) {
+      continue;
+    }
+    seen.add(identity);
+    identities.push(identity);
+  }
+  if (identities.length === 0) {
+    return undefined;
+  }
+  identities.sort();
+  return identities.join(" + ");
+}
+
 export function inferRequirements(
   summary: string,
   facts?: string[],
@@ -138,12 +161,12 @@ export function inferRequirements(
   const text = haystack(summary, facts);
   const out = {} as Record<GateKind, InferredGate>;
   for (const kind of GATE_KINDS) {
-    const hit = PREDICATES[kind].find((p) => p.re.test(text));
-    if (hit !== undefined) {
+    const fact = matchingSetFact(kind, text);
+    if (fact !== undefined) {
       out[kind] = {
         requirement: "required",
         state: "planned",
-        fact: hit.fact,
+        fact,
       };
     } else {
       out[kind] = {
