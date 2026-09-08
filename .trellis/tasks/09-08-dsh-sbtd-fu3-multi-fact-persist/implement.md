@@ -21,6 +21,8 @@ Current reproduction evidence: t2/t3/t6 omit-replan tests failed pre-fix (`requi
 Safety net: `t2-plan.test.mjs` / `t3-hooks.test.mjs` / `t6-clarify.test.mjs` + matching features.
 Hidden dependencies / seam: `clarifyStatus` + `clarifyMode` on session; `mergeGate` now takes `keepRequired`. No production seam.
 Validation plan: `npm run lint && npm run typecheck && npm run build && node --test test/*.test.mjs`
+Timing breach: analysis concluded `characterized` / `proceed` before the `plan.ts` edit, but this written review was persisted after both feature commits. No extra structural change. Gate state: passed.
+
 Review mode: normal
 
 ## Refactoring Review
@@ -33,6 +35,8 @@ Structural friction: none. Sticky branch is a guard before existing merge; match
 Decision and smallest safe step: no refactor needed.
 Safety net and validation: package tests 115/115.
 Deferred refactors: none.
+Timing breach: same as Legacy — written review persisted after both feature commits. Gate state: passed.
+
 
 ## Release Readiness Review
 
@@ -44,6 +48,18 @@ Observability / alerts / runbook: markdown still records trigger-fact-changed no
 Rollout / migration / rollback / cleanup: revert the two commits. `fact?: string` encoding stays compatible for single-member sets.
 Required validation and result: `biome check src` pass; `tsc --noEmit` pass; `node --test test/*.test.mjs` **115/115**.
 Optional checks, accountable owner acceptance, and residual risk: GitNexus `detect-changes --scope all` risk medium (`inferRequirements`, `mergeGate`; SbtdClarify haystack/merge flows). Index refreshed this session. `rtk` missing → fallback-native. No registry publish. Host remains `@deepseek-ai/dsh@0.1.1-rc.2`.
+
+## Code Readability Review
+
+```text
+Code Readability Review
+Scope: modified hand-written production code and tests (plan.ts, t2-plan.test.mjs, t3-hooks.test.mjs, t6-clarify.test.mjs)
+Findings: none
+Ponytail conflicts resolved: none (ponytail / ponytail-review Skills not visible this host)
+Changes applied: none
+Revalidation required: no
+```
+
 
 
 ## Checklist
