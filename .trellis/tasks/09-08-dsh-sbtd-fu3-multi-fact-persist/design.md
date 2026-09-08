@@ -3,17 +3,19 @@
 ## Boundaries
 
 - Adapter: `packages/dsh-sbtd/src/tools/plan.ts` (`inferRequirements`, `mergeGate`, `sbtdPlan`)
-- `clarifyStatus` is read only in the plan merge loop to decide Forced Docs DDD stickiness
+- `clarifyStatus` plus `clarifyCompleteTaskId` are read in the plan merge loop to decide Forced Docs DDD stickiness
 - Do not change `hooks.ts`, `elevateDocsDdd`, `unpassedRequired`
 - `state.ts` `fact?: string` stays; matching-set encoded as a stable string when needed
+- docs Complete writes `clarifyCompleteTaskId` from the live plan; Interview Reset deletes it; serialize/restore hydrate-not-merge
 
 ## Commit 1 — sticky required
 
-In `sbtdPlan`, for `kind === "ddd"` when `sameGoal` and `session.clarifyStatus === "complete"`:
+In `sbtdPlan`, for `kind === "ddd"` when `sameGoal`, `session.clarifyStatus === "complete"`, `clarifyMode === "docs"`, and `session.clarifyCompleteTaskId === taskId`:
 
 If previous `ddd.requirement === "required"` and inferred is `on-demand` (omitted grill facts), do not take the optional/disappear demote branches. Keep `required` + previous `state` + `reviewStatus`/`fact`.
 
-Interview Reset deletes `clarifyStatus` → next same-summary plan may demote. New `taskId` (`sameGoal === false`) drops previous gates.
+Interview Reset deletes `clarifyStatus` and `clarifyCompleteTaskId` → next same-summary plan may demote. New `taskId` (`sameGoal === false`) drops previous gates. A docs Complete from another taskId does not sticky.
+
 
 T3 continues to deny iff `unpassedRequired(plan.gates.ddd)`.
 

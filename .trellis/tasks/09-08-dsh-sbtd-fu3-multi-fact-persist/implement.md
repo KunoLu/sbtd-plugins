@@ -12,6 +12,72 @@
 
 `grill-with-docs`: 未完整调用 — locked DDD already confirmed; implement-only turn.
 
+
+## r4 P2 — bind docs Complete to taskId
+
+Book Gate Plan (this fix):
+
+| Skill | Select | Hit fact | Stage | Gate state |
+|---|---|---|---|---|
+| book-ddd-distilled-modeling | on-demand | locked Q2B; no new interview | — | not-required |
+| book-ddia-data-design | required | `clarifyCompleteTaskId` serialize/restore handoff | before implement | passed |
+| book-legacy-change-safety | required | existing sticky merge uses session-global Complete | before first behavior edit | passed |
+| book-refactoring-pass | required | edit existing state/clarify/plan | after legacy characterized | passed |
+| book-release-readiness | required | `sbtd_plan` / `sbtd_clarify` production tools | after validation | passed |
+
+
+`grill-with-docs`: 未完整调用 — Quality P2 + locked Q1D/Q2B/Q3A/Q5A already specify the bind; no new domain terms.
+
+DDIA Data Design Review
+Status: confirmed
+Data owner and source of truth: `SbtdSessionState` keyed by `sessionId`; live `clarifyCompleteTaskId` is SoT for which task completed docs Clarify.
+Write / read / async / failure paths: docs Complete writes current `plan.taskId`; Interview Reset deletes; `sbtdPlan` reads before `keepRequired`; `serialize`/`restore` hydrate-not-merge like `clarifyStatus`. No async/queue.
+Consistency model: session-local strong; compaction restore is not Reset.
+Idempotency / ordering / retry / deduplication: Complete is terminal; Reset then re-Complete rebinds. Absent snapshot key deletes live field (fail-closed: no stickiness).
+Schema / migration / backfill / rollback / replay: additive optional string; old snapshots without the field do not sticky. Rollback = revert this fix commit.
+Observability and repair: package tests assert bind/restore/reset/cross-task demote.
+Required tests: t2/t3/t6 cross-task stale Complete + Complete bind/restore/reset.
+
+Legacy Change Safety Review
+Status: characterized
+Behavior to change: A docs Complete must not keep B's DDD required after B supplies then omits a grill fact.
+Behavior to preserve: Q1D matching-set; same-task Q2B sticky; Q3A Gate-only T3 deny; Interview Reset demote; generic Complete never Forced Docs DDD; Q8 elevateDocsDdd; hooks frozen.
+Current reproduction evidence: red tests `新 taskId 丢弃 Forced Docs DDD 不粘滞` (B replan omit stays `required`), t3/t6 cross-task demote, t6 Complete `clarifyCompleteTaskId` undefined.
+Safety net: those regressions plus existing sticky omit/T3 deny tests (now bind `clarifyCompleteTaskId`).
+Hidden dependencies / seam: session `clarifyStatus`/`clarifyMode` plus new `clarifyCompleteTaskId`; no production seam.
+Validation plan: `npm run lint && npm run typecheck && npm run build && node --test test/*.test.mjs` in `packages/dsh-sbtd`.
+Review mode: normal
+
+Refactoring Review
+Status: proceed
+Review mode: normal
+Existing-code scope: `state.ts` serialize/restore; `clarify.ts` Complete/Reset; `plan.ts` `keepForcedDocsDdd`.
+Behavior that must remain unchanged: same-task docs sticky; Reset/new-task demote; T3 Gate-only.
+Structural friction: none. One optional field + equality guard.
+Decision and smallest safe step: no refactor needed.
+Safety net and validation: package node:test after tsc.
+Deferred refactors: none.
+
+Release Readiness Review (r4 P2)
+Status: ready
+Production path and affected users / systems: `sbtd_plan` / `sbtd_clarify` session tools; models re-planning after docs Complete across taskIds.
+Failure modes and safeguards: A's Complete cannot sticky B's DDD; same-task omit still sticky; Reset still demotes; T3 remains Gate-only.
+Capacity / backpressure / limits: not-applicable (in-process Map).
+Observability / alerts / runbook: not-applicable.
+Rollout / migration / rollback / cleanup: additional permitted fix commit on PR #43; rollback = revert this commit. Old snapshots without `clarifyCompleteTaskId` fail-closed (no stickiness).
+Required validation and result: production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`; `biome check src` pass; `tsc --noEmit` pass; `tsc` build pass; `node --test test/*.test.mjs` **121/121**.
+
+Optional checks, accountable owner acceptance, and residual risk: GitNexus detect_changes `high` on stale index — advisory; source+tests are the evidence. `rtk` missing → fallback-native. No publish. Host pin unchanged.
+
+Code Readability Review
+Scope: modified hand-written production code and tests (state.ts, clarify.ts, plan.ts, t2/t3/t6 tests)
+Findings: none
+Ponytail conflicts resolved: none (ponytail-review not visible this host)
+Changes applied: none
+Revalidation required: no
+
+
+
 ## Legacy Change Safety Review
 
 Status: characterized

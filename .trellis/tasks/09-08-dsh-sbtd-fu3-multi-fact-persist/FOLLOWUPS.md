@@ -33,3 +33,22 @@ Original order was **not** compliant: feature commits edited `packages/dsh-sbtd/
 Gates remain labeled `passed` with that honest timing-breach admission. `passed` after retrospective characterization is **not** a substitute for mandatory before-first-edit compliance.
 
 Prevention: persist Legacy/Refactoring written reviews **before** the first behavior edit when those gates are required. See `.trellis/lessons/topics/dsh-sbtd.md` `LESSON-20260908-book-gate-before-first-edit`.
+
+## r4 P2 — bind docs Complete to taskId
+
+Quality r4 P2: `keepForcedDocsDdd` requires `clarifyCompleteTaskId` to match the live plan. docs Complete writes the field; Interview Reset and empty restore delete it.
+
+Production tip: `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`
+
+Validation in `packages/dsh-sbtd` at that tip:
+
+- `biome check src` pass
+- `tsc --noEmit` pass
+- `tsc` build pass
+- `node --test test/*.test.mjs` **121/121**
+
+GitNexus `detect_changes` scope=all: `risk_level=high` (stale index + touched `sbtdPlan`/`sbtdClarify`). Cross-check: only the bind field and sticky guard; `hooks.ts` untouched; Q3A Gate-only T3 deny preserved.
+
+`rtk`: fallback-native (`rtk` not found).
+
+

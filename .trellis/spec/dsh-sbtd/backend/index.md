@@ -17,8 +17,9 @@ Source files:
 
 - `src/index.ts` — `name`, `inject = ["tools", "systemPrompt"]`, `apply` (plan + review + clarify)
 - `src/section.ts` — static Chinese section text, `name: "sbtd"`, `order: 50`; Forced DDD prose is docs-mode Complete only
-- `src/state.ts` — `Map` keyed by caller `sessionId`; `serialize()` / `restore()` copy optional `clarifyMode` + `clarifyStatus`
-- `src/tools/plan.ts` — `sbtd_plan` registers/updates BookGatePlan. DDD is required only after completed `grill-with-docs`; bare `ddd` stays on-demand. FU3 **delivered**: trigger identity is the matching-set of distinct catalog facts; docs-Complete same-task Forced Docs DDD stays `required` via `mergeGate` (omission ≠ withdraw).
+- `src/state.ts` — `Map` keyed by caller `sessionId`; `serialize()` / `restore()` copy optional `clarifyMode` + `clarifyStatus` + `clarifyCompleteTaskId`
+- `src/tools/plan.ts` — `sbtd_plan` registers/updates BookGatePlan. DDD is required only after completed `grill-with-docs`; bare `ddd` stays on-demand. FU3 **delivered**: trigger identity is the matching-set of distinct catalog facts; docs-Complete Forced Docs DDD stays `required` via `mergeGate` only when `clarifyCompleteTaskId` matches the current plan (omission ≠ withdraw).
+
 - `src/tools/review.ts` — `sbtd_review` records one Book Gate; FU2 Review Recording Order when both legacy and refactor are required
 - `src/tools/clarify.ts` — `sbtd_clarify` interview adapter; Q8 haystack elevate is one-shot on docs Complete
 - `src/hooks.ts` — `ctx.on("tools/pre-execute")` and `ctx.on("agent/pre-step")`. Allow via `next()`. Local host types only.

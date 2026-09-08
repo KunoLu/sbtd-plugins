@@ -27,11 +27,12 @@ Separately, `inferRequirements` uses `PREDICATES[kind].find` first-match, so per
 
 ### Persist-across-replans (commit 1)
 
-While `clarifyStatus=complete` and `sameGoal` (same `taskId`), `mergeGate` must not demote Forced Docs DDD to on-demand when the haystack omits grill facts. Keep `requirement=required` and previous `state` plus `reviewStatus`/`fact` as appropriate.
+While `clarifyStatus=complete`, `clarifyMode=docs`, `sameGoal` (same `taskId`), and `clarifyCompleteTaskId` equals that `taskId`, `mergeGate` must not demote Forced Docs DDD to on-demand when the haystack omits grill facts. Keep `requirement=required` and previous `state` plus `reviewStatus`/`fact` as appropriate.
 
-`clarifyStatus` may inform merge stickiness. It must not become a second T3 predicate. `hooks.ts` is frozen. T6 Q8 `elevateDocsDdd` one-shot is unchanged.
+`clarifyStatus` may inform merge stickiness only together with the completing `taskId`. It must not become a second T3 predicate. `hooks.ts` is frozen. T6 Q8 `elevateDocsDdd` one-shot is unchanged.
 
-Withdraw still demotes/drops: `sbtd_clarify reset=true` and/or a new `task_summary`/`taskId`.
+Withdraw still demotes/drops: `sbtd_clarify reset=true` and/or a new `task_summary`/`taskId`. A docs Complete from task A must not sticky task B.
+
 
 ### Multi-fact matching-set (commit 2)
 
@@ -54,17 +55,19 @@ Keep `fact?: string` backward-compatible when the set has one member.
 
 - [x] After docs Complete, same-summary replan omitting grill facts: `ddd` stays `required` (including `blocked`); T3 still denies production writes
 - [x] Interview Reset or new taskId/summary: demote/drop allowed
+- [x] A docs Complete does not sticky a later task: B supplies then omits grill facts → ddd demotes; T3 does not deny from A's Complete
 - [x] Expansion persist→persist+schema (or persistence→database/schema): inherited pass resets
 - [x] Extra **ddd grill** alias EN/zh: pass does not reset (not ddia persist/schema bilingual collapse)
 - [x] Existing T5/T6 regressions green (string-change reset, Q8 elevate, Gate-only T3 deny)
-- [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` (**116/116** at production tip `b33641f`)
+- [x] `biome check src`; `tsc --noEmit`; `node --test test/*.test.mjs` (**121/121** at production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`)
 - [x] Two *feature* commits (+ permitted docs/review/fix commits), one PR (#43)
 - [ ] Closeout: not merged, not finish-work
 
-Evidence at production tip `b33641f` (PR #43 Test plan already `[x]`; not 116/116 alone):
+Evidence for r4 P2 at production tip `d2194f5229e6f8b08fef3a6a69f9e8e3a41c9ba1`:
 
-- sticky omit + T3 deny: `t6-clarify.test.mjs` `docs Complete 后同摘要省略 grill facts 时 ddd 保持 required 且 T3 仍 deny`; `t3-hooks.test.mjs` `docs Complete 后省略 grill facts 再 plan 仍因 ddd deny 生产 write`; `t2-plan.test.mjs` `Complete 且同 taskId 省略 grill facts 时 Forced Docs DDD 保持 required`
-- Interview Reset demote: `t6-clarify.test.mjs` `Interview Reset 后同摘要省略 facts 允许 demote Forced Docs DDD`; `features/t2-sbtd-plan.feature` Interview Reset scenario
-- persist→persist+schema reset: `t2-plan.test.mjs` `matching-set persist 后再加 schema 重置 inherited pass`
-- extra ddd EN/zh alias no reset: `t2-plan.test.mjs` `matching-set 额外 ddd EN/zh 别名不重置 pass`
-- T5/T6 regressions + lint/typecheck/116/116: `FOLLOWUPS.md` tip verify at `b33641f`
+- `t2-plan.test.mjs` `新 taskId 丢弃 Forced Docs DDD 不粘滞`; `他任务 docs Complete 后新任务省略 grill 可 demote DDD`
+- `t3-hooks.test.mjs` `他任务 docs Complete 后新任务省略 grill 不因陈旧 Complete deny`
+- `t6-clarify.test.mjs` `docs Complete 绑定 taskId；compaction restore 匹配；Reset 清除`; `他任务 docs Complete 后新任务省略 grill 可 demote 且 T3 不因陈旧 Complete deny`
+- features: t2/t3/t6 cross-task scenarios
+
+
