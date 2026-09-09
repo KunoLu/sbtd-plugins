@@ -46,7 +46,7 @@ function writeSrc(sessionId, file = "src/foo.ts") {
   };
 }
 
-test("apply 注册 pre-execute 与 pre-step，且三个 sbtd_* tool", () => {
+test("apply 注册 pre-execute 与 pre-step，且五个 sbtd_* tool", () => {
   const { tools, hooks } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);

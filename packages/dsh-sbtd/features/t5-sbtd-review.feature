@@ -5,7 +5,7 @@ Feature: DSH T5 sbtd_review 五项 book gate
   Scenario: apply 注册 sbtd_plan、sbtd_review 与 sbtd_clarify
     Given 插件已加载
     When 宿主枚举已注册 tools
-    Then tools 为 sbtd_plan、sbtd_review 与 sbtd_clarify
+    Then tools 含 sbtd_plan、sbtd_review、sbtd_clarify、sbtd_spec、sbtd_tickets
     And inject 仍为 tools 与 systemPrompt
 
   Scenario: 五个规范 kind 成功且拒绝别名

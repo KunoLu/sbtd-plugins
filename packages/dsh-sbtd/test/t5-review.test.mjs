@@ -106,7 +106,7 @@ function assertRefactorOrderError(fn, expectedState, expectedReviewStatus) {
 }
 
 
-test("apply 注册 sbtd_plan、sbtd_review 与 sbtd_clarify", () => {
+test("apply 注册 sbtd_plan、sbtd_review、sbtd_clarify、sbtd_spec 与 sbtd_tickets", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
