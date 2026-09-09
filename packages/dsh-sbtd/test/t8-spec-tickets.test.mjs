@@ -295,6 +295,52 @@ test("Q4A: sbtd_spec writes only prd.md; sbtd_tickets only implement.md", () => 
   assert.equal(existsSync(join(root, ".trellis", "tasks", "child")), false);
 });
 
+test("empty markdown/body rejects before write and preserves existing artifact", () => {
+  const root = fixtureRoot("empty-body");
+  withTrellis(root);
+  const taskDir = join(root, ".trellis", "tasks", "09-09-demo");
+  mkdirSync(taskDir, { recursive: true });
+  const existing = "# keep me\n";
+  writeFileSync(join(taskDir, "prd.md"), existing, "utf8");
+  writeFileSync(join(taskDir, "implement.md"), "# keep tickets\n", "utf8");
+  const id = "t8-empty-body";
+  sbtdPlan(id, { task_summary: "hello empty body guard" });
+
+  assert.throws(
+    () =>
+      sbtdSpec(
+        id,
+        { cwd: root, task: "09-09-demo" },
+        { PATH: "" },
+      ),
+    /markdown\/body must be a non-empty string/,
+  );
+  assert.throws(
+    () =>
+      sbtdSpec(
+        id,
+        { cwd: root, task: "09-09-demo", markdown: "   \n\t  " },
+        { PATH: "" },
+      ),
+    /markdown\/body must be a non-empty string/,
+  );
+  assert.throws(
+    () =>
+      sbtdTickets(
+        id,
+        { cwd: root, task: "09-09-demo", body: "" },
+        { PATH: "" },
+      ),
+    /markdown\/body must be a non-empty string/,
+  );
+
+  assert.equal(readFileSync(join(taskDir, "prd.md"), "utf8"), existing);
+  assert.equal(
+    readFileSync(join(taskDir, "implement.md"), "utf8"),
+    "# keep tickets\n",
+  );
+});
+
 test("host pin unchanged in package.json", () => {
   const pkg = JSON.parse(
     readFileSync(

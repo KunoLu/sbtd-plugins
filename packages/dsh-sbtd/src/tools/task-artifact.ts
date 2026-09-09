@@ -137,6 +137,14 @@ export function runTaskArtifact(
   env: NodeJS.ProcessEnv = process.env,
 ): ArtifactToolResult {
   const markdown = bodyFromInput(input);
+  // Reject missing/empty/whitespace-only content before any draft or write path
+  // so we never silently overwrite existing prd.md / implement.md with "".
+  // Throw (not draft) matches sibling tools e.g. sbtd_plan empty task_summary.
+  if (markdown.trim() === "") {
+    throw new Error(
+      "sbtd_spec/sbtd_tickets: markdown/body must be a non-empty string",
+    );
+  }
   const cwd =
     input.cwd != null && String(input.cwd).trim() !== ""
       ? String(input.cwd).trim()
