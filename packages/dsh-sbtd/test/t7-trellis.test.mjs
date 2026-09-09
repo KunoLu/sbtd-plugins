@@ -154,3 +154,59 @@ test("writeArtifact: missing trellis => structured failure (no throw)", () => {
   });
 });
 
+
+test("writeArtifact: no tree + illegal slug throws (sandbox before missing-trellis)", () => {
+  const root = fixtureRoot("wa-order-escape");
+  assert.throws(
+    () => writeArtifact(root, "../escape", "prd.md", "x"),
+    /rejected|escape|sandbox/i,
+  );
+  assert.throws(
+    () => writeArtifact(root, "09-09-ok", "research.md", "x"),
+    /whitelist|rejected/i,
+  );
+});
+
+test("writeArtifact: no tree + valid slug+whitelist => structured missing-trellis", () => {
+  const root = fixtureRoot("wa-order-ok");
+  assert.deepEqual(writeArtifact(root, "09-09-ok", "prd.md", "body"), {
+    ok: false,
+    reason: "missing-trellis",
+  });
+});
+
+test("currentTask: TRELLIS_CONTEXT_ID punctuation matches Trellis 0.6.16 sanitize", () => {
+  const root = fixtureRoot("ct-ctx-sanitize");
+  withTrellis(root);
+  const sessions = join(root, ".trellis", ".runtime", "sessions");
+  mkdirSync(sessions, { recursive: true });
+  // Trellis _sanitize_key: spaces/special → "_", strip ._- ; "My Session! Foo@Bar" → "My_Session_Foo_Bar"
+  const stem = "My_Session_Foo_Bar";
+  writeFileSync(
+    join(sessions, stem + ".json"),
+    JSON.stringify({
+      platform: "session",
+      current_task: ".trellis/tasks/09-09-demo",
+      current_run: null,
+    }),
+    "utf8",
+  );
+  // Old `-`-based sanitize would look for My-Session-Foo-Bar.json and miss
+  const hit = currentTask(root, null, {
+    TRELLIS_CONTEXT_ID: "My Session! Foo@Bar",
+  });
+  assert.equal(hit.ok, true);
+  if (hit.ok) assert.equal(hit.task, ".trellis/tasks/09-09-demo");
+
+  // Empty-after-sanitize ⇒ sha256(raw)[:24] (Trellis _hash_value)
+  const hashStem = "e84c538e7fe250730ef62de2"; // sha256("!!!").hexdigest()[:24]
+  writeFileSync(
+    join(sessions, hashStem + ".json"),
+    JSON.stringify({ current_task: ".trellis/tasks/09-09-hashed" }),
+    "utf8",
+  );
+  const hashed = currentTask(root, null, { TRELLIS_CONTEXT_ID: "!!!" });
+  assert.equal(hashed.ok, true);
+  if (hashed.ok) assert.equal(hashed.task, ".trellis/tasks/09-09-hashed");
+});
+

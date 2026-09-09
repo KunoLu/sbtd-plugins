@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   accessSync,
   constants,
@@ -113,12 +114,18 @@ export function readWorkflow(cwd: string): ReadWorkflowResult {
   }
 }
 
-function sanitizeKey(value: string): string {
-  const cleaned = value
-    .trim()
-    .replace(/[^A-Za-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return cleaned.slice(0, 200);
+/**
+ * Match Trellis 0.6.16 `active_task._sanitize_key` / `_hash_value` for
+ * TRELLIS_CONTEXT_ID (and explicit sessionKey) so lookups hit real session files.
+ * `_` (not `-`), strip `._-`, max 160; empty after sanitize ⇒ sha256 hex[:24] of raw.
+ */
+function sanitizeKey(raw: string): string {
+  const stripped = raw.trim();
+  let safe = stripped.replace(/[^A-Za-z0-9._-]+/g, "_");
+  safe = safe.replace(/^[._-]+|[._-]+$/g, "");
+  safe = safe.slice(0, 160);
+  if (safe) return safe;
+  return createHash("sha256").update(stripped, "utf8").digest("hex").slice(0, 24);
 }
 
 /** Resolve Trellis session file stem from optional arg and/or env (Q4A). */
@@ -127,13 +134,11 @@ export function resolveSessionKey(
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
   if (sessionKey != null && String(sessionKey).trim() !== "") {
-    const key = sanitizeKey(String(sessionKey));
-    return key || null;
+    return sanitizeKey(String(sessionKey));
   }
   const trellisCtx = env.TRELLIS_CONTEXT_ID?.trim();
   if (trellisCtx) {
-    const safe = sanitizeKey(trellisCtx);
-    return safe || null;
+    return sanitizeKey(trellisCtx);
   }
   return null;
 }
@@ -203,13 +208,14 @@ export function writeArtifact(
   name: string,
   body: string,
 ): WriteArtifactResult {
+  // Q6B: sandbox slug/name hard-reject MUST precede missing-trellis structured failure
+  const slug = assertSafeSlug(task);
+  const artifactName = assertWhitelistName(name);
+
   const root = trellisDir(cwd);
   if (!isDirectory(root)) {
     return { ok: false, reason: "missing-trellis" };
   }
-
-  const slug = assertSafeSlug(task);
-  const artifactName = assertWhitelistName(name);
 
   const tasksRoot = resolve(root, "tasks");
   const taskDir = resolve(tasksRoot, slug);
