@@ -281,3 +281,154 @@ test("return envelope shape (Q4A)", async () => {
   assert.ok(result.validate);
   assert.equal(result.validate.post, "done");
 });
+
+test("discoverProjectTestCommand reads non-Node AGENTS commands (pytest/go/gradle/swift)", () => {
+  const cases = [
+    { label: "pytest", body: "# Agents\n\n- `pytest -q`\n", command: "pytest", args: ["-q"] },
+    { label: "uv-pytest", body: "Run tests:\n\n`uv run pytest`\n", command: "uv", args: ["run", "pytest"] },
+    { label: "go", body: "## Test\n\ngo test ./...\n", command: "go", args: ["test", "./..."] },
+    { label: "gradlew", body: "CI:\n./gradlew test\n", command: "gradlew", args: ["test"] },
+    { label: "swift", body: "`swift test`\n", command: "swift", args: ["test"] },
+  ];
+  for (const c of cases) {
+    const root = fixtureRoot("docs-" + c.label);
+    writeFileSync(join(root, "AGENTS.md"), c.body, "utf8");
+    const cmd = discoverProjectTestCommand(root);
+    assert.ok(cmd, c.label + " should discover");
+    assert.equal(cmd.command, c.command, c.label);
+    assert.deepEqual(cmd.args, c.args, c.label);
+  }
+});
+
+test("discoverProjectTestCommand: bun lockfile uses bun run test", () => {
+  const root = fixtureRoot("bun-run");
+  writeFileSync(
+    join(root, "package.json"),
+    JSON.stringify({ scripts: { test: "vitest run" } }),
+    "utf8",
+  );
+  writeFileSync(join(root, "bun.lock"), "", "utf8");
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(cmd);
+  assert.equal(cmd.command, "bun");
+  assert.deepEqual(cmd.args, ["run", "test"]);
+});
+
+test("Q1A production: apply validateHost injects GitNexus into registered execute", async () => {
+  const root = fixtureRoot("inject-host");
+  withIndex(root, "h");
+  const tools = [];
+  const mcp = mcpStub({
+    "mcp__gitnexus__impact": async (args) => ({ hit: args.target }),
+  });
+  apply({
+    systemPrompt: { section() {} },
+    tools: {
+      register(definition) {
+        tools.push(definition);
+      },
+    },
+    on() {},
+    cwd: root,
+    validateHost: {
+      cwd: root,
+      gitnexus: {
+        mcp,
+        resolveHead: () => "h",
+        resolveIndexedCommit: () => "h",
+      },
+    },
+  });
+  const validate = tools.find((t) => t.name === SBTD_VALIDATE_TOOL_NAME);
+  assert.ok(validate);
+  const result = await validate.execute(
+    { phase: "pre", target: "Sym", cwd: "/evil", mcp: null },
+    { agent: { id: "t10-inject" } },
+  );
+  assert.equal(result.gitnexus.status, "ok");
+  assert.equal(result.validate.pre, "done");
+});
+
+test("Q1A production: apply bridges tools.schemas/execute into GitNexus mcp", async () => {
+  const root = fixtureRoot("inject-bridge");
+  withIndex(root, "h");
+  const tools = [];
+  const toolMap = {
+    "mcp__gitnexus__impact": async (args) => ({ via: "bridge", t: args.target }),
+  };
+  apply({
+    systemPrompt: { section() {} },
+    tools: {
+      register(definition) {
+        tools.push(definition);
+      },
+      schemas: () => Object.keys(toolMap).map((name) => ({ name })),
+      execute: async ({ name, arguments: args }) => {
+        const fn = toolMap[name];
+        if (!fn) {
+          return { isError: true, error: { message: "missing " + name }, content: [] };
+        }
+        return { isError: false, value: await fn(args), content: [] };
+      },
+    },
+    on() {},
+    cwd: root,
+    validateHost: {
+      gitnexus: {
+        resolveHead: () => "h",
+        resolveIndexedCommit: () => "h",
+      },
+    },
+  });
+  const validate = tools.find((t) => t.name === SBTD_VALIDATE_TOOL_NAME);
+  assert.ok(validate);
+  const result = await validate.execute(
+    { phase: "pre", target: "BridgeSym" },
+    { agent: { id: "t10-bridge" } },
+  );
+  assert.equal(result.gitnexus.status, "ok");
+  assert.match(result.gitnexus.summary, /BridgeSym|bridge/i);
+});
+
+test("pickValidateInput drops trust-handle keys", async () => {
+  const { pickValidateInput } = await import("../dist/tools/validate.js");
+  const picked = pickValidateInput({
+    phase: "pre",
+    target: "T",
+    cwd: "/nope",
+    mcp: { x: 1 },
+    runRefresh: () => {},
+    serverName: "evil",
+    toolNames: ["x"],
+  });
+  assert.deepEqual(picked, { phase: "pre", target: "T" });
+});
+
+test("defaultRunTests honors testTimeoutMs via sbtdValidate host", async () => {
+  const root = fixtureRoot("timeout");
+  const bin = join(root, "bin");
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(
+    join(bin, "pytest"),
+    "#!/usr/bin/env node\nsetTimeout(() => {}, 60_000);\n",
+    { mode: 0o755 },
+  );
+  writeFileSync(join(root, "AGENTS.md"), "`pytest`\n", "utf8");
+  const oldPath = process.env.PATH;
+  process.env.PATH = bin + ":" + (oldPath || "");
+  try {
+    const started = Date.now();
+    const result = await sbtdValidate(
+      "t10-timeout",
+      { phase: "post" },
+      { cwd: root, gitnexus: {}, testTimeoutMs: 800 },
+    );
+    const elapsed = Date.now() - started;
+    assert.equal(result.tests.status, "failed");
+    assert.match(result.tests.summary, /timed out/i);
+    assert.ok(elapsed < 15_000, "should not wait full 60s; elapsed=" + elapsed);
+    assert.equal(result.validate.post, "blocked");
+  } finally {
+    process.env.PATH = oldPath;
+  }
+});

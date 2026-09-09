@@ -25,6 +25,8 @@ export type PlanToolResult = {
 
 export type PlanToolExec = {
   agent?: { id?: string };
+  /** Cooperative cancellation from the host tool pipeline (DSH ToolRunContext). */
+  signal?: AbortSignal;
 };
 
 export type PlanToolDefinition = {
@@ -45,6 +47,23 @@ export type PlanToolDefinition = {
 export type ToolsHost = {
   tools: {
     register: (definition: { name: string }) => unknown;
+    /** Optional: list registered tool schemas (production ToolRuntime.schemas). */
+    schemas?: (scope?: unknown) => Array<{ name: string }>;
+    /**
+     * Optional: execute a registered tool (production ToolRuntime.execute).
+     * Used only as a host-owned MCP bridge for GitNexus — never model-controlled.
+     */
+    execute?: (exec: {
+      callId: string;
+      name: string;
+      arguments: unknown;
+      signal: AbortSignal;
+    }) => Promise<{
+      isError: boolean;
+      value?: unknown;
+      content?: unknown;
+      error?: { message?: string };
+    }>;
   };
 };
 
