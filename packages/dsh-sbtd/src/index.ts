@@ -5,6 +5,7 @@ import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
 import { registerSpecTool } from "./tools/spec.js";
 import { registerTicketsTool } from "./tools/tickets.js";
+import { registerValidateTool } from "./tools/validate.js";
 
 export const name = "dsh-sbtd";
 export const inject = ["tools", "systemPrompt"] as const;
@@ -60,6 +61,13 @@ export {
   SBTD_TICKETS_TOOL_NAME,
   sbtdTickets,
 } from "./tools/tickets.js";
+export {
+  createValidateTool,
+  registerValidateTool,
+  SBTD_VALIDATE_TOOL_NAME,
+  sbtdValidate,
+  VALIDATE_PHASES,
+} from "./tools/validate.js";
 
 export function apply(ctx: PluginHost): void {
   console.log("[dsh-sbtd] plugin loaded (T0 stub)");
@@ -69,5 +77,6 @@ export function apply(ctx: PluginHost): void {
   registerClarifyTool(ctx);
   registerSpecTool(ctx);
   registerTicketsTool(ctx);
+  registerValidateTool(ctx);
   registerHooks(ctx);
 }
