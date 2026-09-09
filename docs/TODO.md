@@ -19,7 +19,7 @@
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
 | **P1** | T4–T8 核心闭环 | ✅ T4–T8 完成（T8 #47 → `a90a96f`；T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63` |
-| **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
+| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 完成（#49；merge SHA pending）；T10–T14 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
 ---
@@ -47,18 +47,18 @@
 
 ---
 
-## 4. P2 / P3（未开）
+## 4. P2 / P3
 
-| 优先级 | 任务 | 内容 |
-|---|---|---|
-| P2 | T9 | GitNexus 后端 |
-| P2 | T10 | `sbtd_validate` |
-| P2 | T11 | `sbtd_bdd` |
-| P2 | T12 | Maestro 预检 |
-| P2 | T13 | `sbtd_e2e` |
-| P2 | T14 | `sbtd_lessons` |
-| P3 | T15 | `/sbtd` 命令与 README |
-| P3 | T16 | 端到端验收 |
+| 任务 | 内容 | 状态 | 备注 |
+|---|---|---|---|
+| T9 | GitNexus 后端 | ✅ | #49；scheme A finish；CLEAN r2；tip `df7abb2`；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1 REQUIRED closed（`--index-only` + skip-before-analyze）；archive `09-09-dsh-sbtd-t9-gitnexus-backend-grill` + `09-09-dsh-sbtd-t9-gitnexus-backend-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2`；merge SHA pending |
+| T10 | `sbtd_validate` | ⬜ | 下一队列 |
+| T11 | `sbtd_bdd` | ⬜ |  |
+| T12 | Maestro 预检 | ⬜ |  |
+| T13 | `sbtd_e2e` | ⬜ |  |
+| T14 | `sbtd_lessons` | ⬜ |  |
+| T15 | `/sbtd` 命令与 README | ⬜ | P3 |
+| T16 | 端到端验收 | ⬜ | P3 |
 
 ---
 
@@ -101,7 +101,8 @@
 | 1 | **T6** `sbtd_clarify` | ✅ #39 → `4e76ae8` |
 | 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | ✅ #43 → `2a82e63` |
 | 3 | **T7** Trellis 后端 | ✅ #45 → `b73ece9` |
-| 4 | **T8** `sbtd_spec` / tickets | ✅ #47 → `a90a96f`；下一队列 P2 T9（未开） |
+| 4 | **T8** `sbtd_spec` / tickets | ✅ #47 → `a90a96f` |
+| 5 | **T9** GitNexus 后端 | ✅ #49；下一队列 T10（未开） |
 
 ---
 
@@ -109,6 +110,7 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-09 | T9 #49 scheme A finish/merge：CLEAN r2；tip `df7abb2`；locks Q1B–Q6A；REQUIRED_CHANGES=none；r1 REQUIRED closed（`--index-only` + skip-before-analyze）；residuals detect() outer catch / injected runRefresh timeout / SIGTERM-only / T10 cwd-mcp-runRefresh；不发布包；下一队列 T10（未开） |
 | 2026-09-09 | T8 #47 → main `a90a96f`（TODO merge-SHA backfill） |
 | 2026-09-09 | T8 #47 scheme A finish/merge：CLEAN r3；tip `3fd773f` + archive `a0f669a`；tests 150/150；locks Q1C–Q6A；REQUIRED_CHANGES=none；residual T5 scenario title nit + T7 symlink-at-tasks-dir；不发布包；下一队列 P2 T9（未开） |
 | 2026-09-09 | T7 #45 → main `b73ece9`（TODO merge-SHA backfill） |
