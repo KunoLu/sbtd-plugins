@@ -284,6 +284,7 @@ function detectProjectFamilies(cwd: string): Set<DocCommandFamily> {
   }
   if (
     hasScriptsTest ||
+    existsSync(join(cwd, "package-lock.json")) ||
     existsSync(join(cwd, "pnpm-lock.yaml")) ||
     existsSync(join(cwd, "yarn.lock")) ||
     existsSync(join(cwd, "bun.lockb")) ||
@@ -328,18 +329,21 @@ function collectDocCandidates(text: string, source: string): DocCandidate[] {
     re.lastIndex = 0;
     let match: RegExpExecArray | null = re.exec(text);
     while (match != null) {
-      const captured = match[1];
+      // Advance before any reject/continue so case-insensitive regex hits that
+      // fail case-sensitive finalize (e.g. "NPM test") cannot infinite-loop.
+      const current = match;
+      match = re.exec(text);
+      const captured = current[1];
       if (captured == null) continue;
       const parts = captured.trim().split(/\s+/).filter(Boolean);
       const discovered = finalizeDiscovered(parts, source);
       if (discovered == null) continue;
       const family = familyForCommand(discovered.command, discovered.args);
       if (family == null) continue;
-      const key = `${match.index}:${discovered.command}:${discovered.args.join("\0")}`;
+      const key = `${current.index}:${discovered.command}:${discovered.args.join("\0")}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ ...discovered, index: match.index, family });
-      match = re.exec(text);
+      out.push({ ...discovered, index: current.index, family });
     }
   }
   return out;
@@ -456,6 +460,19 @@ export function defaultRunTests(
 
   const discovered = discoverProjectTestCommand(cwd);
   if (discovered == null) {
+    // Q3A: cancel ≠ skipped/done — observe abort even on the no-command path.
+    if (signal?.aborted) {
+      const reason = signal.reason;
+      if (reason instanceof Error) {
+        return Promise.reject(reason);
+      }
+      return Promise.reject(
+        new DOMException(
+          "Project tests cancelled (no test command discovered).",
+          "AbortError",
+        ),
+      );
+    }
     return Promise.resolve({
       status: "skipped",
       summary:
@@ -634,8 +651,22 @@ function canBridgeTools(tools: ToolsHost["tools"]): boolean {
   return typeof tools.schemas === "function";
 }
 
-/** Mutable outer abort slot for production tools→MCP bridges (cancel quiescence). */
-const bridgeSignalSlots = new WeakMap<McpClient, { current?: AbortSignal }>();
+/**
+ * Outer sbtd_validate execution bound into a host-owned MCP bridge.
+ * Under DSH presentation mode=code, nested tools.execute must carry the outer
+ * agent and parent token (else native MCP names collapse to UNKNOWN_TOOL).
+ */
+export type BridgeOuterExecution = {
+  signal?: AbortSignal;
+  agent?: { id?: string };
+  /** Outer ToolRunContext.token — forwarded as parent on nested execute. */
+  token?: symbol;
+  callId?: string;
+  rootCallId?: string;
+};
+
+/** Mutable outer execution slot for production tools→MCP bridges. */
+const bridgeOuterSlots = new WeakMap<McpClient, BridgeOuterExecution>();
 
 function composeBridgeSignal(outer?: AbortSignal): AbortSignal {
   const timeout = AbortSignal.timeout(DEFAULT_TEST_TIMEOUT_MS);
@@ -661,25 +692,62 @@ function composeBridgeSignal(outer?: AbortSignal): AbortSignal {
   return ctrl.signal;
 }
 
+/** Bind (or clear) the full outer execution identity for nested MCP dispatch. */
+export function bindBridgeOuter(
+  mcp: McpClient | null | undefined,
+  outer: BridgeOuterExecution | undefined,
+): void {
+  if (mcp == null) return;
+  const slot = bridgeOuterSlots.get(mcp);
+  if (slot == null) return;
+  if (outer == null) {
+    delete slot.signal;
+    delete slot.agent;
+    delete slot.token;
+    delete slot.callId;
+    delete slot.rootCallId;
+    return;
+  }
+  if (outer.signal === undefined) delete slot.signal;
+  else slot.signal = outer.signal;
+  if (outer.agent === undefined) delete slot.agent;
+  else slot.agent = outer.agent;
+  if (outer.token === undefined) delete slot.token;
+  else slot.token = outer.token;
+  if (outer.callId === undefined) delete slot.callId;
+  else slot.callId = outer.callId;
+  if (outer.rootCallId === undefined) delete slot.rootCallId;
+  else slot.rootCallId = outer.rootCallId;
+}
+
 /** Bind the current sbtd_validate execution signal into a host-owned MCP bridge. */
 export function bindBridgeSignal(
   mcp: McpClient | null | undefined,
   signal: AbortSignal | undefined,
 ): void {
   if (mcp == null) return;
-  const slot = bridgeSignalSlots.get(mcp);
+  const slot = bridgeOuterSlots.get(mcp);
   if (slot == null) return;
   if (signal == null) {
-    delete slot.current;
+    delete slot.signal;
   } else {
-    slot.current = signal;
+    slot.signal = signal;
   }
+}
+
+/** Q3A: abort must not persist validate.post — reject like defaultRunTests. */
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal == null || !signal.aborted) return;
+  const reason = signal.reason;
+  if (reason instanceof Error) throw reason;
+  throw new DOMException("sbtd_validate cancelled.", "AbortError");
 }
 
 /**
  * Host-owned bridge: Cordis/DSH ToolRuntime → T9 McpClient.
  * list/call happen at use time so MCP tools registered after apply() are visible.
- * Nested execute uses timeout composed with the outer validate signal when bound.
+ * Nested execute forwards outer agent + parent token (code-mode bypass) and
+ * uses timeout composed with the outer validate signal when bound.
  */
 export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
   const client: McpClient = {
@@ -697,12 +765,16 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
           `GitNexus MCP bridge: tools.execute missing for ${name}`,
         );
       }
-      const outer = bridgeSignalSlots.get(client)?.current;
+      const outer = bridgeOuterSlots.get(client) ?? {};
+      const rootCallId = outer.rootCallId ?? outer.callId;
       const result = await tools.execute({
         callId: `sbtd_validate:${name}:${Date.now()}`,
         name,
         arguments: args,
-        signal: composeBridgeSignal(outer),
+        signal: composeBridgeSignal(outer.signal),
+        ...(outer.agent != null ? { agent: outer.agent } : {}),
+        ...(outer.token != null ? { parent: outer.token } : {}),
+        ...(rootCallId != null ? { rootCallId } : {}),
       });
       if (result.isError) {
         throw new Error(
@@ -713,7 +785,7 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
       return result.content;
     },
   };
-  bridgeSignalSlots.set(client, {});
+  bridgeOuterSlots.set(client, {});
   return client;
 }
 
@@ -794,6 +866,10 @@ export async function sbtdValidate(
         timeoutMs,
         ...(host.signal != null ? { signal: host.signal } : {}),
       });
+
+  // Q3A: cancel ≠ test failure — never persist post after abort (injected runners
+  // and no-command skipped alike). Re-check before mutation.
+  throwIfAborted(host.signal);
 
   // Q3A: GitNexus skipped/advisory never sets post=blocked.
   // Q4A: failed tests ⇒ post=blocked; no-script skip ⇒ post=done.
@@ -898,7 +974,17 @@ export function createValidateTool(
     async execute(args, exec) {
       const modelArgs = pickValidateInput(args);
       const signal = exec.signal ?? host.signal;
-      bindBridgeSignal(host.gitnexus?.mcp, signal);
+      bindBridgeOuter(host.gitnexus?.mcp, {
+        ...(signal != null ? { signal } : {}),
+        ...(exec.agent != null ? { agent: exec.agent } : {}),
+        ...(exec.token != null ? { token: exec.token } : {}),
+        ...(exec.callId != null ? { callId: exec.callId } : {}),
+        ...(exec.rootCallId != null
+          ? { rootCallId: exec.rootCallId }
+          : exec.callId != null
+            ? { rootCallId: exec.callId }
+            : {}),
+      });
       return sbtdValidate(sessionIdFromExec(exec), modelArgs, {
         ...host,
         ...(signal != null ? { signal } : {}),

@@ -11,6 +11,7 @@ import { apply, inject, name } from "../dist/index.js";
 import { getSession } from "../dist/state.js";
 import {
   SBTD_VALIDATE_TOOL_NAME,
+  bindBridgeOuter,
   bindBridgeSignal,
   createToolsMcpBridge,
   createValidateTool,
@@ -537,3 +538,103 @@ test("createToolsMcpBridge composes outer abort into nested execute signal", asy
   assert.equal(nestedSignal.aborted, true);
 });
 
+test("multi-candidate AGENTS: package-lock.json marks Node family", () => {
+  const root = fixtureRoot("catalog-pkg-lock");
+  writeFileSync(join(root, "AGENTS.md"), MULTI_CANDIDATE_AGENTS, "utf8");
+  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "x" }), "utf8");
+  writeFileSync(join(root, "package-lock.json"), "{}", "utf8");
+  writeFileSync(join(root, "pyproject.toml"), "[project]\nname='x'\n", "utf8");
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(cmd);
+  // Both node + python applicable → earliest applicable is npm run test.
+  assert.equal(cmd.command, "npm");
+  assert.deepEqual(cmd.args, ["run", "test"]);
+});
+
+test("collectDocCandidates: rejected NPM test does not hang discovery", () => {
+  const root = fixtureRoot("npm-case");
+  writeFileSync(
+    join(root, "AGENTS.md"),
+    "NPM test\npytest\n",
+    "utf8",
+  );
+  writeFileSync(join(root, "pyproject.toml"), "[project]\nname='x'\n", "utf8");
+  const started = Date.now();
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(Date.now() - started < 2_000, "discovery must not infinite-loop");
+  assert.ok(cmd);
+  assert.equal(cmd.command, "pytest");
+});
+
+test("Q3A: cancel with no test script does not persist post=done", async () => {
+  const id = "t10-cancel-no-script";
+  const root = fixtureRoot("cancel-no-script");
+  writeFileSync(join(root, "package.json"), JSON.stringify({ name: "x" }), "utf8");
+  const ac = new AbortController();
+  ac.abort();
+  await assert.rejects(
+    sbtdValidate(
+      id,
+      { phase: "post" },
+      { cwd: root, gitnexus: {}, signal: ac.signal },
+    ),
+    (err) => {
+      assert.equal(err?.name, "AbortError");
+      return true;
+    },
+  );
+  assert.equal(getSession(id).validate.post, undefined);
+});
+
+test("Q3A: injected runTests failed after abort does not persist post=blocked", async () => {
+  const id = "t10-cancel-injected-fail";
+  const root = fixtureRoot("cancel-injected");
+  const ac = new AbortController();
+  await assert.rejects(
+    sbtdValidate(
+      id,
+      { phase: "post" },
+      {
+        cwd: root,
+        gitnexus: {},
+        signal: ac.signal,
+        runTests: async () => {
+          ac.abort();
+          return { status: "failed", summary: "late fail after abort" };
+        },
+      },
+    ),
+    (err) => {
+      assert.equal(err?.name, "AbortError");
+      return true;
+    },
+  );
+  assert.equal(getSession(id).validate.post, undefined);
+});
+
+test("createToolsMcpBridge forwards outer agent + parent token into nested execute", async () => {
+  let nested;
+  const tools = {
+    schemas: () => [{ name: "mcp__gitnexus__impact" }],
+    execute: async (exec) => {
+      nested = exec;
+      return { isError: false, value: { ok: 1 }, content: [] };
+    },
+  };
+  const mcp = createToolsMcpBridge(tools);
+  const token = Symbol("outer-validate-token");
+  const agent = { id: "t10-outer-agent" };
+  bindBridgeOuter(mcp, {
+    signal: AbortSignal.timeout(5_000),
+    agent,
+    token,
+    callId: "validate-call-1",
+    rootCallId: "validate-root-1",
+  });
+  await mcp.callTool("mcp__gitnexus__impact", { target: "X" });
+  assert.ok(nested, "nested execute should be called");
+  assert.equal(nested.agent, agent);
+  assert.equal(nested.parent, token);
+  assert.equal(nested.rootCallId, "validate-root-1");
+  assert.ok(nested.signal, "nested execute should receive a signal");
+});

@@ -27,6 +27,12 @@ export type PlanToolExec = {
   agent?: { id?: string };
   /** Cooperative cancellation from the host tool pipeline (DSH ToolRunContext). */
   signal?: AbortSignal;
+  /** Registry-assigned execution token (DSH ToolRunContext.token); nested MCP uses as parent. */
+  token?: symbol;
+  /** This call's id when provided by the host ToolRunContext. */
+  callId?: string;
+  /** Root model-requested call id for nested dispatch trees. */
+  rootCallId?: string;
 };
 
 export type PlanToolDefinition = {
@@ -58,6 +64,15 @@ export type ToolsHost = {
       name: string;
       arguments: unknown;
       signal: AbortSignal;
+      /** Outer agent — required under code presentation so nested MCP resolves in agent scope. */
+      agent?: { id?: string };
+      /**
+       * Outer execution token as parent: under mode=code, only parented sub-dispatches
+       * may call native tool names (else UNKNOWN_TOOL). See DSH ToolExecutionInput.parent.
+       */
+      parent?: symbol;
+      /** Propagate root model call id for nested MCP dispatch. */
+      rootCallId?: string;
     }) => Promise<{
       isError: boolean;
       value?: unknown;
