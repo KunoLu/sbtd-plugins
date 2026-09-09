@@ -73,6 +73,7 @@ export {
   sbtdTickets,
 } from "./tools/tickets.js";
 export {
+  bindBridgeSignal,
   createToolsMcpBridge,
   createValidateTool,
   discoverProjectTestCommand,

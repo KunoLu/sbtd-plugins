@@ -225,33 +225,157 @@ function finalizeDiscovered(
   return { command, args, source };
 }
 
+type DocCommandFamily = "node" | "python" | "go" | "gradle" | "swift";
+
+type DocCandidate = DiscoveredCommand & {
+  index: number;
+  family: DocCommandFamily;
+};
+
+/** Patterns used to harvest every documented test candidate (not preference order). */
+const DOC_COMMAND_PATTERNS: RegExp[] = [
+  // Use [ \t] (not \s) for same-line args so a catalog line cannot swallow the next.
+  /(?:^|\n)[ \t]*(?:[-*][ \t]*)?(?:`)?((?:pnpm|yarn|bun|npm)(?:[ \t]+run)?[ \t]+test)(?:`)?(?=[ \t]*(?:\n|$))/gi,
+  /(?:^|\n)[ \t]*(?:[-*][ \t]*)?(?:`)?(uv[ \t]+run[ \t]+pytest(?:[ \t]+[^\n;`|&$<>]+)?)(?:`)?(?=[ \t]*(?:\n|$))/gi,
+  /(?:^|\n)[ \t]*(?:[-*][ \t]*)?(?:`)?(pytest(?:[ \t]+[^\n;`|&$<>]+)?)(?:`)?(?=[ \t]*(?:\n|$))/gi,
+  /(?:^|\n)[ \t]*(?:[-*][ \t]*)?(?:`)?(go[ \t]+test(?:[ \t]+[^\n;`|&$<>]+)?)(?:`)?(?=[ \t]*(?:\n|$))/gi,
+  /(?:^|\n)[ \t]*(?:[-*][ \t]*)?(?:`)?((?:\.\/)?gradlew[ \t]+test(?:[ \t]+[^\n;`|&$<>]+)?|gradle[ \t]+test(?:[ \t]+[^\n;`|&$<>]+)?)(?:`)?(?=[ \t]*(?:\n|$))/gi,
+  /(?:^|\n)[ \t]*(?:[-*][ \t]*)?(?:`)?(swift[ \t]+test(?:[ \t]+[^\n;`|&$<>]+)?)(?:`)?(?=[ \t]*(?:\n|$))/gi,
+];
+
+function familyForCommand(
+  command: string,
+  args: string[],
+): DocCommandFamily | null {
+  if (
+    command === "pnpm" ||
+    command === "yarn" ||
+    command === "bun" ||
+    command === "npm"
+  ) {
+    return "node";
+  }
+  if (command === "pytest") return "python";
+  if (command === "uv" && args[0] === "run" && args[1] === "pytest") {
+    return "python";
+  }
+  if (command === "go") return "go";
+  if (command === "gradle" || command === "gradlew") return "gradle";
+  if (command === "swift") return "swift";
+  return null;
+}
+
+/**
+ * Infer applicable language families from workspace markers.
+ * Node is strong only when scripts.test or a lockfile is present — a bare
+ * package.json for tooling must not force npm over pytest/go in a catalog AGENTS.
+ */
+function detectProjectFamilies(cwd: string): Set<DocCommandFamily> {
+  const families = new Set<DocCommandFamily>();
+  const pkgRaw = readTextIfPresent(join(cwd, "package.json"));
+  let hasScriptsTest = false;
+  if (pkgRaw != null) {
+    try {
+      const pkg = JSON.parse(pkgRaw) as { scripts?: Record<string, unknown> };
+      hasScriptsTest = typeof pkg.scripts?.test === "string";
+    } catch {
+      // ignore invalid package.json
+    }
+  }
+  if (
+    hasScriptsTest ||
+    existsSync(join(cwd, "pnpm-lock.yaml")) ||
+    existsSync(join(cwd, "yarn.lock")) ||
+    existsSync(join(cwd, "bun.lockb")) ||
+    existsSync(join(cwd, "bun.lock"))
+  ) {
+    families.add("node");
+  }
+  if (
+    existsSync(join(cwd, "pyproject.toml")) ||
+    existsSync(join(cwd, "requirements.txt")) ||
+    existsSync(join(cwd, "setup.py")) ||
+    existsSync(join(cwd, "setup.cfg")) ||
+    existsSync(join(cwd, "Pipfile")) ||
+    existsSync(join(cwd, "tox.ini")) ||
+    existsSync(join(cwd, "pytest.ini")) ||
+    existsSync(join(cwd, "conftest.py"))
+  ) {
+    families.add("python");
+  }
+  if (existsSync(join(cwd, "go.mod"))) {
+    families.add("go");
+  }
+  if (
+    existsSync(join(cwd, "build.gradle")) ||
+    existsSync(join(cwd, "build.gradle.kts")) ||
+    existsSync(join(cwd, "settings.gradle")) ||
+    existsSync(join(cwd, "settings.gradle.kts")) ||
+    existsSync(join(cwd, "gradlew"))
+  ) {
+    families.add("gradle");
+  }
+  if (existsSync(join(cwd, "Package.swift"))) {
+    families.add("swift");
+  }
+  return families;
+}
+
+function collectDocCandidates(text: string, source: string): DocCandidate[] {
+  const out: DocCandidate[] = [];
+  const seen = new Set<string>();
+  for (const re of DOC_COMMAND_PATTERNS) {
+    re.lastIndex = 0;
+    let match: RegExpExecArray | null = re.exec(text);
+    while (match != null) {
+      const captured = match[1];
+      if (captured == null) continue;
+      const parts = captured.trim().split(/\s+/).filter(Boolean);
+      const discovered = finalizeDiscovered(parts, source);
+      if (discovered == null) continue;
+      const family = familyForCommand(discovered.command, discovered.args);
+      if (family == null) continue;
+      const key = `${match.index}:${discovered.command}:${discovered.args.join("\0")}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...discovered, index: match.index, family });
+      match = re.exec(text);
+    }
+  }
+  return out;
+}
+
+function pickDocCandidate(
+  candidates: DocCandidate[],
+  families: Set<DocCommandFamily>,
+): DiscoveredCommand | null {
+  if (candidates.length === 0) return null;
+  const applicable =
+    families.size > 0
+      ? candidates.filter((c) => families.has(c.family))
+      : candidates;
+  const pool = applicable.length > 0 ? applicable : candidates;
+  pool.sort((a, b) => a.index - b.index);
+  const best = pool[0];
+  if (best == null) return null;
+  return { command: best.command, args: best.args, source: best.source };
+}
+
 /**
  * Best-effort: pull an explicit test command line from AGENTS.md / README.md.
  * Supports npm-family and common non-Node project commands (pytest / go / gradle / swift).
+ * Multi-candidate catalogs (npm + pytest + go together): select by project-type
+ * markers, then earliest doc position among applicable commands — never by regex order alone.
  * No shell metacharacters; argv spawn only.
  */
 function commandFromDocs(cwd: string): DiscoveredCommand | null {
-  // Ordered patterns: first match in file wins per file; files checked AGENTS → README.
-  const patterns: RegExp[] = [
-    /(?:^|\n)\s*(?:[-*]\s*)?(?:`)?((?:pnpm|yarn|bun|npm)(?:\s+run)?\s+test)(?:`)?(?:\s|$)/i,
-    /(?:^|\n)\s*(?:[-*]\s*)?(?:`)?(uv\s+run\s+pytest(?:\s+[^\n;`|&$<>]+)?)(?:`)?(?:\s|$)/i,
-    /(?:^|\n)\s*(?:[-*]\s*)?(?:`)?(pytest(?:\s+[^\n;`|&$<>]+)?)(?:`)?(?:\s|$)/i,
-    /(?:^|\n)\s*(?:[-*]\s*)?(?:`)?(go\s+test(?:\s+[^\n;`|&$<>]+)?)(?:`)?(?:\s|$)/i,
-    /(?:^|\n)\s*(?:[-*]\s*)?(?:`)?((?:\.\/)?gradlew\s+test(?:\s+[^\n;`|&$<>]+)?|gradle\s+test(?:\s+[^\n;`|&$<>]+)?)(?:`)?(?:\s|$)/i,
-    /(?:^|\n)\s*(?:[-*]\s*)?(?:`)?(swift\s+test(?:\s+[^\n;`|&$<>]+)?)(?:`)?(?:\s|$)/i,
-  ];
-
+  const families = detectProjectFamilies(cwd);
   for (const name of ["AGENTS.md", "README.md", "README_zh.md"] as const) {
     const text = readTextIfPresent(join(cwd, name));
     if (text == null) continue;
-    for (const re of patterns) {
-      const match = text.match(re);
-      const captured = match?.[1];
-      if (captured == null) continue;
-      const parts = captured.trim().split(/\s+/).filter(Boolean);
-      const discovered = finalizeDiscovered(parts, name);
-      if (discovered != null) return discovered;
-    }
+    const candidates = collectDocCandidates(text, name);
+    const picked = pickDocCandidate(candidates, families);
+    if (picked != null) return picked;
   }
   return null;
 }
@@ -342,7 +466,7 @@ export function defaultRunTests(
   const spawnSpec = resolveSpawnCommand(cwd, discovered);
   const cmdLabel = `${discovered.command} ${discovered.args.join(" ")}`;
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (result: TestsResult) => {
       if (settled) return;
@@ -352,20 +476,41 @@ export function defaultRunTests(
       }
       resolve(result);
     };
+    const finishAbort = () => {
+      if (settled) return;
+      settled = true;
+      if (signal != null) {
+        signal.removeEventListener("abort", onAbort);
+      }
+      const reason = signal?.reason;
+      if (reason instanceof Error) {
+        reject(reason);
+        return;
+      }
+      reject(
+        new DOMException(
+          `Project tests cancelled (${discovered.source}: ${cmdLabel}).`,
+          "AbortError",
+        ),
+      );
+    };
 
     let child: ChildProcess;
     let timedOut = false;
     let cancelled = false;
     let killEscalate: ReturnType<typeof setTimeout> | undefined;
 
+    const armKillEscalate = () => {
+      if (killEscalate != null) return;
+      killEscalate = setTimeout(() => {
+        forceKillSpawned(child);
+      }, TERM_GRACE_MS);
+    };
+
     const onAbort = () => {
       cancelled = true;
       terminateSpawned(child);
-      if (killEscalate == null) {
-        killEscalate = setTimeout(() => {
-          forceKillSpawned(child);
-        }, TERM_GRACE_MS);
-      }
+      armKillEscalate();
     };
 
     try {
@@ -401,9 +546,7 @@ export function defaultRunTests(
     const timer = setTimeout(() => {
       timedOut = true;
       terminateSpawned(child);
-      killEscalate = setTimeout(() => {
-        forceKillSpawned(child);
-      }, TERM_GRACE_MS);
+      armKillEscalate();
       // Do not finish yet — wait for close so the owned process reaches quiescence.
     }, timeoutMs);
 
@@ -417,7 +560,14 @@ export function defaultRunTests(
 
     child.on("error", (err) => {
       clearTimeout(timer);
-      if (killEscalate != null) clearTimeout(killEscalate);
+      // Retain group SIGKILL after cancel/timeout even if the leader errors out.
+      if (!timedOut && !cancelled && killEscalate != null) {
+        clearTimeout(killEscalate);
+      }
+      if (cancelled) {
+        finishAbort();
+        return;
+      }
       finish({
         status: "failed",
         summary: `Project tests spawn error (${discovered.source}): ${err.message}`,
@@ -426,17 +576,17 @@ export function defaultRunTests(
 
     child.on("close", (code) => {
       clearTimeout(timer);
-      if (killEscalate != null) clearTimeout(killEscalate);
+      // Q3A cancel / timeout: keep process-group SIGKILL armed through the grace
+      // window even after the leader closes (descendants may still be alive).
+      if (!timedOut && !cancelled && killEscalate != null) {
+        clearTimeout(killEscalate);
+      }
       const combined = [stdout.trim(), stderr.trim()]
         .filter(Boolean)
         .join("\n");
       if (cancelled) {
-        finish({
-          status: "failed",
-          summary: `Project tests cancelled (${discovered.source}: ${cmdLabel}).${
-            combined ? `\n${combined.slice(0, 4000)}` : ""
-          }`,
-        });
+        // Cancel ≠ test failure: propagate abort; caller must not set post=blocked.
+        finishAbort();
         return;
       }
       if (timedOut) {
@@ -484,12 +634,55 @@ function canBridgeTools(tools: ToolsHost["tools"]): boolean {
   return typeof tools.schemas === "function";
 }
 
+/** Mutable outer abort slot for production tools→MCP bridges (cancel quiescence). */
+const bridgeSignalSlots = new WeakMap<McpClient, { current?: AbortSignal }>();
+
+function composeBridgeSignal(outer?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(DEFAULT_TEST_TIMEOUT_MS);
+  if (outer == null) return timeout;
+  if (typeof AbortSignal.any === "function") {
+    return AbortSignal.any([timeout, outer]);
+  }
+  // Fallback when AbortSignal.any is unavailable: prefer already-aborted outer.
+  if (outer.aborted) return outer;
+  const ctrl = new AbortController();
+  const onAbort = () => {
+    ctrl.abort(outer.reason);
+  };
+  outer.addEventListener("abort", onAbort, { once: true });
+  timeout.addEventListener(
+    "abort",
+    () => {
+      outer.removeEventListener("abort", onAbort);
+      ctrl.abort(timeout.reason);
+    },
+    { once: true },
+  );
+  return ctrl.signal;
+}
+
+/** Bind the current sbtd_validate execution signal into a host-owned MCP bridge. */
+export function bindBridgeSignal(
+  mcp: McpClient | null | undefined,
+  signal: AbortSignal | undefined,
+): void {
+  if (mcp == null) return;
+  const slot = bridgeSignalSlots.get(mcp);
+  if (slot == null) return;
+  if (signal == null) {
+    delete slot.current;
+  } else {
+    slot.current = signal;
+  }
+}
+
 /**
  * Host-owned bridge: Cordis/DSH ToolRuntime → T9 McpClient.
  * list/call happen at use time so MCP tools registered after apply() are visible.
+ * Nested execute uses timeout composed with the outer validate signal when bound.
  */
 export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
-  return {
+  const client: McpClient = {
     listToolNames: () => {
       try {
         const schemas = tools.schemas?.() ?? [];
@@ -504,11 +697,12 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
           `GitNexus MCP bridge: tools.execute missing for ${name}`,
         );
       }
+      const outer = bridgeSignalSlots.get(client)?.current;
       const result = await tools.execute({
         callId: `sbtd_validate:${name}:${Date.now()}`,
         name,
         arguments: args,
-        signal: AbortSignal.timeout(DEFAULT_TEST_TIMEOUT_MS),
+        signal: composeBridgeSignal(outer),
       });
       if (result.isError) {
         throw new Error(
@@ -519,6 +713,8 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
       return result.content;
     },
   };
+  bridgeSignalSlots.set(client, {});
+  return client;
 }
 
 /**
@@ -561,6 +757,7 @@ export async function sbtdValidate(
   const phase = input.phase;
   const cwd = host.cwd ?? process.cwd();
   const gnOpts: GitNexusOptions = host.gitnexus ?? {};
+  bindBridgeSignal(gnOpts.mcp, host.signal);
   const session = getSession(sessionId);
 
   if (phase === "pre") {
@@ -701,6 +898,7 @@ export function createValidateTool(
     async execute(args, exec) {
       const modelArgs = pickValidateInput(args);
       const signal = exec.signal ?? host.signal;
+      bindBridgeSignal(host.gitnexus?.mcp, signal);
       return sbtdValidate(sessionIdFromExec(exec), modelArgs, {
         ...host,
         ...(signal != null ? { signal } : {}),

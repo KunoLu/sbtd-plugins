@@ -11,6 +11,8 @@ import { apply, inject, name } from "../dist/index.js";
 import { getSession } from "../dist/state.js";
 import {
   SBTD_VALIDATE_TOOL_NAME,
+  bindBridgeSignal,
+  createToolsMcpBridge,
   createValidateTool,
   discoverProjectTestCommand,
   modelSchemaForbidsTrustHandles,
@@ -432,3 +434,106 @@ test("defaultRunTests honors testTimeoutMs via sbtdValidate host", async () => {
     process.env.PATH = oldPath;
   }
 });
+
+const MULTI_CANDIDATE_AGENTS = `# Test catalog
+npm run test
+pytest
+uv run pytest
+go test ./...
+`;
+
+test("multi-candidate AGENTS: Python project selects pytest not npm", () => {
+  const root = fixtureRoot("catalog-py");
+  writeFileSync(join(root, "AGENTS.md"), MULTI_CANDIDATE_AGENTS, "utf8");
+  writeFileSync(join(root, "pyproject.toml"), "[project]\nname='x'\n", "utf8");
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(cmd);
+  assert.equal(cmd.command, "pytest");
+  assert.deepEqual(cmd.args, []);
+});
+
+test("multi-candidate AGENTS: Go project selects go test not npm", () => {
+  const root = fixtureRoot("catalog-go");
+  writeFileSync(join(root, "AGENTS.md"), MULTI_CANDIDATE_AGENTS, "utf8");
+  writeFileSync(join(root, "go.mod"), "module example.com/x\n\ngo 1.22\n", "utf8");
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(cmd);
+  assert.equal(cmd.command, "go");
+  assert.deepEqual(cmd.args, ["test", "./..."]);
+});
+
+test("multi-candidate AGENTS: Node with scripts.test selects npm-family", () => {
+  const root = fixtureRoot("catalog-node");
+  writeFileSync(join(root, "AGENTS.md"), MULTI_CANDIDATE_AGENTS, "utf8");
+  writeFileSync(
+    join(root, "package.json"),
+    JSON.stringify({ scripts: { test: "node --test" } }),
+    "utf8",
+  );
+  writeFileSync(join(root, "pnpm-lock.yaml"), "", "utf8");
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(cmd);
+  assert.equal(cmd.command, "npm");
+  assert.deepEqual(cmd.args, ["run", "test"]);
+});
+
+test("multi-candidate AGENTS: no markers prefers earliest doc position (npm)", () => {
+  const root = fixtureRoot("catalog-none");
+  writeFileSync(join(root, "AGENTS.md"), MULTI_CANDIDATE_AGENTS, "utf8");
+  const cmd = discoverProjectTestCommand(root);
+  assert.ok(cmd);
+  assert.equal(cmd.command, "npm");
+  assert.deepEqual(cmd.args, ["run", "test"]);
+});
+
+test("Q3A: cancel aborts without persisting validate.post=blocked", async () => {
+  const id = "t10-cancel-no-block";
+  const root = fixtureRoot("cancel");
+  const bin = join(root, "bin");
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(
+    join(bin, "pytest"),
+    "#!/usr/bin/env node\nsetTimeout(() => {}, 60_000);\n",
+    { mode: 0o755 },
+  );
+  writeFileSync(join(root, "AGENTS.md"), "`pytest`\n", "utf8");
+  const oldPath = process.env.PATH;
+  process.env.PATH = bin + ":" + (oldPath || "");
+  const ac = new AbortController();
+  try {
+    const pending = sbtdValidate(
+      id,
+      { phase: "post" },
+      { cwd: root, gitnexus: {}, signal: ac.signal, testTimeoutMs: 60_000 },
+    );
+    await new Promise((r) => setTimeout(r, 150));
+    ac.abort();
+    await assert.rejects(pending, (err) => {
+      assert.equal(err?.name, "AbortError");
+      return true;
+    });
+    assert.equal(getSession(id).validate.post, undefined);
+  } finally {
+    process.env.PATH = oldPath;
+  }
+});
+
+test("createToolsMcpBridge composes outer abort into nested execute signal", async () => {
+  let nestedSignal;
+  const tools = {
+    schemas: () => [{ name: "mcp__gitnexus__impact" }],
+    execute: async ({ signal }) => {
+      nestedSignal = signal;
+      return { isError: false, value: { ok: 1 }, content: [] };
+    },
+  };
+  const mcp = createToolsMcpBridge(tools);
+  const ac = new AbortController();
+  bindBridgeSignal(mcp, ac.signal);
+  await mcp.callTool("mcp__gitnexus__impact", { target: "X" });
+  assert.ok(nestedSignal, "nested execute should receive a signal");
+  assert.equal(nestedSignal.aborted, false);
+  ac.abort();
+  assert.equal(nestedSignal.aborted, true);
+});
+
