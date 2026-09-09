@@ -115,20 +115,6 @@ test("currentTask: session pointer; empty pointer structured; ignores decoy", ()
   if (!miss.ok) assert.equal(miss.reason, "no-current-task");
 });
 
-test("currentTask: DSH_SESSION_ID maps to dsh_<id> key", () => {
-  const root = fixtureRoot("ct-dsh");
-  withTrellis(root);
-  const sessions = join(root, ".trellis", ".runtime", "sessions");
-  mkdirSync(sessions, { recursive: true });
-  writeFileSync(
-    join(sessions, "dsh_abc-123.json"),
-    JSON.stringify({ current_task: ".trellis/tasks/from-dsh" }),
-    "utf8",
-  );
-  const result = currentTask(root, null, { DSH_SESSION_ID: "abc-123" });
-  assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.task, ".trellis/tasks/from-dsh");
-});
 
 test("currentTask: missing trellis => structured", () => {
   const root = fixtureRoot("ct-missing");

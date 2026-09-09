@@ -71,7 +71,7 @@ export function isTrellisOnPath(env: NodeJS.ProcessEnv = process.env): boolean {
       try {
         accessSync(candidate, constants.X_OK);
         const st = statSync(candidate);
-        if (st.isFile() || st.isSymbolicLink()) return true;
+        if (st.isFile()) return true;
       } catch {
         // keep looking
       }
@@ -129,11 +129,6 @@ export function resolveSessionKey(
   if (sessionKey != null && String(sessionKey).trim() !== "") {
     const key = sanitizeKey(String(sessionKey));
     return key || null;
-  }
-  const dsh = env.DSH_SESSION_ID?.trim();
-  if (dsh) {
-    const safe = sanitizeKey(dsh);
-    return safe ? `dsh_${safe}` : null;
   }
   const trellisCtx = env.TRELLIS_CONTEXT_ID?.trim();
   if (trellisCtx) {
