@@ -91,6 +91,9 @@ test("manuals whitelist and MANIFEST checksums", () => {
     "clarify.ts",
     "plan.ts",
     "review.ts",
+    "spec.ts",
+    "task-artifact.ts",
+    "tickets.ts",
   ]);
   const trellis = readFileSync(join(manuals, "trellis-workflow", "SKILL.md"));
   assert.notEqual(trellis.length, 0);

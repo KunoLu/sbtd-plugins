@@ -106,14 +106,16 @@ function assertRefactorOrderError(fn, expectedState, expectedReviewStatus) {
 }
 
 
-test("apply 注册 sbtd_plan、sbtd_review 与 sbtd_clarify", () => {
+test("apply 注册 sbtd_plan、sbtd_review、sbtd_clarify、sbtd_spec 与 sbtd_tickets", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 3);
+  assert.equal(tools.length, 5);
   assert.equal(tools[0].name, "sbtd_plan");
   assert.equal(tools[1].name, SBTD_REVIEW_TOOL_NAME);
   assert.equal(tools[2].name, "sbtd_clarify");
+  assert.equal(tools[3].name, "sbtd_spec");
+  assert.equal(tools[4].name, "sbtd_tickets");
 });
 
 test("五个规范 kind 成功且拒绝别名", () => {

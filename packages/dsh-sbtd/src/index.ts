@@ -3,6 +3,8 @@ import { registerSection, type SectionHost } from "./section.js";
 import { registerClarifyTool } from "./tools/clarify.js";
 import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
+import { registerSpecTool } from "./tools/spec.js";
+import { registerTicketsTool } from "./tools/tickets.js";
 
 export const name = "dsh-sbtd";
 export const inject = ["tools", "systemPrompt"] as const;
@@ -46,6 +48,18 @@ export {
   SBTD_REVIEW_TOOL_NAME,
   sbtdReview,
 } from "./tools/review.js";
+export {
+  createSpecTool,
+  registerSpecTool,
+  SBTD_SPEC_TOOL_NAME,
+  sbtdSpec,
+} from "./tools/spec.js";
+export {
+  createTicketsTool,
+  registerTicketsTool,
+  SBTD_TICKETS_TOOL_NAME,
+  sbtdTickets,
+} from "./tools/tickets.js";
 
 export function apply(ctx: PluginHost): void {
   console.log("[dsh-sbtd] plugin loaded (T0 stub)");
@@ -53,5 +67,7 @@ export function apply(ctx: PluginHost): void {
   registerPlanTool(ctx);
   registerReviewTool(ctx);
   registerClarifyTool(ctx);
+  registerSpecTool(ctx);
+  registerTicketsTool(ctx);
   registerHooks(ctx);
 }
