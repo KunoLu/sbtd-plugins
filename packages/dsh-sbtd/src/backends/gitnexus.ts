@@ -187,7 +187,9 @@ function toSummary(value: unknown): string {
 
 /**
  * Best-effort project refresh (Q4A):
- * `node .gitnexus/run.cjs analyze` if present, else `gitnexus analyze`.
+ * `node .gitnexus/run.cjs analyze --index-only` if present, else
+ * `gitnexus analyze --index-only`. `--index-only` keeps writes inside
+ * `.gitnexus/` (no AGENTS.md / CLAUDE.md / skills injection).
  * Never writes MCP config.
  */
 export function defaultRunRefresh(
@@ -197,7 +199,9 @@ export function defaultRunRefresh(
   const runCjs = join(gitnexusDir(cwd), "run.cjs");
   const useRunCjs = isReadableFile(runCjs);
   const command = useRunCjs ? process.execPath : "gitnexus";
-  const args = useRunCjs ? [runCjs, "analyze"] : ["analyze"];
+  const args = useRunCjs
+    ? [runCjs, "analyze", "--index-only"]
+    : ["analyze", "--index-only"];
 
   return new Promise((resolve) => {
     let settled = false;
@@ -338,12 +342,8 @@ export async function impact(
       );
     }
 
-    const { refreshFailed, detail: refreshDetail } = await ensureRefreshIfStale(
-      cwd,
-      d.stale,
-      options,
-    );
-
+    // Q2A: resolve THIS operation's tool + mcp client before any analyze.
+    // toolNames without mcp, or only the opposite tool, must skip immediately.
     const tools = await resolveAnalysisTools(options);
     if (!tools.impact || !options.mcp) {
       return skipped(
@@ -351,6 +351,12 @@ export async function impact(
         "mcp-unavailable",
       );
     }
+
+    const { refreshFailed, detail: refreshDetail } = await ensureRefreshIfStale(
+      cwd,
+      d.stale,
+      options,
+    );
 
     let summary: string;
     try {
@@ -414,12 +420,8 @@ export async function detectChanges(
       );
     }
 
-    const { refreshFailed, detail: refreshDetail } = await ensureRefreshIfStale(
-      cwd,
-      d.stale,
-      options,
-    );
-
+    // Q2A: resolve THIS operation's tool + mcp client before any analyze.
+    // toolNames without mcp, or only the opposite tool, must skip immediately.
     const tools = await resolveAnalysisTools(options);
     if (!tools.detectChanges || !options.mcp) {
       return skipped(
@@ -427,6 +429,12 @@ export async function detectChanges(
         "mcp-unavailable",
       );
     }
+
+    const { refreshFailed, detail: refreshDetail } = await ensureRefreshIfStale(
+      cwd,
+      d.stale,
+      options,
+    );
 
     let summary: string;
     try {

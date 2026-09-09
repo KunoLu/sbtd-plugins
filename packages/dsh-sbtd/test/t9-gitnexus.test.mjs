@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import {
+  defaultRunRefresh,
   detect,
   detectChanges,
   formToolNames,
@@ -313,4 +314,131 @@ test("MCP call failure => advisory, never throw", async () => {
   assert.equal(result.status, "advisory");
   assert.equal(result.advisory, true);
   assert.match(result.summary, /transport down/);
+});
+
+test("defaultRunRefresh: run.cjs analyze includes --index-only (Q4A)", async () => {
+  const root = fixtureRoot("idx-only-run");
+  const argvPath = join(root, ".gitnexus", "argv.json");
+  withIndex(root, {
+    lastCommit: "old",
+    runCjs: `const fs = require("node:fs");
+const path = require("node:path");
+fs.writeFileSync(
+  path.join(__dirname, "argv.json"),
+  JSON.stringify(process.argv.slice(2)),
+  "utf8",
+);
+process.exit(0);
+`,
+  });
+  // Sentinel files outside .gitnexus/ must remain untouched by refresh.
+  writeFileSync(join(root, "AGENTS.md"), "KEEP_AGENTS\n", "utf8");
+  writeFileSync(join(root, "CLAUDE.md"), "KEEP_CLAUDE\n", "utf8");
+  const result = await defaultRunRefresh(root, 10_000);
+  assert.equal(result.ok, true);
+  const argv = JSON.parse(readFileSync(argvPath, "utf8"));
+  assert.deepEqual(argv, ["analyze", "--index-only"]);
+  assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), "KEEP_AGENTS\n");
+  assert.equal(readFileSync(join(root, "CLAUDE.md"), "utf8"), "KEEP_CLAUDE\n");
+});
+
+test("defaultRunRefresh: PATH gitnexus analyze includes --index-only (Q4A)", async () => {
+  const root = fixtureRoot("idx-only-cli");
+  mkdirSync(join(root, ".gitnexus"), { recursive: true });
+  const bin = join(root, "bin");
+  mkdirSync(bin, { recursive: true });
+  const log = join(root, "cli-argv.txt");
+  writeFileSync(
+    join(bin, "gitnexus"),
+    `#!/bin/sh\nprintf '%s\\n' "$@" > "${log}"\nexit 0\n`,
+    { mode: 0o755 },
+  );
+  const prev = process.env.PATH;
+  process.env.PATH = bin + ":" + prev;
+  try {
+    const result = await defaultRunRefresh(root, 10_000);
+    assert.equal(result.ok, true);
+    const argv = readFileSync(log, "utf8")
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+    assert.deepEqual(argv, ["analyze", "--index-only"]);
+  } finally {
+    process.env.PATH = prev;
+  }
+});
+
+test("impact: toolNames only opposite tool => skipped without refresh (Q2A)", async () => {
+  const root = fixtureRoot("impact-opp");
+  withIndex(root, { lastCommit: "old" });
+  let refreshed = false;
+  const result = await impact(root, "t", undefined, {
+    toolNames: ["mcp__gitnexus__detect_changes"],
+    resolveHead: () => "new",
+    resolveIndexedCommit: () => "old",
+    runRefresh: async () => {
+      refreshed = true;
+      return { ok: true };
+    },
+  });
+  assert.equal(result.status, "skipped");
+  assert.equal(result.reason, "mcp-unavailable");
+  assert.equal(refreshed, false);
+});
+
+test("impact: toolNames without mcp client => skipped without refresh (Q2A)", async () => {
+  const root = fixtureRoot("impact-names-only");
+  withIndex(root, { lastCommit: "old" });
+  let refreshed = false;
+  const result = await impact(root, "t", undefined, {
+    toolNames: ["mcp__gitnexus__impact"],
+    resolveHead: () => "new",
+    resolveIndexedCommit: () => "old",
+    runRefresh: async () => {
+      refreshed = true;
+      return { ok: true };
+    },
+  });
+  assert.equal(result.status, "skipped");
+  assert.equal(result.reason, "mcp-unavailable");
+  assert.equal(refreshed, false);
+});
+
+test("detectChanges: mcp lists only impact => skipped without refresh (Q2A)", async () => {
+  const root = fixtureRoot("dc-opp");
+  withIndex(root, { lastCommit: "old" });
+  let refreshed = false;
+  const mcp = mcpStub({
+    "mcp__gitnexus__impact": () => "should-not-call",
+  });
+  const result = await detectChanges(root, "all", {
+    mcp,
+    resolveHead: () => "new",
+    resolveIndexedCommit: () => "old",
+    runRefresh: async () => {
+      refreshed = true;
+      return { ok: true };
+    },
+  });
+  assert.equal(result.status, "skipped");
+  assert.equal(result.reason, "mcp-unavailable");
+  assert.equal(refreshed, false);
+});
+
+test("detectChanges: toolNames without mcp client => skipped without refresh (Q2A)", async () => {
+  const root = fixtureRoot("dc-names-only");
+  withIndex(root, { lastCommit: "old" });
+  let refreshed = false;
+  const result = await detectChanges(root, "all", {
+    toolNames: ["mcp__gitnexus__detect_changes"],
+    resolveHead: () => "new",
+    resolveIndexedCommit: () => "old",
+    runRefresh: async () => {
+      refreshed = true;
+      return { ok: true };
+    },
+  });
+  assert.equal(result.status, "skipped");
+  assert.equal(result.reason, "mcp-unavailable");
+  assert.equal(refreshed, false);
 });
