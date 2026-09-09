@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-08（上海） |
-| 同步时 main | `2a82e63`（#43 FU3） |
+| 上次同步 | 2026-09-09（上海） |
+| 同步时 main | `b73ece9`（#45 T7） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -18,7 +18,7 @@
 | 层级 | 范围 | 状态 |
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
-| **P1** | T4–T8 核心闭环 | 🟡 T4–T6 完成（T6 `4e76ae8`）；FU2 ✅；FU3 ✅ #43 → `2a82e63`；T7–T8 未开 |
+| **P1** | T4–T8 核心闭环 | 🟡 T4–T7 完成（T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63`；T8 未开 |
 | **P2** | T9–T14 验证 / 移动端 | ⬜ 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
@@ -42,7 +42,7 @@
 | T4 | manuals 同步（640-skills v1.0.13 / `f8aa0d7`） | ✅ | #26–#29 |
 | T5 | `sbtd_review` | ✅ | #30 → `b23b0f9` |
 | T6 | `sbtd_clarify` | ✅ | #39 → `4e76ae8`；scheme A finish；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T7 | Trellis 后端 | ⬜ 未开 | |
+| T7 | Trellis 后端 | ✅ | #45 → `b73ece9`；scheme A finish；CLEAN r3；tests 136；locks Q1C Q2B Q3A Q4A Q5A Q6B；archive `09-09-dsh-sbtd-t7-trellis-backend-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T8 | `sbtd_spec` / tickets | ⬜ 未开 | 依赖 T6 / T7 |
 
 ---
@@ -100,7 +100,7 @@
 |---|---|---|
 | 1 | **T6** `sbtd_clarify` | ✅ #39 → `4e76ae8` |
 | 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | ✅ #43 → `2a82e63` |
-| 3 | T7 Trellis 后端 | ⬜ |
+| 3 | **T7** Trellis 后端 | ✅ #45 → `b73ece9` |
 | 4 | T8 `sbtd_spec` / tickets → P2 → P3 | ⬜ |
 
 ---
@@ -109,6 +109,8 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-09 | T7 #45 → main `b73ece9`（TODO merge-SHA backfill） |
+| 2026-09-09 | T7 #45 scheme A finish/merge：CLEAN r3；tip `e9bc7cb` + archive `625dc8c`；tests 136；locks Q1C–Q6B；REQUIRED_CHANGES=none；residual symlink-at-tasks-dir；不发布包；下一队列 T8（未开） |
 | 2026-09-08 | FU3 #43 → main `2a82e63`（TODO merge-SHA backfill） |
 | 2026-09-08 | FU3 #43 scheme A finish/merge：CLEAN r5；tip `bdc25f3` / prod `d2194f5`；tests 121/121；locks Q1D Q2B Q3A Q4B Q5A；vote A；`REQUIRED_CHANGES=none`；不发布包；下一队列 T7 然后 T8（未开） |
 | 2026-09-08 | FU3 #43 post-r2：Q4B re-lock（2 feature + docs/review/fix，不改写历史）；Q1D 文档收窄为 DDD-only alias；tip `b33641f` 验证 116/116 |
