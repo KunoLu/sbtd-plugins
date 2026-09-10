@@ -1050,16 +1050,34 @@ function unwrapWholePatternGroups(pattern: string): string {
   return s;
 }
 
+/**
+ * Peel whole-pattern ^...$ anchors and outer groups until stable.
+ * Handles ^(.*)$, (^.*$), ((?:.+)), and slash-stripped equivalents.
+ */
+function unwrapWholePatternAnchorsAndGroups(pattern: string): string {
+  let s = pattern;
+  for (;;) {
+    const before = s;
+    if (s.length >= 2 && s.startsWith("^") && s.endsWith("$")) {
+      s = s.slice(1, -1);
+    }
+    s = unwrapWholePatternGroups(s);
+    if (s === before) break;
+  }
+  return s;
+}
+
 /** True for wildcard-only placeholders that must not become assertVisible / title regexes (Q4A / R2). */
 function isWildcardOnlySelectorFact(fact: string): boolean {
   const t = fact.trim();
   if (t.length === 0) return true;
-  // Strip /pattern/flags wrappers (e.g. /.*/ / .*/i / /(.*)/).
+  // Strip /pattern/flags wrappers (e.g. /.*/ / .*/i / /(.*)/ / /^(.*)$/).
   const stripped = /^\/(.+)\/[a-z]*$/i.test(t)
     ? t.replace(/^\/(.+)\/[a-z]*$/i, "$1")
     : t;
-  // Peel whole-pattern groups so (.*) / (?:.+) / ((.*)) count as catch-alls.
-  const bare = unwrapWholePatternGroups(stripped);
+  // Peel anchors + groups so ^(.*)$ / /^(.*)$/ / ((.*)) count as catch-alls.
+  const bare = unwrapWholePatternAnchorsAndGroups(stripped);
+  if (bare.length === 0) return true;
   return (
     bare === ".*" ||
     bare === ".+" ||

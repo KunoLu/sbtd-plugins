@@ -787,6 +787,56 @@ test("R2r3: mixed facts drop grouped catch-alls but keep concrete locators", asy
   assert.doesNotMatch(body, /assertVisible: "\(\.\*\)"/);
 });
 
+test("R2r4: anchored grouped catch-all selectorFacts ^(.*)$ / /^(.*)$/ block generate", async () => {
+  const root = fixtureRoot("wild-anchor-group");
+  const mobile = await sbtdE2e(
+    "t13-wild-anchor-m",
+    { surface: "mobile", action: "generate", target: "x" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      selectorsReady: true,
+      credentialsReady: true,
+      selectorFacts: ["^(.*)$"],
+    },
+  );
+  assert.equal(mobile.outcome, "blocked");
+  assert.equal(mobile.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "maestro", "flow", "x.yml")), false);
+
+  const web = await sbtdE2e(
+    "t13-wild-anchor-w",
+    { surface: "web", action: "generate", target: "x" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: ["^(.*)$", "/^(.*)$/", "/^(?:.+)$/i", "^((.*))$"],
+    },
+  );
+  assert.equal(web.outcome, "blocked");
+  assert.equal(web.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "tests", "e2e", "x.spec.ts")), false);
+});
+
+test("R2r4: mixed facts drop anchored grouped catch-alls but keep concrete locators", async () => {
+  const root = fixtureRoot("wild-anchor-group-mix");
+  const result = await sbtdE2e(
+    "t13-wild-anchor-mix",
+    { surface: "mobile", action: "generate", target: "login" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      selectorsReady: true,
+      credentialsReady: true,
+      selectorFacts: ["^(.*)$", "Login", "/^(.*)$/"],
+    },
+  );
+  assert.equal(result.ok, true);
+  const body = readFileSync(join(root, "maestro", "flow", "login.yml"), "utf8");
+  assert.match(body, /assertVisible: "Login"/);
+  assert.doesNotMatch(body, /assertVisible: "\^\(\.\*\)\$"/);
+});
+
 test("R3r2/Q6A: defaultRunMaestro timeout after spawn ⇒ failed (not didNotStart)", async () => {
   const root = fixtureRoot("timeout-m");
   mkdirSync(join(root, "maestro", "flow"), { recursive: true });
