@@ -90,6 +90,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
   assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), [
     "bdd.ts",
     "clarify.ts",
+    "e2e.ts",
     "plan.ts",
     "review.ts",
     "spec.ts",
