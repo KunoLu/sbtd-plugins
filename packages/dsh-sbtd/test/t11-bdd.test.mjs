@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -546,6 +547,28 @@ test("R4 residual: >50 features in one tree must not hide a second tree", () => 
   assert.match(slug.blocked.reason, /ambiguous-feature-root/);
   assert.equal(existsSync(join(big, "login.feature")), false);
   assert.equal(existsSync(join(plugin, "login.feature")), false);
+});
+
+test("R5 Q1C: dir symlink escape blocked on write", () => {
+  const root = fixtureRoot("symlink-cwd");
+  const outside = fixtureRoot("symlink-outside");
+  mkdirSync(join(root, "features"), { recursive: true });
+  // cwd/specs → outside (lexical under cwd, real path escapes)
+  symlinkSync(outside, join(root, "specs"));
+  const result = sbtdBdd(
+    "t11-symlink",
+    {
+      intent: "write",
+      target: "specs/login.feature",
+      content:
+        "Feature: 逃逸\n  Scenario: s\n    Given a\n    When b\n    Then c\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(result.status, "blocked");
+  assert.equal(result.blocked.kind, "invalid-target");
+  assert.equal(existsSync(join(outside, "login.feature")), false);
+  assert.equal(existsSync(join(root, "specs", "login.feature")), false);
 });
 
 test("isConcurrencySafe true only for read", () => {

@@ -9,9 +9,11 @@
 
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -190,13 +192,62 @@ function isFile(path: string): boolean {
   }
 }
 
-/** True when `child` is `parent` or a path under it (after resolve). */
-function isInsideRoot(parent: string, child: string): boolean {
+/** Lexical containment after resolve (no symlink follow). */
+function isInsideRootLexical(parent: string, child: string): boolean {
   const p = resolve(parent);
   const c = resolve(child);
   if (p === c) return true;
   const rel = relative(p, c);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
+function tryRealpath(path: string): string | null {
+  try {
+    return realpathSync(path);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True when `child` is under `parent` using real paths when available (Q1C / R5).
+ * For not-yet-written targets, realpath the nearest existing ancestor.
+ */
+function isInsideRoot(parent: string, child: string): boolean {
+  const parentReal = tryRealpath(parent) ?? resolve(parent);
+  const childResolved = resolve(child);
+  if (existsSync(childResolved)) {
+    const childReal = tryRealpath(childResolved);
+    if (childReal == null) return false;
+    return isInsideRootLexical(parentReal, childReal);
+  }
+  // Walk up to an existing ancestor (may be a symlink dir) and realpath it.
+  let cursor = childResolved;
+  while (!existsSync(cursor)) {
+    const parentDir = dirname(cursor);
+    if (parentDir === cursor) break;
+    cursor = parentDir;
+  }
+  if (!existsSync(cursor)) {
+    // Nothing exists along the path — fall back to lexical under parentReal.
+    return isInsideRootLexical(parentReal, childResolved);
+  }
+  const ancestorReal = tryRealpath(cursor);
+  if (ancestorReal == null) return false;
+  if (!isInsideRootLexical(parentReal, ancestorReal)) return false;
+  // Re-join remaining segments onto the real ancestor and check again.
+  const suffix = relative(cursor, childResolved);
+  const projected =
+    suffix === "" ? ancestorReal : resolve(ancestorReal, suffix);
+  return isInsideRootLexical(parentReal, projected);
+}
+
+function isDirSymlink(path: string): boolean {
+  try {
+    return lstatSync(path).isSymbolicLink();
+  } catch {
+    return false;
+  }
 }
 
 function hasBddRunnerConfig(root: string): boolean {
@@ -265,6 +316,8 @@ function findFeatureFiles(root: string, max = 500): string[] {
     for (const name of entries) {
       if (FEATURE_WALK_SKIP.has(name)) continue;
       const full = join(dir, name);
+      // Q1C/R5: do not follow directory symlinks out of host roots.
+      if (isDirSymlink(full)) continue;
       let st: ReturnType<typeof statSync>;
       try {
         st = statSync(full);
@@ -306,6 +359,8 @@ export function findDistinctFeatureParentDirs(
     for (const name of entries) {
       if (FEATURE_WALK_SKIP.has(name)) continue;
       const full = join(dir, name);
+      // Q1C/R5: do not follow directory symlinks out of host roots.
+      if (isDirSymlink(full)) continue;
       let st: ReturnType<typeof statSync>;
       try {
         st = statSync(full);
@@ -468,7 +523,7 @@ export function validateExtraPaths(
     return { validated, rejected };
   }
   const allow = (host.allowedExtraRoots ?? [])
-    .map((r) => resolve(r))
+    .map((r) => tryRealpath(r) ?? resolve(r))
     .filter((r) => r.length > 0);
 
   for (const raw of extraPaths) {
@@ -489,12 +544,15 @@ export function validateExtraPaths(
       rejected.push({ path: trimmed, reason: "not-a-directory" });
       continue;
     }
-    const ok = allow.some((root) => isInsideRoot(root, abs) || root === abs);
+    const absReal = tryRealpath(abs) ?? abs;
+    const ok = allow.some(
+      (root) => isInsideRootLexical(root, absReal) || root === absReal,
+    );
     if (!ok) {
       rejected.push({ path: trimmed, reason: "not-host-allowed" });
       continue;
     }
-    validated.push(abs);
+    validated.push(absReal);
   }
   return { validated, rejected };
 }
