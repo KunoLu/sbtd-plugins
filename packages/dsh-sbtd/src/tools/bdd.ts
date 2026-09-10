@@ -67,9 +67,9 @@ export type BddHostOptions = {
   /** Primary feature-root override; else derived from cwd conventions (Q2B). */
   featureRoot?: string;
   /**
-   * Optional allowlist of absolute roots under which extra_paths may resolve.
-   * When set, extras outside the allowlist are rejected (not scanned).
-   * When unset, extras must exist as directories and are accepted as user-supplied.
+   * Host allowlist of absolute roots under which extra_paths may resolve (Q1C).
+   * Required for any model-supplied extra_paths: unset or empty ⇒ default-deny
+   * (extras rejected; directory existence alone is not host provenance).
    */
   allowedExtraRoots?: string[];
 };
@@ -103,7 +103,8 @@ export type BddToolResult = {
     | "existing-features-dir"
     | "existing-feature-files"
     | "bdd-runner"
-    | "agents-default";
+    | "agents-default"
+    | "ambiguous-feature-trees";
   catalog?: FeatureCatalogEntry[];
   sync?: {
     mode: "run" | "blocked";
@@ -283,7 +284,8 @@ export type ConventionKind =
   | "existing-features-dir"
   | "existing-feature-files"
   | "bdd-runner"
-  | "agents-default";
+  | "agents-default"
+  | "ambiguous-feature-trees";
 
 /**
  * Q2B: prefer existing features/ / .feature / BDD runner; AGENTS default only if none.
@@ -291,7 +293,12 @@ export type ConventionKind =
 export function detectFeatureConvention(
   cwd: string,
   featureRootOverride?: string,
-): { kind: ConventionKind; featureRoot: string } {
+): {
+  kind: ConventionKind;
+  featureRoot: string;
+  /** Distinct feature parent dirs when kind is ambiguous-feature-trees (Q2B). */
+  ambiguousRoots?: string[];
+} {
   if (
     typeof featureRootOverride === "string" &&
     featureRootOverride.length > 0
@@ -306,15 +313,26 @@ export function detectFeatureConvention(
   if (isDir(featuresDir)) {
     return { kind: "existing-features-dir", featureRoot: featuresDir };
   }
-  const found = findFeatureFiles(cwd, 20);
+  const found = findFeatureFiles(cwd, 50);
   if (found.length > 0) {
-    const first = found[0];
-    if (first == null) {
-      return { kind: "agents-default", featureRoot: featuresDir };
+    const dirs = [
+      ...new Set(found.map((f) => dirname(f))),
+    ].sort();
+    if (dirs.length === 1) {
+      const only = dirs[0];
+      if (only == null) {
+        return { kind: "agents-default", featureRoot: featuresDir };
+      }
+      return {
+        kind: "existing-feature-files",
+        featureRoot: only,
+      };
     }
+    // Q2B: never silently pick found[0] across multiple trees (e.g. plugin fixtures).
     return {
-      kind: "existing-feature-files",
-      featureRoot: dirname(first),
+      kind: "ambiguous-feature-trees",
+      featureRoot: featuresDir,
+      ambiguousRoots: dirs,
     };
   }
   if (hasBddRunnerConfig(cwd)) {
@@ -336,7 +354,9 @@ function isRelativeFeaturePath(target: string): boolean {
   if (isAbsolute(target)) return false;
   const n = normalize(target);
   if (n.startsWith("..") || n.includes(`${sep}..`)) return false;
-  return target.includes("/") || target.endsWith(".feature");
+  // Q1C side-effect: relative write targets must be .feature paths (no src/*.ts overwrite).
+  if (!target.endsWith(".feature")) return false;
+  return true;
 }
 
 /**
@@ -346,7 +366,11 @@ function isRelativeFeaturePath(target: string): boolean {
 export function resolveFeatureTargetPath(
   cwd: string,
   target: string,
-  convention: { kind: ConventionKind; featureRoot: string },
+  convention: {
+    kind: ConventionKind;
+    featureRoot: string;
+    ambiguousRoots?: string[];
+  },
 ): { ok: true; path: string } | { ok: false; reason: string } {
   const trimmed = target.trim();
   if (!trimmed) {
@@ -363,6 +387,13 @@ export function resolveFeatureTargetPath(
     return { ok: true, path: abs };
   }
   if (isSlug(trimmed)) {
+    if (convention.kind === "ambiguous-feature-trees") {
+      return {
+        ok: false,
+        reason:
+          "ambiguous-feature-root: multiple .feature trees under cwd; provide a cwd-relative .feature path or host featureRoot",
+      };
+    }
     const abs = join(convention.featureRoot, `${trimmed}.feature`);
     if (!isInsideRoot(cwd, abs) && !isInsideRoot(convention.featureRoot, abs)) {
       // featureRoot should be under cwd; if host override is outside, still require under featureRoot
@@ -392,10 +423,9 @@ export function validateExtraPaths(
   if (extraPaths == null || extraPaths.length === 0) {
     return { validated, rejected };
   }
-  const allow =
-    host.allowedExtraRoots
-      ?.map((r) => resolve(r))
-      .filter((r) => r.length > 0) ?? null;
+  const allow = (host.allowedExtraRoots ?? [])
+    .map((r) => resolve(r))
+    .filter((r) => r.length > 0);
 
   for (const raw of extraPaths) {
     if (typeof raw !== "string" || raw.trim().length === 0) {
@@ -404,20 +434,22 @@ export function validateExtraPaths(
     }
     const trimmed = raw.trim();
     // Extra roots are user-supplied local paths — may be absolute (sibling repos)
-    // or cwd-relative. Host must still validate before scan.
+    // or cwd-relative. Host must authorize via allowedExtraRoots before scan (Q1C).
     const abs = isAbsolute(trimmed) ? resolve(trimmed) : resolve(cwd, trimmed);
+    if (allow.length === 0) {
+      // Default-deny: existence alone is not host provenance.
+      rejected.push({ path: trimmed, reason: "no-host-allowlist" });
+      continue;
+    }
     if (!isDir(abs)) {
       rejected.push({ path: trimmed, reason: "not-a-directory" });
       continue;
     }
-    if (allow != null && allow.length > 0) {
-      const ok = allow.some((root) => isInsideRoot(root, abs) || root === abs);
-      if (!ok) {
-        rejected.push({ path: trimmed, reason: "not-host-allowed" });
-        continue;
-      }
+    const ok = allow.some((root) => isInsideRoot(root, abs) || root === abs);
+    if (!ok) {
+      rejected.push({ path: trimmed, reason: "not-host-allowed" });
+      continue;
     }
-    // Never treat primary cwd as an "extra" silently inventing scope — allow if user named it.
     validated.push(abs);
   }
   return { validated, rejected };
@@ -442,13 +474,14 @@ function parseFeatureMeta(text: string): {
       for (const t of pendingTags) tags.add(t);
       continue;
     }
-    const feat = line.match(/^\s*Feature:\s*(.*)\s*$/);
+    // English + common Chinese Gherkin keywords (S1; Q2B language reuse).
+    const feat = line.match(/^\s*(?:Feature|功能):\s*(.*)\s*$/);
     if (feat) {
       featureTitle = (feat[1] ?? "").trim() || null;
       pendingTags = [];
       continue;
     }
-    if (/^\s*Scenario(?: Outline)?:\s*/.test(line)) {
+    if (/^\s*(?:Scenario(?: Outline)?|场景(?:大纲)?):\s*/.test(line)) {
       scenarioCount += 1;
       pendingTags = [];
     }
@@ -645,59 +678,33 @@ export function sbtdBdd(
   }
 
   if (intent === "sync") {
+    // R2 / gherkin-bdd Sync Mode: a truthful sync audits working tree + features/
+    // + code/docs/tests and reports update/create/delete/unchanged. T11 tool cannot
+    // perform that whole-tree behavior audit without inventing SoT — do not claim
+    // success for .feature inventory (or optional target write) alone.
     const catalog = catalogFeatures(scanRoots);
-    // Sync Mode report (gherkin-bdd Sync Mode, tool-local): inventory + optional write of target.
-    // Do not invent new SoT from code without model-supplied content.
-    const updated: string[] = [];
-    const created: string[] = [];
-    const unchanged: string[] = [];
-    const body = featureBody(input);
-    let writtenPath: string | undefined;
-
-    if (typeof input.target === "string" && input.target.trim().length > 0) {
-      const resolved = resolveFeatureTargetPath(cwd, input.target, convention);
-      if (!resolved.ok) {
-        return blockedResult(intent, "invalid-target", resolved.reason, "none");
-      }
-      if (body.length > 0) {
-        const existed = isFile(resolved.path);
-        mkdirSync(dirname(resolved.path), { recursive: true });
-        writeFileSync(resolved.path, body, "utf8");
-        writtenPath = resolved.path;
-        if (existed) updated.push(relative(cwd, resolved.path));
-        else created.push(relative(cwd, resolved.path));
-      } else if (isFile(resolved.path)) {
-        unchanged.push(relative(cwd, resolved.path));
-      }
-    } else {
-      for (const entry of catalog) {
-        unchanged.push(
-          entry.root === cwd ? entry.path : join(entry.root, entry.path),
-        );
-      }
-    }
-
+    const reason =
+      "BDD Sync Mode not yet capable in sbtd_bdd: full working-tree + features/ + " +
+      "code/docs/tests behavior audit is required (gherkin-bdd AGENTS Sync Mode). " +
+      "Inventory-only is not a successful sync. Use intent=read for catalog; " +
+      "intent=write to persist a .feature. Sync remains blocked until capable.";
     return {
-      ok: true,
+      ok: false,
       intent: "sync",
-      status: "done",
-      mutation: updated.length > 0 || created.length > 0 ? "sync" : "none",
+      status: "blocked",
+      mutation: "none",
       convention: convention.kind,
-      ...(writtenPath != null ? { path: writtenPath } : {}),
+      blocked: { kind: "sync-not-capable", reason },
       sync: {
-        mode: "run",
+        mode: "blocked",
         rootsScanned: scanRoots,
-        features: catalogFeatures(scanRoots),
-        updated,
-        created,
-        unchanged,
-        note:
-          "BDD Sync Mode: local inventory under host roots (+ validated extras). " +
-          "Full code↔feature behavior audit is model-led; tool does not invent SoT. " +
-          "Provide target+content to update/create a .feature during sync.",
+        features: catalog,
+        updated: [],
+        created: [],
+        unchanged: [],
+        note: reason,
       },
-      note: "BDD Sync Mode: run",
-      ...(body.length > 0 ? { content: body } : {}),
+      note: reason,
     };
   }
 
@@ -750,11 +757,12 @@ export function sbtdBdd(
 
 export const SBTD_BDD_DESCRIPTION =
   "Write, sync, or locally catalog persistent Gherkin .feature files (Behavior SoT). " +
-  "intent=write creates/updates a .feature; intent=sync audits inventory under host roots " +
-  "(+ user-supplied extra_paths) and may update a target when content is provided; " +
+  "intent=write creates/updates a .feature; intent=sync is gherkin-bdd Sync Mode " +
+  "(full code/docs/tests audit) and is blocked until that capability exists — " +
+  "do not treat .feature inventory as a successful sync; " +
   "intent=read parses a rebuildable local catalog with Mutation: none. " +
-  "Model args: intent + target (capability slug or cwd-relative path) + optional content/body; " +
-  "extra_paths and cross_repo_required only for sync/read. " +
+  "Model args: intent + target (capability slug or cwd-relative .feature path) + optional content/body; " +
+  "extra_paths and cross_repo_required only for sync/read (extras require host allowedExtraRoots). " +
   "cwd / feature-root are host-injected — do not pass cwd, mcp, runRefresh, serverName, or toolNames. " +
   "Project feature conventions win; AGENTS features/<slug>.feature only when none exist. " +
   "Missing required cross-repo paths ⇒ blocked (no invented SoT). " +
@@ -772,7 +780,7 @@ export function createBddTool(host: BddHostOptions = {}): BddToolDefinition {
           type: "string",
           enum: [...BDD_INTENTS],
           description:
-            "write = create/update .feature; sync = inventory/audit (+ optional target update); read = local catalog, Mutation none.",
+            "write = create/update .feature; sync = gherkin-bdd Sync Mode (blocked until capable); read = local catalog, Mutation none.",
         },
         target: {
           type: "string",

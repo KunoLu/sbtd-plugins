@@ -333,14 +333,16 @@ test("resolveBddHost prefers bddHost.cwd then ctx.cwd", () => {
   assert.equal(b.cwd, "/ctx");
 });
 
-test("validateExtraPaths rejects missing dirs", () => {
+test("validateExtraPaths rejects missing dirs when allowlist set", () => {
   const root = fixtureRoot("val-extra");
-  const r = validateExtraPaths(root, [join(root, "nope")], {});
+  const r = validateExtraPaths(root, [join(root, "nope")], {
+    allowedExtraRoots: [root],
+  });
   assert.equal(r.validated.length, 0);
   assert.equal(r.rejected[0].reason, "not-a-directory");
 });
 
-test("sync inventory run without content", () => {
+test("R2: sync inventory-only is blocked (not a successful Sync Mode)", () => {
   const root = fixtureRoot("sync-inv");
   mkdirSync(join(root, "features"), { recursive: true });
   writeFileSync(
@@ -349,10 +351,161 @@ test("sync inventory run without content", () => {
     "utf8",
   );
   const result = sbtdBdd("t11-sync", { intent: "sync" }, { cwd: root });
-  assert.equal(result.status, "done");
-  assert.equal(result.sync.mode, "run");
+  assert.equal(result.status, "blocked");
+  assert.equal(result.blocked.kind, "sync-not-capable");
+  assert.equal(result.sync.mode, "blocked");
   assert.equal(result.mutation, "none");
+  assert.equal(result.ok, false);
   assert.ok(result.sync.features.length >= 1);
+});
+
+test("R1 Q1C: extra_paths with unset/empty allowlist ⇒ blocked (default-deny)", () => {
+  const root = fixtureRoot("extra-no-allow");
+  const sibling = fixtureRoot("sibling-exist");
+  mkdirSync(join(sibling, "features"), { recursive: true });
+  writeFileSync(
+    join(sibling, "features", "x.feature"),
+    "Feature: x\n  Scenario: s\n    Given a\n    When b\n    Then c\n",
+    "utf8",
+  );
+  const unset = sbtdBdd(
+    "t11-extra-unset",
+    { intent: "read", extra_paths: [sibling] },
+    { cwd: root },
+  );
+  assert.equal(unset.status, "blocked");
+  assert.equal(unset.blocked.kind, "extra-path-invalid");
+  assert.match(unset.note, /no-host-allowlist/);
+
+  const empty = sbtdBdd(
+    "t11-extra-empty",
+    { intent: "read", extra_paths: [sibling] },
+    { cwd: root, allowedExtraRoots: [] },
+  );
+  assert.equal(empty.status, "blocked");
+  assert.match(empty.note, /no-host-allowlist/);
+
+  // Absolute existing dir still denied without allowlist
+  const abs = sbtdBdd(
+    "t11-extra-abs",
+    { intent: "read", extra_paths: [sibling] },
+    { cwd: root },
+  );
+  assert.equal(abs.status, "blocked");
+});
+
+test("R3: relative non-.feature target rejected (no source overwrite)", () => {
+  const root = fixtureRoot("rel-no-feat");
+  mkdirSync(join(root, "src"), { recursive: true });
+  writeFileSync(join(root, "src", "index.ts"), "export const x = 1;\n", "utf8");
+  const before = readFileSync(join(root, "src", "index.ts"), "utf8");
+  const result = sbtdBdd(
+    "t11-rel-ts",
+    {
+      intent: "write",
+      target: "src/index.ts",
+      content: "Feature: evil\n  Scenario: s\n    Given a\n    When b\n    Then c\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(result.status, "blocked");
+  assert.equal(result.blocked.kind, "invalid-target");
+  assert.equal(readFileSync(join(root, "src", "index.ts"), "utf8"), before);
+});
+
+test("R4 Q2B: multi-tree does not use found[0]; slug write blocked", () => {
+  const root = fixtureRoot("multi-tree");
+  // Two disjoint feature trees (simulate plugin fixtures + app) — no features/ at cwd.
+  mkdirSync(join(root, "packages", "dsh-sbtd", "features"), { recursive: true });
+  mkdirSync(join(root, "apps", "web", "specs"), { recursive: true });
+  writeFileSync(
+    join(root, "packages", "dsh-sbtd", "features", "plugin.feature"),
+    "Feature: plugin\n  Scenario: p\n    Given a\n    When b\n    Then c\n",
+    "utf8",
+  );
+  writeFileSync(
+    join(root, "apps", "web", "specs", "app.feature"),
+    "Feature: app\n  Scenario: a\n    Given a\n    When b\n    Then c\n",
+    "utf8",
+  );
+  const conv = detectFeatureConvention(root);
+  assert.equal(conv.kind, "ambiguous-feature-trees");
+  assert.ok(Array.isArray(conv.ambiguousRoots));
+  assert.ok(conv.ambiguousRoots.length >= 2);
+
+  const slug = sbtdBdd(
+    "t11-amb-slug",
+    {
+      intent: "write",
+      target: "login",
+      content:
+        "Feature: 用户登录\n  Scenario: 登录成功\n    Given 用户已注册\n    When 用户提交正确密码\n    Then 进入工作区\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(slug.status, "blocked");
+  assert.equal(slug.blocked.kind, "invalid-target");
+  assert.match(slug.blocked.reason, /ambiguous-feature-root/);
+  // Must not land in plugin fixtures via found[0]
+  assert.equal(
+    existsSync(join(root, "packages", "dsh-sbtd", "features", "login.feature")),
+    false,
+  );
+
+  // Relative .feature path still works under cwd
+  const rel = sbtdBdd(
+    "t11-amb-rel",
+    {
+      intent: "write",
+      target: "apps/web/specs/login.feature",
+      content:
+        "Feature: 用户登录\n  Scenario: 登录成功\n    Given 用户已注册\n    When 用户提交正确密码\n    Then 进入工作区\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(rel.status, "done");
+  assert.equal(
+    existsSync(join(root, "apps", "web", "specs", "login.feature")),
+    true,
+  );
+  assert.equal(
+    existsSync(join(root, "packages", "dsh-sbtd", "features", "login.feature")),
+    false,
+  );
+});
+
+test("S1: parseFeatureMeta accepts Chinese Feature/Scenario keywords via read", () => {
+  const root = fixtureRoot("zh-kw");
+  mkdirSync(join(root, "features"), { recursive: true });
+  writeFileSync(
+    join(root, "features", "zh.feature"),
+    "功能: 结账\n  场景: 成功支付\n    Given a\n    When b\n    Then c\n",
+    "utf8",
+  );
+  const result = sbtdBdd("t11-zh", { intent: "read" }, { cwd: root });
+  assert.equal(result.status, "done");
+  assert.equal(result.catalog.length, 1);
+  assert.equal(result.catalog[0].featureTitle, "结账");
+  assert.equal(result.catalog[0].scenarioCount, 1);
+});
+
+test("R2: sync with target+content still blocked (not inventory success)", () => {
+  const root = fixtureRoot("sync-write");
+  mkdirSync(join(root, "features"), { recursive: true });
+  const result = sbtdBdd(
+    "t11-sync-write",
+    {
+      intent: "sync",
+      target: "login",
+      content:
+        "Feature: 用户登录\n  Scenario: 登录成功\n    Given 用户已注册\n    When 用户提交正确密码\n    Then 进入工作区\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(result.status, "blocked");
+  assert.equal(result.blocked.kind, "sync-not-capable");
+  assert.equal(result.mutation, "none");
+  assert.equal(existsSync(join(root, "features", "login.feature")), false);
 });
 
 test("isConcurrencySafe true only for read", () => {
