@@ -8,6 +8,7 @@ import {
   modelSchemaForbidsTrustHandles,
   pickModelInput,
   preflight,
+  simctlHasBootedDevice,
 } from "../dist/backends/maestro.js";
 import { getSession, serialize } from "../dist/state.js";
 
@@ -137,13 +138,65 @@ test("defaultDetectDevice: cloud declaration ok without spawning maestro test", 
   assert.match(probe.detail ?? "", /no cloud run\/upload/i);
 });
 
-test("defaultDetectDevice: declared sim/emulator/usb equally valid (Q6A)", () => {
-  assert.equal(defaultDetectDevice({ deviceClass: "sim" }).class, "sim");
-  assert.equal(
-    defaultDetectDevice({ deviceClass: "emulator" }).class,
-    "emulator",
+test("simctlHasBootedDevice: Booted required; Shutdown iPhone/iPad not enough (Q1A R2)", () => {
+  const shutdownOnly = `
+== Devices ==
+-- iOS 17.0 --
+    iPhone 15 (AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA) (Shutdown)
+    iPad Pro (BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB) (Shutdown)
+`;
+  assert.equal(simctlHasBootedDevice(shutdownOnly), false);
+
+  const booted = `
+== Devices ==
+-- iOS 17.0 --
+    iPhone 15 (AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA) (Booted)
+    iPad Pro (BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB) (Shutdown)
+`;
+  assert.equal(simctlHasBootedDevice(booted), true);
+
+  const empty = "No devices are available.";
+  assert.equal(simctlHasBootedDevice(empty), false);
+});
+
+test("defaultDetectDevice: local deviceClass is hint; live list still required (Q1A R1)", () => {
+  // Declared sim/emulator/usb must NOT short-circuit to ok without live listing.
+  // Detail must never be the old "declared <class>" skip message.
+  for (const deviceClass of ["sim", "emulator", "usb"]) {
+    const probe = defaultDetectDevice({ deviceClass, platform: "ios" });
+    if (probe.ok) {
+      // Live list found a Booted sim — class from live probe, not declaration skip.
+      assert.equal(probe.class, "sim");
+      assert.doesNotMatch(probe.detail ?? "", /^declared /);
+    } else {
+      assert.equal(probe.ok, false);
+      assert.doesNotMatch(probe.detail ?? "", /^declared /);
+      assert.match(probe.detail ?? "", /Booted sim|device|detect|virtual/i);
+    }
+  }
+});
+
+test("preflight: declared sim + failed live list => blocked (Q1A R1)", async () => {
+  let sawOptions = null;
+  const result = await preflight(
+    okProbes({
+      skipSessionWrite: true,
+      deviceClass: "sim",
+      detectDevice: async (opts) => {
+        sawOptions = opts;
+        // Mirror fixed defaultDetectDevice: local class is hint; live failed.
+        return {
+          ok: false,
+          detail:
+            "No Booted sim / emulator / USB device detected; start a virtual device or declare deviceClass=cloud",
+        };
+      },
+    }),
   );
-  assert.equal(defaultDetectDevice({ deviceClass: "usb" }).class, "usb");
+  assert.equal(sawOptions?.deviceClass, "sim");
+  assert.equal(result.lastPreflight, "blocked");
+  assert.ok(result.missing.includes("device"));
+  assert.equal(result.probes?.device?.ok, false);
 });
 
 test("pickModelInput: platform hint only; rejects T10 trust keys (Q4A)", () => {

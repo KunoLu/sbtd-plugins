@@ -72,8 +72,9 @@ export type MaestroOptions = {
   /** Step 6: test accounts / data isolation confirmed. */
   accounts?: string | boolean;
   /**
-   * Step 3 cloud (Q6A): host/user declaration of device class.
-   * Cloud records in probes without run/upload. Local classes equally valid.
+   * Step 3 device class (Q6A / Q1A): host/user declaration.
+   * Cloud records in probes without run/upload (declaration-only skip of live list).
+   * Local classes (sim/emulator/usb) are hints only — live list still required.
    */
   deviceClass?: DeviceClass;
   /** Optional declared device id (user-confirmed). */
@@ -203,8 +204,18 @@ export function defaultDetectCli(): CliProbe {
 }
 
 /**
- * Default device probe. Cloud / declared deviceClass is first-class (Q6A)
- * and records without cloud run/upload. Local listing is best-effort.
+ * True when `xcrun simctl list` output shows an actually Booted device (Q1A R2).
+ * Shutdown runtime names matching iPhone/iPad must not count as success.
+ */
+export function simctlHasBootedDevice(out: string): boolean {
+  return /\(Booted\)/i.test(out) || /\bBooted\b/i.test(out);
+}
+
+/**
+ * Default device probe (Q1A / Q6A).
+ * Cloud declaration records without cloud run/upload (only skip of live list).
+ * Local deviceClass (sim/emulator/usb) is a hint only — live list still runs.
+ * iOS success requires a Booted simulator (not merely installed runtime names).
  * Never throws. Never spawns `maestro test`.
  */
 export function defaultDetectDevice(options: MaestroOptions = {}): DeviceProbe {
@@ -216,21 +227,9 @@ export function defaultDetectDevice(options: MaestroOptions = {}): DeviceProbe {
         detail: "cloud device class declared (no cloud run/upload in T12)",
       };
     }
-    if (
-      options.deviceClass === "sim" ||
-      options.deviceClass === "emulator" ||
-      options.deviceClass === "usb"
-    ) {
-      return {
-        ok: true,
-        class: options.deviceClass,
-        detail: options.deviceId
-          ? `declared ${options.deviceClass} (${options.deviceId})`
-          : `declared ${options.deviceClass}`,
-      };
-    }
 
-    // Best-effort local listing (never maestro test).
+    // Local deviceClass is a hint only (Q1A R1) — do not short-circuit to ok.
+    // Still run live device-list probe (xcrun simctl / adb devices).
     const platform = options.platform;
     if (platform !== "android") {
       const sim = spawnSync("xcrun", ["simctl", "list", "devices", "available"], {
@@ -241,10 +240,14 @@ export function defaultDetectDevice(options: MaestroOptions = {}): DeviceProbe {
       const out = `${sim.stdout ?? ""}\n${sim.stderr ?? ""}`;
       if (
         sim.status === 0 &&
-        /Booted|\(Booted\)|iPhone|iPad/i.test(out) &&
+        simctlHasBootedDevice(out) &&
         !/No devices|unable to find|xcrun: error/i.test(out)
       ) {
-        return { ok: true, class: "sim", detail: "iOS Simulator available" };
+        return {
+          ok: true,
+          class: "sim",
+          detail: "iOS Simulator Booted",
+        };
       }
     }
     if (platform !== "ios") {
@@ -274,7 +277,7 @@ export function defaultDetectDevice(options: MaestroOptions = {}): DeviceProbe {
     return {
       ok: false,
       detail:
-        "No sim/emulator/USB device detected; declare deviceClass or start a virtual device",
+        "No Booted sim / emulator / USB device detected; start a virtual device or declare deviceClass=cloud",
     };
   } catch (err) {
     return {
