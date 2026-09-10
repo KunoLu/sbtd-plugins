@@ -19,7 +19,7 @@
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
 | **P1** | T4–T8 核心闭环 | ✅ T4–T8 完成（T8 #47 → `a90a96f`；T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63` |
-| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 完成（#49 → `314c345`）；T10–T14 未开 |
+| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51（merge SHA pending squash）；T11–T14 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
 ---
@@ -52,7 +52,7 @@
 | 任务 | 内容 | 状态 | 备注 |
 |---|---|---|---|
 | T9 | GitNexus 后端 | ✅ | #49 → `314c345`；scheme A finish；CLEAN r2；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1 REQUIRED closed（`--index-only` + skip-before-analyze）；archive `09-09-dsh-sbtd-t9-gitnexus-backend-grill` + `09-09-dsh-sbtd-t9-gitnexus-backend-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T10 | `sbtd_validate` | ⬜ | 下一队列 |
+| T10 | `sbtd_validate` | ✅ | #51 scheme A finish；CLEAN r4；locks Q1A Q2A Q3A(+clar) Q4A Q5A；REQUIRED_CHANGES=none；tip `7a660af`；tests 201；archive `09-09-dsh-sbtd-t10-sbtd-validate-grill` + `09-09-dsh-sbtd-t10-sbtd-validate-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2`；merge SHA pending squash |
 | T11 | `sbtd_bdd` | ⬜ |  |
 | T12 | Maestro 预检 | ⬜ |  |
 | T13 | `sbtd_e2e` | ⬜ |  |
@@ -102,14 +102,18 @@
 | 2 | **FU3** multi-fact 匹配集合 + persist-across-replans / mergeGate demote | ✅ #43 → `2a82e63` |
 | 3 | **T7** Trellis 后端 | ✅ #45 → `b73ece9` |
 | 4 | **T8** `sbtd_spec` / tickets | ✅ #47 → `a90a96f` |
-| 5 | **T9** GitNexus 后端 | ✅ #49 → `314c345`；下一队列 T10（未开） |
-
+| 5 | **T9** GitNexus 后端 | ✅ #49 → `314c345` |
+| 6 | **T10** `sbtd_validate` | ✅ #51（merge SHA pending squash） |
+| 7 | **T11** `sbtd_bdd` | ⬜ |
 ---
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-10 | T10 #51 scheme A finish/merge：CLEAN r4；tip `7a660af`；locks Q1A–Q5A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；tests 201；不发布包；下一队列 T11（未开） |
+| 2026-09-09 | T10 #51 r2 fix：apply/PluginHost 注入 cwd+GitNexus MCP；AGENTS 非 Node 测试命令；P2 timeout/signal/bun run test/SIGTERM wait；未合 / 未 finish-work / 未 npm |
+| 2026-09-09 | T10 scheme A coding：`sbtd_validate` + apply 注册 + tests；locks Q1A–Q5A；消费 T9 gitnexus as-is；未合 / 未 finish-work / 未 npm |
 | 2026-09-09 | T9 #49 → main `314c345`（TODO merge-SHA backfill） |
 | 2026-09-09 | T9 #49 scheme A finish/merge：CLEAN r2；tip `df7abb2`；locks Q1B–Q6A；REQUIRED_CHANGES=none；r1 REQUIRED closed（`--index-only` + skip-before-analyze）；residuals detect() outer catch / injected runRefresh timeout / SIGTERM-only / T10 cwd-mcp-runRefresh；不发布包；下一队列 T10（未开） |
 | 2026-09-09 | T8 #47 → main `a90a96f`（TODO merge-SHA backfill） |

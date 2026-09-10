@@ -5,11 +5,23 @@ import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
 import { registerSpecTool } from "./tools/spec.js";
 import { registerTicketsTool } from "./tools/tickets.js";
+import {
+  registerValidateTool,
+  resolveValidateHost,
+  type ValidateHostOptions,
+  type ValidatePluginHost,
+} from "./tools/validate.js";
 
 export const name = "dsh-sbtd";
 export const inject = ["tools", "systemPrompt"] as const;
 
-export type PluginHost = SectionHost & ToolsHost & HooksHost;
+export type PluginHost = SectionHost &
+  ToolsHost &
+  HooksHost &
+  ValidatePluginHost & {
+    /** Optional explicit validate trust handles (Q1A). Prefer validateHost. */
+    validateHost?: ValidateHostOptions;
+  };
 
 export {
   PRE_EXECUTE_EVENT,
@@ -60,6 +72,19 @@ export {
   SBTD_TICKETS_TOOL_NAME,
   sbtdTickets,
 } from "./tools/tickets.js";
+export {
+  bindBridgeOuter,
+  bindBridgeSignal,
+  createToolsMcpBridge,
+  createValidateTool,
+  discoverProjectTestCommand,
+  pickValidateInput,
+  registerValidateTool,
+  resolveValidateHost,
+  SBTD_VALIDATE_TOOL_NAME,
+  sbtdValidate,
+  VALIDATE_PHASES,
+} from "./tools/validate.js";
 
 export function apply(ctx: PluginHost): void {
   console.log("[dsh-sbtd] plugin loaded (T0 stub)");
@@ -69,5 +94,6 @@ export function apply(ctx: PluginHost): void {
   registerClarifyTool(ctx);
   registerSpecTool(ctx);
   registerTicketsTool(ctx);
+  registerValidateTool(ctx, resolveValidateHost(ctx));
   registerHooks(ctx);
 }
