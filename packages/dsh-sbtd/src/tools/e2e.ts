@@ -248,40 +248,41 @@ function tryRealpath(path: string): string | null {
 }
 
 /**
- * True when `child` is under `parent` using real paths when available (Q4A / R1).
- * For not-yet-written targets, realpath the nearest existing ancestor.
+ * Project `path` through the realpath of its nearest existing ancestor.
+ * Missing leaf segments are re-joined so agents-default roots (not yet mkdir'd)
+ * still see symlink escapes on intermediate dirs (Q4A / R1 residual).
  */
-function isInsideRoot(parent: string, child: string): boolean {
-  const parentResolved = resolve(parent);
-  const childResolved = resolve(child);
-  // Asset root may not exist yet (agents-default); lexical confine until mkdir.
-  if (!existsSync(parentResolved)) {
-    return isInsideRootLexical(parentResolved, childResolved);
+function projectThroughExistingAncestor(path: string): string | null {
+  const resolved = resolve(path);
+  if (existsSync(resolved)) {
+    return tryRealpath(resolved);
   }
-  const parentReal = tryRealpath(parentResolved);
-  if (parentReal == null) return false;
-  if (existsSync(childResolved)) {
-    const childReal = tryRealpath(childResolved);
-    if (childReal == null) return false;
-    return isInsideRootLexical(parentReal, childReal);
-  }
-  // Walk up to an existing ancestor (may be a symlink dir) and realpath it.
-  let cursor = childResolved;
+  let cursor = resolved;
   while (!existsSync(cursor)) {
     const parentDir = dirname(cursor);
     if (parentDir === cursor) break;
     cursor = parentDir;
   }
   if (!existsSync(cursor)) {
-    return isInsideRootLexical(parentReal, childResolved);
+    // Nothing exists along the path — lexical fallback.
+    return resolved;
   }
   const ancestorReal = tryRealpath(cursor);
-  if (ancestorReal == null) return false;
-  if (!isInsideRootLexical(parentReal, ancestorReal)) return false;
-  const suffix = relative(cursor, childResolved);
-  const projected =
-    suffix === "" ? ancestorReal : resolve(ancestorReal, suffix);
-  return isInsideRootLexical(parentReal, projected);
+  if (ancestorReal == null) return null;
+  const suffix = relative(cursor, resolved);
+  return suffix === "" ? ancestorReal : resolve(ancestorReal, suffix);
+}
+
+/**
+ * True when `child` is under `parent` using real paths when available (Q4A / R1).
+ * For not-yet-written targets / missing asset roots, realpath the nearest
+ * existing ancestor of *both* sides (do not lexical-return when root is absent).
+ */
+function isInsideRoot(parent: string, child: string): boolean {
+  const parentProjected = projectThroughExistingAncestor(parent);
+  const childProjected = projectThroughExistingAncestor(child);
+  if (parentProjected == null || childProjected == null) return false;
+  return isInsideRootLexical(parentProjected, childProjected);
 }
 
 /** Q4A/R1: reject final-component symlinks before write (dangling or retarget). */
@@ -475,7 +476,7 @@ export function resolveE2eTargetPath(
     // Default smoke targets
     if (surface === "web") {
       const abs = join(convention.playwrightRoot, "smoke.spec.ts");
-      if (!isInsideRootLexical(cwd, abs)) {
+      if (!isInsideRoot(cwd, abs)) {
         return { ok: false, reason: "default-target-escapes-cwd" };
       }
       return { ok: true, path: abs, slug: "smoke" };
@@ -485,9 +486,9 @@ export function resolveE2eTargetPath(
         ? join(convention.flowRoot, platform)
         : convention.flowRoot;
     const abs = join(platformDir, "smoke.yml");
-    if (!isInsideRootLexical(cwd, abs) && !isInsideRootLexical(convention.flowRoot, abs)) {
+    if (!isInsideRoot(cwd, abs) && !isInsideRoot(convention.flowRoot, abs)) {
       // flowRoot may equal cwd/maestro/flow — still under cwd
-      if (!isInsideRootLexical(cwd, abs)) {
+      if (!isInsideRoot(cwd, abs)) {
         return { ok: false, reason: "default-target-escapes-cwd" };
       }
     }
@@ -499,7 +500,7 @@ export function resolveE2eTargetPath(
   if (isSlug(trimmed)) {
     if (surface === "web") {
       const abs = join(convention.playwrightRoot, `${trimmed}.spec.ts`);
-      if (!isInsideRootLexical(cwd, abs)) {
+      if (!isInsideRoot(cwd, abs)) {
         return { ok: false, reason: "target-escapes-cwd" };
       }
       return { ok: true, path: abs, slug: trimmed };
@@ -509,7 +510,7 @@ export function resolveE2eTargetPath(
         ? join(convention.flowRoot, platform)
         : convention.flowRoot;
     const abs = join(platformDir, `${trimmed}.yml`);
-    if (!isInsideRootLexical(cwd, abs)) {
+    if (!isInsideRoot(cwd, abs)) {
       return { ok: false, reason: "target-escapes-cwd" };
     }
     return { ok: true, path: abs, slug: trimmed };
@@ -518,7 +519,7 @@ export function resolveE2eTargetPath(
     return { ok: false, reason: "invalid-target" };
   }
   const abs = resolve(cwd, trimmed);
-  if (!isInsideRootLexical(cwd, abs)) {
+  if (!isInsideRoot(cwd, abs)) {
     return { ok: false, reason: "target-escapes-cwd" };
   }
   // Q4A / R1: non-slug paths must stay under surface asset root + allowed extension.
@@ -1019,12 +1020,46 @@ function defaultPlaywrightSpecBody(
   ].join("\n");
 }
 
+/** Peel balanced outer capturing / non-capturing groups wrapping the whole pattern. */
+function unwrapWholePatternGroups(pattern: string): string {
+  let s = pattern;
+  while (s.length >= 2 && s.startsWith("(") && s.endsWith(")")) {
+    let depth = 0;
+    let wrapsWhole = true;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (ch === "(") depth += 1;
+      else if (ch === ")") {
+        depth -= 1;
+        if (depth === 0 && i !== s.length - 1) {
+          wrapsWhole = false;
+          break;
+        }
+        if (depth < 0) {
+          wrapsWhole = false;
+          break;
+        }
+      }
+    }
+    if (!wrapsWhole || depth !== 0) break;
+    let inner = s.slice(1, -1);
+    if (inner.startsWith("?:")) inner = inner.slice(2);
+    if (inner.length === 0 || inner === s) break;
+    s = inner;
+  }
+  return s;
+}
+
 /** True for wildcard-only placeholders that must not become assertVisible / title regexes (Q4A / R2). */
 function isWildcardOnlySelectorFact(fact: string): boolean {
   const t = fact.trim();
   if (t.length === 0) return true;
-  // Strip /pattern/flags wrappers (e.g. /.*/ / .*/i).
-  const bare = /^\/(.+)\/[a-z]*$/i.test(t) ? t.replace(/^\/(.+)\/[a-z]*$/i, "$1") : t;
+  // Strip /pattern/flags wrappers (e.g. /.*/ / .*/i / /(.*)/).
+  const stripped = /^\/(.+)\/[a-z]*$/i.test(t)
+    ? t.replace(/^\/(.+)\/[a-z]*$/i, "$1")
+    : t;
+  // Peel whole-pattern groups so (.*) / (?:.+) / ((.*)) count as catch-alls.
+  const bare = unwrapWholePatternGroups(stripped);
   return (
     bare === ".*" ||
     bare === ".+" ||
@@ -1299,7 +1334,12 @@ export async function sbtdE2e(
         },
       );
     }
-    if (!isInsideRoot(assetRoot, targetResolved.path)) {
+    // Asset-root + cwd realpath gates: missing roots still project via ancestors
+    // so symlink tests/ + absent tests/e2e cannot mkdir/write outside the project.
+    if (
+      !isInsideRoot(assetRoot, targetResolved.path) ||
+      !isInsideRoot(cwd, targetResolved.path)
+    ) {
       return blockedResult(
         surface,
         action,

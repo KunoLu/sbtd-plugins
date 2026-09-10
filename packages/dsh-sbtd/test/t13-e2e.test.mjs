@@ -687,6 +687,106 @@ test("R2r2: mixed facts drop wildcards but keep concrete locators", async () => 
   assert.doesNotMatch(body, /toHaveTitle\(\/\.\*\//);
 });
 
+test("R1r3: missing asset root still realpaths symlinked ancestor (web tests/)", async () => {
+  const root = fixtureRoot("missing-root-symlink");
+  const outside = fixtureRoot("missing-root-outside");
+  mkdirSync(outside, { recursive: true });
+  // cwd/tests → outside; tests/e2e absent (agents-default). Must not mkdir/write outside.
+  symlinkSync(outside, join(root, "tests"));
+
+  const bySlug = await sbtdE2e(
+    "t13-missing-root-slug",
+    { surface: "web", action: "generate", target: "login" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: ["Login"],
+    },
+  );
+  assert.equal(bySlug.outcome, "blocked");
+  assert.equal(bySlug.blocked.kind, "invalid-target");
+  assert.equal(existsSync(join(outside, "e2e", "login.spec.ts")), false);
+  assert.equal(existsSync(join(root, "tests", "e2e", "login.spec.ts")), false);
+
+  const byRel = await sbtdE2e(
+    "t13-missing-root-rel",
+    { surface: "web", action: "generate", target: "tests/e2e/escape.spec.ts" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: ["Login"],
+    },
+  );
+  assert.equal(byRel.outcome, "blocked");
+  assert.equal(byRel.blocked.kind, "invalid-target");
+  assert.equal(existsSync(join(outside, "e2e", "escape.spec.ts")), false);
+});
+
+test("R1r3: agents-default still writes when tests/e2e absent (no symlink)", async () => {
+  const root = fixtureRoot("missing-root-ok");
+  const result = await sbtdE2e(
+    "t13-missing-root-ok",
+    { surface: "web", action: "generate", target: "login" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: ["Welcome"],
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(existsSync(join(root, "tests", "e2e", "login.spec.ts")), true);
+});
+
+test("R2r3: grouped catch-all selectorFacts (.*) / /(.*)/ block generate", async () => {
+  const root = fixtureRoot("wild-group");
+  const mobile = await sbtdE2e(
+    "t13-wild-group-m",
+    { surface: "mobile", action: "generate", target: "x" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      selectorsReady: true,
+      credentialsReady: true,
+      selectorFacts: ["(.*)"],
+    },
+  );
+  assert.equal(mobile.outcome, "blocked");
+  assert.equal(mobile.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "maestro", "flow", "x.yml")), false);
+
+  const web = await sbtdE2e(
+    "t13-wild-group-w",
+    { surface: "web", action: "generate", target: "x" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: ["(.*)", "/(.*)/", "/(?:.+)/i", "((.*))"],
+    },
+  );
+  assert.equal(web.outcome, "blocked");
+  assert.equal(web.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "tests", "e2e", "x.spec.ts")), false);
+});
+
+test("R2r3: mixed facts drop grouped catch-alls but keep concrete locators", async () => {
+  const root = fixtureRoot("wild-group-mix");
+  const result = await sbtdE2e(
+    "t13-wild-group-mix",
+    { surface: "mobile", action: "generate", target: "login" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      selectorsReady: true,
+      credentialsReady: true,
+      selectorFacts: ["(.*)", "Login", "/(.*)/"],
+    },
+  );
+  assert.equal(result.ok, true);
+  const body = readFileSync(join(root, "maestro", "flow", "login.yml"), "utf8");
+  assert.match(body, /assertVisible: "Login"/);
+  assert.doesNotMatch(body, /assertVisible: "\(\.\*\)"/);
+});
+
 test("R3r2/Q6A: defaultRunMaestro timeout after spawn ⇒ failed (not didNotStart)", async () => {
   const root = fixtureRoot("timeout-m");
   mkdirSync(join(root, "maestro", "flow"), { recursive: true });
