@@ -7,6 +7,12 @@ import {
   resolveBddHost,
 } from "./tools/bdd.js";
 import { registerClarifyTool } from "./tools/clarify.js";
+import {
+  type E2eHostOptions,
+  type E2ePluginHost,
+  registerE2eTool,
+  resolveE2eHost,
+} from "./tools/e2e.js";
 import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
 import { registerSpecTool } from "./tools/spec.js";
@@ -25,11 +31,14 @@ export type PluginHost = SectionHost &
   ToolsHost &
   HooksHost &
   ValidatePluginHost &
-  BddPluginHost & {
+  BddPluginHost &
+  E2ePluginHost & {
     /** Optional explicit validate trust handles (Q1A). Prefer validateHost. */
     validateHost?: ValidateHostOptions;
     /** Optional explicit bdd trust handles (Q1C). Prefer bddHost. */
     bddHost?: BddHostOptions;
+    /** Optional explicit e2e trust handles (Q4A). Prefer e2eHost. */
+    e2eHost?: E2eHostOptions;
   };
 
 export {
@@ -58,6 +67,24 @@ export {
   sbtdBdd,
   validateExtraPaths,
 } from "./tools/bdd.js";
+export {
+  createE2eTool,
+  defaultRunMaestro,
+  defaultRunPlaywright,
+  detectE2eConvention,
+  E2E_ACTIONS,
+  E2E_MODES,
+  E2E_OUTCOMES,
+  E2E_SURFACES,
+  modelSchemaForbidsTrustHandles as e2eModelSchemaForbidsTrustHandles,
+  pickE2eInput,
+  registerE2eTool,
+  resolveE2eHost,
+  resolveE2eTargetPath,
+  resolveReportedMode,
+  SBTD_E2E_TOOL_NAME,
+  sbtdE2e,
+} from "./tools/e2e.js";
 export {
   CLARIFY_MODES,
   createClarifyTool,
@@ -119,5 +146,6 @@ export function apply(ctx: PluginHost): void {
   registerTicketsTool(ctx);
   registerValidateTool(ctx, resolveValidateHost(ctx));
   registerBddTool(ctx, resolveBddHost(ctx));
+  registerE2eTool(ctx, resolveE2eHost(ctx));
   registerHooks(ctx);
 }

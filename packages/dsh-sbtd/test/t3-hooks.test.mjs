@@ -50,7 +50,7 @@ test("apply 注册 pre-execute 与 pre-step，且五个 sbtd_* tool", () => {
   const { tools, hooks } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 7);
+  assert.equal(tools.length, 8);
   assert.equal(tools[0].name, "sbtd_plan");
   assert.equal(tools[1].name, "sbtd_review");
   assert.equal(tools[2].name, "sbtd_clarify");
