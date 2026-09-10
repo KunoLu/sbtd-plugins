@@ -410,7 +410,8 @@ export function detectFeatureConvention(
     };
   }
   const featuresDir = join(cwd, "features");
-  if (isDir(featuresDir)) {
+  // Q1C/R5: do not adopt a symlink features/ as convention root (stat follows).
+  if (isDir(featuresDir) && !isDirSymlink(featuresDir)) {
     return { kind: "existing-features-dir", featureRoot: featuresDir };
   }
   // Q2B/R4: discover distinct feature parents independently of any file-count
@@ -470,6 +471,12 @@ export function resolveFeatureTargetPath(
     featureRoot: string;
     ambiguousRoots?: string[];
   },
+  /**
+   * When true, `convention.featureRoot` came from an explicit host override and
+   * may intentionally sit outside cwd (still must contain the target).
+   * Convention-derived roots must stay under host cwd (Q1C/R5).
+   */
+  hostFeatureRootOverride = false,
 ): { ok: true; path: string } | { ok: false; reason: string } {
   const trimmed = target.trim();
   if (!trimmed) {
@@ -494,15 +501,39 @@ export function resolveFeatureTargetPath(
       };
     }
     const abs = join(convention.featureRoot, `${trimmed}.feature`);
-    if (!isInsideRoot(cwd, abs) && !isInsideRoot(convention.featureRoot, abs)) {
-      // featureRoot should be under cwd; if host override is outside, still require under featureRoot
-      if (!isInsideRoot(convention.featureRoot, abs)) {
-        return { ok: false, reason: "target-escapes-feature-root" };
-      }
+    if (isInsideRoot(cwd, abs)) {
+      return { ok: true, path: abs };
     }
-    return { ok: true, path: abs };
+    // Outside cwd: only an explicit host featureRoot override may authorize.
+    if (hostFeatureRootOverride && isInsideRoot(convention.featureRoot, abs)) {
+      return { ok: true, path: abs };
+    }
+    return {
+      ok: false,
+      reason: hostFeatureRootOverride
+        ? "target-escapes-feature-root"
+        : "target-escapes-cwd",
+    };
   }
   return { ok: false, reason: "invalid-target" };
+}
+
+/** Q1C/R5: reject final-component symlinks before write (dangling or retarget). */
+function rejectSymlinkFeatureTarget(
+  absPath: string,
+): { ok: true } | { ok: false; reason: string } {
+  try {
+    if (lstatSync(absPath).isSymbolicLink()) {
+      return {
+        ok: false,
+        reason:
+          "target-is-symlink: refusing to follow/overwrite a .feature symlink (Q1C)",
+      };
+    }
+  } catch {
+    // ENOENT — final component absent; safe to create a new regular file.
+  }
+  return { ok: true };
 }
 
 /**
@@ -820,9 +851,20 @@ export function sbtdBdd(
       "none",
     );
   }
-  const resolved = resolveFeatureTargetPath(cwd, target, convention);
+  const hostOverride =
+    typeof host.featureRoot === "string" && host.featureRoot.length > 0;
+  const resolved = resolveFeatureTargetPath(
+    cwd,
+    target,
+    convention,
+    hostOverride,
+  );
   if (!resolved.ok) {
     return blockedResult(intent, "invalid-target", resolved.reason, "none");
+  }
+  const symlinkGate = rejectSymlinkFeatureTarget(resolved.path);
+  if (!symlinkGate.ok) {
+    return blockedResult(intent, "invalid-target", symlinkGate.reason, "none");
   }
 
   let body = featureBody(input);

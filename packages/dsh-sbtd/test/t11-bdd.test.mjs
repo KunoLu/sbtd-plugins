@@ -571,6 +571,49 @@ test("R5 Q1C: dir symlink escape blocked on write", () => {
   assert.equal(existsSync(join(root, "specs", "login.feature")), false);
 });
 
+test("R5 residual: slug + features/ dir-symlink must not write outside", () => {
+  const root = fixtureRoot("symlink-features-cwd");
+  const outside = fixtureRoot("symlink-features-outside");
+  mkdirSync(outside, { recursive: true });
+  // cwd/features → outside (convention root follows symlink)
+  symlinkSync(outside, join(root, "features"));
+  const result = sbtdBdd(
+    "t11-symlink-features",
+    {
+      intent: "write",
+      target: "login",
+      content:
+        "Feature: 逃逸\n  Scenario: s\n    Given a\n    When b\n    Then c\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(result.status, "blocked");
+  assert.equal(result.blocked.kind, "invalid-target");
+  assert.equal(existsSync(join(outside, "login.feature")), false);
+});
+
+test("R5 residual: dangling .feature symlink must not write outside", () => {
+  const root = fixtureRoot("symlink-dangling-cwd");
+  const outside = fixtureRoot("symlink-dangling-outside");
+  mkdirSync(join(root, "features"), { recursive: true });
+  mkdirSync(outside, { recursive: true });
+  const dangling = join(root, "features", "login.feature");
+  symlinkSync(join(outside, "login.feature"), dangling);
+  const result = sbtdBdd(
+    "t11-symlink-dangling",
+    {
+      intent: "write",
+      target: "features/login.feature",
+      content:
+        "Feature: 逃逸\n  Scenario: s\n    Given a\n    When b\n    Then c\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(result.status, "blocked");
+  assert.equal(result.blocked.kind, "invalid-target");
+  assert.equal(existsSync(join(outside, "login.feature")), false);
+});
+
 test("isConcurrencySafe true only for read", () => {
   const tool = createBddTool();
   assert.equal(tool.isConcurrencySafe({ intent: "read" }), true);
