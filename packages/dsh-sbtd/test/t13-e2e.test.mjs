@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -579,4 +580,180 @@ test("S2: root e2e/ wins as existing Playwright convention", () => {
   const c = detectE2eConvention(root, "web");
   assert.equal(c.kind, "existing-playwright-e2e");
   assert.equal(c.playwrightRoot, join(root, "e2e"));
+});
+
+
+test("R1r2: generate rejects flow symlink that escapes asset root", async () => {
+  const root = fixtureRoot("symlink-escape");
+  const flowDir = join(root, "maestro", "flow");
+  mkdirSync(flowDir, { recursive: true });
+  const outside = join(root, "outside-secret.yml");
+  writeFileSync(outside, "secret: keep\n");
+  symlinkSync(outside, join(flowDir, "login.yml"));
+
+  const byPath = await sbtdE2e(
+    "t13-symlink-path",
+    { surface: "mobile", action: "generate", target: "maestro/flow/login.yml" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      ...readyGenerateFacts({ selectorFacts: ["Login"] }),
+    },
+  );
+  assert.equal(byPath.outcome, "blocked");
+  assert.equal(byPath.blocked.kind, "invalid-target");
+  assert.equal(readFileSync(outside, "utf8"), "secret: keep\n");
+
+  const bySlug = await sbtdE2e(
+    "t13-symlink-slug",
+    { surface: "mobile", action: "generate", target: "login" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      ...readyGenerateFacts({ selectorFacts: ["Login"] }),
+    },
+  );
+  assert.equal(bySlug.outcome, "blocked");
+  assert.equal(bySlug.blocked.kind, "invalid-target");
+  assert.equal(readFileSync(outside, "utf8"), "secret: keep\n");
+  assert.doesNotMatch(readFileSync(outside, "utf8"), /assertVisible/);
+});
+
+test("R1r2: resolveE2eTargetPath rejects symlink escape under flow root", () => {
+  const root = fixtureRoot("symlink-resolve");
+  const flowDir = join(root, "maestro", "flow");
+  mkdirSync(flowDir, { recursive: true });
+  const outside = join(root, "evil.yml");
+  writeFileSync(outside, "x: 1\n");
+  symlinkSync(outside, join(flowDir, "login.yml"));
+  const convention = detectE2eConvention(root, "mobile");
+  const bad = resolveE2eTargetPath(
+    root,
+    "mobile",
+    "maestro/flow/login.yml",
+    convention,
+  );
+  assert.equal(bad.ok, false);
+});
+
+test("R2r2: wildcard-only selectorFacts (.*) block generate", async () => {
+  const root = fixtureRoot("wild-only");
+  const result = await sbtdE2e(
+    "t13-wild",
+    { surface: "mobile", action: "generate", target: "x" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      selectorsReady: true,
+      credentialsReady: true,
+      selectorFacts: [".*"],
+    },
+  );
+  assert.equal(result.outcome, "blocked");
+  assert.equal(result.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "maestro", "flow", "x.yml")), false);
+
+  const web = await sbtdE2e(
+    "t13-wild-web",
+    { surface: "web", action: "generate", target: "x" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: [".*", "/.*/", "/.*/i"],
+    },
+  );
+  assert.equal(web.outcome, "blocked");
+  assert.equal(web.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "tests", "e2e", "x.spec.ts")), false);
+});
+
+test("R2r2: mixed facts drop wildcards but keep concrete locators", async () => {
+  const root = fixtureRoot("wild-mix");
+  const result = await sbtdE2e(
+    "t13-wild-mix",
+    { surface: "mobile", action: "generate", target: "login" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      selectorsReady: true,
+      credentialsReady: true,
+      selectorFacts: [".*", "Login", "/.*/"],
+    },
+  );
+  assert.equal(result.ok, true);
+  const body = readFileSync(join(root, "maestro", "flow", "login.yml"), "utf8");
+  assert.match(body, /assertVisible: "Login"/);
+  assert.doesNotMatch(body, /assertVisible: "\.\*"/);
+  assert.doesNotMatch(body, /toHaveTitle\(\/\.\*\//);
+});
+
+test("R3r2/Q6A: defaultRunMaestro timeout after spawn ⇒ failed (not didNotStart)", async () => {
+  const root = fixtureRoot("timeout-m");
+  mkdirSync(join(root, "maestro", "flow"), { recursive: true });
+  const flow = join(root, "maestro", "flow", "smoke.yml");
+  writeFileSync(flow, "appId: com.example.app\n---\n- launchApp\n");
+  const bin = join(root, "bin");
+  mkdirSync(bin, { recursive: true });
+  const maestroShim = join(bin, "maestro");
+  writeFileSync(
+    maestroShim,
+    "#!/bin/sh\nwhile true; do sleep 1; done\n",
+    { mode: 0o755 },
+  );
+  const prevPath = process.env.PATH;
+  process.env.PATH = `${bin}:${prevPath ?? ""}`;
+  try {
+    const result = await defaultRunMaestro(
+      {
+        cwd: root,
+        surface: "mobile",
+        action: "run",
+        targetPath: flow,
+        reportDir: join(root, ".maestro", "reports"),
+        mode: "smoke-only",
+      },
+      300,
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.failed, true);
+    assert.notEqual(result.didNotStart, true);
+    assert.match(String(result.summary), /timed out/i);
+  } finally {
+    process.env.PATH = prevPath;
+  }
+});
+
+test("R4r2/Q6A: defaultRunPlaywright with no package ⇒ didNotStart (blocked)", async () => {
+  const root = fixtureRoot("npx-miss");
+  mkdirSync(join(root, "tests", "e2e"), { recursive: true });
+  const spec = join(root, "tests", "e2e", "smoke.spec.ts");
+  writeFileSync(spec, "import { test } from '@playwright/test';\ntest('x', async () => {});\n");
+  // No node_modules/@playwright — must not spawn npx and claim failed.
+  const result = await defaultRunPlaywright(
+    {
+      cwd: root,
+      surface: "web",
+      action: "run",
+      targetPath: spec,
+      reportDir: join(root, "tests", "e2e", "reports", "html"),
+      mode: "smoke-only",
+    },
+    5_000,
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.didNotStart, true);
+  assert.notEqual(result.failed, true);
+  assert.match(String(result.summary), /Playwright package not found|npx --no-install/i);
+
+  const mapped = await sbtdE2e(
+    "t13-npx-map",
+    { surface: "web", action: "run", target: "smoke" },
+    {
+      cwd: root,
+      mode: "smoke-only",
+      runPlaywright: async () => result,
+    },
+  );
+  assert.equal(mapped.outcome, "blocked");
+  assert.equal(mapped.runnerStarted, false);
 });

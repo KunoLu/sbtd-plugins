@@ -11,8 +11,10 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -237,6 +239,69 @@ function isInsideRootLexical(parent: string, child: string): boolean {
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 }
 
+function tryRealpath(path: string): string | null {
+  try {
+    return realpathSync(path);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * True when `child` is under `parent` using real paths when available (Q4A / R1).
+ * For not-yet-written targets, realpath the nearest existing ancestor.
+ */
+function isInsideRoot(parent: string, child: string): boolean {
+  const parentResolved = resolve(parent);
+  const childResolved = resolve(child);
+  // Asset root may not exist yet (agents-default); lexical confine until mkdir.
+  if (!existsSync(parentResolved)) {
+    return isInsideRootLexical(parentResolved, childResolved);
+  }
+  const parentReal = tryRealpath(parentResolved);
+  if (parentReal == null) return false;
+  if (existsSync(childResolved)) {
+    const childReal = tryRealpath(childResolved);
+    if (childReal == null) return false;
+    return isInsideRootLexical(parentReal, childReal);
+  }
+  // Walk up to an existing ancestor (may be a symlink dir) and realpath it.
+  let cursor = childResolved;
+  while (!existsSync(cursor)) {
+    const parentDir = dirname(cursor);
+    if (parentDir === cursor) break;
+    cursor = parentDir;
+  }
+  if (!existsSync(cursor)) {
+    return isInsideRootLexical(parentReal, childResolved);
+  }
+  const ancestorReal = tryRealpath(cursor);
+  if (ancestorReal == null) return false;
+  if (!isInsideRootLexical(parentReal, ancestorReal)) return false;
+  const suffix = relative(cursor, childResolved);
+  const projected =
+    suffix === "" ? ancestorReal : resolve(ancestorReal, suffix);
+  return isInsideRootLexical(parentReal, projected);
+}
+
+/** Q4A/R1: reject final-component symlinks before write (dangling or retarget). */
+function rejectSymlinkWriteTarget(
+  absPath: string,
+): { ok: true } | { ok: false; reason: string } {
+  try {
+    if (lstatSync(absPath).isSymbolicLink()) {
+      return {
+        ok: false,
+        reason:
+          "target-is-symlink: refusing to follow/overwrite a flow/spec symlink outside asset root (Q4A)",
+      };
+    }
+  } catch {
+    // ENOENT — final component absent; safe to create a new regular file.
+  }
+  return { ok: true };
+}
+
 function normalizeMode(raw: E2eMode | undefined): E2eMode {
   if (raw === "contract-backed" || raw === "mock-backed") return raw;
   if (raw === "smoke-only") return "smoke-only";
@@ -457,15 +522,22 @@ export function resolveE2eTargetPath(
     return { ok: false, reason: "target-escapes-cwd" };
   }
   // Q4A / R1: non-slug paths must stay under surface asset root + allowed extension.
+  // Use realpath containment so flow/spec symlinks that escape the asset root are rejected.
   if (surface === "web") {
-    if (!isInsideRootLexical(convention.playwrightRoot, abs)) {
+    if (
+      !isInsideRootLexical(convention.playwrightRoot, abs) ||
+      !isInsideRoot(convention.playwrightRoot, abs)
+    ) {
       return { ok: false, reason: "target-outside-playwright-root" };
     }
     if (!isPlaywrightSpecPath(abs)) {
       return { ok: false, reason: "target-not-playwright-spec" };
     }
   } else {
-    if (!isInsideRootLexical(convention.flowRoot, abs)) {
+    if (
+      !isInsideRootLexical(convention.flowRoot, abs) ||
+      !isInsideRoot(convention.flowRoot, abs)
+    ) {
       return { ok: false, reason: "target-outside-flow-root" };
     }
     if (!isMaestroFlowPath(abs)) {
@@ -540,20 +612,24 @@ export function modelSchemaForbidsTrustHandles(
 
 const DEFAULT_E2E_RUN_TIMEOUT_MS = 120_000;
 
+type SpawnRunnerResult = {
+  code: number | null;
+  stdout: string;
+  stderr: string;
+  error?: Error;
+  /** True when the child was spawned and then hit the wall-clock timeout (Q6A). */
+  timedOut?: boolean;
+};
+
 function spawnRunner(
   command: string,
   args: string[],
   cwd: string,
   timeoutMs: number,
-): Promise<{ code: number | null; stdout: string; stderr: string; error?: Error }> {
+): Promise<SpawnRunnerResult> {
   return new Promise((resolvePromise) => {
     let settled = false;
-    const finish = (result: {
-      code: number | null;
-      stdout: string;
-      stderr: string;
-      error?: Error;
-    }) => {
+    const finish = (result: SpawnRunnerResult) => {
       if (settled) return;
       settled = true;
       resolvePromise(result);
@@ -594,11 +670,12 @@ function spawnRunner(
       } catch {
         // ignore
       }
+      // Q6A: timeout fires only after spawn succeeded ⇒ started run ⇒ failed, not blocked.
       finish({
         code: null,
         stdout,
         stderr: `${stderr}\n(timed out after ${timeoutMs}ms)`.trim(),
-        error: new Error(`E2E runner timed out after ${timeoutMs}ms`),
+        timedOut: true,
       });
     }, timeoutMs);
 
@@ -612,6 +689,14 @@ function spawnRunner(
       finish({ code, stdout, stderr });
     });
   });
+}
+
+/** Detect npx --no-install failing because Playwright was never resolved (Q6A). */
+function isNpxPlaywrightUnresolved(stderr: string, stdout: string): boolean {
+  const text = `${stderr}\n${stdout}`;
+  return /could not determine executable to run|not found:\s*playwright|No package .*playwright|ERR_MODULE_NOT_FOUND.*playwright|Cannot find (module|package).*playwright|npm error code ENOENT|npx:.*not found|could not find package.*playwright/i.test(
+    text,
+  );
 }
 
 /**
@@ -642,6 +727,16 @@ export async function defaultRunMaestro(
     ctx.cwd,
     timeoutMs,
   );
+
+  if (result.timedOut === true) {
+    return {
+      ok: false,
+      failed: true,
+      summary:
+        result.stderr.trim() ||
+        `maestro test timed out after ${timeoutMs}ms (runner started)`,
+    };
+  }
 
   if (result.error) {
     const err = result.error as NodeJS.ErrnoException;
@@ -706,12 +801,37 @@ export async function defaultRunPlaywright(
 
   const localBin = join(ctx.cwd, "node_modules", ".bin", "playwright");
   const useLocal = existsSync(localBin);
+  if (!useLocal) {
+    // Q6A: npx --no-install with no Playwright package never runs tests ⇒ blocked/didNotStart.
+    const hasPlaywrightPkg =
+      existsSync(join(ctx.cwd, "node_modules", "@playwright", "test")) ||
+      existsSync(join(ctx.cwd, "node_modules", "playwright")) ||
+      existsSync(join(ctx.cwd, "node_modules", "playwright-core"));
+    if (!hasPlaywrightPkg) {
+      return {
+        ok: false,
+        didNotStart: true,
+        summary:
+          "Playwright package not found for `npx --no-install` (no node_modules/.bin/playwright and no @playwright/test|playwright). Install @playwright/test in the project, then re-run action=run (unit tests must inject runPlaywright stubs).",
+      };
+    }
+  }
   const command = useLocal ? localBin : "npx";
   const args = useLocal
     ? ["test", ctx.targetPath, "--reporter=html"]
     : ["--no-install", "playwright", "test", ctx.targetPath, "--reporter=html"];
 
   const result = await spawnRunner(command, args, ctx.cwd, timeoutMs);
+
+  if (result.timedOut === true) {
+    return {
+      ok: false,
+      failed: true,
+      summary:
+        result.stderr.trim() ||
+        `playwright test timed out after ${timeoutMs}ms (runner started)`,
+    };
+  }
 
   if (result.error) {
     const err = result.error as NodeJS.ErrnoException;
@@ -727,6 +847,22 @@ export async function defaultRunPlaywright(
       ok: false,
       didNotStart: true,
       summary: `Failed to start Playwright: ${err.message}`,
+    };
+  }
+
+  // npx --no-install may exit nonzero when the package still cannot be resolved.
+  if (
+    !useLocal &&
+    result.code !== 0 &&
+    isNpxPlaywrightUnresolved(result.stderr, result.stdout)
+  ) {
+    return {
+      ok: false,
+      didNotStart: true,
+      summary:
+        result.stderr.trim() ||
+        result.stdout.trim() ||
+        "Playwright package unresolved via npx --no-install; install @playwright/test then re-run.",
     };
   }
 
@@ -883,12 +1019,30 @@ function defaultPlaywrightSpecBody(
   ].join("\n");
 }
 
+/** True for wildcard-only placeholders that must not become assertVisible / title regexes (Q4A / R2). */
+function isWildcardOnlySelectorFact(fact: string): boolean {
+  const t = fact.trim();
+  if (t.length === 0) return true;
+  // Strip /pattern/flags wrappers (e.g. /.*/ / .*/i).
+  const bare = /^\/(.+)\/[a-z]*$/i.test(t) ? t.replace(/^\/(.+)\/[a-z]*$/i, "$1") : t;
+  return (
+    bare === ".*" ||
+    bare === ".+" ||
+    bare === "*" ||
+    bare === "^.*$" ||
+    bare === "^.+$" ||
+    bare === "[\\s\\S]*" ||
+    bare === "[\\S\\s]*"
+  );
+}
+
 function normalizeSelectorFacts(raw: string[] | undefined): string[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((s): s is string => typeof s === "string")
     .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+    .filter((s) => s.length > 0)
+    .filter((s) => !isWildcardOnlySelectorFact(s));
 }
 
 function hasAffirmativeCredentials(
@@ -1117,6 +1271,43 @@ export async function sbtdE2e(
         mode,
         "missing-credentials",
         "Maestro Flow Assets: blocked — credentials/accounts not confirmed.",
+        {
+          calledT12Preflight,
+          convention: convention.kind,
+          path: targetResolved.path,
+          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+        },
+      );
+    }
+
+    const assetRoot =
+      surface === "web" ? convention.playwrightRoot : convention.flowRoot;
+    // Q4A / R1 residual: refuse symlink write targets and realpath escapes (mirror bdd.ts).
+    const symlinkGate = rejectSymlinkWriteTarget(targetResolved.path);
+    if (!symlinkGate.ok) {
+      return blockedResult(
+        surface,
+        action,
+        mode,
+        "invalid-target",
+        symlinkGate.reason,
+        {
+          calledT12Preflight,
+          convention: convention.kind,
+          path: targetResolved.path,
+          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+        },
+      );
+    }
+    if (!isInsideRoot(assetRoot, targetResolved.path)) {
+      return blockedResult(
+        surface,
+        action,
+        mode,
+        "invalid-target",
+        surface === "web"
+          ? "target-outside-playwright-root (symlink/realpath escape)"
+          : "target-outside-flow-root (symlink/realpath escape)",
         {
           calledT12Preflight,
           convention: convention.kind,
