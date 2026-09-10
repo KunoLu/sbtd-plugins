@@ -17,6 +17,7 @@ import {
   SBTD_BDD_TOOL_NAME,
   createBddTool,
   detectFeatureConvention,
+  findDistinctFeatureParentDirs,
   modelSchemaForbidsTrustHandles,
   resolveBddHost,
   sbtdBdd,
@@ -506,6 +507,45 @@ test("R2: sync with target+content still blocked (not inventory success)", () =>
   assert.equal(result.blocked.kind, "sync-not-capable");
   assert.equal(result.mutation, "none");
   assert.equal(existsSync(join(root, "features", "login.feature")), false);
+});
+
+test("R4 residual: >50 features in one tree must not hide a second tree", () => {
+  const root = fixtureRoot("cap-multi");
+  const big = join(root, "apps", "web", "features");
+  const plugin = join(root, "packages", "dsh-sbtd", "features");
+  mkdirSync(big, { recursive: true });
+  mkdirSync(plugin, { recursive: true });
+  // 55 files in the first tree — old findFeatureFiles(cwd, 50) stopped here.
+  for (let i = 0; i < 55; i++) {
+    writeFileSync(
+      join(big, "f" + String(i).padStart(3, "0") + ".feature"),
+      "Feature: big" + i + "\n  Scenario: s\n    Given a\n    When b\n    Then c\n",
+      "utf8",
+    );
+  }
+  writeFileSync(
+    join(plugin, "plugin.feature"),
+    "Feature: plugin\n  Scenario: p\n    Given a\n    When b\n    Then c\n",
+    "utf8",
+  );
+  const parents = findDistinctFeatureParentDirs(root, 2);
+  assert.ok(parents.length >= 2, "must see both trees despite >50 files");
+  const conv = detectFeatureConvention(root);
+  assert.equal(conv.kind, "ambiguous-feature-trees");
+  const slug = sbtdBdd(
+    "t11-cap-slug",
+    {
+      intent: "write",
+      target: "login",
+      content:
+        "Feature: 用户登录\n  Scenario: 登录成功\n    Given 用户已注册\n    When 用户提交正确密码\n    Then 进入工作区\n",
+    },
+    { cwd: root },
+  );
+  assert.equal(slug.status, "blocked");
+  assert.match(slug.blocked.reason, /ambiguous-feature-root/);
+  assert.equal(existsSync(join(big, "login.feature")), false);
+  assert.equal(existsSync(join(plugin, "login.feature")), false);
 });
 
 test("isConcurrencySafe true only for read", () => {

@@ -240,18 +240,19 @@ function hasBddRunnerConfig(root: string): boolean {
   }
 }
 
+const FEATURE_WALK_SKIP = new Set([
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  "coverage",
+  ".trellis",
+  ".gitnexus",
+]);
+
 function findFeatureFiles(root: string, max = 500): string[] {
   const out: string[] = [];
   const stack = [root];
-  const skip = new Set([
-    "node_modules",
-    ".git",
-    "dist",
-    "build",
-    "coverage",
-    ".trellis",
-    ".gitnexus",
-  ]);
   while (stack.length > 0 && out.length < max) {
     const dir = stack.pop();
     if (dir == null) break;
@@ -262,7 +263,7 @@ function findFeatureFiles(root: string, max = 500): string[] {
       continue;
     }
     for (const name of entries) {
-      if (skip.has(name)) continue;
+      if (FEATURE_WALK_SKIP.has(name)) continue;
       const full = join(dir, name);
       let st: ReturnType<typeof statSync>;
       try {
@@ -278,6 +279,50 @@ function findFeatureFiles(root: string, max = 500): string[] {
     }
   }
   return out.sort();
+}
+
+/**
+ * Distinct parent directories of `.feature` files under `root` (Q2B / R4).
+ * Unlike findFeatureFiles, does **not** stop after N files in one tree — that
+ * would hide a second tree and silently pick the sampled root. Early-exits
+ * only once `stopAtDistinct` different parents are known (enough for ambiguous).
+ */
+export function findDistinctFeatureParentDirs(
+  root: string,
+  stopAtDistinct = 2,
+): string[] {
+  const parents = new Set<string>();
+  const stack = [root];
+  while (stack.length > 0) {
+    if (parents.size >= stopAtDistinct) break;
+    const dir = stack.pop();
+    if (dir == null) break;
+    let entries: string[];
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of entries) {
+      if (FEATURE_WALK_SKIP.has(name)) continue;
+      const full = join(dir, name);
+      let st: ReturnType<typeof statSync>;
+      try {
+        st = statSync(full);
+      } catch {
+        continue;
+      }
+      if (st.isDirectory()) {
+        stack.push(full);
+      } else if (st.isFile() && name.endsWith(".feature")) {
+        parents.add(dirname(full));
+        if (parents.size >= stopAtDistinct) {
+          return [...parents].sort();
+        }
+      }
+    }
+  }
+  return [...parents].sort();
 }
 
 export type ConventionKind =
@@ -313,11 +358,10 @@ export function detectFeatureConvention(
   if (isDir(featuresDir)) {
     return { kind: "existing-features-dir", featureRoot: featuresDir };
   }
-  const found = findFeatureFiles(cwd, 50);
-  if (found.length > 0) {
-    const dirs = [
-      ...new Set(found.map((f) => dirname(f))),
-    ].sort();
+  // Q2B/R4: discover distinct feature parents independently of any file-count
+  // cap (a large first tree must not hide a second tree / plugin fixtures).
+  const dirs = findDistinctFeatureParentDirs(cwd, 2);
+  if (dirs.length > 0) {
     if (dirs.length === 1) {
       const only = dirs[0];
       if (only == null) {
