@@ -1,5 +1,11 @@
 import { type HooksHost, registerHooks } from "./hooks.js";
 import { registerSection, type SectionHost } from "./section.js";
+import {
+  type BddHostOptions,
+  type BddPluginHost,
+  registerBddTool,
+  resolveBddHost,
+} from "./tools/bdd.js";
 import { registerClarifyTool } from "./tools/clarify.js";
 import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
@@ -18,9 +24,12 @@ export const inject = ["tools", "systemPrompt"] as const;
 export type PluginHost = SectionHost &
   ToolsHost &
   HooksHost &
-  ValidatePluginHost & {
+  ValidatePluginHost &
+  BddPluginHost & {
     /** Optional explicit validate trust handles (Q1A). Prefer validateHost. */
     validateHost?: ValidateHostOptions;
+    /** Optional explicit bdd trust handles (Q1C). Prefer bddHost. */
+    bddHost?: BddHostOptions;
   };
 
 export {
@@ -35,6 +44,20 @@ export {
   SBTD_SECTION_TEXT,
 } from "./section.js";
 export { getSession, restore, serialize } from "./state.js";
+export {
+  BDD_INTENTS,
+  catalogFeatures,
+  createBddTool,
+  detectFeatureConvention,
+  modelSchemaForbidsTrustHandles as bddModelSchemaForbidsTrustHandles,
+  pickBddInput,
+  registerBddTool,
+  resolveBddHost,
+  resolveFeatureTargetPath,
+  SBTD_BDD_TOOL_NAME,
+  sbtdBdd,
+  validateExtraPaths,
+} from "./tools/bdd.js";
 export {
   CLARIFY_MODES,
   createClarifyTool,
@@ -95,5 +118,6 @@ export function apply(ctx: PluginHost): void {
   registerSpecTool(ctx);
   registerTicketsTool(ctx);
   registerValidateTool(ctx, resolveValidateHost(ctx));
+  registerBddTool(ctx, resolveBddHost(ctx));
   registerHooks(ctx);
 }

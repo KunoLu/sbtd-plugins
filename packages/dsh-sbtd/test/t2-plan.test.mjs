@@ -526,7 +526,7 @@ test("apply 注册 sbtd_plan 且不写 AGENTS.md", async () => {
 
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 6);
+  assert.equal(tools.length, 7);
   assert.equal(tools[0].name, SBTD_PLAN_TOOL_NAME);
   assert.equal(tools[1].name, "sbtd_review");
   assert.equal(tools[2].name, "sbtd_clarify");
