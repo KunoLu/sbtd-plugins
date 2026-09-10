@@ -14,10 +14,13 @@ import { preflight as t12Preflight } from "../dist/backends/maestro.js";
 import {
   SBTD_E2E_TOOL_NAME,
   createE2eTool,
+  defaultRunMaestro,
+  defaultRunPlaywright,
   detectE2eConvention,
   modelSchemaForbidsTrustHandles,
   pickE2eInput,
   resolveE2eHost,
+  resolveE2eTargetPath,
   resolveReportedMode,
   sbtdE2e,
 } from "../dist/tools/e2e.js";
@@ -51,6 +54,16 @@ function okMaestroFacts(overrides = {}) {
     appId: "com.example.app",
     accounts: "qa@example.com",
     skipSessionWrite: true,
+    ...overrides,
+  };
+}
+
+/** Affirmative generate facts (Q4A / R2) — undefined selectorsReady must not pass. */
+function readyGenerateFacts(overrides = {}) {
+  return {
+    selectorsReady: true,
+    credentialsReady: true,
+    selectorFacts: ["Home"],
     ...overrides,
   };
 }
@@ -147,6 +160,7 @@ test("Q1B: web generate/run does NOT call T12 preflight", async () => {
   const host = {
     cwd: root,
     mode: "smoke-only",
+    ...readyGenerateFacts(),
     preflight: async () => {
       preflightCalls += 1;
       return { lastPreflight: "ok", missing: [], guidance: "should not call" };
@@ -213,6 +227,7 @@ test("Q1B: mobile generate/run always re-calls T12 even if session looks ok", as
     cwd: root,
     maestro: okMaestroFacts(),
     mode: "smoke-only",
+    ...readyGenerateFacts(),
     preflight: async (opts) => {
       calls += 1;
       return t12Preflight(opts);
@@ -326,6 +341,7 @@ test("mobile generate writes flow under convention path after ok preflight", asy
       cwd: root,
       maestro: okMaestroFacts(),
       mode: "smoke-only",
+      ...readyGenerateFacts({ selectorFacts: ["Login"] }),
     },
   );
   assert.equal(result.ok, true);
@@ -334,6 +350,8 @@ test("mobile generate writes flow under convention path after ok preflight", asy
   assert.equal(existsSync(join(root, "maestro", "flow", "login.yml")), true);
   const body = readFileSync(join(root, "maestro", "flow", "login.yml"), "utf8");
   assert.match(body, /appId: com\.example\.app/);
+  assert.match(body, /assertVisible: "Login"/);
+  assert.doesNotMatch(body, /assertVisible: "\.\*"/);
 });
 
 test("generate missing selectors ⇒ blocked (no fragile flow)", async () => {
@@ -353,6 +371,39 @@ test("generate missing selectors ⇒ blocked (no fragile flow)", async () => {
   assert.equal(existsSync(join(root, "maestro", "flow", "x.yml")), false);
 });
 
+test("R2: selectorsReady undefined blocks generate (affirmative required)", async () => {
+  const root = fixtureRoot("sel-undef");
+  const result = await sbtdE2e(
+    "t13-sel-undef",
+    { surface: "mobile", action: "generate", target: "x" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      // selectorsReady intentionally omitted
+      credentialsReady: true,
+      selectorFacts: ["Home"],
+    },
+  );
+  assert.equal(result.outcome, "blocked");
+  assert.equal(result.blocked.kind, "missing-selectors");
+  assert.equal(existsSync(join(root, "maestro", "flow", "x.yml")), false);
+});
+
+test("R2: selectorsReady true but empty selectorFacts blocks generate", async () => {
+  const root = fixtureRoot("sel-empty");
+  const result = await sbtdE2e(
+    "t13-sel-empty",
+    { surface: "web", action: "generate", target: "x" },
+    {
+      cwd: root,
+      selectorsReady: true,
+      selectorFacts: [],
+    },
+  );
+  assert.equal(result.outcome, "blocked");
+  assert.equal(result.blocked.kind, "missing-selectors");
+});
+
 test("resolveE2eHost prefers e2eHost.cwd", () => {
   const host = resolveE2eHost({
     tools: { register() {} },
@@ -360,6 +411,25 @@ test("resolveE2eHost prefers e2eHost.cwd", () => {
     e2eHost: { cwd: "/from-e2e" },
   });
   assert.equal(host.cwd, "/from-e2e");
+});
+
+test("R3: resolveE2eHost wires default production runners", () => {
+  const host = resolveE2eHost({
+    tools: { register() {} },
+    cwd: "/proj",
+  });
+  assert.equal(host.runMaestro, defaultRunMaestro);
+  assert.equal(host.runPlaywright, defaultRunPlaywright);
+});
+
+test("R3: resolveE2eHost keeps explicit runner stubs (unit override)", () => {
+  const stub = async () => ({ ok: true });
+  const host = resolveE2eHost({
+    tools: { register() {} },
+    e2eHost: { cwd: "/proj", runMaestro: stub, runPlaywright: stub },
+  });
+  assert.equal(host.runMaestro, stub);
+  assert.equal(host.runPlaywright, stub);
 });
 
 test("unit path never requires live maestro/browser binaries (Q3A)", async () => {
@@ -373,4 +443,140 @@ test("unit path never requires live maestro/browser binaries (Q3A)", async () =>
   assert.equal(result.outcome, "ok");
   assert.equal(result.calledT12Preflight, true);
   assert.equal(result.runnerStarted, false);
+});
+
+test("R1: generate rejects cwd-relative overwrite outside flow/spec root", async () => {
+  const root = fixtureRoot("overwrite");
+  mkdirSync(join(root, "src"), { recursive: true });
+  writeFileSync(join(root, "src", "index.ts"), "export {}\n");
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(join(root, "docs", "note.yml"), "keep: me\n");
+
+  const web = await sbtdE2e(
+    "t13-ow-web",
+    { surface: "web", action: "generate", target: "src/index.ts" },
+    { cwd: root, ...readyGenerateFacts() },
+  );
+  assert.equal(web.outcome, "blocked");
+  assert.equal(web.blocked.kind, "invalid-target");
+  assert.equal(readFileSync(join(root, "src", "index.ts"), "utf8"), "export {}\n");
+
+  const mobile = await sbtdE2e(
+    "t13-ow-mobile",
+    { surface: "mobile", action: "generate", target: "docs/note.yml" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      ...readyGenerateFacts(),
+    },
+  );
+  assert.equal(mobile.outcome, "blocked");
+  assert.equal(mobile.blocked.kind, "invalid-target");
+  assert.equal(readFileSync(join(root, "docs", "note.yml"), "utf8"), "keep: me\n");
+});
+
+test("R1: resolveE2eTargetPath allows relative path under flow root + yml", () => {
+  const root = fixtureRoot("rel-ok");
+  mkdirSync(join(root, "maestro", "flow"), { recursive: true });
+  const convention = detectE2eConvention(root, "mobile");
+  const ok = resolveE2eTargetPath(
+    root,
+    "mobile",
+    "maestro/flow/login.yml",
+    convention,
+  );
+  assert.equal(ok.ok, true);
+  assert.equal(ok.path, join(root, "maestro", "flow", "login.yml"));
+  const badExt = resolveE2eTargetPath(
+    root,
+    "mobile",
+    "maestro/flow/login.ts",
+    convention,
+  );
+  assert.equal(badExt.ok, false);
+  const badRoot = resolveE2eTargetPath(root, "mobile", "docs/note.yml", convention);
+  assert.equal(badRoot.ok, false);
+});
+
+test("R4: ok without native reporter file does not synthesize reportPath/md", async () => {
+  const root = fixtureRoot("no-report");
+  const result = await sbtdE2e(
+    "t13-noreport",
+    { surface: "web", action: "run", target: "smoke" },
+    {
+      cwd: root,
+      mode: "smoke-only",
+      runPlaywright: async () => ({ ok: true, summary: "ok bare" }),
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.reportPath, undefined);
+  assert.equal(result.reportMdPath, undefined);
+  // reportDir may be mkdir'd, but no formal .html/.md claims without native evidence
+  const reportDir = join(root, "tests", "e2e", "reports", "html");
+  if (existsSync(reportDir)) {
+    const { readdirSync } = await import("node:fs");
+    assert.equal(
+      readdirSync(reportDir).filter((n) => /\.(html|md|xml)$/i.test(n)).length,
+      0,
+    );
+  }
+});
+
+test("R4: reportPath + 中文 md only when native reporter file exists", async () => {
+  const root = fixtureRoot("native-report");
+  const reportDir = join(root, ".maestro", "reports");
+  mkdirSync(reportDir, { recursive: true });
+  const native = join(reportDir, "maestro-report-smoke-native.xml");
+  writeFileSync(native, "<testsuite/>\n");
+  const result = await sbtdE2e(
+    "t13-native-report",
+    { surface: "mobile", action: "run", target: "smoke" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      mode: "smoke-only",
+      runMaestro: async () => ({
+        ok: true,
+        summary: "native ok",
+        reportPath: native,
+      }),
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.reportPath, native);
+  assert.ok(result.reportMdPath);
+  assert.equal(existsSync(result.reportMdPath), true);
+  const md = readFileSync(result.reportMdPath, "utf8");
+  assert.match(md, /E2E 报告/);
+});
+
+test("S1: mobile invalid target still re-calls T12 before reject", async () => {
+  const root = fixtureRoot("t12-before-target");
+  let calls = 0;
+  const result = await sbtdE2e(
+    "t13-t12-order",
+    { surface: "mobile", action: "generate", target: "/abs/evil.yml" },
+    {
+      cwd: root,
+      maestro: okMaestroFacts(),
+      ...readyGenerateFacts(),
+      preflight: async (opts) => {
+        calls += 1;
+        return t12Preflight(opts);
+      },
+    },
+  );
+  assert.equal(calls, 1);
+  assert.equal(result.calledT12Preflight, true);
+  assert.equal(result.outcome, "blocked");
+  assert.equal(result.blocked.kind, "invalid-target");
+});
+
+test("S2: root e2e/ wins as existing Playwright convention", () => {
+  const root = fixtureRoot("root-e2e");
+  mkdirSync(join(root, "e2e"), { recursive: true });
+  const c = detectE2eConvention(root, "web");
+  assert.equal(c.kind, "existing-playwright-e2e");
+  assert.equal(c.playwrightRoot, join(root, "e2e"));
 });

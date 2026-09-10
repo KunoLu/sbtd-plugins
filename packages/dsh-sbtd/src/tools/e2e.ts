@@ -8,6 +8,7 @@
  * Unit tests never spawn maestro test / live browser (injectable runners).
  */
 
+import { type ChildProcess, spawn } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -16,7 +17,9 @@ import {
   writeFileSync,
 } from "node:fs";
 import {
+  basename,
   dirname,
+  extname,
   isAbsolute,
   join,
   normalize,
@@ -90,9 +93,14 @@ export type E2eHostOptions = {
   browserControllerBusy?: boolean | (() => boolean | Promise<boolean>);
   /** Host-declared E2E mode; mock/contract cannot report full-stack (Q6A). */
   mode?: E2eMode;
-  /** Generate selectors / locator facts; missing on generate ⇒ blocked. */
+  /** Generate selectors / locator facts; must be affirmative true on generate (Q4A). */
   selectorsReady?: boolean;
-  /** Host credentials confirmed for generate/run; missing ⇒ blocked when needed. */
+  /**
+   * Concrete locator / assertVisible texts for generate (Q4A).
+   * Required (non-empty) when selectorsReady===true — no wildcard placeholders.
+   */
+  selectorFacts?: string[];
+  /** Host credentials confirmed for generate/run; must be affirmative when needed. */
   credentialsReady?: boolean;
   /** User declined install/assist ⇒ skipped-by-user (Q6A). */
   userDeclinedAssist?: boolean;
@@ -126,7 +134,13 @@ export type E2eRunnerResult = {
   ok: boolean;
   /** When ok=false and runner did start: assertion/process failure. */
   failed?: boolean;
+  /**
+   * True when the runner never started (missing binary / spawn refuse).
+   * Mapped to T13 blocked, not failed (Q6A).
+   */
+  didNotStart?: boolean;
   summary?: string;
+  /** Set only when a native reporter actually produced this file (Q6A). */
   reportPath?: string;
   reportMdPath?: string;
 };
@@ -293,13 +307,24 @@ export function detectE2eConvention(
         ? resolve(cwd, host.playwrightRoot)
         : null;
     const existingTests = join(cwd, "tests", "e2e");
+    const existingRootE2e = join(cwd, "e2e");
+    // Convention-win: tests/e2e first, then root e2e/, else AGENTS default tests/e2e.
+    const detectedExisting = isDir(existingTests)
+      ? existingTests
+      : isDir(existingRootE2e)
+        ? existingRootE2e
+        : null;
     const defaultPw = existingTests;
-    const playwrightRoot = pwOverride ?? defaultPw;
+    const playwrightRoot = pwOverride ?? detectedExisting ?? defaultPw;
     const reportRoot =
       typeof host.reportRoot === "string" && host.reportRoot.length > 0
         ? resolve(cwd, host.reportRoot)
         : join(playwrightRoot, "reports", "html");
-    if (pwOverride != null || isDir(existingTests) || hasPlaywrightConfig(cwd)) {
+    if (
+      pwOverride != null ||
+      detectedExisting != null ||
+      hasPlaywrightConfig(cwd)
+    ) {
       return {
         kind: "existing-playwright-e2e",
         flowRoot: playwrightRoot,
@@ -431,9 +456,35 @@ export function resolveE2eTargetPath(
   if (!isInsideRootLexical(cwd, abs)) {
     return { ok: false, reason: "target-escapes-cwd" };
   }
+  // Q4A / R1: non-slug paths must stay under surface asset root + allowed extension.
+  if (surface === "web") {
+    if (!isInsideRootLexical(convention.playwrightRoot, abs)) {
+      return { ok: false, reason: "target-outside-playwright-root" };
+    }
+    if (!isPlaywrightSpecPath(abs)) {
+      return { ok: false, reason: "target-not-playwright-spec" };
+    }
+  } else {
+    if (!isInsideRootLexical(convention.flowRoot, abs)) {
+      return { ok: false, reason: "target-outside-flow-root" };
+    }
+    if (!isMaestroFlowPath(abs)) {
+      return { ok: false, reason: "target-not-maestro-yaml" };
+    }
+  }
   const base = trimmed.split(/[/\\]/).pop() ?? trimmed;
-  const slug = base.replace(/\.(yml|yaml|ts|js|mjs|feature)$/i, "") || "target";
+  const slug =
+    base.replace(/\.(yml|yaml|spec\.(ts|js|mjs|cjs|tsx|jsx)|test\.(ts|js|mjs|cjs|tsx|jsx)|ts|js|mjs|feature)$/i, "") ||
+    "target";
   return { ok: true, path: abs, slug };
+}
+
+function isMaestroFlowPath(absPath: string): boolean {
+  return /\.ya?ml$/i.test(absPath);
+}
+
+function isPlaywrightSpecPath(absPath: string): boolean {
+  return /\.(spec|test)\.(ts|tsx|js|jsx|mjs|cjs)$/i.test(absPath);
 }
 
 function reportStem(
@@ -487,8 +538,242 @@ export function modelSchemaForbidsTrustHandles(
   return true;
 }
 
+const DEFAULT_E2E_RUN_TIMEOUT_MS = 120_000;
+
+function spawnRunner(
+  command: string,
+  args: string[],
+  cwd: string,
+  timeoutMs: number,
+): Promise<{ code: number | null; stdout: string; stderr: string; error?: Error }> {
+  return new Promise((resolvePromise) => {
+    let settled = false;
+    const finish = (result: {
+      code: number | null;
+      stdout: string;
+      stderr: string;
+      error?: Error;
+    }) => {
+      if (settled) return;
+      settled = true;
+      resolvePromise(result);
+    };
+
+    let child: ChildProcess;
+    try {
+      child = spawn(command, args, {
+        cwd,
+        stdio: ["ignore", "pipe", "pipe"],
+        env: process.env,
+        shell: false,
+      });
+    } catch (err) {
+      finish({
+        code: null,
+        stdout: "",
+        stderr: "",
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
+      return;
+    }
+
+    let stdout = "";
+    let stderr = "";
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr?.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+
+    const timer = setTimeout(() => {
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
+      finish({
+        code: null,
+        stdout,
+        stderr: `${stderr}\n(timed out after ${timeoutMs}ms)`.trim(),
+        error: new Error(`E2E runner timed out after ${timeoutMs}ms`),
+      });
+    }, timeoutMs);
+
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      finish({ code: null, stdout, stderr, error: err });
+    });
+
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      finish({ code, stdout, stderr });
+    });
+  });
+}
+
 /**
- * Resolve host-owned cwd / maestro / runners for production registration (Q4A).
+ * Production Maestro runner (Q3A): `maestro test --format junit --output …`.
+ * Unit tests inject stubs and never hit this path.
+ */
+export async function defaultRunMaestro(
+  ctx: E2eRunnerContext,
+  timeoutMs: number = DEFAULT_E2E_RUN_TIMEOUT_MS,
+): Promise<E2eRunnerResult> {
+  mkdirSync(ctx.reportDir, { recursive: true });
+  const slug =
+    basename(ctx.targetPath).replace(/\.ya?ml$/i, "") || "flow";
+  const stem = reportStem("maestro", slug, ctx.cwd);
+  const reportPath = join(ctx.reportDir, `${stem}.xml`);
+
+  if (!existsSync(ctx.targetPath)) {
+    return {
+      ok: false,
+      didNotStart: true,
+      summary: `Maestro flow missing at ${ctx.targetPath}; generate first or pass an existing flow.`,
+    };
+  }
+
+  const result = await spawnRunner(
+    "maestro",
+    ["test", ctx.targetPath, "--format", "junit", "--output", reportPath],
+    ctx.cwd,
+    timeoutMs,
+  );
+
+  if (result.error) {
+    const err = result.error as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") {
+      return {
+        ok: false,
+        didNotStart: true,
+        summary:
+          "Maestro CLI not found on PATH. Install Maestro locally, then re-run `sbtd_e2e` action=run (unit tests must inject runMaestro stubs).",
+      };
+    }
+    return {
+      ok: false,
+      didNotStart: true,
+      summary: `Failed to start maestro test: ${err.message}`,
+    };
+  }
+
+  const nativeOk = existsSync(reportPath);
+  if (result.code === 0) {
+    return {
+      ok: true,
+      summary: "maestro test passed",
+      ...(nativeOk ? { reportPath } : {}),
+    };
+  }
+  return {
+    ok: false,
+    failed: true,
+    summary:
+      result.stderr.trim() ||
+      result.stdout.trim() ||
+      `maestro test exited ${result.code ?? "null"}`,
+    ...(nativeOk ? { reportPath } : {}),
+  };
+}
+
+/**
+ * Production Playwright runner (Q3A): local `playwright` bin or `npx playwright test`.
+ * Unit tests inject stubs and never hit this path.
+ */
+export async function defaultRunPlaywright(
+  ctx: E2eRunnerContext,
+  timeoutMs: number = DEFAULT_E2E_RUN_TIMEOUT_MS,
+): Promise<E2eRunnerResult> {
+  mkdirSync(ctx.reportDir, { recursive: true });
+  const slug =
+    basename(ctx.targetPath)
+      .replace(/\.(spec|test)\.(ts|tsx|js|jsx|mjs|cjs)$/i, "") || "spec";
+  const stem = reportStem("playwright", slug, ctx.cwd);
+  const reportPath = join(ctx.reportDir, `${stem}.html`);
+  const tempDir = join(ctx.reportDir, ".playwright-html-current");
+  mkdirSync(tempDir, { recursive: true });
+
+  if (!existsSync(ctx.targetPath)) {
+    return {
+      ok: false,
+      didNotStart: true,
+      summary: `Playwright spec missing at ${ctx.targetPath}; generate first or pass an existing spec.`,
+    };
+  }
+
+  const localBin = join(ctx.cwd, "node_modules", ".bin", "playwright");
+  const useLocal = existsSync(localBin);
+  const command = useLocal ? localBin : "npx";
+  const args = useLocal
+    ? ["test", ctx.targetPath, "--reporter=html"]
+    : ["--no-install", "playwright", "test", ctx.targetPath, "--reporter=html"];
+
+  const result = await spawnRunner(command, args, ctx.cwd, timeoutMs);
+
+  if (result.error) {
+    const err = result.error as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") {
+      return {
+        ok: false,
+        didNotStart: true,
+        summary:
+          "Playwright binary not found (node_modules/.bin/playwright or npx). Install @playwright/test in the project, then re-run action=run (unit tests must inject runPlaywright stubs).",
+      };
+    }
+    return {
+      ok: false,
+      didNotStart: true,
+      summary: `Failed to start Playwright: ${err.message}`,
+    };
+  }
+
+  // Promote native HTML output when present (temp index or default playwright-report).
+  const candidates = [
+    join(tempDir, "index.html"),
+    join(ctx.cwd, "playwright-report", "index.html"),
+    join(ctx.reportDir, "index.html"),
+  ];
+  let nativeSource: string | undefined;
+  for (const c of candidates) {
+    if (existsSync(c)) {
+      nativeSource = c;
+      break;
+    }
+  }
+  if (nativeSource != null) {
+    try {
+      writeFileSync(reportPath, readFileSync(nativeSource));
+    } catch {
+      // fall through — only claim reportPath when file exists
+    }
+  }
+
+  const nativeOk = existsSync(reportPath);
+  if (result.code === 0) {
+    return {
+      ok: true,
+      summary: "playwright test passed",
+      ...(nativeOk ? { reportPath } : {}),
+    };
+  }
+  return {
+    ok: false,
+    failed: true,
+    summary:
+      result.stderr.trim() ||
+      result.stdout.trim() ||
+      `playwright test exited ${result.code ?? "null"}`,
+    ...(nativeOk ? { reportPath } : {}),
+  };
+}
+
+/**
+ * Resolve host-owned cwd / maestro / runners for production registration (Q4A / Q3A).
+ * Wires default Maestro/Playwright runners so production `action=run` is not a
+ * permanent `runner-not-injected` dead path; unit tests override with stubs.
  */
 export function resolveE2eHost(ctx: E2ePluginHost): E2eHostOptions {
   const explicit = ctx.e2eHost ?? {};
@@ -501,6 +786,8 @@ export function resolveE2eHost(ctx: E2ePluginHost): E2eHostOptions {
   return {
     ...explicit,
     cwd,
+    runMaestro: explicit.runMaestro ?? defaultRunMaestro,
+    runPlaywright: explicit.runPlaywright ?? defaultRunPlaywright,
   };
 }
 
@@ -558,28 +845,61 @@ function needsT12(surface: E2eSurface, action: E2eAction): boolean {
   );
 }
 
-function defaultMaestroFlowBody(slug: string, appId: string): string {
+function defaultMaestroFlowBody(
+  slug: string,
+  appId: string,
+  selectorFacts: string[],
+): string {
+  const assertions = selectorFacts.map(
+    (fact) => `- assertVisible: ${JSON.stringify(fact)}`,
+  );
   return [
     `appId: ${appId}`,
     "---",
     `- launchApp`,
     `# smoke flow generated by sbtd_e2e for ${slug}`,
-    `- assertVisible: ".*"`,
+    ...assertions,
     "",
   ].join("\n");
 }
 
-function defaultPlaywrightSpecBody(slug: string): string {
+function defaultPlaywrightSpecBody(
+  slug: string,
+  selectorFacts: string[],
+): string {
+  const asserts = selectorFacts.map(
+    (fact) =>
+      `  await expect(page.getByText(${JSON.stringify(fact)})).toBeVisible();`,
+  );
   return [
     `import { test, expect } from "@playwright/test";`,
     "",
     `test("${slug} smoke", async ({ page }) => {`,
-    `  // Generated by sbtd_e2e — replace URL/selectors with project facts.`,
+    `  // Generated by sbtd_e2e from host-injected selector facts.`,
     `  await page.goto("/");`,
-    `  await expect(page).toHaveTitle(/.*/);`,
+    ...asserts,
     `});`,
     "",
   ].join("\n");
+}
+
+function normalizeSelectorFacts(raw: string[] | undefined): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((s): s is string => typeof s === "string")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+function hasAffirmativeCredentials(
+  host: E2eHostOptions,
+  surface: E2eSurface,
+): boolean {
+  if (surface === "web") return true;
+  if (host.credentialsReady === true) return true;
+  const accounts = host.maestro?.accounts;
+  if (accounts === true) return true;
+  return typeof accounts === "string" && accounts.trim().length > 0;
 }
 
 function chineseReportMd(opts: {
@@ -671,27 +991,9 @@ export async function sbtdE2e(
     }
   }
 
-  const convention = detectE2eConvention(cwd, surface, host);
-  const targetResolved = resolveE2eTargetPath(
-    cwd,
-    surface,
-    input.target,
-    convention,
-    platform,
-  );
-  if (!targetResolved.ok) {
-    return blockedResult(
-      surface,
-      action,
-      mode,
-      "invalid-target",
-      targetResolved.reason,
-    );
-  }
-
+  // Q1B S1: mobile|hybrid always re-call T12 before target rejection.
   let calledT12Preflight = false;
   let preflightResult: PreflightResult | undefined;
-
   const callT12 = needsT12(surface, action);
   if (callT12) {
     calledT12Preflight = true;
@@ -712,8 +1014,6 @@ export async function sbtdE2e(
         action,
         outcome: "blocked",
         mode,
-        convention: convention.kind,
-        path: targetResolved.path,
         preflight: preflightResult,
         calledT12Preflight: true,
         runnerStarted: false,
@@ -729,6 +1029,29 @@ export async function sbtdE2e(
             : `Blocked before ${action}: T12 preflight not ok — no maestro test process started.`,
       };
     }
+  }
+
+  const convention = detectE2eConvention(cwd, surface, host);
+  const targetResolved = resolveE2eTargetPath(
+    cwd,
+    surface,
+    input.target,
+    convention,
+    platform,
+  );
+  if (!targetResolved.ok) {
+    return blockedResult(
+      surface,
+      action,
+      mode,
+      "invalid-target",
+      targetResolved.reason,
+      {
+        calledT12Preflight,
+        convention: convention.kind,
+        ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+      },
+    );
   }
 
   // action === preflight
@@ -766,46 +1089,40 @@ export async function sbtdE2e(
 
   // generate / run — additional generate gates
   if (action === "generate") {
-    if (surface !== "web") {
-      // Missing selectors at generate ⇒ blocked, no fragile flow (Q4A / §3.5)
-      if (host.selectorsReady === false) {
-        return blockedResult(
-          surface,
-          action,
-          mode,
-          "missing-selectors",
-          "Maestro Flow Assets: blocked — selectors/locator facts missing; will not invent fragile flow.",
-          {
-            calledT12Preflight,
-            convention: convention.kind,
-            path: targetResolved.path,
-            ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
-          },
-        );
-      }
-      if (host.credentialsReady === false) {
-        return blockedResult(
-          surface,
-          action,
-          mode,
-          "missing-credentials",
-          "Maestro Flow Assets: blocked — credentials/accounts not confirmed.",
-          {
-            calledT12Preflight,
-            convention: convention.kind,
-            path: targetResolved.path,
-            ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
-          },
-        );
-      }
-    } else if (host.selectorsReady === false) {
+    const selectorFacts = normalizeSelectorFacts(host.selectorFacts);
+    // Q4A / R2: require affirmative selector facts (undefined ≠ ok); no fragile wildcards.
+    if (host.selectorsReady !== true || selectorFacts.length === 0) {
+      const reason =
+        surface === "web"
+          ? "Web generate blocked — affirmative selectors/locator facts required; will not invent fragile tests."
+          : "Maestro Flow Assets: blocked — selectors/locator facts missing; will not invent fragile flow.";
       return blockedResult(
         surface,
         action,
         mode,
         "missing-selectors",
-        "Web generate blocked — selectors missing; will not invent fragile tests.",
-        { calledT12Preflight: false, convention: convention.kind, path: targetResolved.path },
+        reason,
+        {
+          calledT12Preflight,
+          convention: convention.kind,
+          path: targetResolved.path,
+          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+        },
+      );
+    }
+    if (!hasAffirmativeCredentials(host, surface)) {
+      return blockedResult(
+        surface,
+        action,
+        mode,
+        "missing-credentials",
+        "Maestro Flow Assets: blocked — credentials/accounts not confirmed.",
+        {
+          calledT12Preflight,
+          convention: convention.kind,
+          path: targetResolved.path,
+          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+        },
       );
     }
 
@@ -813,7 +1130,7 @@ export async function sbtdE2e(
     if (surface === "web") {
       writeFileSync(
         targetResolved.path,
-        defaultPlaywrightSpecBody(targetResolved.slug),
+        defaultPlaywrightSpecBody(targetResolved.slug, selectorFacts),
         "utf8",
       );
     } else {
@@ -823,7 +1140,7 @@ export async function sbtdE2e(
         "com.example.app";
       writeFileSync(
         targetResolved.path,
-        defaultMaestroFlowBody(targetResolved.slug, appId),
+        defaultMaestroFlowBody(targetResolved.slug, appId, selectorFacts),
         "utf8",
       );
     }
@@ -844,11 +1161,7 @@ export async function sbtdE2e(
     );
   }
 
-  // action === run
-  const stem =
-    surface === "web"
-      ? reportStem("playwright", targetResolved.slug, cwd)
-      : reportStem("maestro", targetResolved.slug, cwd);
+  // action === run — production defaults via resolveE2eHost / fallback (Q3A / R3)
   const reportDir = convention.reportRoot;
   mkdirSync(reportDir, { recursive: true });
 
@@ -862,68 +1175,67 @@ export async function sbtdE2e(
     mode,
   };
 
-  let runnerResult: E2eRunnerResult;
-  let runnerStarted = false;
+  const runPlaywright = host.runPlaywright ?? defaultRunPlaywright;
+  const runMaestro = host.runMaestro ?? defaultRunMaestro;
+  const runnerResult: E2eRunnerResult =
+    surface === "web"
+      ? await runPlaywright(runnerCtx)
+      : await runMaestro(runnerCtx);
 
-  if (surface === "web") {
-    if (host.runPlaywright == null) {
-      // Production without injectable runner: do not spawn live browser in this slice's
-      // default path when unset — report blocked (no silent live spawn). Hosts inject.
-      return blockedResult(
-        surface,
-        action,
-        mode,
-        "runner-not-injected",
-        "Playwright runner not host-injected; refusing to spawn a live browser from unit/default path.",
-        { calledT12Preflight: false, convention: convention.kind, path: targetResolved.path },
-      );
-    }
-    runnerStarted = true;
-    runnerResult = await host.runPlaywright(runnerCtx);
-  } else {
-    if (host.runMaestro == null) {
-      return blockedResult(
-        surface,
-        action,
-        mode,
-        "runner-not-injected",
-        "Maestro runner not host-injected; refusing to spawn `maestro test` from unit/default path.",
-        {
-          calledT12Preflight,
-          convention: convention.kind,
-          path: targetResolved.path,
-          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
-        },
-      );
-    }
-    runnerStarted = true;
-    runnerResult = await host.runMaestro(runnerCtx);
+  if (runnerResult.didNotStart === true) {
+    return blockedResult(
+      surface,
+      action,
+      mode,
+      "runner-unavailable",
+      runnerResult.summary ??
+        "E2E runner unavailable after start attempt; see host guidance.",
+      {
+        calledT12Preflight,
+        convention: convention.kind,
+        path: targetResolved.path,
+        ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+      },
+    );
   }
 
-  const reportPath =
-    runnerResult.reportPath ??
-    join(
-      reportDir,
-      surface === "web" ? `${stem}.html` : `${stem}.xml`,
-    );
-  const reportMdPath =
-    runnerResult.reportMdPath ?? join(reportDir, `${stem}.md`);
+  // Q6A / R4: formal reportPath + 中文 .md only when native reporter file exists.
+  const nativeReportPath =
+    typeof runnerResult.reportPath === "string" &&
+    runnerResult.reportPath.length > 0 &&
+    existsSync(runnerResult.reportPath)
+      ? runnerResult.reportPath
+      : undefined;
 
-  if (runnerResult.ok) {
-    // Named reports + 中文 .md only when a native reporter actually ran (Q6A).
+  let reportMdPath: string | undefined;
+  if (nativeReportPath != null) {
+    reportMdPath =
+      typeof runnerResult.reportMdPath === "string" &&
+      runnerResult.reportMdPath.length > 0
+        ? runnerResult.reportMdPath
+        : join(
+            dirname(nativeReportPath),
+            `${basename(nativeReportPath, extname(nativeReportPath))}.md`,
+          );
+    const outcomeLabel: E2eOutcome = runnerResult.ok ? "ok" : "failed";
     if (!existsSync(reportMdPath)) {
       writeFileSync(
         reportMdPath,
         chineseReportMd({
           surface,
           action,
-          outcome: "ok",
+          outcome: outcomeLabel,
           mode,
-          summary: runnerResult.summary ?? "E2E run passed.",
+          summary:
+            runnerResult.summary ??
+            (runnerResult.ok ? "E2E run passed." : "E2E assertions failed."),
         }),
         "utf8",
       );
     }
+  }
+
+  if (runnerResult.ok) {
     return withOptionalPreflight(
       {
         ok: true,
@@ -933,8 +1245,8 @@ export async function sbtdE2e(
         mode,
         convention: convention.kind,
         path: targetResolved.path,
-        reportPath,
-        reportMdPath,
+        ...(nativeReportPath != null ? { reportPath: nativeReportPath } : {}),
+        ...(reportMdPath != null ? { reportMdPath } : {}),
         calledT12Preflight,
         runnerStarted: true,
         note: runnerResult.summary ?? `E2E run ok (mode=${mode})`,
@@ -944,19 +1256,6 @@ export async function sbtdE2e(
   }
 
   // Runner started and lost ⇒ failed (not blocked) (Q6A)
-  if (!existsSync(reportMdPath)) {
-    writeFileSync(
-      reportMdPath,
-      chineseReportMd({
-        surface,
-        action,
-        outcome: "failed",
-        mode,
-        summary: runnerResult.summary ?? "E2E assertions failed.",
-      }),
-      "utf8",
-    );
-  }
   return withOptionalPreflight(
     {
       ok: false,
@@ -966,8 +1265,8 @@ export async function sbtdE2e(
       mode,
       convention: convention.kind,
       path: targetResolved.path,
-      reportPath,
-      reportMdPath,
+      ...(nativeReportPath != null ? { reportPath: nativeReportPath } : {}),
+      ...(reportMdPath != null ? { reportMdPath } : {}),
       calledT12Preflight,
       runnerStarted: true,
       note: runnerResult.summary ?? "E2E run failed assertions.",
@@ -975,6 +1274,7 @@ export async function sbtdE2e(
     preflightResult,
   );
 }
+
 
 export const SBTD_E2E_DESCRIPTION =
   "Preflight, generate, or run Web / Mobile / Hybrid E2E. " +

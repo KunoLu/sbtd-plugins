@@ -69,6 +69,8 @@ export {
 } from "./tools/bdd.js";
 export {
   createE2eTool,
+  defaultRunMaestro,
+  defaultRunPlaywright,
   detectE2eConvention,
   E2E_ACTIONS,
   E2E_MODES,
