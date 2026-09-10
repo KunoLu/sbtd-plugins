@@ -208,7 +208,8 @@ export function defaultDetectCli(): CliProbe {
  * Shutdown runtime names matching iPhone/iPad must not count as success.
  */
 export function simctlHasBootedDevice(out: string): boolean {
-  return /\(Booted\)/i.test(out) || /\bBooted\b/i.test(out);
+  // Match only the parenthesized simctl state marker — not the word "Booted" in a device name.
+  return /\(Booted\)/i.test(out);
 }
 
 /**
@@ -370,15 +371,15 @@ function buildGuidance(missing: string[], platform?: PlatformHint): string {
   if (missing.includes(MISSING_DEVICE)) {
     if (platform === "ios") {
       lines.push(
-        "Start an iOS Simulator, e.g. `open -a Simulator` then `xcrun simctl list devices available`.",
+        "Start a Booted iOS Simulator, e.g. `open -a Simulator` then confirm `(Booted)` via `xcrun simctl list devices available`. Local deviceClass=sim is a hint only — live Booted state is required.",
       );
     } else if (platform === "android") {
       lines.push(
-        "Start an Android Emulator or connect USB; check with `adb devices`. Do not auto-create AVDs.",
+        "Start an Android Emulator or connect USB; check with `adb devices` for a `\tdevice` line. Local deviceClass=emulator|usb are hints only — live adb device is required. Do not auto-create AVDs.",
       );
     } else {
       lines.push(
-        "Start iOS Simulator (`open -a Simulator`) or Android Emulator / USB (`adb devices`), or declare deviceClass=cloud|sim|emulator|usb.",
+        "Start a Booted iOS Simulator (`open -a Simulator` / `xcrun simctl list`) or an Android Emulator/USB device visible via `adb devices` (`\tdevice`). Only `deviceClass=cloud` skips the live list (declaration-only); local deviceClass=sim|emulator|usb are hints and still require a live Booted sim / adb device.",
       );
     }
   }

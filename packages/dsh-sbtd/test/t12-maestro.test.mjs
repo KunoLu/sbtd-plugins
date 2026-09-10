@@ -108,6 +108,51 @@ test("preflight: missing app and/or device => guidance mentions app AND virtual 
   assert.match(deviceOnly.guidance, /virtual device/i);
 });
 
+test("preflight: missing-device guidance points at Booted/adb; only cloud is declaration-only (Q1A R3)", async () => {
+  const noPlatform = await preflight(
+    okProbes({
+      skipSessionWrite: true,
+      detectDevice: async () => ({ ok: false, detail: "no device" }),
+    }),
+  );
+  assert.ok(noPlatform.missing.includes("device"));
+  assert.match(noPlatform.guidance, /Booted/i);
+  assert.match(noPlatform.guidance, /adb devices/i);
+  assert.match(noPlatform.guidance, /deviceClass=cloud/);
+  // Must NOT tell users that declaring local class resolves step 3.
+  assert.doesNotMatch(
+    noPlatform.guidance,
+    /declare deviceClass=cloud\|sim\|emulator\|usb/,
+  );
+  assert.doesNotMatch(
+    noPlatform.guidance,
+    /declare deviceClass=sim/,
+  );
+
+  const ios = await preflight(
+    okProbes({
+      skipSessionWrite: true,
+      platform: "ios",
+      detectDevice: async () => ({ ok: false, detail: "no device" }),
+    }),
+  );
+  assert.match(ios.guidance, /Booted/i);
+  assert.doesNotMatch(ios.guidance, /declare deviceClass=cloud\|sim\|emulator\|usb/);
+
+  const android = await preflight(
+    okProbes({
+      skipSessionWrite: true,
+      platform: "android",
+      detectDevice: async () => ({ ok: false, detail: "no device" }),
+    }),
+  );
+  assert.match(android.guidance, /adb devices/i);
+  assert.doesNotMatch(
+    android.guidance,
+    /declare deviceClass=cloud\|sim\|emulator\|usb/,
+  );
+});
+
 test("preflight: cloud declaration records device class without upload/run (Q6A)", async () => {
   let sawOptions = null;
   const result = await preflight(
@@ -157,46 +202,40 @@ test("simctlHasBootedDevice: Booted required; Shutdown iPhone/iPad not enough (Q
 
   const empty = "No devices are available.";
   assert.equal(simctlHasBootedDevice(empty), false);
+
+  // R2 residual: word "Booted" in the device *name* must not count (state is Shutdown).
+  const bootedNameShutdown = `
+== Devices ==
+-- iOS 17.0 --
+    Booted QA (CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC) (Shutdown)
+`;
+  assert.equal(simctlHasBootedDevice(bootedNameShutdown), false);
 });
 
-test("defaultDetectDevice: local deviceClass is hint; live list still required (Q1A R1)", () => {
-  // Declared sim/emulator/usb must NOT short-circuit to ok without live listing.
-  // Detail must never be the old "declared <class>" skip message.
+test("preflight: local deviceClass hint + failed live list => blocked for sim|emulator|usb (Q1A R1 / Q5A stub)", async () => {
+  // Declared local classes must NOT short-circuit to ok — inject failed live list (no spawn).
   for (const deviceClass of ["sim", "emulator", "usb"]) {
-    const probe = defaultDetectDevice({ deviceClass, platform: "ios" });
-    if (probe.ok) {
-      // Live list found a Booted sim — class from live probe, not declaration skip.
-      assert.equal(probe.class, "sim");
-      assert.doesNotMatch(probe.detail ?? "", /^declared /);
-    } else {
-      assert.equal(probe.ok, false);
-      assert.doesNotMatch(probe.detail ?? "", /^declared /);
-      assert.match(probe.detail ?? "", /Booted sim|device|detect|virtual/i);
-    }
+    let sawOptions = null;
+    const result = await preflight(
+      okProbes({
+        skipSessionWrite: true,
+        deviceClass,
+        detectDevice: async (opts) => {
+          sawOptions = opts;
+          return {
+            ok: false,
+            detail:
+              "No Booted sim / emulator / USB device detected; start a virtual device or declare deviceClass=cloud",
+          };
+        },
+      }),
+    );
+    assert.equal(sawOptions?.deviceClass, deviceClass);
+    assert.equal(result.lastPreflight, "blocked");
+    assert.ok(result.missing.includes("device"));
+    assert.equal(result.probes?.device?.ok, false);
+    assert.doesNotMatch(result.probes?.device?.detail ?? "", /^declared /);
   }
-});
-
-test("preflight: declared sim + failed live list => blocked (Q1A R1)", async () => {
-  let sawOptions = null;
-  const result = await preflight(
-    okProbes({
-      skipSessionWrite: true,
-      deviceClass: "sim",
-      detectDevice: async (opts) => {
-        sawOptions = opts;
-        // Mirror fixed defaultDetectDevice: local class is hint; live failed.
-        return {
-          ok: false,
-          detail:
-            "No Booted sim / emulator / USB device detected; start a virtual device or declare deviceClass=cloud",
-        };
-      },
-    }),
-  );
-  assert.equal(sawOptions?.deviceClass, "sim");
-  assert.equal(result.lastPreflight, "blocked");
-  assert.ok(result.missing.includes("device"));
-  assert.equal(result.probes?.device?.ok, false);
 });
 
 test("pickModelInput: platform hint only; rejects T10 trust keys (Q4A)", () => {
@@ -307,13 +346,11 @@ test("preflight: never throws when detect stubs throw", async () => {
   assert.equal(typeof result.guidance, "string");
 });
 
-test("defaults exist and never throw for missing env", () => {
+test("defaults exist as injectable functions (Q5A: no live spawn in unit tests)", () => {
   assert.equal(typeof defaultDetectJava, "function");
   assert.equal(typeof defaultDetectCli, "function");
-  const j = defaultDetectJava();
-  const c = defaultDetectCli();
-  assert.equal(typeof j.ok, "boolean");
-  assert.equal(typeof c.ok, "boolean");
+  assert.equal(typeof defaultDetectDevice, "function");
+  // Do not invoke live defaults here — unit tests stub detect* (Q5A).
 });
 
 test("bundleId alias satisfies identity with accounts", async () => {
