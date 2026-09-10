@@ -7,7 +7,7 @@
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-10（上海） |
-| 同步时 main | `d729d6e`（#53 T11；#52 TODO backfill；T10 #51 → `014f480`） |
+| 同步时 main | `61026a1`（#55 T12；#53 T11 → `d729d6e`；#52 TODO；T10 #51 → `014f480`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -19,7 +19,7 @@
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
 | **P1** | T4–T8 核心闭环 | ✅ T4–T8 完成（T8 #47 → `a90a96f`；T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63` |
-| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55（merge SHA pending chore）；T13–T14 未开 |
+| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55 → `61026a1`；T13–T14 未开 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
 ---
@@ -54,7 +54,7 @@
 | T9 | GitNexus 后端 | ✅ | #49 → `314c345`；scheme A finish；CLEAN r2；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1 REQUIRED closed（`--index-only` + skip-before-analyze）；archive `09-09-dsh-sbtd-t9-gitnexus-backend-grill` + `09-09-dsh-sbtd-t9-gitnexus-backend-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T10 | `sbtd_validate` | ✅ | #51 → `014f480`；scheme A finish；CLEAN r4；locks Q1A Q2A Q3A(+clar) Q4A Q5A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；archive `09-09-dsh-sbtd-t10-sbtd-validate-grill` + `09-09-dsh-sbtd-t10-sbtd-validate-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T11 | `sbtd_bdd` | ✅ | #53 → `d729d6e`；scheme A finish；CLEAN r5；locks Q1C Q2B Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r5 REQUIRED closed；archive `09-10-dsh-sbtd-t11-sbtd-bdd-grill` + `09-10-dsh-sbtd-t11-sbtd-bdd-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T12 | Maestro 预检 | ✅ | #55（merge SHA pending）；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
+| T12 | Maestro 预检 | ✅ | #55 → `61026a1`；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T13 | `sbtd_e2e` | ⬜ |  |
 | T14 | `sbtd_lessons` | ⬜ |  |
 | T15 | `/sbtd` 命令与 README | ⬜ | P3 |
@@ -105,7 +105,7 @@
 | 5 | **T9** GitNexus 后端 | ✅ #49 → `314c345` |
 | 6 | **T10** `sbtd_validate` | ✅ #51 → `014f480` |
 | 7 | **T11** `sbtd_bdd` | ✅ #53 → `d729d6e` |
-| 8 | **T12** Maestro 预检 | ✅ #55（merge SHA pending） |
+| 8 | **T12** Maestro 预检 | ✅ #55 → `61026a1` |
 | 9 | **T13** `sbtd_e2e` | ⬜ 下一队列 |
 ---
 
@@ -113,7 +113,8 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-10 | T12 #55 scheme A finish/merge：CLEAN r3；tip `a42ca4c`；locks Q1A–Q6A；REQUIRED_CHANGES=none；r1 R1/R2 + r2 R2/R3/R4 closed；tests 17/17 t12-maestro；Main+Pr55R3Reviewer+advisor CONTENT CLEAN；不发布包；下一队列 T13（未开） |
+| 2026-09-10 | T12 #55 → main `61026a1`（TODO merge-SHA backfill） |
+| 2026-09-10 | T12 #55 scheme A finish/merge：CLEAN r3；tip `a42ca4c`；locks Q1A–Q6A；REQUIRED_CHANGES=none；r1 R1/R2 + r2 R2/R3/R4 closed；tests 17/17 t12-maestro；Main+Pr55R3Reviewer+advisor CONTENT CLEAN；squash `61026a1`；不发布包；下一队列 T13（未开） |
 | 2026-09-10 | T11 #53 → main `d729d6e`（TODO merge-SHA backfill） |
 | 2026-09-10 | T11 #53 scheme A finish/merge：CLEAN r5；tip `975d878`；locks Q1C–Q6A；REQUIRED_CHANGES=none；r1–r5 REQUIRED closed；tests 228；Main+Pr53R5Reviewer CLEAN；Advisor no content verdict；squash `d729d6e`；不发布包；下一队列 T12（未开） |
 | 2026-09-10 | T10 #51 → main `014f480`（TODO merge-SHA backfill） |
