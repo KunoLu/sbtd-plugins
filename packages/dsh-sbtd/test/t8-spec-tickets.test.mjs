@@ -75,7 +75,7 @@ test("apply 注册 sbtd_spec 与 sbtd_tickets", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 6);
+  assert.equal(tools.length, 7);
   assert.equal(tools[3].name, SBTD_SPEC_TOOL_NAME);
   assert.equal(tools[4].name, SBTD_TICKETS_TOOL_NAME);
 });

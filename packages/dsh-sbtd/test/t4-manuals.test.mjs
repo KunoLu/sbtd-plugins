@@ -88,6 +88,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
   assert.match(readme, /references\//);
   assert.doesNotMatch(readme, /skill-root markdown/);
   assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), [
+    "bdd.ts",
     "clarify.ts",
     "plan.ts",
     "review.ts",
