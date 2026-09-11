@@ -56,28 +56,19 @@ export function parseSbtdArgv(rawInput: string): "status" | "plan" | "maestro" {
     .split(/\s+/)
     .filter((t) => t.length > 0);
 
-  if (tokens.length > 0 && (tokens[0] === "sbtd" || tokens[0] === "/sbtd")) {
-    tokens.shift();
-  }
-  const head = tokens[0];
-  if (head?.startsWith("/")) {
-    tokens[0] = head.slice(1);
-  }
-
   if (tokens.length === 0) {
     return "status";
   }
 
-  const first = tokens[0];
-  if (first === "plan") {
+  if (tokens.length === 1 && tokens[0] === "plan") {
     return "plan";
   }
-  if (first === "maestro") {
+  if (tokens.length === 1 && tokens[0] === "maestro") {
     return "maestro";
   }
 
   throw new Error(
-    `unknown subcommand: ${first}\nusage: /sbtd | /sbtd plan | /sbtd maestro`,
+    `unknown subcommand: ${tokens[0]}\nusage: /sbtd | /sbtd plan | /sbtd maestro`,
   );
 }
 

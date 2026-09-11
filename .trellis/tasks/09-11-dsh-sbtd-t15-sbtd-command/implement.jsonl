@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-11-dsh-sbtd-t15-sbtd-command/prd.md", "reason": "Locked Q1A-Q6A requirements"}
+{"file": ".trellis/tasks/09-11-dsh-sbtd-t15-sbtd-command/design.md", "reason": "dsh-commands handler and T10 host injection"}
+{"file": ".trellis/tasks/09-11-dsh-sbtd-t15-sbtd-command/implement.md", "reason": "R1-R4 checklist and r1 block record"}
+{"file": "/workspace/omp-tasks/t15-sbtd-command-ddd.md", "reason": "Confirmed DDD Q1A-Q6A"}
+{"file": "packages/dsh-sbtd/src/commands/sbtd.ts", "reason": "Human /sbtd command module"}

@@ -115,7 +115,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-11 | T15 开 PR #62 `feat/t15-sbtd-command`：`/sbtd` 人类命令 + package README；locks Q1A–Q6A；未合 / 未 npm |
+| 2026-09-11 | T15 开 PR #62 `feat/t15-sbtd-command`：`/sbtd` 人类命令 + package README；locks Q1A–Q6A；r1 block @ `a83ffd07`；R1–R4 fix pass in flight；未合 / 未 npm / 未 claim CLEAN |
 | 2026-09-11 | T14 #59 → main `2b7cf61`（TODO merge-SHA backfill） |
 | 2026-09-11 | T14 #59 scheme A finish/merge：product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A–Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；不发布包；下一队列 T15（未开） |
 | 2026-09-11 | T14 #59 **流程违规记录**：pre-gate ac5aed6+b26d0b9；Trellis manual `rm -rf` + `TRELLIS_CONTEXT_ID` bypass + 误报 workflow complete；GitNexus pre-commit 缺失；task meta `process_violations_open`；**勿合并** |

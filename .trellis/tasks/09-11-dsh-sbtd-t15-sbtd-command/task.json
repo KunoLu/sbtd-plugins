@@ -1,0 +1,28 @@
+{
+  "id": "dsh-sbtd-t15-sbtd-command",
+  "name": "dsh-sbtd-t15-sbtd-command",
+  "title": "dsh-sbtd T15 /sbtd command README",
+  "description": "Implement T15 /sbtd human command + package README (scheme A). Locks Q1A-Q6A.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-11",
+  "completedAt": null,
+  "branch": "feat/t15-sbtd-command",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/62"
+  }
+}
