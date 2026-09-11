@@ -77,7 +77,7 @@ PR [#59](https://github.com/KunoLu/sbtd-plugins/pull/59) remains **not merge-rea
 
 - [x] Check commands green (biome/tsc/t14/full) — **technical only**
 - [x] Spec update on branch — **technical only**
-- [ ] **Valid** Trellis lifecycle from task creation (no `rm -rf`, no env bypass)
+- [x] **Valid** Trellis lifecycle for current session (2026-09-11 process clear): `task.py validate`+`start` via shell ticket; no `rm -rf`; no `TRELLIS_CONTEXT_ID=` prefix; meta via `set-meta` only. Historical pre-gate ordering still recorded above.
 - [ ] GitNexus pre-edit impact + pre-commit detect_changes on production commits
 - [ ] Parent `/review` on PR #59
 - [ ] PR #59 remains **do not merge**

@@ -125,3 +125,50 @@ Post-hoc compare HIGH risk is **expected** for new tool + `apply()` registration
 - Pre-gate `detect-changes --scope all` was **missed** on production SHAs `ac5aed6` and tip `4adb6e3` before the r1 fix; any `scope all` run on this pass is **post-hoc only**.
 - Dirty worktree vs CLI/MCP `detect-changes` discrepancy remains: not an unqualified clean pass.
 - Trellis implement-before-create / lifecycle ordering gap remains **open** (not closed by r1 code fixes).
+
+## 7. Process clear (r3 option 2) — 2026-09-11
+
+Parent chose **option 2**: clear process gaps only. No product fence changes (`lessons.ts` / tests). No merge / finish-work / npm.
+
+### 7.1 Trellis lifecycle — before → after
+
+| Item | Before (gap) | After (this clear) |
+|---|---|---|
+| Task existence | Created after pre-gate commits; prior turn used manual mkdir + **`rm -rf`** on implement dir | Task dir retained; **no `rm -rf`** |
+| `TRELLIS_CONTEXT_ID` | Prefixed on `task.py` as bypass | **No prefix**. `task.py start` resolved `session:cursor_sand-subagent-0b9d2577-c8db-476f-a4a0-a374e2704652` via shell ticket |
+| Status | `in_progress` (already) | Re-`validate` + re-`start` via `python3 ./.trellis/scripts/task.py` → still `in_progress`, current task set |
+| Meta edits | Manual Python / hand-edit of `task.json` | **`task.py set-meta` only** (`security_fix_*`, `workflow_status`, `trellis_lifecycle_align`, `trellis_session_source`) |
+| Grill / DDD siblings | Untracked empty jsonl | `add-context` + `validate` PASS; committed as process docs on PR branch |
+| Unrelated Trellis dirt | Many untracked review/grill dirs | **Intentionally discarded** via `git clean -fd -- <paths>` (not implement dir) |
+
+Commands (verbatim pattern):
+
+```bash
+python3 ./.trellis/scripts/task.py validate .trellis/tasks/09-11-dsh-sbtd-t14-sbtd-lessons-implement
+python3 ./.trellis/scripts/task.py start .trellis/tasks/09-11-dsh-sbtd-t14-sbtd-lessons-implement
+python3 ./.trellis/scripts/task.py current --json
+# → status in_progress; source session:cursor_sand-subagent-…
+```
+
+Historical pre-gate commits (`ac5aed6`/`b26d0b9` before create) remain on the timeline and stay documented; **current** lifecycle is aligned without forbidden bypasses.
+
+### 7.2 GitNexus refresh — before
+
+| Field | Value |
+|---|---|
+| HEAD (pre-process-commit tip) | `e4bf2b1e41d883ef27a083e172e46f6b30800e40` |
+| index lastCommit | `4adb6e33ef361223f775a988963e4420f504b15b` |
+| staleness | **2 commits behind** |
+| CLI `detect-changes --scope all` (dirty tree) | `No changes detected.` |
+| MCP | **Not registered** in this executor MCP catalog (CLI-only; no GitNexus MCP calls) |
+
+### 7.3 Dirty worktree — before
+
+- Modified tracked: `…/implement/task.json` (manual security_fix meta; later redone via `set-meta`)
+- Untracked: many non-T14 Trellis task dirs + T14 grill/ddd
+- Production paths (`packages/`, `docs/`, `test/`): **clean**
+
+### 7.4 After refresh + cleanup (filled post-commit)
+
+_Pending analyze at process-clear HEAD — see follow-up edit in same section after `node .gitnexus/run.cjs analyze .`._
+
