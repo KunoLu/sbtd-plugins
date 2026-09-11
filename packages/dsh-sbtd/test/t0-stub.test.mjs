@@ -32,7 +32,7 @@ test("插件加载时打印 T0 stub 日志并注册非空中文 sbtd section", (
   }
 
   assert.equal(name, "dsh-sbtd");
-  assert.deepEqual([...inject], ["tools", "systemPrompt"]);
+  assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
   assert.deepEqual(logs, ["[dsh-sbtd] plugin loaded (T0 stub)"]);
   assert.deepEqual(sections, [{ name: "sbtd", order: 50, text: SBTD_SECTION_TEXT }]);
   assert.ok(sections[0].text.length > 0);

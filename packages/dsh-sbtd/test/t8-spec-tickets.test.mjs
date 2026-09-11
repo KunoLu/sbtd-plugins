@@ -74,7 +74,7 @@ function planWithRequiredDdd(id, summary = "t8 ddd required path") {
 test("apply 注册 sbtd_spec 与 sbtd_tickets", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
-  assert.deepEqual([...inject], ["tools", "systemPrompt"]);
+  assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
   assert.equal(tools.length, 9);
   assert.equal(tools[3].name, SBTD_SPEC_TOOL_NAME);
   assert.equal(tools[4].name, SBTD_TICKETS_TOOL_NAME);

@@ -1,6 +1,6 @@
 # @kunolu/dsh-sbtd
 
-DSH 宿主上的 SBTD workflow 适配器。当前为 T6：注册短中文 sbtd section、进程内会话状态、`sbtd_plan`、`sbtd_review`、`sbtd_clarify`、`tools/pre-execute` / `agent/pre-step` hooks 门禁，以及从 640-skills 只读同步的 `manuals/`。
+DSH 宿主上的 SBTD workflow 适配器。`apply()` 注册短中文 sbtd section、hooks、`sbtd_plan`、`sbtd_review`、`sbtd_clarify`、`sbtd_spec`、`sbtd_tickets`、`sbtd_validate`、`sbtd_bdd`、`sbtd_e2e`、`sbtd_lessons`，以及人类命令 `/sbtd`。不修改 `640-skills` 源仓；MCP 可选且缺失时降级。非目标：不执行 `trellis init`、不静默安装 app/JDK/Maestro、不改宿主钉。
 
 版本 **0.1.0-rc.1**，发布在 dist-tag `next`。目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
 
@@ -14,6 +14,13 @@ dsh plugin --profile web add @kunolu/dsh-sbtd@next
 
 加载时 `apply()` 注册短中文 sbtd section（name `sbtd`，order 50），注册 `sbtd_plan`、`sbtd_review` 与 `sbtd_clarify`，并注册 hooks。不写用户磁盘或 `AGENTS.md`。无 plan 时对生产代码的 write/edit 会 ask 先调用 `sbtd_plan`；README 编辑放行。命中 book gate 须 `sbtd_review` 到通过态。仅 docs 模式 Clarify Complete 强制 DDD 复审。
 
+## /sbtd
+
+人类命令（`ctx.commands`，非模型 tool）：
+
+- `/sbtd` — 只读：当前 Book Gate Plan 或 `no-plan`，以及 maestro missing 摘要；不安装。
+- `/sbtd plan` — 查看会话 plan；无 plan 时明确说明；不创建 plan。
+- `/sbtd maestro` — 复用 T12 `preflight()`；先征得同意再指引；不静默安装。
 
 ## sbtd_clarify
 

@@ -72,7 +72,7 @@ function readyGenerateFacts(overrides = {}) {
 test("apply registers sbtd_e2e (Q2A)", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
-  assert.deepEqual([...inject], ["tools", "systemPrompt"]);
+  assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
   assert.equal(tools.length, 9);
   const e2e = tools.find((t) => t.name === SBTD_E2E_TOOL_NAME);
   assert.ok(e2e);

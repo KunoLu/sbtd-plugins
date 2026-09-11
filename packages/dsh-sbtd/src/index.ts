@@ -1,3 +1,8 @@
+import {
+  type CommandsHost,
+  registerCommand,
+  resolveCommandHost,
+} from "./commands/sbtd.js";
 import { type HooksHost, registerHooks } from "./hooks.js";
 import { registerSection, type SectionHost } from "./section.js";
 import {
@@ -30,11 +35,12 @@ import {
 } from "./tools/validate.js";
 
 export const name = "dsh-sbtd";
-export const inject = ["tools", "systemPrompt"] as const;
+export const inject = ["tools", "systemPrompt", "commands"] as const;
 
 export type PluginHost = SectionHost &
   ToolsHost &
   HooksHost &
+  CommandsHost &
   ValidatePluginHost &
   BddPluginHost &
   E2ePluginHost & {
@@ -48,6 +54,15 @@ export type PluginHost = SectionHost &
     lessonsHost?: LessonsHostOptions;
   };
 
+export {
+  createSbtdCommand,
+  parseSbtdArgv,
+  registerCommand,
+  resolveCommandHost,
+  runSbtdCommand,
+  SBTD_COMMAND_DESCRIPTION,
+  SBTD_COMMAND_NAME,
+} from "./commands/sbtd.js";
 export {
   PRE_EXECUTE_EVENT,
   PRE_STEP_EVENT,
@@ -74,6 +89,14 @@ export {
   sbtdBdd,
   validateExtraPaths,
 } from "./tools/bdd.js";
+export {
+  CLARIFY_MODES,
+  createClarifyTool,
+  GRILL_WITH_DOCS_FACT,
+  registerClarifyTool,
+  SBTD_CLARIFY_TOOL_NAME,
+  sbtdClarify,
+} from "./tools/clarify.js";
 export {
   createE2eTool,
   defaultRunMaestro,
@@ -103,14 +126,6 @@ export {
   SBTD_LESSONS_TOOL_NAME,
   sbtdLessons,
 } from "./tools/lessons.js";
-export {
-  CLARIFY_MODES,
-  createClarifyTool,
-  GRILL_WITH_DOCS_FACT,
-  registerClarifyTool,
-  SBTD_CLARIFY_TOOL_NAME,
-  sbtdClarify,
-} from "./tools/clarify.js";
 export {
   createPlanTool,
   inferRequirements,
@@ -167,4 +182,5 @@ export function apply(ctx: PluginHost): void {
   registerE2eTool(ctx, resolveE2eHost(ctx));
   registerLessonsTool(ctx, resolveLessonsHost(ctx));
   registerHooks(ctx);
+  registerCommand(ctx, resolveCommandHost(ctx));
 }
