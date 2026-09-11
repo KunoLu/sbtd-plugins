@@ -3,9 +3,9 @@
 ## Checklist
 
 - [x] **R1** — Tighten `parseSbtdArgv` to empty/`plan`/`maestro` only; alias/trailing rejection tests
-- [x] **R2** — Trellis implement task artifacts (prd, design, implement, jsonl); DDD task archived
+- [x] **R2** — Trellis implement task artifacts (prd, design, implement, jsonl); DDD task archived via `task.py archive 09-11-dsh-sbtd-t15-sbtd-command-ddd --skip-branch-validation`
 - [x] **R3** — GitNexus analyze + detect_changes bound to final pushed HEAD (PR #62 body only; no tracked `gitnexus-check.md`)
-- [x] **R4** — `features/t15-sbtd-command.feature` + scenario comments in tests
+- [x] **R4** — `features/t15-sbtd-command.feature`; `node:test` titles mirror Chinese `Scenario:` titles (English Gherkin keywords)
 - [x] **Phase 2.2 trellis-check** — recorded below (2026-09-11 @ `b7d346b`)
 - [x] **/review r2** — CLEAN @ `b7d346b` (2026-09-11); see `/workspace/omp-tasks/t15-pr62-review-r2.md`
 
@@ -32,6 +32,14 @@ R1 proof: `parseSbtdArgv("sbtd")` throws; `parseSbtdArgv("plan")` → `"plan"`; 
 | `detect-changes --scope all` | PASS — `No changes detected.` |
 
 **R3 evidence location:** PR #62 body only. Tracked `gitnexus-check.md` was removed in `48753bb` (supersedes stale `fb87a6e` artifact that pinned `05df370` and said “re-run after commit 2”).
+
+### R2 DDD archive (task.py)
+
+| Check | Result |
+|---|---|
+| `task.py archive 09-11-dsh-sbtd-t15-sbtd-command-ddd --skip-branch-validation` | PASS → `archive/2026-09/09-11-dsh-sbtd-t15-sbtd-command-ddd/` |
+| Archived `task.json` `status` / `completedAt` | `completed` / `2026-09-11` (matches T14 DDD pattern) |
+| `task.py current --json` | `current_task: null` (active pointer not on DDD task) |
 
 ### Unit / type / fence
 

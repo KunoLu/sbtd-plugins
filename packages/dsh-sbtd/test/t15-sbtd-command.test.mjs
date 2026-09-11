@@ -36,8 +36,7 @@ function loadPlugin(host = {}) {
   return { tools, commands };
 }
 
-// Scenario: apply 注册人类 sbtd 命令且不注册同名模型 tool
-test("apply registers sbtd command with commands inject", () => {
+test("apply 注册人类 sbtd 命令且不注册同名模型 tool", () => {
   const { tools, commands } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
@@ -48,16 +47,14 @@ test("apply registers sbtd command with commands inject", () => {
   assert.equal(tools.some((t) => t.name === "sbtd"), false);
 });
 
-// Scenario: 空会话裸 /sbtd 只读 no-plan 且给出 maestro missing
-test("bare /sbtd on empty session is read-only no-plan", async () => {
+test("空会话裸 /sbtd 只读 no-plan 且给出 maestro missing", async () => {
   const out = await runSbtdCommand("", { sessionId: "t15-empty" });
   assert.match(out, /no-plan/);
   assert.match(out, /maestro missing: none/);
   assert.equal(serialize("t15-empty").plan, undefined);
 });
 
-// Scenario: 有 plan 时裸 /sbtd 打印该 plan 与 maestro missing
-test("bare /sbtd shows plan and maestro missing from session", async () => {
+test("有 plan 时裸 /sbtd 打印该 plan 与 maestro missing", async () => {
   getSession("t15-plan").plan = {
     taskId: "tid",
     summary: "sum",
@@ -76,8 +73,7 @@ test("bare /sbtd shows plan and maestro missing from session", async () => {
   assert.match(out, /maestro missing: java, cli/);
 });
 
-// Scenario: /sbtd plan 只查看会话 plan 不创建
-test("/sbtd plan is read-only plan view", async () => {
+test("/sbtd plan 只查看会话 plan 不创建", async () => {
   assert.equal(
     await runSbtdCommand("plan", { sessionId: "t15-empty2" }),
     "no-plan",
@@ -92,8 +88,7 @@ test("/sbtd plan is read-only plan view", async () => {
   assert.doesNotMatch(src, /sbtdPlan/);
 });
 
-// Scenario: /sbtd maestro 复用 T12 preflight 且不静默安装
-test("/sbtd maestro calls injected preflight only", async () => {
+test("/sbtd maestro 复用 T12 preflight 且不静默安装", async () => {
   let called = 0;
   const out = await runSbtdCommand("maestro", {
     sessionId: "t15-m",
@@ -156,8 +151,7 @@ test("unknown subcommands settle as CommandResult error", async () => {
   assert.equal(commands[0].name, "sbtd");
 });
 
-// Scenario: 拒绝命令名别名、前导斜杠别名与多余参数
-test("rejects command-name aliases, leading-slash aliases, and trailing tokens", async () => {
+test("拒绝命令名别名、前导斜杠别名与多余参数", async () => {
   const usage = /usage: \/sbtd \| \/sbtd plan \| \/sbtd maestro/;
   for (const token of [
     "sbtd",
@@ -211,21 +205,24 @@ test("Q4A trust handles use canonical FORBIDDEN_MODEL_KEYS from maestro", () => 
   );
 });
 
-test("t15 feature documents locked /sbtd behaviors", () => {
+test("t15 node:test titles mirror feature Scenario titles", () => {
   const feature = readFileSync(
     join(pkgRoot, "features/t15-sbtd-command.feature"),
     "utf8",
   );
+  const testSrc = readFileSync(fileURLToPath(import.meta.url), "utf8");
   assert.doesNotMatch(feature, /# language: zh-CN/);
-  for (const title of [
+  const scenarioTitles = [
     "apply 注册人类 sbtd 命令且不注册同名模型 tool",
     "空会话裸 /sbtd 只读 no-plan 且给出 maestro missing",
     "有 plan 时裸 /sbtd 打印该 plan 与 maestro missing",
     "/sbtd plan 只查看会话 plan 不创建",
     "/sbtd maestro 复用 T12 preflight 且不静默安装",
     "拒绝命令名别名、前导斜杠别名与多余参数",
-  ]) {
+  ];
+  for (const title of scenarioTitles) {
     assert.match(feature, new RegExp(`Scenario: ${title}`));
+    assert.match(testSrc, new RegExp(`test\\("${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   }
 });
 
