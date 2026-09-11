@@ -18,8 +18,8 @@ Implement human `/sbtd`, `/sbtd plan`, and `/sbtd maestro` on DSH `ctx.commands`
 - [x] Q1A–Q6A locks satisfied
 - [x] R1–R4 REQUIRED_CHANGES closed
 - [x] Review r3b CLEAN @ `f8561bf` (`/workspace/omp-tasks/t15-pr62-review-r3b.md`; T15QualityR3b pass)
-- [ ] Review r4 process commits (pending after artifact fix)
-- [ ] `/trellis:finish-work` (after r4 CLEAN)
+- [x] Review r4b CLEAN @ `70d3a60` (`/workspace/omp-tasks/t15-pr62-review-r4b.md`)
+- [x] `/trellis:finish-work` (after r4b CLEAN)
 - [ ] PR #62 merge to `main`
 
 ## Notes

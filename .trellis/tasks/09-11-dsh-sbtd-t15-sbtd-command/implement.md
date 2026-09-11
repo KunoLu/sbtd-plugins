@@ -8,8 +8,8 @@
 - [x] **R4** — `features/t15-sbtd-command.feature`; `node:test` titles mirror Chinese `Scenario:` titles
 - [x] **Phase 2.2 trellis-check** — @ **`f8561bf`** (product tip)
 - [x] **/review r3b** — CLEAN @ **`f8561bf`** — `/workspace/omp-tasks/t15-pr62-review-r3b.md` (T15QualityR3b pass; T15QualityR3 block void)
-- [ ] **/review r4** — process commits `f8561bf`..`HEAD` (pending)
-- [ ] **/trellis:finish-work** — pending after r4
+- [x] **/review r4b** — CLEAN @ `70d3a60` — `/workspace/omp-tasks/t15-pr62-review-r4b.md` (T15QualityR4b pass)
+- [x] **/trellis:finish-work** — executing after r4b
 
 ## Verification @ `f8561bf` (2026-09-11)
 
@@ -36,9 +36,10 @@ node --test test/*.test.mjs                   # 322/322
 | r3 (T15QualityR3) | `f8561bf` | **block** | stale GitNexus — void |
 | **r3b (T15QualityR3b)** | `f8561bf` | **CLEAN** | authoritative product review |
 | r3 (T15SecurityR3) | `f8561bf` | **pass** | not re-run |
-| r4 (prior file) | `8b61d5d` | **VOID** | written while r3 invalid |
+| r4 (T15QualityR4-2) | `70d3a60` (pre-fix) | **block** | invalid artifact claims |
+| **r4b (T15QualityR4b)** | `70d3a60` | **CLEAN** | authoritative process review |
 
-Premature archives @ `5670f14` and `7f273d7` reverted; task restored `in_progress`.
+Premature archives @ `5670f14` and `7f273d7` reverted; task restored `in_progress` then re-archived after r4b.
 
 ## GitNexus
 

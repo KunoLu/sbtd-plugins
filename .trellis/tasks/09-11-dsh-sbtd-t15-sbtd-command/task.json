@@ -24,9 +24,9 @@
   "notes": "",
   "meta": {
     "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/62",
-    "commit": "f8561bf",
-    "review_head": "f8561bf",
-    "review_record": "/workspace/omp-tasks/t15-pr62-review-r3b.md",
+    "commit": "70d3a60",
+    "review_head": "70d3a60",
+    "review_record": "/workspace/omp-tasks/t15-pr62-review-r4b.md",
     "note": "r3b CLEAN @ f8561bf (T15QualityR3b pass); r3/r4 prior files void; premature archives reverted"
   }
 }
