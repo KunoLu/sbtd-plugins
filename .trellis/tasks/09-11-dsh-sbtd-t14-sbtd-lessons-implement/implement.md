@@ -29,6 +29,13 @@ Branch: `feat/t14-sbtd-lessons` · PR: https://github.com/KunoLu/sbtd-plugins/pu
 ## Check gate commands
 
 ```bash
+# GitNexus (mandatory — refresh if stale, then scope all)
+node .gitnexus/run.cjs analyze .
+node .gitnexus/run.cjs detect-changes --scope all --repo .
+# PR blast radius (informational for review)
+node .gitnexus/run.cjs detect-changes --scope compare --base-ref origin/main --repo .
+
+# Unit / type / fence
 cd packages/dsh-sbtd
 ../../node_modules/.bin/biome check src/tools/lessons.ts
 ../../node_modules/.bin/tsc -p tsconfig.json
@@ -66,6 +73,20 @@ See `prd.md` § Workflow status. Summary:
 **Workflow correction is NOT complete.** Post-gate commits `34471fd`/`6fadd16` do not erase violations.
 
 ## Check gate results (2026-09-11)
+
+### GitNexus (mandatory)
+
+Full report: `gitnexus-check.md`
+
+| Step | Result |
+|---|---|
+| Index refresh (`analyze .`) | PASS — was 2 commits stale; now @ HEAD `3ef2c0e` (indexed 2026-09-11T03:37:46Z) |
+| `detect-changes --scope all` | PASS — `No changes detected.` (`changed_count=0`, `partial=false`, `truncated=false`) |
+| `detect-changes --scope compare --base-ref origin/main` | PASS (report complete) — 20 files, 155 symbols, 8 affected processes, **risk=high** (`partial=false`, `truncated=false`) |
+
+**Process gap:** `scope all` was **not** run before `ac5aed6`/`b26d0b9`. Post-hoc pass does not retroactively validate those commits.
+
+### Unit / type / fence
 
 - biome check src/tools/lessons.ts: PASS
 - tsc -p tsconfig.json: PASS
