@@ -4,7 +4,7 @@
 
 - [x] **R1** — Tighten `parseSbtdArgv` to empty/`plan`/`maestro` only; alias/trailing rejection tests
 - [x] **R2** — Trellis implement task artifacts (prd, design, implement, jsonl)
-- [x] **R3** — GitNexus analyze + detect_changes bound to HEAD (see `gitnexus-check.md`)
+- [x] **R3** — GitNexus analyze + detect_changes bound to final pushed HEAD (recorded in PR #62 body only; no tracked gitnexus artifact)
 - [x] **R4** — `features/t15-sbtd-command.feature` + scenario comments in tests
 
 ## Verification (2026-09-11)
@@ -28,4 +28,4 @@ R1 proof: `parseSbtdArgv("sbtd")` throws; `parseSbtdArgv("plan")` → `"plan"`; 
 
 ## GitNexus
 
-See `gitnexus-check.md` for HEAD SHA, `lastCommit`, and detect_changes summary.
+HEAD-bound analyze/detect result is in PR #62 body (not a tracked task file — avoids stale `lastCommit` after a follow-up commit).
