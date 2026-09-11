@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -128,10 +129,10 @@ test("security: invalid index topic cannot read outside lessons root", () => {
     join(root, ".trellis", "lessons", "index.md"),
     `# Lessons index
 
-| id | tag | summary | topic | read_when |
+| id | tags | read_when | summary | detail |
 |---|---|---|---|---|
-| LESSON-20260101-evil | bug-fix | stolen summary | ../../../OUTSIDE_SECRET | when |
-| LESSON-20260101-good | bug-fix | safe summary | bug-fix | when |
+| LESSON-20260101-evil | bug-fix | when | stolen summary | ../../../OUTSIDE_SECRET.md |
+| LESSON-20260101-good | bug-fix | when | safe summary | topics/bug-fix.md#LESSON-20260101-good |
 `,
     "utf8",
   );
@@ -230,7 +231,7 @@ test("Q3A: layered docs store when docs/lessons/index.md exists", () => {
     join(root, "docs", "lessons", "index.md"),
     `# Lessons index
 
-| id | tag | summary | topic | read_when |
+| id | tags | read_when | summary | detail |
 |---|---|---|---|---|
 `,
     "utf8",
@@ -255,9 +256,9 @@ test("Q6A: match/read does not enumerate topics/archive (decoy ignored)", () => 
     join(root, ".trellis", "lessons", "index.md"),
     `# Lessons index
 
-| id | tag | summary | topic | read_when |
+| id | tags | read_when | summary | detail |
 |---|---|---|---|---|
-| LESSON-20260101-bug-fix | bug-fix | indexed only | bug-fix | when fail |
+| LESSON-20260101-bug-fix | bug-fix | when fail | indexed only | topics/bug-fix.md#LESSON-20260101-bug-fix |
 `,
     "utf8",
   );
@@ -356,3 +357,243 @@ test("isConcurrencySafe: read/match true; record false", () => {
   assert.equal(tool.isConcurrencySafe({ intent: "match" }), true);
   assert.equal(tool.isConcurrencySafe({ intent: "record", event: "bug-fix" }), false);
 });
+
+test("R1: index round-trip keeps empty read_when in established column order", () => {
+  const root = fixtureRoot("r1-roundtrip");
+  trellisFixture(root);
+
+  const recorded = sbtdLessons(
+    "s1",
+    {
+      intent: "record",
+      event: "bug-fix",
+      summary: "round-trip summary",
+      tags: ["trellis"],
+    },
+    { cwd: root },
+  );
+  assert.equal(recorded.ok, true);
+  assert.equal(recorded.status, "recorded");
+
+  const indexBody = readFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    "utf8",
+  );
+  assert.match(indexBody, /\| id \| tags \| read_when \| summary \| detail \|/);
+  assert.match(
+    indexBody,
+    /\| LESSON-[^|]+ \| bug-fix, trellis \| *\| round-trip summary \| topics\/bug-fix\.md#LESSON-/,
+  );
+
+  const matched = sbtdLessons(
+    "s1",
+    { intent: "match", tags: ["trellis"] },
+    { cwd: root },
+  );
+  assert.equal(matched.status, "matched");
+  assert.equal(matched.hits.length, 1);
+  assert.equal(matched.hits[0].id, recorded.id);
+
+  const readSel = sbtdLessons(
+    "s1",
+    { intent: "read", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(readSel.status, "read");
+  assert.match(readSel.hits[0].body ?? "", /round-trip summary/);
+});
+
+test("R1/R4: existing-style index row is matchable via topics detail", () => {
+  const root = fixtureRoot("r1-existing-style");
+  trellisFixture(root);
+  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
+  writeFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    `# Lessons index
+
+| id | tags | read_when | summary | detail |
+|---|---|---|---|---|
+| LESSON-20260903-dsh-sbtd | dsh-sbtd, t4 | when changing manuals | Copy only SKILL.md | topics/dsh-sbtd.md#lesson-anchor |
+`,
+    "utf8",
+  );
+  writeFileSync(
+    join(root, ".trellis", "lessons", "topics", "dsh-sbtd.md"),
+    `# dsh-sbtd
+
+## LESSON-20260903-dsh-sbtd
+
+**event:** bug-fix
+**summary:** Copy only SKILL.md
+`,
+    "utf8",
+  );
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", summary: "Copy only" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits[0].topic, "dsh-sbtd");
+});
+
+test("R2: summary mentioning docs/lessons.md path is allowed on record", () => {
+  const root = fixtureRoot("r2-summary-path");
+  const result = sbtdLessons(
+    "s1",
+    {
+      intent: "record",
+      event: "bug-fix",
+      summary: "fixed docs/lessons.md",
+      tags: ["trellis"],
+    },
+    { cwd: root },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "recorded");
+  assert.ok(existsSync(join(root, "docs", "lessons.md")));
+});
+
+test("R3: unqualified read returns index-only hits without bodies", () => {
+  const root = fixtureRoot("r3-index-only-read");
+  trellisFixture(root);
+  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
+  writeFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    `# Lessons index
+
+| id | tags | read_when | summary | detail |
+|---|---|---|---|---|
+| LESSON-20260101-bug-fix | bug-fix | | indexed only | topics/bug-fix.md#LESSON-20260101-bug-fix |
+`,
+    "utf8",
+  );
+  writeFileSync(
+    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    `# bug-fix
+
+## LESSON-20260101-bug-fix
+
+**event:** bug-fix
+**summary:** indexed only
+**body:** DECOY-BODY-SECRET
+`,
+    "utf8",
+  );
+
+  const readAll = sbtdLessons("s1", { intent: "read" }, { cwd: root });
+  assert.equal(readAll.status, "matched");
+  assert.equal(readAll.hits.length, 1);
+  assert.equal(readAll.hits[0].body, undefined);
+});
+
+test("R4: match covers tags column and read_when substring", () => {
+  const root = fixtureRoot("r4-tags-readwhen");
+  trellisFixture(root);
+  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
+  writeFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    `# Lessons index
+
+| id | tags | read_when | summary | detail |
+|---|---|---|---|---|
+| LESSON-20260101-bug-fix | bug-fix, trellis | consult trellis gate docs | tag lesson | topics/bug-fix.md#LESSON-20260101-bug-fix |
+`,
+    "utf8",
+  );
+  writeFileSync(
+    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    `# bug-fix
+
+## LESSON-20260101-bug-fix
+
+**event:** bug-fix
+**summary:** tag lesson
+`,
+    "utf8",
+  );
+
+  const byTag = sbtdLessons(
+    "s1",
+    { intent: "match", tags: ["trellis"] },
+    { cwd: root },
+  );
+  assert.equal(byTag.status, "matched");
+  assert.equal(byTag.hits.length, 1);
+
+  const byReadWhen = sbtdLessons(
+    "s1",
+    { intent: "match", tags: ["gate"] },
+    { cwd: root },
+  );
+  assert.equal(byReadWhen.status, "matched");
+  assert.equal(byReadWhen.hits.length, 1);
+});
+
+test("R5: symlink lessons store outside cwd refuses record", () => {
+  const root = fixtureRoot("r5-symlink-store");
+  trellisFixture(root);
+  const outsideDir = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-outside-"));
+  const outsideLessons = join(outsideDir, "lessons");
+  mkdirSync(outsideLessons, { recursive: true });
+  mkdirSync(join(outsideLessons, "topics"), { recursive: true });
+  writeFileSync(join(outsideLessons, "index.md"), "# Lessons index\n", "utf8");
+
+  const lessonsLink = join(root, ".trellis", "lessons");
+  try {
+    symlinkSync(outsideLessons, lessonsLink, "dir");
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "EPERM") {
+      return;
+    }
+    throw err;
+  }
+
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "symlink probe" },
+    { cwd: root },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "skipped");
+  assert.equal(result.kind, "unsafe-path");
+  assert.doesNotMatch(
+    readFileSync(join(outsideLessons, "index.md"), "utf8"),
+    /symlink probe/,
+  );
+});
+
+test("R6: poisoned summary is sanitized in topic file and index row", () => {
+  const root = fixtureRoot("r6-sanitize");
+  trellisFixture(root);
+
+  const poison = "line1\n## LESSON-forged\npipe|cell\n";
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: poison },
+    { cwd: root },
+  );
+  assert.equal(result.ok, true);
+
+  const topicBody = readFileSync(
+    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    "utf8",
+  );
+  assert.doesNotMatch(topicBody, /## LESSON-forged/);
+  assert.match(topicBody, /LESSON-forged/);
+
+  const indexBody = readFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    "utf8",
+  );
+  const dataLines = indexBody
+    .split("\n")
+    .filter((line) => line.trim().startsWith("| LESSON-"));
+  assert.equal(dataLines.length, 1);
+  const rawCells = dataLines[0].split("|").map((c) => c.trim());
+  if (rawCells[0] === "") rawCells.shift();
+  if (rawCells.at(-1) === "") rawCells.pop();
+  assert.equal(rawCells.length, 5);
+});
+

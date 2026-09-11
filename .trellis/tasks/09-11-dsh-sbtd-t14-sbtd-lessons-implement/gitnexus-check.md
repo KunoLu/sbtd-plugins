@@ -119,3 +119,9 @@ Post-hoc compare HIGH risk is **expected** for new tool + `apply()` registration
 
 - **GitNexus graph check gate:** PASS (index fresh; `scope all` clean; compare report complete, non-partial)
 - **Workflow / merge:** still **NOT ready** — Trellis violations + missed pre-commit on production SHA + parent `/review` pending
+
+## 6. r1 fix pass (2026-09-11)
+
+- Pre-gate `detect-changes --scope all` was **missed** on production SHAs `ac5aed6` and tip `4adb6e3` before the r1 fix; any `scope all` run on this pass is **post-hoc only**.
+- Dirty worktree vs CLI/MCP `detect-changes` discrepancy remains: not an unqualified clean pass.
+- Trellis implement-before-create / lifecycle ordering gap remains **open** (not closed by r1 code fixes).

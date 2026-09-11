@@ -6,8 +6,15 @@
  * No GitNexus; no writeArtifact; no trellis init; no manuals nest.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { isAbsolute, join, resolve, sep } from "node:path";
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { detect } from "../backends/trellis.js";
 import {
   type PlanToolExec,
@@ -101,10 +108,10 @@ export const SBTD_LESSONS_DESCRIPTION =
 
 type IndexRow = {
   id: string;
-  tag: string;
-  summary: string;
-  topic: string;
+  tags: string;
   read_when: string;
+  summary: string;
+  detail: string;
 };
 
 type StoreLayout =
@@ -144,9 +151,105 @@ function isValidIndexTopic(topic: string): boolean {
   return SAFE_SLUG_RE.test(topic) && !hasUnsafePath(topic);
 }
 
-function isInsideRoot(root: string, candidate: string): boolean {
-  const rootWithSep = root.endsWith(sep) ? root : root + sep;
-  return candidate === root || candidate.startsWith(rootWithSep);
+function isInsideRootLexical(parent: string, child: string): boolean {
+  const p = resolve(parent);
+  const c = resolve(child);
+  if (p === c) return true;
+  const rel = relative(p, c);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
+function tryRealpath(path: string): string | null {
+  try {
+    return realpathSync(path);
+  } catch {
+    return null;
+  }
+}
+
+function projectThroughExistingAncestor(path: string): string | null {
+  const resolved = resolve(path);
+  if (existsSync(resolved)) {
+    return tryRealpath(resolved);
+  }
+  let cursor = resolved;
+  while (!existsSync(cursor)) {
+    const parentDir = dirname(cursor);
+    if (parentDir === cursor) break;
+    cursor = parentDir;
+  }
+  if (!existsSync(cursor)) {
+    return resolved;
+  }
+  const ancestorReal = tryRealpath(cursor);
+  if (ancestorReal == null) return null;
+  const suffix = relative(cursor, resolved);
+  return suffix === "" ? ancestorReal : resolve(ancestorReal, suffix);
+}
+
+function isInsideRoot(parent: string, child: string): boolean {
+  const parentProjected = projectThroughExistingAncestor(parent);
+  const childProjected = projectThroughExistingAncestor(child);
+  if (parentProjected == null || childProjected == null) return false;
+  return isInsideRootLexical(parentProjected, childProjected);
+}
+
+function rejectSymlinkWriteTarget(
+  absPath: string,
+): { ok: true } | { ok: false; reason: string } {
+  try {
+    if (lstatSync(absPath).isSymbolicLink()) {
+      return {
+        ok: false,
+        reason:
+          "target-is-symlink: refusing to follow/overwrite a lessons symlink outside cwd (Q4A)",
+      };
+    }
+  } catch {
+    // ENOENT — final component absent; safe to create a new regular file.
+  }
+  return { ok: true };
+}
+
+function lessonPathAllowed(cwd: string, absPath: string): boolean {
+  if (!isInsideRoot(cwd, absPath)) return false;
+  return rejectSymlinkWriteTarget(absPath).ok;
+}
+
+function sanitizeCell(value: string): string {
+  return value
+    .replace(/\r?\n/g, " ")
+    .replace(/\|/g, "/")
+    .replace(/##\s*LESSON-/gi, "LESSON-")
+    .trim();
+}
+
+function sanitizeTags(tags: string[] | undefined): string[] {
+  if (tags == null) return [];
+  return tags.map((t) => sanitizeCell(t)).filter(Boolean);
+}
+
+function buildTagsColumn(
+  event: LessonEvent,
+  tags: string[] | undefined,
+): string {
+  const parts: string[] = [event];
+  const seen = new Set<string>([event]);
+  for (const t of sanitizeTags(tags)) {
+    if (!seen.has(t)) {
+      parts.push(t);
+      seen.add(t);
+    }
+  }
+  return parts.join(", ");
+}
+
+function topicFromDetail(detail: string): string | null {
+  const pathPart = detail.split("#")[0] ?? detail;
+  const match = pathPart.match(/(?:^|\/)topics\/([^/]+)\.md$/);
+  if (!match?.[1]) return null;
+  const slug = match[1];
+  return isValidIndexTopic(slug) ? slug : null;
 }
 
 function trellisPresent(cwd: string): boolean {
@@ -188,34 +291,23 @@ function parseIndexRows(content: string): IndexRow[] {
     const trimmed = line.trim();
     if (!trimmed.startsWith("|")) continue;
     if (trimmed.includes("---")) continue;
-    const cells = trimmed
-      .split("|")
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0);
-    if (cells.length < 5) continue;
-    if (cells[0] === "id" && cells[1] === "tag") continue;
-    if (!cells[0]?.startsWith("LESSON-")) continue;
-    const id = cells[0];
-    const tag = cells[1];
-    const summary = cells[2];
-    const topic = cells[3];
-    const readWhen = cells[4];
-    if (
-      id === undefined ||
-      tag === undefined ||
-      summary === undefined ||
-      topic === undefined ||
-      readWhen === undefined
-    ) {
-      continue;
-    }
-    if (!isValidIndexTopic(topic)) continue;
+    const rawCells = trimmed.split("|").map((c) => c.trim());
+    if (rawCells[0] === "") rawCells.shift();
+    if (rawCells.at(-1) === "") rawCells.pop();
+    if (rawCells.length < 5) continue;
+    if (rawCells[0] === "id") continue;
+    if (!rawCells[0]?.startsWith("LESSON-")) continue;
+    const id = rawCells[0];
+    const tags = rawCells[1] ?? "";
+    const readWhen = rawCells[2] ?? "";
+    const summary = rawCells[3] ?? "";
+    const detail = rawCells[4] ?? "";
     rows.push({
       id,
-      tag,
-      summary,
-      topic,
+      tags,
       read_when: readWhen,
+      summary,
+      detail,
     });
   }
   return rows;
@@ -224,7 +316,7 @@ function parseIndexRows(content: string): IndexRow[] {
 function indexHeader(): string {
   return `# Lessons index
 
-| id | tag | summary | topic | read_when |
+| id | tags | read_when | summary | detail |
 |---|---|---|---|---|
 `;
 }
@@ -271,10 +363,11 @@ function formatTags(tags: string[] | undefined): string {
 function formatRecordSection(
   id: string,
   event: LessonEvent,
+  topic: string,
   summary: string,
   tags: string[] | undefined,
 ): string {
-  const lines = [`## ${id}`, "", `**event:** ${event}`];
+  const lines = [`## ${id}`, "", `**event:** ${event}`, `**topic:** ${topic}`];
   if (summary.length > 0) lines.push(`**summary:** ${summary}`);
   const tagLine = formatTags(tags);
   if (tagLine.length > 0) lines.push(`**tags:** ${tagLine}`);
@@ -284,7 +377,7 @@ function formatRecordSection(
 
 function appendIndexRow(indexContent: string, row: IndexRow): string {
   const base = ensureIndex(indexContent);
-  return `${base}| ${row.id} | ${row.tag} | ${row.summary} | ${row.topic} | ${row.read_when} |\n`;
+  return `${base}| ${row.id} | ${row.tags} | ${row.read_when} | ${row.summary} | ${row.detail} |\n`;
 }
 
 function topicFileHeader(topic: string): string {
@@ -301,7 +394,7 @@ function extractSection(content: string, lessonId: string): string | null {
   return body.length > 0 ? body : null;
 }
 
-function parseFlatSections(content: string): IndexRow[] {
+function parseFlatSections(content: string, filePath: string): IndexRow[] {
   const rows: IndexRow[] = [];
   const re = /^## (LESSON-\d{8}-[^\s]+)/gm;
   let match = re.exec(content);
@@ -311,40 +404,91 @@ function parseFlatSections(content: string): IndexRow[] {
       match = re.exec(content);
       continue;
     }
-    const topic = id.replace(/^LESSON-\d{8}-/, "");
+    const body = extractSection(content, id) ?? "";
+    const topicMatch = body.match(/\*\*topic:\*\*\s*(\S+)/);
+    const topic = topicMatch?.[1]?.trim() ?? id.replace(/^LESSON-\d{8}-/, "");
     if (!isValidIndexTopic(topic)) {
       match = re.exec(content);
       continue;
     }
-    const body = extractSection(content, id) ?? "";
     const summaryMatch = body.match(/\*\*summary:\*\*\s*(.+)/);
     const eventMatch = body.match(/\*\*event:\*\*\s*(\S+)/);
+    const tagsMatch = body.match(/\*\*tags:\*\*\s*(.+)/);
     rows.push({
       id,
-      tag: eventMatch?.[1] ?? topic,
-      summary: summaryMatch?.[1]?.trim() ?? "",
-      topic,
+      tags: tagsMatch?.[1]?.trim() ?? eventMatch?.[1] ?? topic,
       read_when: "",
+      summary: summaryMatch?.[1]?.trim() ?? "",
+      detail: filePath,
     });
     match = re.exec(content);
   }
   return rows;
 }
 
-function rowMatchesFilters(row: IndexRow, input: LessonsInput): boolean {
+function flatRowTopic(row: IndexRow, filePath: string): string | null {
+  const content = readText(filePath);
+  const body = extractSection(content, row.id);
+  if (body) {
+    const topicMatch = body.match(/\*\*topic:\*\*\s*(\S+)/);
+    if (topicMatch?.[1]) {
+      const slug = topicMatch[1].trim();
+      if (isValidIndexTopic(slug)) return slug;
+    }
+  }
+  const fromId = row.id.replace(/^LESSON-\d{8}-/, "");
+  return isValidIndexTopic(fromId) ? fromId : null;
+}
+
+function rowTopic(row: IndexRow, store: StoreLayout): string {
+  if (store.kind === "docs-flat") {
+    return flatRowTopic(row, store.filePath) ?? "";
+  }
+  return topicFromDetail(row.detail) ?? "";
+}
+
+function hasSelector(input: LessonsInput): boolean {
+  if (input.event != null && input.event.trim() !== "") return true;
+  if (input.topic != null && input.topic.trim() !== "") return true;
+  if (input.summary != null && input.summary.trim() !== "") return true;
+  if (input.tags != null) {
+    for (const tag of input.tags) {
+      if (tag.trim() !== "") return true;
+    }
+  }
+  return false;
+}
+
+function rowMatchesFilters(
+  row: IndexRow,
+  input: LessonsInput,
+  store: StoreLayout,
+): boolean {
   if (input.event != null && input.event.trim() !== "") {
-    if (row.tag !== input.event.trim()) return false;
+    const event = input.event.trim();
+    const rowTags = row.tags.split(",").map((t) => t.trim());
+    if (!rowTags.includes(event)) return false;
   }
   if (input.topic != null && input.topic.trim() !== "") {
-    if (row.topic !== input.topic.trim()) return false;
+    if (rowTopic(row, store) !== input.topic.trim()) return false;
   }
   if (input.summary != null && input.summary.trim() !== "") {
     const needle = input.summary.trim().toLowerCase();
     if (!row.summary.toLowerCase().includes(needle)) return false;
   }
   if (input.tags != null && input.tags.length > 0) {
-    const wanted = new Set(input.tags.map((t) => t.trim()).filter(Boolean));
-    if (wanted.size > 0 && !wanted.has(row.tag)) return false;
+    const rowTags = row.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const readWhenLower = row.read_when.toLowerCase();
+    for (const needle of input.tags) {
+      const trimmed = needle.trim();
+      if (trimmed === "") continue;
+      const tagMatch = rowTags.includes(trimmed);
+      const readWhenMatch = readWhenLower.includes(trimmed.toLowerCase());
+      if (!tagMatch && !readWhenMatch) return false;
+    }
   }
   return true;
 }
@@ -352,21 +496,44 @@ function rowMatchesFilters(row: IndexRow, input: LessonsInput): boolean {
 function safeDetailPathForRow(
   store: StoreLayout,
   row: IndexRow,
+  cwd: string,
 ): { ok: true; path: string } | { ok: false } {
   if (store.kind === "docs-flat") {
+    if (!lessonPathAllowed(cwd, store.filePath)) return { ok: false };
     return { ok: true, path: store.filePath };
   }
-  if (!isValidIndexTopic(row.topic)) return { ok: false };
-  const abs = resolve(store.topicsDir, `${row.topic}.md`);
-  if (!isInsideRoot(store.topicsDir, abs)) return { ok: false };
+  const topic = topicFromDetail(row.detail);
+  if (topic == null) return { ok: false };
+  const abs = resolve(store.topicsDir, `${topic}.md`);
+  if (!isInsideRoot(cwd, abs)) return { ok: false };
+  if (!isInsideRoot(store.root, abs)) return { ok: false };
+  if (!lessonPathAllowed(cwd, abs)) return { ok: false };
   return { ok: true, path: abs };
 }
 
 function loadIndexRows(store: StoreLayout): IndexRow[] {
   if (store.kind === "docs-flat") {
-    return parseFlatSections(readText(store.filePath));
+    return parseFlatSections(readText(store.filePath), store.filePath);
   }
   return parseIndexRows(readText(store.indexPath));
+}
+
+function buildHit(
+  row: IndexRow,
+  store: StoreLayout,
+  detailPath: string,
+  body?: string,
+): LessonHit {
+  const hit: LessonHit = {
+    id: row.id,
+    tag: row.tags,
+    summary: row.summary,
+    topic: rowTopic(row, store),
+    read_when: row.read_when,
+    detail: detailPath,
+  };
+  if (body != null) hit.body = body;
+  return hit;
 }
 
 function skipped(intent: string, kind: string): LessonsToolResult {
@@ -384,27 +551,31 @@ function recordLesson(
   input: LessonsInput,
   event: LessonEvent,
 ): LessonsToolResult {
-  if (input.summary != null && hasUnsafePath(input.summary)) {
-    return skipped("record", "unsafe-path");
-  }
-  if (input.tags != null) {
-    for (const tag of input.tags) {
-      if (hasUnsafePath(tag)) return skipped("record", "unsafe-path");
-    }
-  }
-
   const topic = resolveTopicSlug(input, event);
   if (topic == null) return skipped("record", "unsafe-path");
 
   const present = trellisPresent(cwd);
   const store = resolveStore(cwd, present);
-  const summary = input.summary?.trim() ?? "";
+  const summary = sanitizeCell(input.summary?.trim() ?? "");
+  const sanitizedTags = sanitizeTags(input.tags);
 
   if (store.kind === "docs-flat") {
+    if (!lessonPathAllowed(cwd, store.filePath)) {
+      return skipped("record", "unsafe-path");
+    }
     mkdirSync(join(cwd, "docs"), { recursive: true });
     const existing = readText(store.filePath);
-    const id = nextLessonIdFromRows(topic, parseFlatSections(existing));
-    const section = formatRecordSection(id, event, summary, input.tags);
+    const id = nextLessonIdFromRows(
+      topic,
+      parseFlatSections(existing, store.filePath),
+    );
+    const section = formatRecordSection(
+      id,
+      event,
+      topic,
+      summary,
+      sanitizedTags,
+    );
     const prefix = existing.length === 0 ? `# Lessons\n\n` : "";
     writeFileSync(store.filePath, `${existing}${prefix}${section}`, "utf8");
     return {
@@ -418,10 +589,21 @@ function recordLesson(
     };
   }
 
+  if (!lessonPathAllowed(cwd, store.root)) {
+    return skipped("record", "unsafe-path");
+  }
+  if (!lessonPathAllowed(cwd, store.indexPath)) {
+    return skipped("record", "unsafe-path");
+  }
+
   mkdirSync(store.topicsDir, { recursive: true });
   const indexContent = readText(store.indexPath);
   const id = nextLessonId(topic, indexContent);
   const topicPath = join(store.topicsDir, `${topic}.md`);
+  if (!lessonPathAllowed(cwd, topicPath)) {
+    return skipped("record", "unsafe-path");
+  }
+
   const topicExisting = readText(topicPath);
   const topicPrefix =
     topicExisting.length === 0
@@ -429,15 +611,15 @@ function recordLesson(
       : topicExisting.endsWith("\n")
         ? topicExisting
         : `${topicExisting}\n`;
-  const section = formatRecordSection(id, event, summary, input.tags);
+  const section = formatRecordSection(id, event, topic, summary, sanitizedTags);
   writeFileSync(topicPath, `${topicPrefix}${section}`, "utf8");
 
   const indexRow: IndexRow = {
     id,
-    tag: event,
-    summary,
-    topic,
+    tags: buildTagsColumn(event, sanitizedTags),
     read_when: "",
+    summary,
+    detail: `topics/${topic}.md#${id}`,
   };
   writeFileSync(
     store.indexPath,
@@ -461,22 +643,14 @@ function queryLessons(
   input: LessonsInput,
   intent: "match" | "read",
 ): LessonsToolResult {
-  if (input.summary != null && hasUnsafePath(input.summary)) {
-    return skipped(intent, "unsafe-path");
-  }
   if (input.topic != null && hasUnsafePath(input.topic)) {
     return skipped(intent, "unsafe-path");
-  }
-  if (input.tags != null) {
-    for (const tag of input.tags) {
-      if (hasUnsafePath(tag)) return skipped(intent, "unsafe-path");
-    }
   }
 
   const present = trellisPresent(cwd);
   const store = resolveStore(cwd, present);
   const rows = loadIndexRows(store).filter((row) =>
-    rowMatchesFilters(row, input),
+    rowMatchesFilters(row, input, store),
   );
 
   if (rows.length === 0) {
@@ -490,22 +664,24 @@ function queryLessons(
   }
 
   const hits: LessonHit[] = [];
+  const indexOnlyRead = intent === "read" && !hasSelector(input);
+
   for (const row of rows) {
-    const pathResult = safeDetailPathForRow(store, row);
+    const pathResult = safeDetailPathForRow(store, row, cwd);
     if (!pathResult.ok) continue;
-    const hit: LessonHit = {
-      id: row.id,
-      tag: row.tag,
-      summary: row.summary,
-      topic: row.topic,
-      read_when: row.read_when,
-      detail: pathResult.path,
-    };
-    if (intent === "read") {
-      const body = extractSection(readText(pathResult.path), row.id);
-      if (body != null) hit.body = body;
+    if (indexOnlyRead) {
+      hits.push(buildHit(row, store, pathResult.path));
+      continue;
     }
-    hits.push(hit);
+    if (intent === "read") {
+      if (!lessonPathAllowed(cwd, pathResult.path)) continue;
+      const body = extractSection(readText(pathResult.path), row.id);
+      hits.push(
+        buildHit(row, store, pathResult.path, body != null ? body : undefined),
+      );
+      continue;
+    }
+    hits.push(buildHit(row, store, pathResult.path));
   }
 
   if (hits.length === 0) {
@@ -521,7 +697,7 @@ function queryLessons(
   return {
     ok: true,
     intent,
-    status: intent === "read" ? "read" : "matched",
+    status: indexOnlyRead ? "matched" : intent === "read" ? "read" : "matched",
     hits,
     store: present ? "trellis" : "docs",
     mutation: "none",
