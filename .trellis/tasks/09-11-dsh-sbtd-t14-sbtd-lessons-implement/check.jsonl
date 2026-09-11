@@ -1,0 +1,3 @@
+{"file": "/workspace/omp-tasks/t14-sbtd-lessons-ddd.md", "reason": "Verify Q1A-Q6A invariants"}
+{"file": "packages/dsh-sbtd/test/t14-lessons.test.mjs", "reason": "Primary acceptance tests"}
+{"file": "packages/dsh-sbtd/src/tools/lessons.ts", "reason": "Fence-bound implementation"}
