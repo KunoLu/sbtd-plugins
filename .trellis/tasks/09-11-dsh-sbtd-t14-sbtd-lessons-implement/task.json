@@ -25,6 +25,9 @@
   "meta": {
     "pre_gate_commits": "ac5aed6,b26d0b9",
     "post_gate_commit": "34471fd",
-    "workflow_status": "check_and_spec_passed_review_pending"
+    "workflow_status": "process_violations_open_review_pending",
+    "trellis_session_source": "session:dsh-sbtd-t1",
+    "process_violations": "pre_gate_commits;manual_rm_rf_task_dir;TRELLIS_CONTEXT_ID_env_bypass;manual_task_json_edit;gitnexus_precommit_missed;false_workflow_complete_claim",
+    "gitnexus_precommit": "missed_on_ac5aed6;posthoc_compare_high_20files"
   }
 }

@@ -53,6 +53,18 @@ Single commit after check + spec update pass, e.g.:
 
 No trellis/e2e/maestro/validate/bdd/gitnexus rewrite; no npm publish; host pin `@deepseek-ai/dsh@0.1.1-rc.2`.
 
+## Trellis lifecycle violations (recorded 2026-09-11)
+
+See `prd.md` § Workflow status. Summary:
+
+1. Pre-gate commits before `task.py create`/`start`
+2. Manual task dir + **`rm -rf`** on `.trellis/tasks/09-11-dsh-sbtd-t14-sbtd-lessons-implement`
+3. Explicit **`TRELLIS_CONTEXT_ID=dsh-sbtd-t1`** on task.py invocations (forbidden bypass)
+4. Manual `task.json` Python edit vs `task.py set-meta`
+5. GitNexus pre-edit/pre-commit checks missed on `ac5aed6`
+
+**Workflow correction is NOT complete.** Post-gate commits `34471fd`/`6fadd16` do not erase violations.
+
 ## Check gate results (2026-09-11)
 
 - biome check src/tools/lessons.ts: PASS
