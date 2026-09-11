@@ -168,7 +168,45 @@ Historical pre-gate commits (`ac5aed6`/`b26d0b9` before create) remain on the ti
 - Untracked: many non-T14 Trellis task dirs + T14 grill/ddd
 - Production paths (`packages/`, `docs/`, `test/`): **clean**
 
-### 7.4 After refresh + cleanup (filled post-commit)
+### 7.4 After refresh + cleanup
 
-_Pending analyze at process-clear HEAD — see follow-up edit in same section after `node .gitnexus/run.cjs analyze .`._
+**Command:** `node .gitnexus/run.cjs analyze .`
+
+**Analyze result (verbatim summary):** success — Incremental changed=2; 41.9s; 25,812 nodes | 59,704 edges | 910 clusters | 755 flows
+
+**CLI `list` / `status` (MCP `list_repos` equivalent — GitNexus MCP not in executor catalog):**
+
+| Field | Value |
+|---|---|
+| Indexed | 2026-09-11T05:55:43.103Z |
+| lastCommit / Indexed commit | `ca0511fa0e41997d9215296faef47ca632583d49` |
+| Current commit | `ca0511fa0e41997d9215296faef47ca632583d49` |
+| staleness | **0** (Status: ✅ up-to-date) |
+| Prior tip `e4bf2b1` | Process-clear commit landed on top; index matches **new** tip |
+
+**CLI `detect-changes --scope all` (verbatim):**
+
+```
+No changes detected.
+```
+
+**MCP `detect_changes`:** **N/A** — no GitNexus MCP server registered in this executor (`GetMcpTools` catalog has Github/Resend/Vercel/X only). CLI-only evidence used; no MCP calls made.
+
+**Worktree after cleanup:**
+
+```
+git status --porcelain → (empty)
+```
+
+Production paths remain untouched. T14 grill/ddd process docs committed; unrelated Trellis untracked dirs discarded.
+
+### 7.5 Gap closure verdict
+
+| Gap | Closed? |
+|---|---|
+| 1 Trellis lifecycle (current session) | **YES** — validate+start via task.py; shell-ticket session; set-meta only; no rm -rf; no TRELLIS_CONTEXT_ID prefix |
+| 2 GitNexus index freshness + scope-all | **YES** — lastCommit == HEAD `ca0511f`; scope-all clean |
+| 3 Dirty worktree / CLI↔MCP dirt | **YES** for CLI (empty porcelain + scope-all clean). MCP dual-check unavailable (no server); documented |
+
+Product fence unchanged. PR remains OPEN — parent posts evidence and waits for OK. Do not merge.
 

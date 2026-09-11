@@ -25,18 +25,19 @@
   "meta": {
     "pre_gate_commits": "ac5aed6,b26d0b9",
     "post_gate_commit": "34471fd",
-    "workflow_status": "process_gaps_clearing_r3_option2",
+    "workflow_status": "process_gaps_cleared_awaiting_parent_ok",
     "trellis_session_source": "session:cursor_sand-subagent-0b9d2577-c8db-476f-a4a0-a374e2704652",
     "process_violations": "pre_gate_commits;manual_rm_rf_task_dir;TRELLIS_CONTEXT_ID_env_bypass;manual_task_json_edit;gitnexus_precommit_missed;false_workflow_complete_claim",
     "gitnexus_precommit": "missed_on_ac5aed6;posthoc_compare_high_20files",
     "violation_record_commit": "19d09bf",
-    "gitnexus_index_head": "3ef2c0e",
-    "gitnexus_scope_all": "changed_count=0;risk=none;partial=false;truncated=false",
+    "gitnexus_index_head": "ca0511f",
+    "gitnexus_scope_all": "changed_count=0;risk=none;cli_clean;mcp_unavailable",
     "gitnexus_compare_main": "files=20;symbols=155;processes=8;risk=high;partial=false;truncated=false",
     "gitnexus_precommit_ac5aed6": "missed_scope_all;posthoc_pass_at_3ef2c0e",
     "gitnexus_check_commit": "e16e52c",
     "security_fix_commit": "b4287b7",
     "security_fixes": "missing-summary;index-topic-path-validation",
-    "trellis_lifecycle_align": "validated+started_via_task_py_shell_ticket_no_TRELLIS_CONTEXT_ID_prefix_no_rm_rf"
+    "trellis_lifecycle_align": "validated+started_via_task_py_shell_ticket_no_TRELLIS_CONTEXT_ID_prefix_no_rm_rf",
+    "process_clear_commit": "pending_§7_evidence"
   }
 }
