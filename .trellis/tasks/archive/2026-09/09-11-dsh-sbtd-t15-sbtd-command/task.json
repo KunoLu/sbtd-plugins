@@ -1,0 +1,32 @@
+{
+  "id": "dsh-sbtd-t15-sbtd-command",
+  "name": "dsh-sbtd-t15-sbtd-command",
+  "title": "dsh-sbtd T15 /sbtd command README",
+  "description": "Implement T15 /sbtd human command + package README (scheme A). Locks Q1A-Q6A.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-11",
+  "completedAt": "2026-09-11",
+  "branch": "feat/t15-sbtd-command",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/62",
+    "commit": "3529daf",
+    "review_head": "3529daf",
+    "review_record": "/workspace/omp-tasks/t15-pr62-review-r5.md",
+    "note": "r5 CLEAN @ 3529daf (T15QualityR5+T15SecurityR5); r3b product @ f8561bf; r4b quality @ 70d3a60; r4 security @ 8b61d5d; void invalid r3/r4 manual claims; merge SHA pending"
+  }
+}

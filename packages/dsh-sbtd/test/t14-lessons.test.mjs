@@ -49,7 +49,7 @@ function trellisFixture(root) {
 test("apply registers sbtd_lessons after sbtd_e2e (Q2A)", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
-  assert.deepEqual([...inject], ["tools", "systemPrompt"]);
+  assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
   assert.equal(tools.length, 9);
   assert.equal(tools[7].name, "sbtd_e2e");
   assert.equal(tools[8].name, SBTD_LESSONS_TOOL_NAME);

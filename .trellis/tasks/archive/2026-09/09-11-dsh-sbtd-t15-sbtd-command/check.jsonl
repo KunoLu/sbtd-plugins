@@ -1,0 +1,8 @@
+{"file": "/workspace/omp-tasks/t15-sbtd-command-ddd.md", "reason": "Verify Q1A-Q6A invariants"}
+{"file": "packages/dsh-sbtd/test/t15-sbtd-command.test.mjs", "reason": "Primary acceptance tests"}
+{"file": "packages/dsh-sbtd/features/t15-sbtd-command.feature", "reason": "Persistent T15 BDD"}
+{"file": "packages/dsh-sbtd/src/commands/sbtd.ts", "reason": "Fence-bound implementation"}
+{"file": "/workspace/omp-tasks/t15-pr62-review-r3b.md", "reason": "r3b CLEAN @ f8561bf (T15QualityR3b pass)"}
+{"file": "/workspace/omp-tasks/t15-pr62-review-r4b.md", "reason": "r4b CLEAN @ 70d3a60 (T15QualityR4b pass)"}
+{"file": "/workspace/omp-tasks/t15-pr62-review-r4-security.md", "reason": "r4 security pass @ 8b61d5d (T15SecurityR4)"}
+{"file": "/workspace/omp-tasks/t15-pr62-review-r5.md", "reason": "r5 CLEAN @ 3529daf (T15QualityR5+T15SecurityR5 pass)"}

@@ -54,7 +54,7 @@ test("apply 注册非空中文 sbtd section 且不写磁盘", () => {
   }
 
   assert.equal(name, "dsh-sbtd");
-  assert.deepEqual([...inject], ["tools", "systemPrompt"]);
+  assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
   assert.deepEqual(logs, ["[dsh-sbtd] plugin loaded (T0 stub)"]);
   assert.deepEqual(sections, [
     {

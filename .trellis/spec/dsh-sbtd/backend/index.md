@@ -1,23 +1,24 @@
 # dsh-sbtd Backend Guidelines
 
 > Conventions for `@kunolu/dsh-sbtd` (`packages/dsh-sbtd/`): the DSH host adapter.
-> T14 adds `sbtd_lessons`. T6 `sbtd_clarify`, T5 `sbtd_review`, T4 manuals sync remain. Host `@deepseek-ai/dsh@0.1.1-rc.2`.
+> T15 adds human `/sbtd` commands on `ctx.commands`. T14 adds `sbtd_lessons`. T6 `sbtd_clarify`, T5 `sbtd_review`, T4 manuals sync remain. Host `@deepseek-ai/dsh@0.1.1-rc.2`.
 
 ---
 
-## Current State (T14 + T6 + FU3)
+## Current State (T15 + T14 + T6 + FU3)
 
 Per `packages/dsh-sbtd/README.md`: DSH SBTD adapter registers a short Chinese `sbtd` section,
 in-process session state, nine tools on `apply()` (`sbtd_plan`, `sbtd_review`, `sbtd_clarify`,
 `sbtd_spec`, `sbtd_tickets`, `sbtd_validate`, `sbtd_bdd`, `sbtd_e2e`, `sbtd_lessons`), hooks,
-plus manuals/.
+plus manuals/. T15 registers one human command `sbtd` via `inject` + `registerCommand` (not a model tool): bare `/sbtd` (read-only status), `/sbtd plan` (session plan view), `/sbtd maestro` (T12 `preflight()` only).
 Target host: `@deepseek-ai/dsh@0.1.1-rc.2`.
 `apply()` does not write `AGENTS.md` or user disk.
 FU3 is **delivered**: matching-set identity + docs-Complete same-task Forced Docs DDD stickiness via `mergeGate`.
 
 Source files:
 
-- `src/index.ts` — `name`, `inject = ["tools", "systemPrompt"]`, `apply` (registers all sbtd_* tools + hooks)
+- `src/index.ts` — `name`, `inject = ["tools", "systemPrompt", "commands"]`, `apply` (registers all sbtd_* tools + hooks + human `sbtd` command)
+- `src/commands/sbtd.ts` — human `/sbtd` command handler (`parseSbtdArgv`, `runSbtdCommand`, `registerCommand`); `rawInput` accepts only empty/`plan`/`maestro`
 - `src/section.ts` — static Chinese section text, `name: "sbtd"`, `order: 50`; Forced DDD prose is docs-mode Complete only
 - `src/state.ts` — `Map` keyed by caller `sessionId`; `serialize()` / `restore()` copy optional `clarifyMode` + `clarifyStatus` + `clarifyCompleteTaskId`
 - `src/tools/plan.ts` — `sbtd_plan` registers/updates BookGatePlan. DDD is required only after completed `grill-with-docs`; bare `ddd` stays on-demand. FU3 **delivered**: trigger identity is the matching-set of distinct catalog facts; docs-Complete Forced Docs DDD stays `required` via `mergeGate` only when `clarifyCompleteTaskId` matches the current plan (omission ≠ withdraw).
