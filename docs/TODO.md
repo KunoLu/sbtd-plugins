@@ -19,7 +19,7 @@
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
 | **P1** | T4–T8 核心闭环 | ✅ T4–T8 完成（T8 #47 → `a90a96f`；T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63` |
-| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55 → `61026a1`；T13 ✅ #57 → `9289798`；T14 🟡 进行中 |
+| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55 → `61026a1`；T13 ✅ #57 → `9289798`；T14 ✅ #59（merge SHA pending chore） |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
 ---
@@ -56,7 +56,7 @@
 | T11 | `sbtd_bdd` | ✅ | #53 → `d729d6e`；scheme A finish；CLEAN r5；locks Q1C Q2B Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r5 REQUIRED closed；archive `09-10-dsh-sbtd-t11-sbtd-bdd-grill` + `09-10-dsh-sbtd-t11-sbtd-bdd-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T12 | Maestro 预检 | ✅ | #55 → `61026a1`；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T13 | `sbtd_e2e` | ✅ | #57 → `9289798`；scheme A finish；CLEAN r5；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r4 REQUIRED closed；archive `09-10-dsh-sbtd-t13-sbtd-e2e-grill` + `09-10-dsh-sbtd-t13-sbtd-e2e-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T14 | `sbtd_lessons` | 🟡 | #59 预提交 ac5aed6+b26d0b9；**Trellis/GitNexus 流程违规未闭合**（含 manual `rm -rf` task dir、env bypass）；tests 299/299；**勿合并**；locks Q1A–Q6A |
+| T14 | `sbtd_lessons` | ✅ | #59（merge SHA pending）；scheme A finish；product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；archive `09-11-dsh-sbtd-t14-sbtd-lessons-grill` + `09-11-dsh-sbtd-t14-sbtd-lessons-ddd` + `09-11-dsh-sbtd-t14-sbtd-lessons-implement`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T15 | `/sbtd` 命令与 README | ⬜ | P3 |
 | T16 | 端到端验收 | ⬜ | P3 |
 
@@ -107,13 +107,15 @@
 | 7 | **T11** `sbtd_bdd` | ✅ #53 → `d729d6e` |
 | 8 | **T12** Maestro 预检 | ✅ #55 → `61026a1` |
 | 9 | **T13** `sbtd_e2e` | ✅ #57 → `9289798` |
-| 10 | **T14** `sbtd_lessons` | 🟡 进行中 |
+| 10 | **T14** `sbtd_lessons` | ✅ #59（merge SHA pending） |
+| 11 | **T15** `/sbtd` 命令与 README | ⬜ 下一队列 |
 ---
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-11 | T14 #59 scheme A finish/merge：product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A–Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；不发布包；下一队列 T15（未开） |
 | 2026-09-11 | T14 #59 **流程违规记录**：pre-gate ac5aed6+b26d0b9；Trellis manual `rm -rf` + `TRELLIS_CONTEXT_ID` bypass + 误报 workflow complete；GitNexus pre-commit 缺失；task meta `process_violations_open`；**勿合并** |
 | 2026-09-11 | T14 #59 Trellis gate（技术验证 only）：check 299/299 + spec update @ 34471fd/6fadd16 — **非 workflow-valid** |
 | 2026-09-10 | T13 #57 → main `9289798`（TODO merge-SHA backfill） |
