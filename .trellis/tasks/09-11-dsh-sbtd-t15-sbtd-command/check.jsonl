@@ -2,4 +2,4 @@
 {"file": "packages/dsh-sbtd/test/t15-sbtd-command.test.mjs", "reason": "Primary acceptance tests"}
 {"file": "packages/dsh-sbtd/features/t15-sbtd-command.feature", "reason": "Persistent T15 BDD"}
 {"file": "packages/dsh-sbtd/src/commands/sbtd.ts", "reason": "Fence-bound implementation"}
-{"file": "/workspace/omp-tasks/t15-pr62-review-r4.md", "reason": "r4 CLEAN @ 8b61d5d final PR tip"}
+{"file": "/workspace/omp-tasks/t15-pr62-review-r3b.md", "reason": "r3b CLEAN @ f8561bf (T15QualityR3b pass)"}

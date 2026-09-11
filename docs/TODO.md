@@ -20,7 +20,7 @@
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
 | **P1** | T4–T8 核心闭环 | ✅ T4–T8 完成（T8 #47 → `a90a96f`；T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63` |
 | **P2** | T9–T14 验证 / 移动端 | ✅ T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55 → `61026a1`；T13 ✅ #57 → `9289798`；T14 ✅ #59 → `2b7cf61` |
-| **P3** | T15–T16 入口 + 整包验收 | 🟡 T15 r4 CLEAN @ `8b61d5d`；finish-work 执行中；#62 待合 |
+| **P3** | T15–T16 入口 + 整包验收 | 🟡 T15 r3b CLEAN @ `f8561bf`；r4 process pending；task `in_progress`；#62 待合 |
 
 ---
 
@@ -57,7 +57,7 @@
 | T12 | Maestro 预检 | ✅ | #55 → `61026a1`；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T13 | `sbtd_e2e` | ✅ | #57 → `9289798`；scheme A finish；CLEAN r5；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r4 REQUIRED closed；archive `09-10-dsh-sbtd-t13-sbtd-e2e-grill` + `09-10-dsh-sbtd-t13-sbtd-e2e-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T14 | `sbtd_lessons` | ✅ | #59 → `2b7cf61`；scheme A finish；product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；archive `09-11-dsh-sbtd-t14-sbtd-lessons-grill` + `09-11-dsh-sbtd-t14-sbtd-lessons-ddd` + `09-11-dsh-sbtd-t14-sbtd-lessons-implement`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T15 | `/sbtd` 命令与 README | 🟡 | #62 `feat/t15-sbtd-command` @ `8b61d5d`；r4 CLEAN @ `8b61d5d`（r2 @ `b7d346b` stale；premature archive reverted）；finish-work 执行；locks Q1A–Q6A；tests 322/322（t15 12/12）；**未合** / 未 npm |
+| T15 | `/sbtd` 命令与 README | 🟡 | #62 `feat/t15-sbtd-command` @ `f8561bf` product；r3b CLEAN @ `f8561bf`（T15QualityR3b）；r3/r4 prior files void；premature archives reverted；task `in_progress`；locks Q1A–Q6A；tests 322/322（t15 12/12）；**未合** / 未 npm |
 | T16 | 端到端验收 | ⬜ | P3 |
 
 ---
@@ -115,7 +115,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-11 | T15 #62 r4 CLEAN @ `8b61d5d`（r2 @ `b7d346b` stale；premature archive @ `5670f14` reverted）；GitNexus `lastCommit`=`8b61d5d`；finish-work 执行；**未合** |
+| 2026-09-11 | T15 #62 r3b CLEAN @ `f8561bf`（T15QualityR3b pass；T15QualityR3 block void）；r4 process pending；premature archives reverted；task `in_progress`；**未合** |
 | 2026-09-11 | T15 开 PR #62 `feat/t15-sbtd-command`：`/sbtd` 人类命令 + package README；locks Q1A–Q6A；r1 block @ `a83ffd07`；R1–R4 fix pass in flight；未合 / 未 npm / 未 claim CLEAN |
 | 2026-09-11 | T14 #59 → main `2b7cf61`（TODO merge-SHA backfill） |
 | 2026-09-11 | T14 #59 scheme A finish/merge：product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A–Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；不发布包；下一队列 T15（未开） |

@@ -17,11 +17,13 @@ Implement human `/sbtd`, `/sbtd plan`, and `/sbtd maestro` on DSH `ctx.commands`
 
 - [x] Q1A–Q6A locks satisfied
 - [x] R1–R4 REQUIRED_CHANGES closed
-- [x] Review r4 CLEAN @ `8b61d5d` (`/workspace/omp-tasks/t15-pr62-review-r4.md`)
-- [x] `/trellis:finish-work` (archive after r4 record)
+- [x] Review r3b CLEAN @ `f8561bf` (`/workspace/omp-tasks/t15-pr62-review-r3b.md`; T15QualityR3b pass)
+- [ ] Review r4 process commits (pending after artifact fix)
+- [ ] `/trellis:finish-work` (after r4 CLEAN)
 - [ ] PR #62 merge to `main`
 
 ## Notes
 
-- r2 @ `b7d346b` and premature finish-work @ `5670f14` are stale/reverted — do not credit.
+- r2 @ `b7d346b`, premature archives @ `5670f14`/`7f273d7`, `/workspace/omp-tasks/t15-pr62-review-r3.md`, `/workspace/omp-tasks/t15-pr62-review-r4.md` are void — do not credit.
+- T15QualityR3 **blocked** (stale GitNexus); only T15QualityR3b pass counts for product.
 - DDD confirmed in `/workspace/omp-tasks/t15-sbtd-command-ddd.md`.
