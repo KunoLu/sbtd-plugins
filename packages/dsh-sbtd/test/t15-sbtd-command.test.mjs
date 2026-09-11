@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
 import {
+  executeSbtdCommand,
   parseSbtdArgv,
   runSbtdCommand,
 } from "../dist/commands/sbtd.js";
@@ -39,12 +40,13 @@ test("apply registers sbtd command with commands inject", () => {
   assert.deepEqual([...inject], ["tools", "systemPrompt", "commands"]);
   assert.equal(commands.length, 1);
   assert.equal(commands[0].name, "sbtd");
+  assert.equal(typeof commands[0].handler, "function");
   assert.equal(tools.length, 9);
   assert.equal(tools.some((t) => t.name === "sbtd"), false);
 });
 
 test("bare /sbtd on empty session is read-only no-plan", async () => {
-  const out = await runSbtdCommand(undefined, { sessionId: "t15-empty" });
+  const out = await runSbtdCommand("", { sessionId: "t15-empty" });
   assert.match(out, /no-plan/);
   assert.match(out, /maestro missing: none/);
   assert.equal(serialize("t15-empty").plan, undefined);
@@ -113,31 +115,58 @@ test("/sbtd maestro calls injected preflight only", async () => {
   assert.doesNotMatch(src, /brew install/);
 });
 
-test("unknown subcommands are rejected", () => {
+test("handler uses dsh-commands invocation shape and returns CommandResult", async () => {
+  const { commands } = loadPlugin({
+    commandHost: { cwd: "/tmp/t15-host" },
+  });
+  const command = commands[0];
+  const result = await command.handler({
+    agent: { id: "t15-agent" },
+    rawInput: "",
+  });
+  assert.deepEqual(result, {
+    kind: "success",
+    text: "no-plan\n\nmaestro missing: none",
+  });
+  assert.equal(serialize("t15-agent").plan, undefined);
+});
+
+test("unknown subcommands settle as CommandResult error", async () => {
   for (const token of ["validate", "e2e", "lessons"]) {
     assert.throws(
       () => parseSbtdArgv(token),
       new RegExp(`unknown subcommand: ${token}`),
     );
+    const result = await executeSbtdCommand({
+      agent: { id: "t15-err" },
+      rawInput: token,
+    });
+    assert.equal(result.kind, "error");
+    assert.match(result.text, new RegExp(`unknown subcommand: ${token}`));
   }
   const { commands } = loadPlugin();
   assert.equal(commands.length, 1);
   assert.equal(commands[0].name, "sbtd");
 });
 
-test("T10 trust keys forbidden on command input object", async () => {
-  for (const key of [
-    "cwd",
-    "mcp",
-    "runRefresh",
-    "serverName",
-    "toolNames",
-  ]) {
-    await assert.rejects(
-      () => runSbtdCommand({ [key]: key === "cwd" ? "/tmp" : {} }),
-      new RegExp(`forbids trust handle "${key}"`),
-    );
-  }
+test("session id comes from invocation.agent not slash argv", async () => {
+  getSession("t15-agent-only").plan = {
+    taskId: "agent-tid",
+    summary: "agent-sum",
+    gates: {
+      ddd: { requirement: "required", state: "planned" },
+      ddia: { requirement: "on-demand", state: "not-required" },
+      legacy: { requirement: "on-demand", state: "not-required" },
+      refactor: { requirement: "on-demand", state: "not-required" },
+      release: { requirement: "on-demand", state: "not-required" },
+    },
+  };
+  const result = await executeSbtdCommand({
+    agent: { id: "t15-agent-only" },
+    rawInput: "plan",
+  });
+  assert.equal(result.kind, "success");
+  assert.match(result.text, /taskId: agent-tid/);
 });
 
 test("README documents /sbtd command and install pins", () => {

@@ -3,18 +3,24 @@ import { preflight } from "../backends/maestro.js";
 import type { BookGatePlan } from "../state.js";
 import { serialize } from "../state.js";
 
+/**
+ * Structural match for `@deepseek-ai/dsh-commands@0.1.1-rc.2` `CommandDefinition`
+ * (verified in pnpm store; not inferred from omp-sbtd).
+ */
 export const SBTD_COMMAND_NAME = "sbtd";
 
 export const SBTD_COMMAND_DESCRIPTION =
   "Human SBTD status, Book Gate Plan view, and Maestro preflight. Not a model tool.";
 
-export const FORBIDDEN_COMMAND_KEYS = [
-  "cwd",
-  "mcp",
-  "runRefresh",
-  "serverName",
-  "toolNames",
-] as const;
+export type CommandResult =
+  | { kind: "success"; text?: string; sourceEventSeq?: number }
+  | { kind: "error"; text: string };
+
+/** Minimal invocation surface from dsh-commands `CommandInvocation`. */
+export type CommandInvocation = {
+  readonly agent: { readonly id?: string };
+  readonly rawInput: string;
+};
 
 export type SbtdCommandHost = {
   sessionId?: string;
@@ -25,7 +31,7 @@ export type SbtdCommandHost = {
 
 export type CommandsHost = {
   commands?: {
-    register: (definition: SbtdCommandDefinition) => unknown;
+    register: (definition: SbtdCommandDefinition) => () => void;
   };
   commandHost?: SbtdCommandHost;
 };
@@ -33,52 +39,22 @@ export type CommandsHost = {
 export type SbtdCommandDefinition = {
   name: "sbtd";
   description: string;
-  input: { hint: string };
-  handler: (input?: unknown) => Promise<string>;
+  input?: { hint: string };
+  handler: (
+    invocation: CommandInvocation,
+  ) => CommandResult | Promise<CommandResult>;
 };
 
 const GATE_KINDS = ["ddd", "ddia", "legacy", "refactor", "release"] as const;
 
-export function parseSbtdArgv(input: unknown): "status" | "plan" | "maestro" {
-  if (input !== null && typeof input === "object" && !Array.isArray(input)) {
-    const obj = input as Record<string, unknown>;
-    for (const key of FORBIDDEN_COMMAND_KEYS) {
-      if (Object.hasOwn(obj, key)) {
-        throw new Error(
-          `sbtd command forbids trust handle "${key}" (host-injected only)`,
-        );
-      }
-    }
-    if (typeof obj.args === "string") {
-      return parseSbtdArgv(obj.args);
-    }
-    if (Array.isArray(obj.argv)) {
-      return parseSbtdArgv(obj.argv);
-    }
-    if (typeof obj.subcommand === "string") {
-      return parseSbtdArgv(obj.subcommand);
-    }
-    return "status";
-  }
-
-  if (input === undefined || input === null || input === "") {
-    return "status";
-  }
-
-  let tokens: string[];
-  if (typeof input === "string") {
-    tokens = input
-      .trim()
-      .split(/\s+/)
-      .filter((t) => t.length > 0);
-  } else if (Array.isArray(input)) {
-    tokens = input.filter((t): t is string => typeof t === "string");
-  } else {
-    return "status";
-  }
+export function parseSbtdArgv(rawInput: string): "status" | "plan" | "maestro" {
+  const tokens = rawInput
+    .trim()
+    .split(/\s+/)
+    .filter((t) => t.length > 0);
 
   if (tokens.length > 0 && (tokens[0] === "sbtd" || tokens[0] === "/sbtd")) {
-    tokens = tokens.slice(1);
+    tokens.shift();
   }
   const head = tokens[0];
   if (head?.startsWith("/")) {
@@ -128,14 +104,14 @@ export function formatPlanBlock(plan: BookGatePlan): string {
 }
 
 export async function runSbtdCommand(
-  input?: unknown,
+  rawInput: string,
   host: SbtdCommandHost = {},
 ): Promise<string> {
   const sessionId =
     typeof host.sessionId === "string" && host.sessionId.length > 0
       ? host.sessionId
       : "default";
-  const verb = parseSbtdArgv(input);
+  const verb = parseSbtdArgv(rawInput);
 
   if (verb === "status") {
     const snap = serialize(sessionId);
@@ -164,6 +140,38 @@ export async function runSbtdCommand(
   return `maestro preflight: ${result.lastPreflight}\nmissing: ${formatMissing(result.missing)}\n${result.guidance}`;
 }
 
+function sessionIdFromInvocation(
+  invocation: CommandInvocation,
+  host: SbtdCommandHost,
+): string {
+  const agentId = invocation.agent.id;
+  if (typeof agentId === "string" && agentId.length > 0) {
+    return agentId;
+  }
+  if (typeof host.sessionId === "string" && host.sessionId.length > 0) {
+    return host.sessionId;
+  }
+  return "default";
+}
+
+export async function executeSbtdCommand(
+  invocation: CommandInvocation,
+  host: SbtdCommandHost = {},
+): Promise<CommandResult> {
+  try {
+    const text = await runSbtdCommand(invocation.rawInput, {
+      ...host,
+      sessionId: sessionIdFromInvocation(invocation, host),
+    });
+    return { kind: "success", text };
+  } catch (error) {
+    return {
+      kind: "error",
+      text: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export function createSbtdCommand(
   host: SbtdCommandHost = {},
 ): SbtdCommandDefinition {
@@ -171,7 +179,7 @@ export function createSbtdCommand(
     name: SBTD_COMMAND_NAME,
     description: SBTD_COMMAND_DESCRIPTION,
     input: { hint: "[plan|maestro]" },
-    handler: (input?: unknown) => runSbtdCommand(input, host),
+    handler: (invocation) => executeSbtdCommand(invocation, host),
   };
 }
 
@@ -190,8 +198,6 @@ export function resolveCommandHost(ctx: CommandsHost): SbtdCommandHost {
   const out: SbtdCommandHost = {};
   if (typeof explicit.sessionId === "string" && explicit.sessionId.length > 0) {
     out.sessionId = explicit.sessionId;
-  } else {
-    out.sessionId = "default";
   }
   if (typeof explicit.cwd === "string" && explicit.cwd.length > 0) {
     out.cwd = explicit.cwd;

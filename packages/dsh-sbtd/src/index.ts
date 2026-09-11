@@ -56,12 +56,17 @@ export type PluginHost = SectionHost &
 
 export {
   createSbtdCommand,
+  executeSbtdCommand,
   parseSbtdArgv,
   registerCommand,
   resolveCommandHost,
   runSbtdCommand,
   SBTD_COMMAND_DESCRIPTION,
   SBTD_COMMAND_NAME,
+} from "./commands/sbtd.js";
+export type {
+  CommandInvocation,
+  CommandResult,
 } from "./commands/sbtd.js";
 export {
   PRE_EXECUTE_EVENT,
