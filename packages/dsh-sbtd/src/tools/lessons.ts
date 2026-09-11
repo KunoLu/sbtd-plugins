@@ -7,7 +7,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { isAbsolute, join } from "node:path";
+import { isAbsolute, join, resolve, sep } from "node:path";
 import { detect } from "../backends/trellis.js";
 import {
   type PlanToolExec,
@@ -140,6 +140,15 @@ function hasUnsafePath(value: string): boolean {
   return false;
 }
 
+function isValidIndexTopic(topic: string): boolean {
+  return SAFE_SLUG_RE.test(topic) && !hasUnsafePath(topic);
+}
+
+function isInsideRoot(root: string, candidate: string): boolean {
+  const rootWithSep = root.endsWith(sep) ? root : root + sep;
+  return candidate === root || candidate.startsWith(rootWithSep);
+}
+
 function trellisPresent(cwd: string): boolean {
   const det = detect(cwd);
   return det.exists || det.workflowPresent;
@@ -200,6 +209,7 @@ function parseIndexRows(content: string): IndexRow[] {
     ) {
       continue;
     }
+    if (!isValidIndexTopic(topic)) continue;
     rows.push({
       id,
       tag,
@@ -302,6 +312,10 @@ function parseFlatSections(content: string): IndexRow[] {
       continue;
     }
     const topic = id.replace(/^LESSON-\d{8}-/, "");
+    if (!isValidIndexTopic(topic)) {
+      match = re.exec(content);
+      continue;
+    }
     const body = extractSection(content, id) ?? "";
     const summaryMatch = body.match(/\*\*summary:\*\*\s*(.+)/);
     const eventMatch = body.match(/\*\*event:\*\*\s*(\S+)/);
@@ -335,9 +349,17 @@ function rowMatchesFilters(row: IndexRow, input: LessonsInput): boolean {
   return true;
 }
 
-function detailPathForRow(store: StoreLayout, row: IndexRow): string {
-  if (store.kind === "docs-flat") return store.filePath;
-  return join(store.topicsDir, `${row.topic}.md`);
+function safeDetailPathForRow(
+  store: StoreLayout,
+  row: IndexRow,
+): { ok: true; path: string } | { ok: false } {
+  if (store.kind === "docs-flat") {
+    return { ok: true, path: store.filePath };
+  }
+  if (!isValidIndexTopic(row.topic)) return { ok: false };
+  const abs = resolve(store.topicsDir, `${row.topic}.md`);
+  if (!isInsideRoot(store.topicsDir, abs)) return { ok: false };
+  return { ok: true, path: abs };
 }
 
 function loadIndexRows(store: StoreLayout): IndexRow[] {
@@ -374,9 +396,13 @@ function recordLesson(
   const topic = resolveTopicSlug(input, event);
   if (topic == null) return skipped("record", "unsafe-path");
 
+  if (input.summary == null || input.summary.trim() === "") {
+    return skipped("record", "missing-summary");
+  }
+  const summary = input.summary.trim();
+
   const present = trellisPresent(cwd);
   const store = resolveStore(cwd, present);
-  const summary = input.summary?.trim() ?? "";
 
   if (store.kind === "docs-flat") {
     mkdirSync(join(cwd, "docs"), { recursive: true });
@@ -467,22 +493,34 @@ function queryLessons(
     };
   }
 
-  const hits: LessonHit[] = rows.map((row) => {
-    const detail = detailPathForRow(store, row);
+  const hits: LessonHit[] = [];
+  for (const row of rows) {
+    const pathResult = safeDetailPathForRow(store, row);
+    if (!pathResult.ok) continue;
     const hit: LessonHit = {
       id: row.id,
       tag: row.tag,
       summary: row.summary,
       topic: row.topic,
       read_when: row.read_when,
-      detail,
+      detail: pathResult.path,
     };
     if (intent === "read") {
-      const body = extractSection(readText(detail), row.id);
+      const body = extractSection(readText(pathResult.path), row.id);
       if (body != null) hit.body = body;
     }
-    return hit;
-  });
+    hits.push(hit);
+  }
+
+  if (hits.length === 0) {
+    return {
+      ok: true,
+      intent,
+      status: "not-found",
+      hits: [],
+      mutation: "none",
+    };
+  }
 
   return {
     ok: true,

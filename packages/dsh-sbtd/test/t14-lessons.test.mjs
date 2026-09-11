@@ -119,6 +119,83 @@ test("Q4A: absolute topic on record => skipped; no write", () => {
   assert.equal(existsSync(join(root, "docs", "lessons.md")), false);
 });
 
+
+test("Q1A: record without summary => skipped missing-summary; no write", () => {
+  const root = fixtureRoot("no-summary");
+  trellisFixture(root);
+  const before = readdirSync(root, { recursive: true }).length;
+
+  for (const input of [
+    { intent: "record", event: "bug-fix" },
+    { intent: "record", event: "bug-fix", summary: "" },
+    { intent: "record", event: "bug-fix", summary: "   " },
+  ]) {
+    const result = sbtdLessons("s1", input, { cwd: root });
+    assert.equal(result.ok, false, JSON.stringify(input));
+    assert.equal(result.status, "skipped");
+    assert.equal(result.kind, "missing-summary");
+  }
+
+  const after = readdirSync(root, { recursive: true }).length;
+  assert.equal(after, before);
+  assert.equal(existsSync(join(root, ".trellis", "lessons", "index.md")), false);
+});
+
+test("security: invalid index topic cannot read outside lessons root", () => {
+  const root = fixtureRoot("index-traversal");
+  trellisFixture(root);
+  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
+  writeFileSync(join(root, "OUTSIDE_SECRET.md"), "LEAKED\n", "utf8");
+  writeFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    `# Lessons index
+
+| id | tag | summary | topic | read_when |
+|---|---|---|---|---|
+| LESSON-20260101-evil | bug-fix | stolen summary | ../../../OUTSIDE_SECRET | when |
+| LESSON-20260101-good | bug-fix | safe summary | bug-fix | when |
+`,
+    "utf8",
+  );
+  writeFileSync(
+    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    `# bug-fix
+
+## LESSON-20260101-good
+
+**event:** bug-fix
+**summary:** safe summary
+`,
+    "utf8",
+  );
+
+  const matchEvil = sbtdLessons(
+    "s1",
+    { intent: "match", summary: "stolen" },
+    { cwd: root },
+  );
+  assert.equal(matchEvil.status, "not-found");
+  assert.deepEqual(matchEvil.hits, []);
+
+  const readEvil = sbtdLessons(
+    "s1",
+    { intent: "read", summary: "stolen" },
+    { cwd: root },
+  );
+  assert.equal(readEvil.status, "not-found");
+  assert.deepEqual(readEvil.hits, []);
+
+  const readGood = sbtdLessons(
+    "s1",
+    { intent: "read", event: "bug-fix", summary: "safe" },
+    { cwd: root },
+  );
+  assert.equal(readGood.status, "read");
+  assert.equal(readGood.hits.length, 1);
+  assert.match(readGood.hits[0].body ?? "", /safe summary/);
+  assert.doesNotMatch(readGood.hits[0].body ?? "", /LEAKED/);
+});
+
 test("Q3A: five-event Trellis record => topic+index; no root lessons.md", () => {
   const root = fixtureRoot("trellis-five");
   trellisFixture(root);
