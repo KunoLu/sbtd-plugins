@@ -27,6 +27,6 @@
     "commit": "70d3a60",
     "review_head": "70d3a60",
     "review_record": "/workspace/omp-tasks/t15-pr62-review-r4b.md",
-    "note": "r3b CLEAN @ f8561bf (T15QualityR3b pass); r3/r4 prior files void; premature archives reverted"
+    "note": "r3b CLEAN @ f8561bf; r4b quality @ 70d3a60; r4 security @ 8b61d5d (T15SecurityR4 pass); void invalid r3/r4 manual claims"
   }
 }

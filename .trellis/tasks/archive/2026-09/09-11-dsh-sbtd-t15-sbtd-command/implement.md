@@ -35,9 +35,10 @@ node --test test/*.test.mjs                   # 322/322
 | r2 | `b7d346b` | **STALE** | do not credit |
 | r3 (T15QualityR3) | `f8561bf` | **block** | stale GitNexus — void |
 | **r3b (T15QualityR3b)** | `f8561bf` | **CLEAN** | authoritative product review |
-| r3 (T15SecurityR3) | `f8561bf` | **pass** | not re-run |
+| r3 (T15SecurityR3) | `f8561bf` | **pass** | product authority |
 | r4 (T15QualityR4-2) | `70d3a60` (pre-fix) | **block** | invalid artifact claims |
-| **r4b (T15QualityR4b)** | `70d3a60` | **CLEAN** | authoritative process review |
+| **r4b (T15QualityR4b)** | `70d3a60` | **CLEAN** | authoritative process quality |
+| r4 (T15SecurityR4) | `8b61d5d` | **pass** | `/workspace/omp-tasks/t15-pr62-review-r4-security.md` |
 
 Premature archives @ `5670f14` and `7f273d7` reverted; task restored `in_progress` then re-archived after r4b.
 

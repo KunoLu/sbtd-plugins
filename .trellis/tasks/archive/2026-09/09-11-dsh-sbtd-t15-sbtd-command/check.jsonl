@@ -4,3 +4,4 @@
 {"file": "packages/dsh-sbtd/src/commands/sbtd.ts", "reason": "Fence-bound implementation"}
 {"file": "/workspace/omp-tasks/t15-pr62-review-r3b.md", "reason": "r3b CLEAN @ f8561bf (T15QualityR3b pass)"}
 {"file": "/workspace/omp-tasks/t15-pr62-review-r4b.md", "reason": "r4b CLEAN @ 70d3a60 (T15QualityR4b pass)"}
+{"file": "/workspace/omp-tasks/t15-pr62-review-r4-security.md", "reason": "r4 security pass @ 8b61d5d (T15SecurityR4)"}
