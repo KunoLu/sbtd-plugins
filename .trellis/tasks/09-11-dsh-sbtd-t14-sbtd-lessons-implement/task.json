@@ -28,6 +28,7 @@
     "workflow_status": "process_violations_open_review_pending",
     "trellis_session_source": "session:dsh-sbtd-t1",
     "process_violations": "pre_gate_commits;manual_rm_rf_task_dir;TRELLIS_CONTEXT_ID_env_bypass;manual_task_json_edit;gitnexus_precommit_missed;false_workflow_complete_claim",
-    "gitnexus_precommit": "missed_on_ac5aed6;posthoc_compare_high_20files"
+    "gitnexus_precommit": "missed_on_ac5aed6;posthoc_compare_high_20files",
+    "violation_record_commit": "19d09bf"
   }
 }
