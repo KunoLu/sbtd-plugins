@@ -200,6 +200,17 @@ git status --porcelain → (empty)
 
 Production paths remain untouched. T14 grill/ddd process docs committed; unrelated Trellis untracked dirs discarded.
 
+
+### 7.6 Final tip after §7 evidence commits
+
+| Field | Value |
+|---|---|
+| Process-clear stack | `ca0511f` (align) → `fe73870` (§7 after) → **`bb0edee9956d2001b901f068352175bed2019acc`** (set-meta tip) |
+| Re-analyze after stack | `node .gitnexus/run.cjs analyze .` → lastCommit matches HEAD `bb0edee` (0 behind) |
+| CLI `detect-changes --scope all` | `No changes detected.` |
+| `git status --porcelain` | empty |
+| MCP | still unavailable (CLI-only) |
+
 ### 7.5 Gap closure verdict
 
 | Gap | Closed? |
