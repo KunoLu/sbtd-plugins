@@ -10,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { apply, inject, name } from "../dist/index.js";
+import { apply, inject, name, SBTD_LESSONS_TOOL_NAME } from "../dist/index.js";
 import { preflight as t12Preflight } from "../dist/backends/maestro.js";
 import {
   SBTD_E2E_TOOL_NAME,
@@ -73,10 +73,11 @@ test("apply registers sbtd_e2e (Q2A)", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 8);
+  assert.equal(tools.length, 9);
   const e2e = tools.find((t) => t.name === SBTD_E2E_TOOL_NAME);
   assert.ok(e2e);
   assert.equal(tools[7].name, SBTD_E2E_TOOL_NAME);
+  assert.equal(tools[8].name, SBTD_LESSONS_TOOL_NAME);
 });
 
 test("typeof T12 preflight export unchanged (Q5A consume as-is)", () => {

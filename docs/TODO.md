@@ -6,7 +6,7 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-10（上海） |
+| 上次同步 | 2026-09-11（上海） |
 | 同步时 main | `9289798`（#57 T13；#55 T12 → `61026a1`；#53 T11 → `d729d6e`；#52 TODO；T10 #51 → `014f480`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
@@ -19,7 +19,7 @@
 |---|---|---|
 | **P0** | T0–T3 骨架 + 硬门禁 | ✅ 完成 |
 | **P1** | T4–T8 核心闭环 | ✅ T4–T8 完成（T8 #47 → `a90a96f`；T7 `b73ece9`）；FU2 ✅；FU3 ✅ #43 → `2a82e63` |
-| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55 → `61026a1`；T13 ✅ #57 → `9289798`；T14 未开 |
+| **P2** | T9–T14 验证 / 移动端 | 🟡 T9 ✅ #49 → `314c345`；T10 ✅ #51 → `014f480`；T11 ✅ #53 → `d729d6e`；T12 ✅ #55 → `61026a1`；T13 ✅ #57 → `9289798`；T14 🟡 进行中 |
 | **P3** | T15–T16 入口 + 整包验收 | ⬜ 未开 |
 
 ---
@@ -56,7 +56,7 @@
 | T11 | `sbtd_bdd` | ✅ | #53 → `d729d6e`；scheme A finish；CLEAN r5；locks Q1C Q2B Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r5 REQUIRED closed；archive `09-10-dsh-sbtd-t11-sbtd-bdd-grill` + `09-10-dsh-sbtd-t11-sbtd-bdd-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T12 | Maestro 预检 | ✅ | #55 → `61026a1`；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T13 | `sbtd_e2e` | ✅ | #57 → `9289798`；scheme A finish；CLEAN r5；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r4 REQUIRED closed；archive `09-10-dsh-sbtd-t13-sbtd-e2e-grill` + `09-10-dsh-sbtd-t13-sbtd-e2e-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T14 | `sbtd_lessons` | ⬜ |  |
+| T14 | `sbtd_lessons` | 🟡 | scheme A implement 进行中；locks Q1A–Q6A；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T15 | `/sbtd` 命令与 README | ⬜ | P3 |
 | T16 | 端到端验收 | ⬜ | P3 |
 
@@ -107,13 +107,14 @@
 | 7 | **T11** `sbtd_bdd` | ✅ #53 → `d729d6e` |
 | 8 | **T12** Maestro 预检 | ✅ #55 → `61026a1` |
 | 9 | **T13** `sbtd_e2e` | ✅ #57 → `9289798` |
-| 10 | **T14** `sbtd_lessons` | ⬜ 下一队列 |
+| 10 | **T14** `sbtd_lessons` | 🟡 进行中 |
 ---
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-11 | T14 `sbtd_lessons` scheme A implement 进行中（branch `feat/t14-sbtd-lessons`；locks Q1A–Q6A；不发布包；不改写 trellis/e2e/maestro/validate/bdd/gitnexus） |
 | 2026-09-10 | T13 #57 → main `9289798`（TODO merge-SHA backfill） |
 | 2026-09-10 | T13 #57 scheme A finish/merge：CLEAN r5；tip `194a662`；locks Q1B–Q6A；REQUIRED_CHANGES=none；r1–r4 REQUIRED closed；Main+Pr57R5Reviewer+advisor CONTENT CLEAN；squash `9289798`；不发布包；不改写 maestro.ts；下一队列 T14（未开） |
 | 2026-09-10 | T12 #55 → main `61026a1`（TODO merge-SHA backfill） |

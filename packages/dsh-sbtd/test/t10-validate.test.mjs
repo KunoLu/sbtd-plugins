@@ -63,7 +63,7 @@ test("apply registers sbtd_validate (Q5A)", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
   assert.deepEqual([...inject], ["tools", "systemPrompt"]);
-  assert.equal(tools.length, 8);
+  assert.equal(tools.length, 9);
   assert.equal(tools[5].name, SBTD_VALIDATE_TOOL_NAME);
 });
 
