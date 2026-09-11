@@ -57,7 +57,7 @@
 | T12 | Maestro 预检 | ✅ | #55 → `61026a1`；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T13 | `sbtd_e2e` | ✅ | #57 → `9289798`；scheme A finish；CLEAN r5；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r4 REQUIRED closed；archive `09-10-dsh-sbtd-t13-sbtd-e2e-grill` + `09-10-dsh-sbtd-t13-sbtd-e2e-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T14 | `sbtd_lessons` | ✅ | #59 → `2b7cf61`；scheme A finish；product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；archive `09-11-dsh-sbtd-t14-sbtd-lessons-grill` + `09-11-dsh-sbtd-t14-sbtd-lessons-ddd` + `09-11-dsh-sbtd-t14-sbtd-lessons-implement`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T15 | `/sbtd` 命令与 README | 🟡 | `feat/t15-sbtd-command`；scheme A；locks Q1A–Q6A |
+| T15 | `/sbtd` 命令与 README | 🟡 | #62 `feat/t15-sbtd-command`；scheme A；locks Q1A–Q6A |
 | T16 | 端到端验收 | ⬜ | P3 |
 
 ---
@@ -108,14 +108,14 @@
 | 8 | **T12** Maestro 预检 | ✅ #55 → `61026a1` |
 | 9 | **T13** `sbtd_e2e` | ✅ #57 → `9289798` |
 | 10 | **T14** `sbtd_lessons` | ✅ #59 → `2b7cf61` |
-| 11 | **T15** `/sbtd` 命令与 README | 🟡 `feat/t15-sbtd-command` |
+| 11 | **T15** `/sbtd` 命令与 README | 🟡 #62 `feat/t15-sbtd-command` |
 ---
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-11 | T15 开分支 `feat/t15-sbtd-command`：`/sbtd` 人类命令 + package README；locks Q1A–Q6A；未合 / 未 npm |
+| 2026-09-11 | T15 开 PR #62 `feat/t15-sbtd-command`：`/sbtd` 人类命令 + package README；locks Q1A–Q6A；未合 / 未 npm |
 | 2026-09-11 | T14 #59 → main `2b7cf61`（TODO merge-SHA backfill） |
 | 2026-09-11 | T14 #59 scheme A finish/merge：product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A–Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；不发布包；下一队列 T15（未开） |
 | 2026-09-11 | T14 #59 **流程违规记录**：pre-gate ac5aed6+b26d0b9；Trellis manual `rm -rf` + `TRELLIS_CONTEXT_ID` bypass + 误报 workflow complete；GitNexus pre-commit 缺失；task meta `process_violations_open`；**勿合并** |
