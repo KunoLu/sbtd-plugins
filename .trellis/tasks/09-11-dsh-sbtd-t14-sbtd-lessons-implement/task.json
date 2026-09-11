@@ -15,12 +15,16 @@
   "branch": "feat/t14-sbtd-lessons",
   "base_branch": "main",
   "worktree_path": null,
-  "commit": null,
-  "pr_url": null,
+  "commit": "34471fd",
+  "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/59",
   "subtasks": [],
   "children": [],
   "parent": "09-11-dsh-sbtd-t14-sbtd-lessons-grill",
   "relatedFiles": [],
-  "notes": "",
-  "meta": {}
+  "notes": "Pre-gate: ac5aed6+b26d0b9 (code+TODO). Post-gate: 34471fd (Trellis task+spec+check). PR #59 NOT merge-ready until parent /review.",
+  "meta": {
+    "pre_gate_commits": "ac5aed6,b26d0b9",
+    "post_gate_commit": "34471fd",
+    "workflow_status": "check_and_spec_passed_review_pending"
+  }
 }
