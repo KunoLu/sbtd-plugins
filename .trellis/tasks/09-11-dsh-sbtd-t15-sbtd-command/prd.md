@@ -25,7 +25,8 @@ Implement human `/sbtd`, `/sbtd plan`, and `/sbtd maestro` on DSH `ctx.commands`
 - [x] R4: persistent `packages/dsh-sbtd/features/t15-sbtd-command.feature`
 - [x] No npm publish
 - [x] Review r2 CLEAN @ `b7d346b` (`/workspace/omp-tasks/t15-pr62-review-r2.md`)
-- [ ] PR #62 merge / `/trellis:finish-work` (task stays `in_progress` until finish-work)
+- [x] `/trellis:finish-work` — task archived via `task.py archive` (2026-09-11)
+- [ ] PR #62 merge to `main` (task lifecycle complete; merge is separate)
 
 ## Notes
 

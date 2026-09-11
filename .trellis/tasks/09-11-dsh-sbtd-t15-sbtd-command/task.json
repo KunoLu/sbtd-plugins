@@ -23,6 +23,8 @@
   "relatedFiles": [],
   "notes": "",
   "meta": {
-    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/62"
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/62",
+    "commit": "f8561bf",
+    "workflow_status": "scheme_a_finish_work"
   }
 }

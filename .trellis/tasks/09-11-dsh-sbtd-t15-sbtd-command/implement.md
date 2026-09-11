@@ -58,7 +58,7 @@ R1 proof: `parseSbtdArgv("sbtd")` throws; `parseSbtdArgv("plan")` → `"plan"`; 
 
 - r1 REQUIRED_CHANGES R1–R4: **CLOSED** on branch; trellis-check gate recorded above.
 - **Review convergence:** r2 CLEAN (2026-09-11). PR #62 still OPEN; no merge.
-- **Task remains `in_progress`** until `/trellis:finish-work` (archive is separate).
+- **Finish-work:** `/trellis:finish-work` executed 2026-09-11 — spec update + `task.py archive` (see `task.json` `completedAt`).
 
 ## GitNexus
 
