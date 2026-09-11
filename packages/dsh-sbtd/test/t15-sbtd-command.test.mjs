@@ -6,9 +6,11 @@ import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
 import {
   executeSbtdCommand,
+  FORBIDDEN_MODEL_KEYS,
   parseSbtdArgv,
   runSbtdCommand,
 } from "../dist/commands/sbtd.js";
+import { FORBIDDEN_MODEL_KEYS as MAESTRO_FORBIDDEN } from "../dist/backends/maestro.js";
 import { getSession, serialize } from "../dist/state.js";
 
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -167,6 +169,17 @@ test("session id comes from invocation.agent not slash argv", async () => {
   });
   assert.equal(result.kind, "success");
   assert.match(result.text, /taskId: agent-tid/);
+});
+
+test("Q4A trust handles use canonical FORBIDDEN_MODEL_KEYS from maestro", () => {
+  assert.deepEqual(FORBIDDEN_MODEL_KEYS, MAESTRO_FORBIDDEN);
+  const src = readFileSync(join(pkgRoot, "src/commands/sbtd.ts"), "utf8");
+  assert.doesNotMatch(src, /FORBIDDEN_COMMAND_KEYS/);
+  assert.match(src, /FORBIDDEN_MODEL_KEYS/);
+  assert.doesNotMatch(
+    src,
+    /\[\s*"cwd"\s*,\s*"mcp"\s*,\s*"runRefresh"/,
+  );
 });
 
 test("README documents /sbtd command and install pins", () => {

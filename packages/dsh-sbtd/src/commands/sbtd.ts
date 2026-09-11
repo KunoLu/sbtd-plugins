@@ -1,5 +1,5 @@
 import type { MaestroOptions, PreflightResult } from "../backends/maestro.js";
-import { preflight } from "../backends/maestro.js";
+import { FORBIDDEN_MODEL_KEYS, preflight } from "../backends/maestro.js";
 import type { BookGatePlan } from "../state.js";
 import { serialize } from "../state.js";
 
@@ -11,6 +11,9 @@ export const SBTD_COMMAND_NAME = "sbtd";
 
 export const SBTD_COMMAND_DESCRIPTION =
   "Human SBTD status, Book Gate Plan view, and Maestro preflight. Not a model tool.";
+
+/** Q4A canonical T10 trust-handle list (host-injected via `commandHost`; not on `CommandInvocation`). */
+export { FORBIDDEN_MODEL_KEYS };
 
 export type CommandResult =
   | { kind: "success"; text?: string; sourceEventSeq?: number }

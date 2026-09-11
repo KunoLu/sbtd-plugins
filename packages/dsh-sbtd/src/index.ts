@@ -57,6 +57,7 @@ export type PluginHost = SectionHost &
 export {
   createSbtdCommand,
   executeSbtdCommand,
+  FORBIDDEN_MODEL_KEYS,
   parseSbtdArgv,
   registerCommand,
   resolveCommandHost,

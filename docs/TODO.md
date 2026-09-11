@@ -57,7 +57,7 @@
 | T12 | Maestro 预检 | ✅ | #55 → `61026a1`；scheme A finish；CLEAN r3；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r2 REQUIRED closed；archive `09-10-dsh-sbtd-t12-maestro-precheck-grill` + `09-10-dsh-sbtd-t12-maestro-precheck-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T13 | `sbtd_e2e` | ✅ | #57 → `9289798`；scheme A finish；CLEAN r5；locks Q1B Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r4 REQUIRED closed；archive `09-10-dsh-sbtd-t13-sbtd-e2e-grill` + `09-10-dsh-sbtd-t13-sbtd-e2e-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 | T14 | `sbtd_lessons` | ✅ | #59 → `2b7cf61`；scheme A finish；product CLEAN r3 @ `e4bf2b1`；process clear tip `ffb081d`；locks Q1A Q2A Q3A Q4A Q5A Q6A；REQUIRED_CHANGES=none；r1–r3 REQUIRED closed；process gaps cleared；archive `09-11-dsh-sbtd-t14-sbtd-lessons-grill` + `09-11-dsh-sbtd-t14-sbtd-lessons-ddd` + `09-11-dsh-sbtd-t14-sbtd-lessons-implement`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
-| T15 | `/sbtd` 命令与 README | 🟡 | #62 `feat/t15-sbtd-command`；scheme A；locks Q1A–Q6A |
+| T15 | `/sbtd` 命令与 README | 🟡 | #62 `feat/t15-sbtd-command`；scheme A；locks Q1A–Q6A；**fence 冲突已解**：Q4A `inject`+`commands` 要求 11 个 inject-pin 测试单行更新（t0/t1/t2/t3/t5/t6/t8/t10/t11/t13/t14）；非四文件 fence 的必要 fallout |
 | T16 | 端到端验收 | ⬜ | P3 |
 
 ---
