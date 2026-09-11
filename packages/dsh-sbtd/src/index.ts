@@ -13,6 +13,11 @@ import {
   registerE2eTool,
   resolveE2eHost,
 } from "./tools/e2e.js";
+import {
+  type LessonsHostOptions,
+  registerLessonsTool,
+  resolveLessonsHost,
+} from "./tools/lessons.js";
 import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
 import { registerReviewTool } from "./tools/review.js";
 import { registerSpecTool } from "./tools/spec.js";
@@ -39,6 +44,8 @@ export type PluginHost = SectionHost &
     bddHost?: BddHostOptions;
     /** Optional explicit e2e trust handles (Q4A). Prefer e2eHost. */
     e2eHost?: E2eHostOptions;
+    /** Optional explicit lessons trust handles (Q4A). Prefer lessonsHost. */
+    lessonsHost?: LessonsHostOptions;
   };
 
 export {
@@ -85,6 +92,17 @@ export {
   SBTD_E2E_TOOL_NAME,
   sbtdE2e,
 } from "./tools/e2e.js";
+export {
+  createLessonsTool,
+  LESSON_EVENTS,
+  LESSON_INTENTS,
+  modelSchemaForbidsTrustHandles as lessonsModelSchemaForbidsTrustHandles,
+  pickLessonsInput,
+  registerLessonsTool,
+  resolveLessonsHost,
+  SBTD_LESSONS_TOOL_NAME,
+  sbtdLessons,
+} from "./tools/lessons.js";
 export {
   CLARIFY_MODES,
   createClarifyTool,
@@ -147,5 +165,6 @@ export function apply(ctx: PluginHost): void {
   registerValidateTool(ctx, resolveValidateHost(ctx));
   registerBddTool(ctx, resolveBddHost(ctx));
   registerE2eTool(ctx, resolveE2eHost(ctx));
+  registerLessonsTool(ctx, resolveLessonsHost(ctx));
   registerHooks(ctx);
 }

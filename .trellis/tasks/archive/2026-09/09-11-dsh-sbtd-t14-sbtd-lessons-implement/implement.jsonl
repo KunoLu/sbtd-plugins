@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/09-11-dsh-sbtd-t14-sbtd-lessons-implement/prd.md", "reason": "Acceptance criteria and pre-gate vs post-gate scope"}
+{"file": ".trellis/tasks/09-11-dsh-sbtd-t14-sbtd-lessons-implement/design.md", "reason": "Module boundaries and store layout"}
+{"file": ".trellis/tasks/09-11-dsh-sbtd-t14-sbtd-lessons-implement/implement.md", "reason": "Check and spec-update gate commands"}
+{"file": "/workspace/omp-tasks/t14-sbtd-lessons-ddd.md", "reason": "Locked DDD Q1A-Q6A confirmed"}
+{"file": ".trellis/spec/dsh-sbtd/backend/index.md", "reason": "Package backend spec baseline"}

@@ -91,6 +91,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
     "bdd.ts",
     "clarify.ts",
     "e2e.ts",
+    "lessons.ts",
     "plan.ts",
     "review.ts",
     "spec.ts",

@@ -1,0 +1,28 @@
+{
+  "id": "dsh-sbtd-t14-sbtd-lessons-grill",
+  "name": "dsh-sbtd-t14-sbtd-lessons-grill",
+  "title": "dsh-sbtd T14 sbtd_lessons grill",
+  "description": "Grill-only Round 1 of grill-with-docs for T14 sbtd_lessons. Surface product/domain decisions; consume T5/T7/T13 as-is; no implementation.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-11",
+  "completedAt": "2026-09-11",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-11-dsh-sbtd-t14-sbtd-lessons-implement"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
