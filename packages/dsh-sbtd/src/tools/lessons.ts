@@ -396,13 +396,9 @@ function recordLesson(
   const topic = resolveTopicSlug(input, event);
   if (topic == null) return skipped("record", "unsafe-path");
 
-  if (input.summary == null || input.summary.trim() === "") {
-    return skipped("record", "missing-summary");
-  }
-  const summary = input.summary.trim();
-
   const present = trellisPresent(cwd);
   const store = resolveStore(cwd, present);
+  const summary = input.summary?.trim() ?? "";
 
   if (store.kind === "docs-flat") {
     mkdirSync(join(cwd, "docs"), { recursive: true });

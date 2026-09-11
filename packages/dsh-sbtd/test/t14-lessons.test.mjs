@@ -119,28 +119,6 @@ test("Q4A: absolute topic on record => skipped; no write", () => {
   assert.equal(existsSync(join(root, "docs", "lessons.md")), false);
 });
 
-
-test("Q1A: record without summary => skipped missing-summary; no write", () => {
-  const root = fixtureRoot("no-summary");
-  trellisFixture(root);
-  const before = readdirSync(root, { recursive: true }).length;
-
-  for (const input of [
-    { intent: "record", event: "bug-fix" },
-    { intent: "record", event: "bug-fix", summary: "" },
-    { intent: "record", event: "bug-fix", summary: "   " },
-  ]) {
-    const result = sbtdLessons("s1", input, { cwd: root });
-    assert.equal(result.ok, false, JSON.stringify(input));
-    assert.equal(result.status, "skipped");
-    assert.equal(result.kind, "missing-summary");
-  }
-
-  const after = readdirSync(root, { recursive: true }).length;
-  assert.equal(after, before);
-  assert.equal(existsSync(join(root, ".trellis", "lessons", "index.md")), false);
-});
-
 test("security: invalid index topic cannot read outside lessons root", () => {
   const root = fixtureRoot("index-traversal");
   trellisFixture(root);
