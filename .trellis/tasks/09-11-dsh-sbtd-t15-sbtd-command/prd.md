@@ -24,7 +24,8 @@ Implement human `/sbtd`, `/sbtd plan`, and `/sbtd maestro` on DSH `ctx.commands`
 - [x] R1: `parseSbtdArgv` accepts only empty/`plan`/`maestro` rawInput (no command-name or leading-slash aliases, no trailing tokens)
 - [x] R4: persistent `packages/dsh-sbtd/features/t15-sbtd-command.feature`
 - [x] No npm publish
-- [ ] PR #62 left open until review CLEAN
+- [x] Review r2 CLEAN @ `b7d346b` (`/workspace/omp-tasks/t15-pr62-review-r2.md`)
+- [ ] PR #62 merge / `/trellis:finish-work` (task stays `in_progress` until finish-work)
 
 ## Notes
 
