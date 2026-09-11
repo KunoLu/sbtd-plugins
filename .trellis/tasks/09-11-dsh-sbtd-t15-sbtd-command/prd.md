@@ -15,20 +15,13 @@ Implement human `/sbtd`, `/sbtd plan`, and `/sbtd maestro` on DSH `ctx.commands`
 
 ## Acceptance Criteria
 
-- [x] Q1A: three literals only; not a model tool
-- [x] Q2A: bare `/sbtd` read-only no-plan/plan + maestro missing; no install
-- [x] Q3A: `/sbtd plan` view-only; `/sbtd maestro` calls T12 `preflight()`; no silent install
-- [x] Q4A: `inject` includes `commands`; `registerCommand` in `apply()`; host-injected session; forbid model cwd/mcp; host pin rc.2
-- [x] Q5A: package README updated only
-- [x] Q6A: fence respected; no hooks/tools/backends rewrite
-- [x] R1: `parseSbtdArgv` accepts only empty/`plan`/`maestro` rawInput (no command-name or leading-slash aliases, no trailing tokens)
-- [x] R4: persistent `packages/dsh-sbtd/features/t15-sbtd-command.feature`
-- [x] No npm publish
-- [x] Review r3 CLEAN @ `f8561bf` (`/workspace/omp-tasks/t15-pr62-review-r3.md`); r2 @ `b7d346b` **stale**
-- [ ] `/trellis:finish-work` (premature archive @ `5670f14` reverted; task `in_progress`)
+- [x] Q1A–Q6A locks satisfied
+- [x] R1–R4 REQUIRED_CHANGES closed
+- [x] Review r4 CLEAN @ `8b61d5d` (`/workspace/omp-tasks/t15-pr62-review-r4.md`)
+- [x] `/trellis:finish-work` (archive after r4 record)
 - [ ] PR #62 merge to `main`
 
 ## Notes
 
+- r2 @ `b7d346b` and premature finish-work @ `5670f14` are stale/reverted — do not credit.
 - DDD confirmed in `/workspace/omp-tasks/t15-sbtd-command-ddd.md`.
-- r1 review at `a83ffd07` was block / not CLEAN (Quality block, Security pass). R1–R4 fix pass addresses REQUIRED_CHANGES.

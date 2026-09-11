@@ -24,8 +24,9 @@
   "notes": "",
   "meta": {
     "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/62",
-    "commit": "f8561bf",
-    "review_head": "f8561bf",
-    "note": "finish-work reverted pending r3 @ f8561bf (r2 @ b7d346b stale after f8561bf)"
+    "commit": "8b61d5d",
+    "review_head": "8b61d5d",
+    "note": "r4 CLEAN @ 8b61d5d final tip; r2 @ b7d346b stale; premature archive @ 5670f14 reverted",
+    "review_record": "/workspace/omp-tasks/t15-pr62-review-r4.md"
   }
 }
