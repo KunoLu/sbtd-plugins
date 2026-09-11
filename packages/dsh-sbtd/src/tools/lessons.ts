@@ -280,9 +280,10 @@ function resolveStore(cwd: string, present: boolean): StoreLayout {
   return { kind: "docs-flat", filePath: join(cwd, "docs", "lessons.md") };
 }
 
-function readText(path: string): string {
-  if (!existsSync(path)) return "";
-  return readFileSync(path, "utf8");
+function readTextIfAllowed(cwd: string, absPath: string): string | null {
+  if (!lessonPathAllowed(cwd, absPath)) return null;
+  if (!existsSync(absPath)) return "";
+  return readFileSync(absPath, "utf8");
 }
 
 function parseIndexRows(content: string): IndexRow[] {
@@ -414,9 +415,24 @@ function parseFlatSections(content: string, filePath: string): IndexRow[] {
     const summaryMatch = body.match(/\*\*summary:\*\*\s*(.+)/);
     const eventMatch = body.match(/\*\*event:\*\*\s*(\S+)/);
     const tagsMatch = body.match(/\*\*tags:\*\*\s*(.+)/);
+    const eventRaw = eventMatch?.[1]?.trim();
+    const userTags = tagsMatch?.[1]
+      ? tagsMatch[1]
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+    let tags: string;
+    if (eventRaw != null && isLessonEvent(eventRaw)) {
+      tags = buildTagsColumn(eventRaw, userTags);
+    } else if (userTags.length > 0) {
+      tags = userTags.join(", ");
+    } else {
+      tags = topic;
+    }
     rows.push({
       id,
-      tags: tagsMatch?.[1]?.trim() ?? eventMatch?.[1] ?? topic,
+      tags,
       read_when: "",
       summary: summaryMatch?.[1]?.trim() ?? "",
       detail: filePath,
@@ -426,8 +442,16 @@ function parseFlatSections(content: string, filePath: string): IndexRow[] {
   return rows;
 }
 
-function flatRowTopic(row: IndexRow, filePath: string): string | null {
-  const content = readText(filePath);
+function flatRowTopic(
+  row: IndexRow,
+  filePath: string,
+  cwd: string,
+): string | null {
+  const content = readTextIfAllowed(cwd, filePath);
+  if (content == null) {
+    const fromId = row.id.replace(/^LESSON-\d{8}-/, "");
+    return isValidIndexTopic(fromId) ? fromId : null;
+  }
   const body = extractSection(content, row.id);
   if (body) {
     const topicMatch = body.match(/\*\*topic:\*\*\s*(\S+)/);
@@ -440,9 +464,9 @@ function flatRowTopic(row: IndexRow, filePath: string): string | null {
   return isValidIndexTopic(fromId) ? fromId : null;
 }
 
-function rowTopic(row: IndexRow, store: StoreLayout): string {
+function rowTopic(row: IndexRow, store: StoreLayout, cwd: string): string {
   if (store.kind === "docs-flat") {
-    return flatRowTopic(row, store.filePath) ?? "";
+    return flatRowTopic(row, store.filePath, cwd) ?? "";
   }
   return topicFromDetail(row.detail) ?? "";
 }
@@ -463,6 +487,7 @@ function rowMatchesFilters(
   row: IndexRow,
   input: LessonsInput,
   store: StoreLayout,
+  cwd: string,
 ): boolean {
   if (input.event != null && input.event.trim() !== "") {
     const event = input.event.trim();
@@ -470,7 +495,7 @@ function rowMatchesFilters(
     if (!rowTags.includes(event)) return false;
   }
   if (input.topic != null && input.topic.trim() !== "") {
-    if (rowTopic(row, store) !== input.topic.trim()) return false;
+    if (rowTopic(row, store, cwd) !== input.topic.trim()) return false;
   }
   if (input.summary != null && input.summary.trim() !== "") {
     const needle = input.summary.trim().toLowerCase();
@@ -511,24 +536,29 @@ function safeDetailPathForRow(
   return { ok: true, path: abs };
 }
 
-function loadIndexRows(store: StoreLayout): IndexRow[] {
+function loadIndexRows(store: StoreLayout, cwd: string): IndexRow[] {
   if (store.kind === "docs-flat") {
-    return parseFlatSections(readText(store.filePath), store.filePath);
+    const text = readTextIfAllowed(cwd, store.filePath);
+    if (text == null) return [];
+    return parseFlatSections(text, store.filePath);
   }
-  return parseIndexRows(readText(store.indexPath));
+  const text = readTextIfAllowed(cwd, store.indexPath);
+  if (text == null) return [];
+  return parseIndexRows(text);
 }
 
 function buildHit(
   row: IndexRow,
   store: StoreLayout,
   detailPath: string,
+  cwd: string,
   body?: string,
 ): LessonHit {
   const hit: LessonHit = {
     id: row.id,
     tag: row.tags,
     summary: row.summary,
-    topic: rowTopic(row, store),
+    topic: rowTopic(row, store, cwd),
     read_when: row.read_when,
     detail: detailPath,
   };
@@ -564,7 +594,8 @@ function recordLesson(
       return skipped("record", "unsafe-path");
     }
     mkdirSync(join(cwd, "docs"), { recursive: true });
-    const existing = readText(store.filePath);
+    const existing = readTextIfAllowed(cwd, store.filePath);
+    if (existing == null) return skipped("record", "unsafe-path");
     const id = nextLessonIdFromRows(
       topic,
       parseFlatSections(existing, store.filePath),
@@ -597,14 +628,16 @@ function recordLesson(
   }
 
   mkdirSync(store.topicsDir, { recursive: true });
-  const indexContent = readText(store.indexPath);
+  const indexContent = readTextIfAllowed(cwd, store.indexPath);
+  if (indexContent == null) return skipped("record", "unsafe-path");
   const id = nextLessonId(topic, indexContent);
   const topicPath = join(store.topicsDir, `${topic}.md`);
   if (!lessonPathAllowed(cwd, topicPath)) {
     return skipped("record", "unsafe-path");
   }
 
-  const topicExisting = readText(topicPath);
+  const topicExisting = readTextIfAllowed(cwd, topicPath);
+  if (topicExisting == null) return skipped("record", "unsafe-path");
   const topicPrefix =
     topicExisting.length === 0
       ? topicFileHeader(topic)
@@ -649,8 +682,19 @@ function queryLessons(
 
   const present = trellisPresent(cwd);
   const store = resolveStore(cwd, present);
-  const rows = loadIndexRows(store).filter((row) =>
-    rowMatchesFilters(row, input, store),
+  if (store.kind === "docs-flat") {
+    if (!lessonPathAllowed(cwd, store.filePath)) {
+      return skipped(intent, "unsafe-path");
+    }
+  } else if (
+    !lessonPathAllowed(cwd, store.root) ||
+    !lessonPathAllowed(cwd, store.indexPath)
+  ) {
+    return skipped(intent, "unsafe-path");
+  }
+
+  const rows = loadIndexRows(store, cwd).filter((row) =>
+    rowMatchesFilters(row, input, store, cwd),
   );
 
   if (rows.length === 0) {
@@ -670,18 +714,25 @@ function queryLessons(
     const pathResult = safeDetailPathForRow(store, row, cwd);
     if (!pathResult.ok) continue;
     if (indexOnlyRead) {
-      hits.push(buildHit(row, store, pathResult.path));
+      hits.push(buildHit(row, store, pathResult.path, cwd));
       continue;
     }
     if (intent === "read") {
-      if (!lessonPathAllowed(cwd, pathResult.path)) continue;
-      const body = extractSection(readText(pathResult.path), row.id);
+      const topicText = readTextIfAllowed(cwd, pathResult.path);
+      if (topicText == null) continue;
+      const body = extractSection(topicText, row.id);
       hits.push(
-        buildHit(row, store, pathResult.path, body != null ? body : undefined),
+        buildHit(
+          row,
+          store,
+          pathResult.path,
+          cwd,
+          body != null ? body : undefined,
+        ),
       );
       continue;
     }
-    hits.push(buildHit(row, store, pathResult.path));
+    hits.push(buildHit(row, store, pathResult.path, cwd));
   }
 
   if (hits.length === 0) {

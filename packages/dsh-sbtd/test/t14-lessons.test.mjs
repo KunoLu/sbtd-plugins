@@ -564,6 +564,149 @@ test("R5: symlink lessons store outside cwd refuses record", () => {
   );
 });
 
+
+test("R4 docs-flat: parseFlatSections unions event and user tags", () => {
+  const root = fixtureRoot("r4-flat-event-tags");
+  const recorded = sbtdLessons(
+    "s1",
+    {
+      intent: "record",
+      event: "bug-fix",
+      summary: "flat event keep",
+      tags: ["trellis"],
+    },
+    { cwd: root },
+  );
+  assert.equal(recorded.ok, true);
+  assert.equal(recorded.status, "recorded");
+  assert.ok(existsSync(join(root, "docs", "lessons.md")));
+
+  const byEvent = sbtdLessons(
+    "s1",
+    { intent: "match", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(byEvent.status, "matched");
+  assert.equal(byEvent.hits.length, 1);
+  assert.equal(byEvent.hits[0].id, recorded.id);
+
+  const byTag = sbtdLessons(
+    "s1",
+    { intent: "match", tags: ["trellis"] },
+    { cwd: root },
+  );
+  assert.equal(byTag.status, "matched");
+  assert.equal(byTag.hits.length, 1);
+});
+
+test("R5: symlink docs/lessons.md outside cwd refuses match/read", () => {
+  const root = fixtureRoot("r5-symlink-flat-read");
+  const outsideDir = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-outside-flat-"));
+  const outsideFile = join(outsideDir, "lessons.md");
+  writeFileSync(
+    outsideFile,
+    `# Lessons
+
+## LESSON-20260101-bug-fix
+
+**event:** bug-fix
+**summary:** OUTSIDE-FLAT-SECRET
+`,
+    "utf8",
+  );
+  mkdirSync(join(root, "docs"), { recursive: true });
+  const linkPath = join(root, "docs", "lessons.md");
+  try {
+    symlinkSync(outsideFile, linkPath);
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "EPERM") {
+      return;
+    }
+    throw err;
+  }
+
+  const matchResult = sbtdLessons(
+    "s1",
+    { intent: "match", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(matchResult.ok, false);
+  assert.equal(matchResult.status, "skipped");
+  assert.equal(matchResult.kind, "unsafe-path");
+  assert.doesNotMatch(JSON.stringify(matchResult), /OUTSIDE-FLAT-SECRET/);
+
+  const readResult = sbtdLessons(
+    "s1",
+    { intent: "read", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(readResult.ok, false);
+  assert.equal(readResult.status, "skipped");
+  assert.equal(readResult.kind, "unsafe-path");
+  assert.doesNotMatch(JSON.stringify(readResult), /OUTSIDE-FLAT-SECRET/);
+  assert.match(readFileSync(outsideFile, "utf8"), /OUTSIDE-FLAT-SECRET/);
+});
+
+test("R5: symlink Trellis index.md outside cwd refuses match/read", () => {
+  const root = fixtureRoot("r5-symlink-index-read");
+  trellisFixture(root);
+  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
+  writeFileSync(
+    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    `# bug-fix
+
+## LESSON-20260101-evil
+
+**event:** bug-fix
+**summary:** in-cwd topic
+`,
+    "utf8",
+  );
+
+  const outsideDir = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-outside-index-"));
+  const outsideIndex = join(outsideDir, "index.md");
+  writeFileSync(
+    outsideIndex,
+    `# Lessons index
+
+| id | tags | read_when | summary | detail |
+|---|---|---|---|---|
+| LESSON-20260101-evil | bug-fix | | OUTSIDE-INDEX-SECRET | topics/bug-fix.md#LESSON-20260101-evil |
+`,
+    "utf8",
+  );
+
+  const indexLink = join(root, ".trellis", "lessons", "index.md");
+  try {
+    symlinkSync(outsideIndex, indexLink);
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "EPERM") {
+      return;
+    }
+    throw err;
+  }
+
+  const matchResult = sbtdLessons(
+    "s1",
+    { intent: "match", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(matchResult.ok, false);
+  assert.equal(matchResult.status, "skipped");
+  assert.equal(matchResult.kind, "unsafe-path");
+  assert.doesNotMatch(JSON.stringify(matchResult), /OUTSIDE-INDEX-SECRET/);
+
+  const readResult = sbtdLessons(
+    "s1",
+    { intent: "read", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(readResult.ok, false);
+  assert.equal(readResult.status, "skipped");
+  assert.equal(readResult.kind, "unsafe-path");
+  assert.doesNotMatch(JSON.stringify(readResult), /OUTSIDE-INDEX-SECRET/);
+});
+
 test("R6: poisoned summary is sanitized in topic file and index row", () => {
   const root = fixtureRoot("r6-sanitize");
   trellisFixture(root);
