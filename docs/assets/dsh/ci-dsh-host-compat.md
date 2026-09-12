@@ -2,7 +2,7 @@
 
 适用包：`@kunolu/dsh-sbtd@0.1.0-rc.1`。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。
 
-现有 GitHub Actions 全部是 `omp-*`。dsh 只用独立 workflow：`dsh-host-compat`、`dsh-manuals-pin`。禁止改 `omp-compatibility-*`。
+现有 GitHub Actions 全部是 `omp-*`。dsh **拟**用独立 workflow 名 `dsh-host-compat`、`dsh-manuals-pin`，禁止改 `omp-compatibility-*`。**本 PR 未入库** `.github/workflows/dsh-*.yml`（OAuth 缺 `workflow` scope）；在文件进仓之前，不要 `workflow_dispatch` 这些名字，跑下面「本地等价」命令。
 
 ## 触发条件
 
@@ -11,7 +11,7 @@
 1. 上游发布新的 `@deepseek-ai/dsh`（含 rc / alpha），准备评估当前插件能否继续用。
 2. 准备把 `peerDependencies` / 兼容矩阵从 `0.1.1-rc.2` 扩到候选版本。
 3. 怀疑宿主 schema / Cordis `register` / tool `output.schema` 行为变了（T16 / FU4 同类）。
-4. 手动 `workflow_dispatch`：`.github/workflows/dsh-host-compat.yml`。
+4. 拟议手动 `workflow_dispatch`：`.github/workflows/dsh-host-compat.yml`（**pending / 本 PR 未入库**）。未入库前用本地 `pnpm --filter @kunolu/dsh-sbtd test` + pack。
 
 未触发：只改 omp 文档、只改 manuals pin、只改无关 markdown。
 
@@ -20,11 +20,11 @@
 | 门 | 命令 / Actions | 级别 | 期望 |
 |---|---|---|---|
 | 单测 | `pnpm --filter @kunolu/dsh-sbtd test`（=`tsc` + `node --test test/*.test.mjs`） | **REQUIRED** | 退出码 0。含 `test/fu4-host-schema.test.mjs` |
-| FU4 pinned-host register smoke | 套件内 `fu4-host-schema.test.mjs` **以及** `dsh-host-compat` job `unit-pack` 的 temp cell | **REQUIRED** | 钉死 `@deepseek-ai/dsh@0.1.1-rc.2` 与 `@kunolu/dsh-sbtd@0.1.0-rc.1`；Cordis `register/load` 接受 `sbtd_clarify` / `sbtd_spec` / `sbtd_tickets` 的 `output.schema`；`properties.*.type` 不是数组 |
+| FU4 pinned-host register smoke | 套件内 `fu4-host-schema.test.mjs`；拟议 `dsh-host-compat` job `unit-pack` temp cell（**pending**） | **REQUIRED（命令）** | 钉死 `@deepseek-ai/dsh@0.1.1-rc.2` 与 `@kunolu/dsh-sbtd@0.1.0-rc.1`；Cordis `register/load` 接受 `sbtd_clarify` / `sbtd_spec` / `sbtd_tickets` 的 `output.schema`；`properties.*.type` 不是数组。YAML 未入库前只跑本地 `pnpm --filter @kunolu/dsh-sbtd test` |
 | pack 含 `dist/` | `pnpm --filter @kunolu/dsh-sbtd pack --pack-destination <tmp>` 后检查 tarball | **REQUIRED** | tarball 内有 `package/dist/` 且至少有 `package/dist/index.js`（T16 坑：漏 `dist/` 的包无法加载） |
 | pack→temp install→smoke | 同一 tarball：`pnpm add @deepseek-ai/dsh@0.1.1-rc.2 <tgz>` 到空目录再跑 register smoke | **REQUIRED** | 证明 pack 产物可被钉死宿主加载。复用 omp-runtime-linux-probe 的 pack→临时目录→smoke 模式，不改 omp workflow |
-| 独立 Actions | `dsh-host-compat` | **REQUIRED 意图** / 运行时可能被注册表挡住 | `workflow_dispatch`；job `unit-pack` 红即停 |
-| 候选矩阵 | 同 workflow 的 `advisory-dsh-matrix` | **advisory** | **同一 pack tarball** × 候选 `dsh` 的 temp cell register smoke。**不**跑仓库全量 `test`（FU4 硬断言 `0.1.1-rc.2`，候选宿主会假红）。先绿一段时间再升 REQUIRED。矩阵绿 **不是** 唯一合主线门 |
+| 独立 Actions | 拟议名 `dsh-host-compat`（`.github/workflows/dsh-host-compat.yml`） | **pending** | **本 PR 未入库**。意图：`workflow_dispatch`；job `unit-pack` 红即停。有 `workflow` scope 后再推 YAML |
+| 候选矩阵 | 拟议 job `advisory-dsh-matrix` | **advisory / pending** | **同一 pack tarball** × 候选 `dsh` 的 temp cell register smoke。**不**跑仓库全量 `test`（FU4 硬断言 `0.1.1-rc.2`，候选宿主会假红）。YAML 未入库前可在本机对候选宿主做同样 temp cell。矩阵绿 **不是** 唯一合主线门 |
 
 前置（GHA）：runner 必须能按 lockfile 安装 `@deepseek-ai/dsh@0.1.1-rc.2`。若 GitHub 没有该私有/受限 npm registry，不要把本 workflow 改成 `pull_request` 必绿；保持 `workflow_dispatch`，在能装宿主的环境里跑。禁止为打通 CI 去 npm publish。
 
@@ -98,9 +98,9 @@ advisory 矩阵绿？
 
 | 现象 | 先查 |
 |---|---|
-| GHA `pnpm install` 拉不下 `@deepseek-ai/dsh` | 预期。保持 `workflow_dispatch`；在能访问该 registry 的环境跑。不要改 omp workflow 顶上。 |
+| GHA `pnpm install` 拉不下 `@deepseek-ai/dsh` | 预期。YAML 入库后保持 `workflow_dispatch`；现在用本机 lockfile 跑 `pnpm --filter @kunolu/dsh-sbtd test`。不要改 omp workflow。 |
 | 单测绿但宿主拒 schema | 对照 `test/fu4-host-schema.test.mjs`；确认装的就是 `0.1.1-rc.2`，不是本机另一个 rc。 |
 | pack 只有 `cordis.patch.yml` / `manuals/` | 没跑 `tsc` 或 `files` 漏 `dist/`。`package.json` 的 `files` 必须含 `dist/`。 |
 | `dsh plugin add` 同版本无效果 | 先 `remove` 再 `add`。 |
 | 抽检无弹窗 | 路径是不是 `frontend/src`；cwd 是不是仓库根；有没有已有 plan。 |
-| 有人把本检查写进 `omp-compatibility-*` | 撤回。dsh 只用 `dsh-host-compat.yml`。 |
+| 有人把本检查写进 `omp-compatibility-*` | 撤回。拟议独立文件是 `dsh-host-compat.yml`（本 PR **未入库**）。 |
