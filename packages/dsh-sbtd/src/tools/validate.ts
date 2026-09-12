@@ -15,6 +15,7 @@ import {
   impact,
   type McpClient,
 } from "../backends/gitnexus.js";
+import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import { getSession } from "../state.js";
 import {
   type PlanToolExec,
@@ -796,13 +797,9 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
 export function resolveValidateHost(
   ctx: ValidatePluginHost,
 ): ValidateHostOptions {
-  const explicit = ctx.validateHost ?? {};
-  const cwd =
-    typeof explicit.cwd === "string" && explicit.cwd.length > 0
-      ? explicit.cwd
-      : typeof ctx.cwd === "string" && ctx.cwd.length > 0
-        ? ctx.cwd
-        : process.cwd();
+  const explicit =
+    optionalHostBag<ValidateHostOptions>(ctx, "validateHost") ?? {};
+  const cwd = optionalHostCwd(ctx, explicit.cwd);
 
   const gitnexus: GitNexusOptions = { ...(explicit.gitnexus ?? {}) };
   if (gitnexus.mcp == null && canBridgeTools(ctx.tools)) {

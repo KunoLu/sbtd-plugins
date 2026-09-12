@@ -343,7 +343,7 @@ test("empty markdown/body rejects before write and preserves existing artifact",
   );
 });
 
-// Q3C unit coverage only (schema + execute omit-null). Pinned DSH host load: pending T16 step 2.
+// Q3C unit coverage (schema + execute omit-null). Pinned-host load: test/fu4-host-schema.test.mjs.
 function assertNoTypeArraysInOutputSchema(tool) {
   for (const prop of Object.values(tool.output.schema.properties)) {
     if (prop.type !== undefined) {

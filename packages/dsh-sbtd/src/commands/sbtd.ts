@@ -1,5 +1,6 @@
 import type { MaestroOptions, PreflightResult } from "../backends/maestro.js";
 import { FORBIDDEN_MODEL_KEYS, preflight } from "../backends/maestro.js";
+import { optionalHostBag } from "../host-context.js";
 import type { BookGatePlan } from "../state.js";
 import { serialize } from "../state.js";
 
@@ -188,7 +189,7 @@ export function registerCommand(
 }
 
 export function resolveCommandHost(ctx: CommandsHost): SbtdCommandHost {
-  const explicit = ctx.commandHost ?? {};
+  const explicit = optionalHostBag<SbtdCommandHost>(ctx, "commandHost") ?? {};
   const out: SbtdCommandHost = {};
   if (typeof explicit.sessionId === "string" && explicit.sessionId.length > 0) {
     out.sessionId = explicit.sessionId;
