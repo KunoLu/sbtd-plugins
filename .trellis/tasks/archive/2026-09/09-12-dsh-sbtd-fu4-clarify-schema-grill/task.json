@@ -1,0 +1,32 @@
+{
+  "id": "dsh-sbtd-fu4-clarify-schema-grill",
+  "name": "dsh-sbtd-fu4-clarify-schema-grill",
+  "title": "dsh-sbtd FU4 clarify JSON schema host compatibility grill",
+  "description": "Grill-only Round 1 of grill-with-docs for FU4: lock how to make tool output.schema host-compatible with dsh@0.1.1-rc.2 without reopening T6 clarify product semantics. No implementation.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-12",
+  "completedAt": "2026-09-12",
+  "branch": "feat/fu4-clarify-schema-host",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/65",
+    "commit": "ca9eb8f",
+    "review_head": "ca9eb8f",
+    "review_record": "/workspace/omp-tasks/fu4-pr65-review-r3-extract.md",
+    "note": "r3 CLEAN @ ca9eb8f; Q1B Q2B Q3C Q4A PASS; Q5A pending T16; R1 CLOSED; R2 CLOSED; REQUIRED_CHANGES=none; merge SHA pending"
+  }
+}
