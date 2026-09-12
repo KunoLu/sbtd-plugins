@@ -90,3 +90,9 @@ Feature: DSH T6 sbtd_clarify 澄清适配器
     Then B 的 Forced Docs DDD 可撤回
     And 生产 write 不因 A 的 Complete 被 deny
 
+  Scenario: 宿主看到的 sbtd_clarify 输出 schema 不含 type 数组
+    Given 插件已向宿主注册 sbtd_clarify
+    When 宿主读取 output.schema
+    Then mode 与 currentQuestion 的 type 为 string 且不是数组
+    And execute 在 Complete 或 reset-only 时省略值为 null 的键
+

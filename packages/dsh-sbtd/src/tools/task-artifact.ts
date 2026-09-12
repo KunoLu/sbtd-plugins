@@ -33,6 +33,22 @@ export type ArtifactToolResult = {
   detect?: DetectResult;
   source?: "explicit" | "pointer" | null;
 };
+/** Host-facing payload: slug/source omitted when null (Q1B). */
+export type ArtifactHostResult = Omit<ArtifactToolResult, "slug" | "source"> & {
+  slug?: string;
+  source?: "explicit" | "pointer";
+};
+
+export function toArtifactHostResult(
+  result: ArtifactToolResult,
+): ArtifactHostResult {
+  const { slug, source, ...rest } = result;
+  return {
+    ...rest,
+    ...(slug != null ? { slug } : {}),
+    ...(source != null ? { source } : {}),
+  };
+}
 
 export type ArtifactInput = {
   markdown?: string;

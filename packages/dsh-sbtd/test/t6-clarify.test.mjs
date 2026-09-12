@@ -53,6 +53,18 @@ function planHello(id) {
   return sbtdPlan(id, { task_summary: "hello world clarify" });
 }
 
+
+// Q3C unit coverage: schema shape + execute omit-null. Pinned-host register/load:
+// test/fu4-host-schema.test.mjs (not T16 / Q5A).
+
+function assertNoTypeArraysInOutputSchema(tool) {
+  for (const prop of Object.values(tool.output.schema.properties)) {
+    if (prop.type !== undefined) {
+      assert.equal(Array.isArray(prop.type), false);
+    }
+  }
+}
+
 test("apply 注册 sbtd_plan、sbtd_review、sbtd_clarify、sbtd_spec 与 sbtd_tickets", () => {
   const { tools } = loadPlugin();
   assert.equal(name, "dsh-sbtd");
@@ -341,6 +353,44 @@ test("他任务 docs Complete 后新任务省略 grill 可 demote 且 T3 不因�
 
 
 
+test("createClarifyTool output.schema 无 type 数组且 mode/currentQuestion 为 string", () => {
+  const tool = createClarifyTool();
+  assert.equal(tool.output.schema.properties.mode.type, "string");
+  assert.equal(tool.output.schema.properties.currentQuestion.type, "string");
+  assert.equal(Array.isArray(tool.output.schema.properties.mode.type), false);
+  assertNoTypeArraysInOutputSchema(tool);
+});
+
+test("apply 收集的 clarify/spec/tickets output.schema 无 type 数组（单元 stub，非 DSH 宿主校验）", () => {
+  const { tools } = loadPlugin();
+  for (const toolName of [SBTD_CLARIFY_TOOL_NAME, "sbtd_spec", "sbtd_tickets"]) {
+    const tool = tools.find((t) => t.name === toolName);
+    assert.ok(tool, toolName);
+    assertNoTypeArraysInOutputSchema(tool);
+  }
+});
+
+test("createClarifyTool execute 在 Complete 时省略 currentQuestion 键", async () => {
+  const tool = createClarifyTool();
+  const id = "t6-fu4-omit-complete";
+  planHello(id);
+  const result = await tool.execute(
+    { mode: "docs", frontier_empty: true, user_confirmed: true },
+    { agent: { id } },
+  );
+  assert.equal("currentQuestion" in result, false);
+  assert.equal(result.mode, "docs");
+});
+
+test("createClarifyTool execute reset-only 省略 mode 与 currentQuestion 键", async () => {
+  const result = await createClarifyTool().execute(
+    { reset: true },
+    { agent: { id: "t6-fu4-omit-reset" } },
+  );
+  assert.equal("mode" in result, false);
+  assert.equal("currentQuestion" in result, false);
+});
+
 test("createClarifyTool execute 复用 sessionIdFromExec", async () => {
   const tool = createClarifyTool();
   assert.equal(tool.name, SBTD_CLARIFY_TOOL_NAME);
@@ -351,6 +401,7 @@ test("createClarifyTool execute 复用 sessionIdFromExec", async () => {
     { agent: { id: "t6-exec-id" } },
   );
   assert.equal(result.mode, "docs");
+  assert.equal(result.currentQuestion, "from exec");
   assert.equal(getSession("t6-exec-id").clarifyMode, "docs");
 });
 

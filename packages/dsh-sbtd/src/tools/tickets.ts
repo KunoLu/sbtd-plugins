@@ -4,15 +4,18 @@ import {
   type ToolsHost,
 } from "./plan.js";
 import {
+  type ArtifactHostResult,
   type ArtifactInput,
   type ArtifactToolResult,
   runTaskArtifact,
+  toArtifactHostResult,
 } from "./task-artifact.js";
 
 export const SBTD_TICKETS_TOOL_NAME = "sbtd_tickets";
 
 export type TicketsInput = ArtifactInput;
 export type TicketsToolResult = ArtifactToolResult;
+export type TicketsHostResult = ArtifactHostResult;
 
 export type TicketsToolDefinition = {
   name: string;
@@ -22,14 +25,14 @@ export type TicketsToolDefinition = {
     schema: Record<string, unknown>;
     render: (
       args: unknown,
-      value: TicketsToolResult,
+      value: TicketsHostResult,
     ) => Array<{ type: "text"; text: string }>;
   };
   isConcurrencySafe: (args: unknown) => false;
   execute: (
     args: TicketsInput,
     exec: PlanToolExec,
-  ) => Promise<TicketsToolResult>;
+  ) => Promise<TicketsHostResult>;
 };
 
 export function sbtdTickets(
@@ -85,11 +88,11 @@ export function createTicketsTool(): TicketsToolDefinition {
           artifact: { type: "string" },
           markdown: { type: "string" },
           path: { type: "string" },
-          slug: { type: ["string", "null"] },
+          slug: { type: "string" },
           note: { type: "string" },
           blocked: { type: "object" },
           detect: { type: "object" },
-          source: { type: ["string", "null"] },
+          source: { type: "string" },
         },
       },
       render(_args, value) {
@@ -119,7 +122,9 @@ export function createTicketsTool(): TicketsToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      return sbtdTickets(sessionIdFromExec(exec), args);
+      return toArtifactHostResult(
+        sbtdTickets(sessionIdFromExec(exec), args),
+      );
     },
   };
 }

@@ -4,15 +4,18 @@ import {
   type ToolsHost,
 } from "./plan.js";
 import {
+  type ArtifactHostResult,
   type ArtifactInput,
   type ArtifactToolResult,
   runTaskArtifact,
+  toArtifactHostResult,
 } from "./task-artifact.js";
 
 export const SBTD_SPEC_TOOL_NAME = "sbtd_spec";
 
 export type SpecInput = ArtifactInput;
 export type SpecToolResult = ArtifactToolResult;
+export type SpecHostResult = ArtifactHostResult;
 
 export type SpecToolDefinition = {
   name: string;
@@ -22,11 +25,11 @@ export type SpecToolDefinition = {
     schema: Record<string, unknown>;
     render: (
       args: unknown,
-      value: SpecToolResult,
+      value: SpecHostResult,
     ) => Array<{ type: "text"; text: string }>;
   };
   isConcurrencySafe: (args: unknown) => false;
-  execute: (args: SpecInput, exec: PlanToolExec) => Promise<SpecToolResult>;
+  execute: (args: SpecInput, exec: PlanToolExec) => Promise<SpecHostResult>;
 };
 
 export function sbtdSpec(
@@ -82,11 +85,11 @@ export function createSpecTool(): SpecToolDefinition {
           artifact: { type: "string" },
           markdown: { type: "string" },
           path: { type: "string" },
-          slug: { type: ["string", "null"] },
+          slug: { type: "string" },
           note: { type: "string" },
           blocked: { type: "object" },
           detect: { type: "object" },
-          source: { type: ["string", "null"] },
+          source: { type: "string" },
         },
       },
       render(_args, value) {
@@ -116,7 +119,7 @@ export function createSpecTool(): SpecToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      return sbtdSpec(sessionIdFromExec(exec), args);
+      return toArtifactHostResult(sbtdSpec(sessionIdFromExec(exec), args));
     },
   };
 }

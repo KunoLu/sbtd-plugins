@@ -35,6 +35,7 @@ import {
   type PreflightResult,
   preflight as t12Preflight,
 } from "../backends/maestro.js";
+import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import {
   type PlanToolExec,
   sessionIdFromExec,
@@ -913,16 +914,10 @@ export async function defaultRunPlaywright(
  * permanent `runner-not-injected` dead path; unit tests override with stubs.
  */
 export function resolveE2eHost(ctx: E2ePluginHost): E2eHostOptions {
-  const explicit = ctx.e2eHost ?? {};
-  const cwd =
-    typeof explicit.cwd === "string" && explicit.cwd.length > 0
-      ? explicit.cwd
-      : typeof ctx.cwd === "string" && ctx.cwd.length > 0
-        ? ctx.cwd
-        : process.cwd();
+  const explicit = optionalHostBag<E2eHostOptions>(ctx, "e2eHost") ?? {};
   return {
     ...explicit,
-    cwd,
+    cwd: optionalHostCwd(ctx, explicit.cwd),
     runMaestro: explicit.runMaestro ?? defaultRunMaestro,
     runPlaywright: explicit.runPlaywright ?? defaultRunPlaywright,
   };

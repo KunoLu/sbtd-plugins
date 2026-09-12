@@ -15,10 +15,12 @@ import { getSession } from "../dist/state.js";
 import { sbtdPlan } from "../dist/tools/plan.js";
 import { sbtdReview } from "../dist/tools/review.js";
 import {
+  createSpecTool,
   SBTD_SPEC_TOOL_NAME,
   sbtdSpec,
 } from "../dist/tools/spec.js";
 import {
+  createTicketsTool,
   SBTD_TICKETS_TOOL_NAME,
   sbtdTickets,
 } from "../dist/tools/tickets.js";
@@ -339,6 +341,72 @@ test("empty markdown/body rejects before write and preserves existing artifact",
     readFileSync(join(taskDir, "implement.md"), "utf8"),
     "# keep tickets\n",
   );
+});
+
+// Q3C unit coverage (schema + execute omit-null). Pinned-host load: test/fu4-host-schema.test.mjs.
+function assertNoTypeArraysInOutputSchema(tool) {
+  for (const prop of Object.values(tool.output.schema.properties)) {
+    if (prop.type !== undefined) {
+      assert.equal(Array.isArray(prop.type), false);
+    }
+  }
+}
+
+test("createSpecTool/createTicketsTool output.schema slug/source 为 string 且无 type 数组", () => {
+  for (const tool of [createSpecTool(), createTicketsTool()]) {
+    assert.equal(tool.output.schema.properties.slug.type, "string");
+    assert.equal(tool.output.schema.properties.source.type, "string");
+    assertNoTypeArraysInOutputSchema(tool);
+  }
+});
+
+test("createSpecTool execute draft 省略 slug/source 键", async () => {
+  const root = fixtureRoot("fu4-spec-omit");
+  withTrellis(root);
+  const id = "t8-fu4-spec-omit";
+  sbtdPlan(id, { task_summary: "hello fu4 spec omit" });
+  const result = await createSpecTool().execute(
+    { cwd: root, markdown: "# draft body\n" },
+    { agent: { id } },
+  );
+  assert.equal(result.mode, "draft");
+  assert.equal("slug" in result, false);
+  assert.equal("source" in result, false);
+});
+
+test("createTicketsTool execute draft 省略 slug/source 键", async () => {
+  const root = fixtureRoot("fu4-tickets-omit");
+  withTrellis(root);
+  const id = "t8-fu4-tickets-omit";
+  sbtdPlan(id, { task_summary: "hello fu4 tickets omit" });
+  const result = await createTicketsTool().execute(
+    { cwd: root, markdown: "# draft tickets\n" },
+    { agent: { id } },
+  );
+  assert.equal(result.mode, "draft");
+  assert.equal("slug" in result, false);
+  assert.equal("source" in result, false);
+});
+
+test("createSpecTool execute written 保留 slug/source 键", async () => {
+  const root = fixtureRoot("fu4-spec-written");
+  withTrellis(root);
+  writeSession(root, "sess", ".trellis/tasks/pointer-slug");
+  const id = "t8-fu4-spec-written";
+  planWithRequiredDdd(id);
+  sbtdReview(id, { kind: "ddd", status: "confirmed", conclusions: "ok" });
+  const result = await createSpecTool().execute(
+    {
+      cwd: root,
+      session_key: "sess",
+      task: "explicit-slug",
+      markdown: "# PRD explicit\n",
+    },
+    { agent: { id } },
+  );
+  assert.equal(result.slug, "explicit-slug");
+  assert.equal(result.source, "explicit");
+  assert.equal("slug" in result, true);
 });
 
 test("host pin unchanged in package.json", () => {

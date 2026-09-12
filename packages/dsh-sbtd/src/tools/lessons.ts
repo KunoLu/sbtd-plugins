@@ -16,6 +16,7 @@ import {
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { detect } from "../backends/trellis.js";
+import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import {
   type PlanToolExec,
   sessionIdFromExec,
@@ -791,14 +792,9 @@ export function modelSchemaForbidsTrustHandles(
 }
 
 export function resolveLessonsHost(ctx: LessonsPluginHost): LessonsHostOptions {
-  const explicit = ctx.lessonsHost ?? {};
-  const cwd =
-    typeof explicit.cwd === "string" && explicit.cwd.length > 0
-      ? explicit.cwd
-      : typeof ctx.cwd === "string" && ctx.cwd.length > 0
-        ? ctx.cwd
-        : process.cwd();
-  return { cwd };
+  const explicit =
+    optionalHostBag<LessonsHostOptions>(ctx, "lessonsHost") ?? {};
+  return { cwd: optionalHostCwd(ctx, explicit.cwd) };
 }
 
 export function sbtdLessons(

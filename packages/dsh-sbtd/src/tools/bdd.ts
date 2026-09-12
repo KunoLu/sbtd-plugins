@@ -26,6 +26,7 @@ import {
   resolve,
   sep,
 } from "node:path";
+import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import {
   type PlanToolExec,
   sessionIdFromExec,
@@ -719,16 +720,10 @@ export function modelSchemaForbidsTrustHandles(
  * Resolve host-owned cwd / featureRoot for production registration (Q1C).
  */
 export function resolveBddHost(ctx: BddPluginHost): BddHostOptions {
-  const explicit = ctx.bddHost ?? {};
-  const cwd =
-    typeof explicit.cwd === "string" && explicit.cwd.length > 0
-      ? explicit.cwd
-      : typeof ctx.cwd === "string" && ctx.cwd.length > 0
-        ? ctx.cwd
-        : process.cwd();
+  const explicit = optionalHostBag<BddHostOptions>(ctx, "bddHost") ?? {};
   return {
     ...explicit,
-    cwd,
+    cwd: optionalHostCwd(ctx, explicit.cwd),
   };
 }
 
