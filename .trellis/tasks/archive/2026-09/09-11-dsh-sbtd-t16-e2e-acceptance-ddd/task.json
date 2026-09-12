@@ -1,0 +1,29 @@
+{
+  "id": "dsh-sbtd-t16-e2e-acceptance-ddd",
+  "name": "dsh-sbtd-t16-e2e-acceptance-ddd",
+  "title": "dsh-sbtd T16 端到端验收 DDD boundary review",
+  "description": "DDD-only boundary review after LIVE grill Q1A-Q6A. No implementation. Host pin @deepseek-ai/dsh@0.1.1-rc.2.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-11",
+  "completedAt": "2026-09-12",
+  "branch": "docs/t16-acceptance-record",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/64",
+    "commit": "97e365c"
+  }
+}

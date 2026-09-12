@@ -1,0 +1,32 @@
+{
+  "id": "dsh-sbtd-t16-e2e-acceptance-grill",
+  "name": "dsh-sbtd-t16-e2e-acceptance-grill",
+  "title": "dsh-sbtd T16 端到端验收 grill",
+  "description": "Grill-only Round 1 of grill-with-docs for T16 e2e acceptance. Product forks only; no implementation; host pin @deepseek-ai/dsh@0.1.1-rc.2.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-11",
+  "completedAt": "2026-09-12",
+  "branch": "docs/t16-acceptance-record",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/64",
+    "commit": "97e365c",
+    "review_head": "97e365c",
+    "review_record": "/workspace/omp-tasks/t16-pr64-review-r2-extract.md",
+    "note": "r2 CLEAN @ 97e365c; T16 PASS 8/8; REQUIRED_CHANGES=none; merge SHA pending"
+  }
+}
