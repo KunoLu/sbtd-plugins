@@ -4,15 +4,18 @@ import {
   type ToolsHost,
 } from "./plan.js";
 import {
+  type ArtifactHostResult,
   type ArtifactInput,
   type ArtifactToolResult,
   runTaskArtifact,
+  toArtifactHostResult,
 } from "./task-artifact.js";
 
 export const SBTD_TICKETS_TOOL_NAME = "sbtd_tickets";
 
 export type TicketsInput = ArtifactInput;
 export type TicketsToolResult = ArtifactToolResult;
+export type TicketsHostResult = ArtifactHostResult;
 
 export type TicketsToolDefinition = {
   name: string;
@@ -22,14 +25,14 @@ export type TicketsToolDefinition = {
     schema: Record<string, unknown>;
     render: (
       args: unknown,
-      value: TicketsToolResult,
+      value: TicketsHostResult,
     ) => Array<{ type: "text"; text: string }>;
   };
   isConcurrencySafe: (args: unknown) => false;
   execute: (
     args: TicketsInput,
     exec: PlanToolExec,
-  ) => Promise<TicketsToolResult>;
+  ) => Promise<TicketsHostResult>;
 };
 
 export function sbtdTickets(
@@ -119,13 +122,9 @@ export function createTicketsTool(): TicketsToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      const result = sbtdTickets(sessionIdFromExec(exec), args);
-      const { slug, source, ...rest } = result;
-      return {
-        ...rest,
-        ...(slug === null ? {} : { slug }),
-        ...(source === null ? {} : { source }),
-      };
+      return toArtifactHostResult(
+        sbtdTickets(sessionIdFromExec(exec), args),
+      );
     },
   };
 }

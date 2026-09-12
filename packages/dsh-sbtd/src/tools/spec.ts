@@ -4,15 +4,18 @@ import {
   type ToolsHost,
 } from "./plan.js";
 import {
+  type ArtifactHostResult,
   type ArtifactInput,
   type ArtifactToolResult,
   runTaskArtifact,
+  toArtifactHostResult,
 } from "./task-artifact.js";
 
 export const SBTD_SPEC_TOOL_NAME = "sbtd_spec";
 
 export type SpecInput = ArtifactInput;
 export type SpecToolResult = ArtifactToolResult;
+export type SpecHostResult = ArtifactHostResult;
 
 export type SpecToolDefinition = {
   name: string;
@@ -22,11 +25,11 @@ export type SpecToolDefinition = {
     schema: Record<string, unknown>;
     render: (
       args: unknown,
-      value: SpecToolResult,
+      value: SpecHostResult,
     ) => Array<{ type: "text"; text: string }>;
   };
   isConcurrencySafe: (args: unknown) => false;
-  execute: (args: SpecInput, exec: PlanToolExec) => Promise<SpecToolResult>;
+  execute: (args: SpecInput, exec: PlanToolExec) => Promise<SpecHostResult>;
 };
 
 export function sbtdSpec(
@@ -116,13 +119,7 @@ export function createSpecTool(): SpecToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      const result = sbtdSpec(sessionIdFromExec(exec), args);
-      const { slug, source, ...rest } = result;
-      return {
-        ...rest,
-        ...(slug === null ? {} : { slug }),
-        ...(source === null ? {} : { source }),
-      };
+      return toArtifactHostResult(sbtdSpec(sessionIdFromExec(exec), args));
     },
   };
 }

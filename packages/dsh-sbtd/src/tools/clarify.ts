@@ -56,6 +56,25 @@ export type ClarifyToolResult = {
   };
   manuals?: string;
 };
+/** Host-facing payload: mode/currentQuestion omitted when null (Q1B). */
+export type ClarifyHostResult = Omit<
+  ClarifyToolResult,
+  "mode" | "currentQuestion"
+> & {
+  mode?: ClarifyMode;
+  currentQuestion?: string;
+};
+
+export function toClarifyHostResult(
+  result: ClarifyToolResult,
+): ClarifyHostResult {
+  const { mode, currentQuestion, ...rest } = result;
+  return {
+    ...rest,
+    ...(mode === null ? {} : { mode }),
+    ...(currentQuestion === null ? {} : { currentQuestion }),
+  };
+}
 
 export type ClarifyToolDefinition = {
   name: string;
@@ -65,14 +84,14 @@ export type ClarifyToolDefinition = {
     schema: Record<string, unknown>;
     render: (
       args: unknown,
-      value: ClarifyToolResult,
+      value: ClarifyHostResult,
     ) => Array<{ type: "text"; text: string }>;
   };
   isConcurrencySafe: (args: unknown) => false;
   execute: (
     args: ClarifyInput,
     exec: PlanToolExec,
-  ) => Promise<ClarifyToolResult>;
+  ) => Promise<ClarifyHostResult>;
 };
 
 function isClarifyMode(value: string): value is ClarifyMode {
@@ -351,7 +370,7 @@ export function createClarifyTool(): ClarifyToolDefinition {
           `clarifyStatus: ${value.clarifyStatus}`,
           `mode: ${value.mode ?? ""}`,
         ];
-        if (value.currentQuestion !== null) {
+        if (value.currentQuestion !== undefined) {
           lines.push(`currentQuestion: ${value.currentQuestion}`);
         }
         if (value.blocked !== undefined) {
@@ -369,13 +388,7 @@ export function createClarifyTool(): ClarifyToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      const result = sbtdClarify(sessionIdFromExec(exec), args);
-      const { mode, currentQuestion, ...rest } = result;
-      return {
-        ...rest,
-        ...(mode === null ? {} : { mode }),
-        ...(currentQuestion === null ? {} : { currentQuestion }),
-      } as ClarifyToolResult;
+      return toClarifyHostResult(sbtdClarify(sessionIdFromExec(exec), args));
     },
   };
 }
