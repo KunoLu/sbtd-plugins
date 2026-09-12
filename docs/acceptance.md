@@ -51,4 +51,4 @@ Record-update session only (not T16 Mac/`dsh web` operators). Unverifiable entri
 
 | Model | Purpose | Calls |
 |---|---|---|
-| xai-oauth/grok-4.6 | Main OMP session: rewrite T16 PASS record and update PR #64 | 调用次数未知 |
+| 模型未知 | Main OMP session: rewrite T16 PASS record and update PR #64 | 调用次数未知 |
