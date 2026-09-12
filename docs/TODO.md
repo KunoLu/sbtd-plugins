@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-11（上海） |
-| 同步时 main | `0dbe135`（#62 T15 → `0dbe135`；#61 gitignore；#59 T14 → `2b7cf61`；#57 T13 → `9289798`；#55 T12 → `61026a1`；#53 T11 → `d729d6e`；T10 #51 → `014f480`） |
+| 上次同步 | 2026-09-12（上海） |
+| 同步时 main | `2fc31b4`（#65 FU4 → `2fc31b4`；#62 T15 → `0dbe135`；#61 gitignore；#59 T14 → `2b7cf61`；#57 T13 → `9289798`；#55 T12 → `61026a1`；#53 T11 → `d729d6e`；T10 #51 → `014f480`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
@@ -69,7 +69,7 @@
 | FU1 | Remediation Write：`seam-required` / `refactor-first` ↔ T3 `passed` 死锁 | ✅ | #33 → `7352071`；整窗 scoped allow；无字节级 seam/feature 分类器（Q4A honor） |
 | FU2 | `sbtd_review` 强制 legacy-before-refactor | ✅ | #37 → `f039a99`；Review Recording Order on `sbtd_review` only；88/88；archive `09-07-dsh-sbtd-fu2-legacy-before-refactor` |
 | FU3 | multi-fact matching-set + persist-across-replans | ✅ | [#43](https://github.com/KunoLu/sbtd-plugins/pull/43) scheme A finish；CLEAN r5；tip `bdc25f3` / prod `d2194f5`；tests 121/121；locks Q1D Q2B Q3A Q4B Q5A；archive `09-08-dsh-sbtd-fu3-multi-fact-persist`；#43 → `2a82e63` |
-| FU4 | clarify JSON schema host-compatible omit-null | 🟡 ready | [#65](https://github.com/KunoLu/sbtd-plugins/pull/65) scheme A finish；CLEAN r3 @ `ca9eb8f`；tests 331/331；locks Q1B Q2B Q3C Q4A PASS；Q5A pending post-merge T16；R1 CLOSED；R2 CLOSED；REQUIRED_CHANGES=none；archive `09-12-dsh-sbtd-fu4-clarify-schema-grill` + `09-12-dsh-sbtd-fu4-clarify-schema-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2`；**未合**（merge SHA pending） |
+| FU4 | clarify JSON schema host-compatible omit-null | ✅ | [#65](https://github.com/KunoLu/sbtd-plugins/pull/65) → `2fc31b4`；scheme A finish；CLEAN r3 @ `ca9eb8f`；tests 331/331；locks Q1B Q2B Q3C Q4A PASS；Q5A pending post-merge T16；R1 CLOSED；R2 CLOSED；REQUIRED_CHANGES=none；archive `09-12-dsh-sbtd-fu4-clarify-schema-grill` + `09-12-dsh-sbtd-fu4-clarify-schema-ddd`；host `@deepseek-ai/dsh@0.1.1-rc.2` |
 
 ---
 
@@ -116,6 +116,8 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-12 | FU4 #65 → main `2fc31b4`（TODO merge-SHA backfill） |
+| 2026-09-12 | FU4 #65 scheme A finish/merge：CLEAN r3 @ `ca9eb8f`；locks Q1B Q2B Q3C Q4A PASS；Q5A pending T16；REQUIRED_CHANGES=none；R1/R2 CLOSED；squash `2fc31b4`；不发布包；下一队列 T16 |
 | 2026-09-12 | FU4 #65 ready：r3 CLEAN @ `ca9eb8f`；Q1B Q2B Q3C Q4A PASS；Q5A pending T16；REQUIRED_CHANGES=none；R1/R2 CLOSED；finish-work ✅；archive grill+DDD+FOLLOWUPS；**未合**（merge SHA pending） |
 | 2026-09-11 | T15 #62 → main `0dbe135`（TODO merge-SHA backfill） |
 | 2026-09-11 | T15 #62 scheme A finish/merge：CLEAN r5 @ `3529daf`；product r3b @ `f8561bf`；locks Q1A–Q6A；REQUIRED_CHANGES=none；R1–R4 CLOSED；squash `0dbe135`；不发布包；下一队列 T16（未开） |
