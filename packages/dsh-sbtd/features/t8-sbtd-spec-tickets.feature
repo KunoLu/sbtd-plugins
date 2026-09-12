@@ -56,3 +56,9 @@ Feature: DSH T8 sbtd_spec / sbtd_tickets Trellis artifacts
     When 模型省略 markdown 与 body，或以空白串调用 sbtd_spec 或 sbtd_tickets
     Then tool 抛错
     And 已有 artifact 字节不变
+
+  Scenario: 宿主看到的 spec/tickets 输出 schema 不含 type 数组
+    Given 插件已向宿主注册 sbtd_spec 与 sbtd_tickets
+    When 宿主读取 output.schema
+    Then slug 与 source 的 type 为 string 且不是数组
+    And execute 在 draft 时省略值为 null 的 slug/source 键

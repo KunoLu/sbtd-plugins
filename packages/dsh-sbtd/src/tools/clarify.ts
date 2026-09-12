@@ -339,8 +339,8 @@ export function createClarifyTool(): ClarifyToolDefinition {
         additionalProperties: false,
         properties: {
           clarifyStatus: { type: "string" },
-          mode: { type: ["string", "null"] },
-          currentQuestion: { type: ["string", "null"] },
+          mode: { type: "string" },
+          currentQuestion: { type: "string" },
           blocked: { type: "object" },
           ddd: { type: "object" },
           manuals: { type: "string" },
@@ -369,7 +369,13 @@ export function createClarifyTool(): ClarifyToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      return sbtdClarify(sessionIdFromExec(exec), args);
+      const result = sbtdClarify(sessionIdFromExec(exec), args);
+      const { mode, currentQuestion, ...rest } = result;
+      return {
+        ...rest,
+        ...(mode === null ? {} : { mode }),
+        ...(currentQuestion === null ? {} : { currentQuestion }),
+      } as ClarifyToolResult;
     },
   };
 }

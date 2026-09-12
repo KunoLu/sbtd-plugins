@@ -82,11 +82,11 @@ export function createSpecTool(): SpecToolDefinition {
           artifact: { type: "string" },
           markdown: { type: "string" },
           path: { type: "string" },
-          slug: { type: ["string", "null"] },
+          slug: { type: "string" },
           note: { type: "string" },
           blocked: { type: "object" },
           detect: { type: "object" },
-          source: { type: ["string", "null"] },
+          source: { type: "string" },
         },
       },
       render(_args, value) {
@@ -116,7 +116,13 @@ export function createSpecTool(): SpecToolDefinition {
       return false;
     },
     async execute(args, exec) {
-      return sbtdSpec(sessionIdFromExec(exec), args);
+      const result = sbtdSpec(sessionIdFromExec(exec), args);
+      const { slug, source, ...rest } = result;
+      return {
+        ...rest,
+        ...(slug === null ? {} : { slug }),
+        ...(source === null ? {} : { source }),
+      };
     },
   };
 }
