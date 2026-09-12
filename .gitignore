@@ -12,6 +12,8 @@ dist/
 build/
 .next/
 out/
+# local npm pack artifacts
+*.tgz
 .env
 .env.local
 .env.*.local
