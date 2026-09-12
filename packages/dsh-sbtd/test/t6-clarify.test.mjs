@@ -54,6 +54,9 @@ function planHello(id) {
 }
 
 
+// Q3C unit coverage only: schema shape + execute omit-null. Pinned @deepseek-ai/dsh@0.1.1-rc.2
+// host registration/load (dsh web) is NOT proven by loadPlugin() stub — pending human T16 step 2 (Q5A).
+
 function assertNoTypeArraysInOutputSchema(tool) {
   for (const prop of Object.values(tool.output.schema.properties)) {
     if (prop.type !== undefined) {
@@ -358,7 +361,7 @@ test("createClarifyTool output.schema 无 type 数组且 mode/currentQuestion �
   assertNoTypeArraysInOutputSchema(tool);
 });
 
-test("apply 注册的 clarify/spec/tickets output.schema 均无 type 数组", () => {
+test("apply 收集的 clarify/spec/tickets output.schema 无 type 数组（单元 stub，非 DSH 宿主校验）", () => {
   const { tools } = loadPlugin();
   for (const toolName of [SBTD_CLARIFY_TOOL_NAME, "sbtd_spec", "sbtd_tickets"]) {
     const tool = tools.find((t) => t.name === toolName);
