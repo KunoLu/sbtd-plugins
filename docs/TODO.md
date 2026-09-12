@@ -83,6 +83,7 @@
 | Trellis 历史积压 archive | ✅ #34 → `69a6acf`（T5/T4/pr10/pr12/v1.2） |
 | OMP 配置（provider / fallback / 模型别名） | 🔒 **只读**；未经用户明确允许不得改 |
 | `omp-compatibility-certification` | workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧（2026-09-08） |
+| dsh host/manuals CI 指南 | 🟡 本 PR `docs/dsh-ci-compat-guides`：`docs/assets/dsh/ci-*.md`；独立 `dsh-*.yml` 因 token 缺 `workflow` scope **未入库**；不改 omp-*；不 npm |
 
 ---
 
@@ -111,11 +112,13 @@
 | 10 | **T14** `sbtd_lessons` | ✅ #59 → `2b7cf61` |
 | 11 | **T15** `/sbtd` 命令与 README | ✅ #62 → `0dbe135` |
 | 12 | **T16** 端到端验收 | ✅ #64 → `2fe061d` |
+| 13 | dsh CI 兼容指南 + 独立 workflow | 🟡 本 PR 开出后 **未合** |
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-12 | dsh CI 指南：宿主兼容 + 640-skills pin；独立 `dsh-*` workflow；不 npm / 不改 omp-* |
 | 2026-09-12 | T16 #64 → main `2fe061d`（TODO merge-SHA backfill） |
 | 2026-09-12 | T16 #64 scheme A finish/merge：PASS 8/8；r2 CLEAN @ `97e365c`；REQUIRED_CHANGES=none；squash `2fe061d`；不发布包 |
 | 2026-09-12 | T16 #64 ready：PASS 8/8；r2 CLEAN @ `97e365c`；REQUIRED_CHANGES=none；finish-work ✅；archive grill+DDD+FOLLOWUPS；**未合**（merge SHA pending） |
