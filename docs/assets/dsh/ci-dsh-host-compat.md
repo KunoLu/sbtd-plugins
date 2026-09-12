@@ -26,7 +26,7 @@
 | 独立 Actions | 拟议名 `dsh-host-compat`（`.github/workflows/dsh-host-compat.yml`） | **pending** | **本 PR 未入库**。意图：`workflow_dispatch`；job `unit-pack` 红即停。有 `workflow` scope 后再推 YAML |
 | 候选矩阵 | 拟议 job `advisory-dsh-matrix` | **advisory / pending** | **同一 pack tarball** × 候选 `dsh` 的 temp cell register smoke。**不**跑仓库全量 `test`（FU4 硬断言 `0.1.1-rc.2`，候选宿主会假红）。YAML 未入库前可在本机对候选宿主做同样 temp cell。矩阵绿 **不是** 唯一合主线门 |
 
-前置（GHA）：runner 必须能按 lockfile 安装 `@deepseek-ai/dsh@0.1.1-rc.2`。若 GitHub 没有该私有/受限 npm registry，不要把本 workflow 改成 `pull_request` 必绿；保持 `workflow_dispatch`，在能装宿主的环境里跑。禁止为打通 CI 去 npm publish。
+前置（GHA，**YAML 本 PR 未入库**）：将来 runner 必须能按 lockfile 安装 `@deepseek-ai/dsh@0.1.1-rc.2`。若 GitHub 没有该 registry，入库后也不要把拟议 workflow 改成 `pull_request` 必绿；保持 `workflow_dispatch`。现在用本机命令。禁止为打通 CI 去 npm publish。
 
 本地等价：
 
