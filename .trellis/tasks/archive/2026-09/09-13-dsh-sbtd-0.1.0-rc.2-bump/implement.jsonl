@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/dsh-sbtd/backend/index.md", "reason": "Host pin, package scripts, manuals"}
+{"file": ".trellis/spec/dsh-sbtd/backend/quality-guidelines.md", "reason": "Verification commands for dsh-sbtd"}
+{"file": ".trellis/spec/guides/index.md", "reason": "Search all pins before changing version strings"}

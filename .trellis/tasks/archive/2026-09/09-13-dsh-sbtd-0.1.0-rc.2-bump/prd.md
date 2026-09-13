@@ -18,7 +18,7 @@ From origin/main tip `11571234ed109f2037f94615caefb6ecf5bd1d01`, bump `@kunolu/d
 - Consumer README / BDD claim `next=0.1.0-rc.2` and `latest=0.1.0-rc.1`
 - `docs/TODO.md` changelog record that `0.1.0-rc.2` was published to `next`
 - Local REQUIRED: `pnpm --filter @kunolu/dsh-sbtd test`; pack and assert `package/dist/index.js`; manuals MANIFEST `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`
-- Commit, push, open PR (Scheme A). Do not merge. Do not `npm publish` again.
+- Commit, push, open PR (Scheme A). Merge after CLEAN + `/trellis-finish-work`. Do not `npm publish` again.
 
 ## Out of scope
 
@@ -27,7 +27,6 @@ From origin/main tip `11571234ed109f2037f94615caefb6ecf5bd1d01`, bump `@kunolu/d
 - omp config
 - changing host pin `@deepseek-ai/dsh@0.1.1-rc.2`
 - product behavior in `packages/dsh-sbtd/src`
-- merge unless asked
 
 ## Constraints (locked)
 
@@ -45,8 +44,11 @@ From origin/main tip `11571234ed109f2037f94615caefb6ecf5bd1d01`, bump `@kunolu/d
 - [x] `pnpm --filter @kunolu/dsh-sbtd test` pass
 - [x] Packed tarball contains `package/dist/index.js`; sha256 `95d199e435cf917cd2045e8ba0a7feb29a80fad16fd376f7df5101d408bfd0ed`
 - [x] MANIFEST version `1.0.13` and sourceRevision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`
-- [x] PR opened, not merged: https://github.com/KunoLu/sbtd-plugins/pull/70
+- [x] PR opened: https://github.com/KunoLu/sbtd-plugins/pull/70
 - [x] No second `npm publish`; `next=0.1.0-rc.2`; `latest=0.1.0-rc.1`
+- [x] Review r3 CLEAN @ `534895f5aa368ef6c9f0b8a7af71b2439b879737`; `REQUIRED_CHANGES=none`; r1/r2 REQUIRED closed
+- [x] `/trellis:finish-work` archive as completed (scheme A, same PR #70)
+- [ ] PR #70 merge to `main` (SHA pending squash)
 
 ## grill-with-docs
 
@@ -74,7 +76,7 @@ Capacity / backpressure / limits: not-applicable.
 
 Observability / alerts / runbook: 331 tests; pack `package/dist/index.js`; tarball sha256 `95d199e435cf917cd2045e8ba0a7feb29a80fad16fd376f7df5101d408bfd0ed`; MANIFEST `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`.
 
-Rollout / migration / rollback / cleanup: Scheme A PR #70 only; do not merge unless asked. Registry already has `next=0.1.0-rc.2`. Rollback: leave unmerged; do not republish; do not move `latest`.
+Rollout / migration / rollback / cleanup: Scheme A PR #70; merge after r3 CLEAN. Registry already has `next=0.1.0-rc.2`. Rollback: revert merge; do not republish; do not move `latest`.
 
 Required validation and result: `pnpm --filter @kunolu/dsh-sbtd test` 331/331; pack_dist=yes. r2: PRD publish-state language aligned with registry; npm=no.
 
