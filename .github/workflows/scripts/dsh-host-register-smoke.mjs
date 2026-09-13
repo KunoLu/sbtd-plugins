@@ -19,7 +19,7 @@ const pluginPkg = readJson(pluginPkgPath);
 const dshPkgPath = require.resolve("@deepseek-ai/dsh/package.json");
 const dshPkg = readJson(dshPkgPath);
 if (process.env.DSH_PIN_SMOKE === "1") {
-  assert.equal(pluginPkg.version, "0.1.0-rc.1");
+  assert.equal(pluginPkg.version, "0.1.0-rc.2");
   assert.equal(dshPkg.version, "0.1.1-rc.2");
   assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
 } else {

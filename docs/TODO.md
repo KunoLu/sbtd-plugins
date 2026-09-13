@@ -8,7 +8,7 @@
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-13（上海） |
 | 同步时 main | `c6c1d80`（#68 dsh CI → `c6c1d80`；#64 T16 → `2fe061d`；#65 FU4 → `2fc31b4`；#62 T15 → `0dbe135`；#61 gitignore；#59 T14 → `2b7cf61`；#57 T13 → `9289798`；#55 T12 → `61026a1`；#53 T11 → `d729d6e`；T10 #51 → `014f480`） |
-| 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
+| 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` **待发布**（dist-tag `next` 仍为 `0.1.0-rc.1`；`latest` 暂留 `0.1.0-rc.1`） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
 
 ---
@@ -79,6 +79,7 @@
 |---|---|
 | lockfile 补 `@deepseek-ai/dsh@0.1.1-rc.2` | ✅ #31；`omp-runtime-linux-probe` 已绿 |
 | npm `@kunolu/dsh-sbtd@0.1.0-rc.1` → `next` | ✅ #32；冒烟 PASS |
+| npm `@kunolu/dsh-sbtd@0.1.0-rc.2` → `next` | 🟡 **pending**（本 PR bump + pack；**未** `npm publish`；勿动 `latest`） |
 | `latest=0.1.0-rc.1` | 🟡 **保留**（npm 往往删不掉 `latest`）；文档/安装**只推** `@kunolu/dsh-sbtd@next` |
 | Trellis 历史积压 archive | ✅ #34 → `69a6acf`（T5/T4/pr10/pr12/v1.2） |
 | OMP 配置（provider / fallback / 模型别名） | 🔒 **只读**；未经用户明确允许不得改 |
@@ -113,11 +114,13 @@
 | 11 | **T15** `/sbtd` 命令与 README | ✅ #62 → `0dbe135` |
 | 12 | **T16** 端到端验收 | ✅ #64 → `2fe061d` |
 | 13 | dsh CI 兼容指南 + 独立 workflow | ✅ #68 → `c6c1d80` |
+| 14 | `@kunolu/dsh-sbtd@0.1.0-rc.2` bump + pack | 🟡 pending publish（本 PR；不 npm） |
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-13 | dsh-sbtd `0.1.0-rc.2` bump：候选 pack，**未** npm publish；`next`/`latest` 仍 `0.1.0-rc.1` |
 | 2026-09-13 | dsh CI 指南 #68 → main `c6c1d80`（TODO merge-SHA backfill） |
 | 2026-09-13 | dsh CI 指南 #68 scheme A finish/merge：r2 CLEAN @ `d6ff538`；REQUIRED_CHANGES=none；squash `c6c1d80`；不发布包 |
 | 2026-09-13 | dsh CI 指南 #68 ready：r2 CLEAN @ `d6ff538`；REQUIRED_CHANGES=none；r1 nits closed；finish-work ✅；archive `09-12-dsh-ci-compat-guides`；**未合**（merge SHA pending） |

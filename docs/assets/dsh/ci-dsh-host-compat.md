@@ -1,6 +1,6 @@
 # 上游 `dsh` 发新版：宿主兼容校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.1`。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（待发布；`next` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。
 
 现有 GitHub Actions 全部是 `omp-*`。dsh **拟**用独立 workflow 名 `dsh-host-compat`、`dsh-manuals-pin`，禁止改 `omp-compatibility-*`。独立 workflow 已入库：`.github/workflows/dsh-host-compat.yml`、`dsh-manuals-pin.yml`。可 `workflow_dispatch`；亦可用下面「本地等价」命令。禁止改 `omp-compatibility-*`。
 
@@ -20,7 +20,7 @@
 | 门 | 命令 / Actions | 级别 | 期望 |
 |---|---|---|---|
 | 单测 | `pnpm --filter @kunolu/dsh-sbtd test`（=`tsc` + `node --test test/*.test.mjs`） | **REQUIRED** | 退出码 0。含 `test/fu4-host-schema.test.mjs` |
-| FU4 pinned-host register smoke | 套件内 `fu4-host-schema.test.mjs`；`dsh-host-compat` job `unit-pack` temp cell | **REQUIRED** | 钉死 `@deepseek-ai/dsh@0.1.1-rc.2` 与 `@kunolu/dsh-sbtd@0.1.0-rc.1`；Cordis `register/load` 接受 `sbtd_clarify` / `sbtd_spec` / `sbtd_tickets` 的 `output.schema`；`properties.*.type` 不是数组。本地：仓库 `test` **加上** 下一节临时 cell（`DSH_PIN_SMOKE=1`） |
+| FU4 pinned-host register smoke | 套件内 `fu4-host-schema.test.mjs`；`dsh-host-compat` job `unit-pack` temp cell | **REQUIRED** | 钉死 `@deepseek-ai/dsh@0.1.1-rc.2` 与 `@kunolu/dsh-sbtd@0.1.0-rc.2`；Cordis `register/load` 接受 `sbtd_clarify` / `sbtd_spec` / `sbtd_tickets` 的 `output.schema`；`properties.*.type` 不是数组。本地：仓库 `test` **加上** 下一节临时 cell（`DSH_PIN_SMOKE=1`） |
 | pack 含 `dist/` | `pnpm --filter @kunolu/dsh-sbtd pack --pack-destination <tmp>` 后检查 tarball | **REQUIRED** | tarball 内有 `package/dist/` 且至少有 `package/dist/index.js`（T16 坑：漏 `dist/` 的包无法加载） |
 | pack→temp install→smoke | 同一 tarball：`pnpm add @deepseek-ai/dsh@0.1.1-rc.2 <tgz>` 到空目录再跑 register smoke | **REQUIRED** | 证明 pack 产物可被钉死宿主加载。复用 omp-runtime-linux-probe 的 pack→临时目录→smoke 模式，不改 omp workflow |
 | 独立 Actions | `dsh-host-compat`（`.github/workflows/dsh-host-compat.yml`） | **REQUIRED（dispatch）** | `workflow_dispatch`；job `unit-pack` 红即停。不改 omp ledger |
@@ -93,7 +93,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 REQUIRED 绿？
  ├─ 否 → 不发版。开适配 PR（schema / register / peer 行为），修到 FU4+单测绿，再谈 bump。
  └─ 是 → 候选宿主与钉 0.1.1-rc.2 行为是否兼容？
-      ├─ 兼容 → 可不发版。只更新矩阵注释、本文件、必要时放宽 peerRange。包版本可停在 0.1.0-rc.1。
+      ├─ 兼容 → 可不发版。只更新矩阵注释、本文件、必要时放宽 peerRange。包版本可停在 0.1.0-rc.2。
       └─ 不兼容 → 不发当前 tarball。适配 PR + 版本 bump 后再发。禁止只改文档假装兼容。
 
 advisory 矩阵绿？
