@@ -6,7 +6,7 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-12（上海） |
+| 上次同步 | 2026-09-13（上海） |
 | 同步时 main | `2fe061d`（#64 T16 → `2fe061d`；#65 FU4 → `2fc31b4`；#62 T15 → `0dbe135`；#61 gitignore；#59 T14 → `2b7cf61`；#57 T13 → `9289798`；#55 T12 → `61026a1`；#53 T11 → `d729d6e`；T10 #51 → `014f480`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.1` dist-tag `next`（`latest` 暂留同版本） |
 | 宿主钉 | `@deepseek-ai/dsh@0.1.1-rc.2` |
@@ -83,7 +83,7 @@
 | Trellis 历史积压 archive | ✅ #34 → `69a6acf`（T5/T4/pr10/pr12/v1.2） |
 | OMP 配置（provider / fallback / 模型别名） | 🔒 **只读**；未经用户明确允许不得改 |
 | `omp-compatibility-certification` | workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧（2026-09-08） |
-| dsh host/manuals CI 指南 | 🟡 #68 `docs/dsh-ci-compat-guides`：`docs/assets/dsh/ci-*.md` + 独立 `dsh-host-compat.yml` / `dsh-manuals-pin.yml`（已入库）；不改 omp-*；不 npm |
+| dsh host/manuals CI 指南 | ✅ #68 `docs/dsh-ci-compat-guides`：r2 CLEAN @ `d6ff538`；REQUIRED_CHANGES=none；finish-work ✅；**未合**（merge SHA pending）；`docs/assets/dsh/ci-*.md` + 独立 `dsh-host-compat.yml` / `dsh-manuals-pin.yml`；不改 omp-*；不 npm |
 
 ---
 
@@ -112,12 +112,13 @@
 | 10 | **T14** `sbtd_lessons` | ✅ #59 → `2b7cf61` |
 | 11 | **T15** `/sbtd` 命令与 README | ✅ #62 → `0dbe135` |
 | 12 | **T16** 端到端验收 | ✅ #64 → `2fe061d` |
-| 13 | dsh CI 兼容指南 + 独立 workflow | 🟡 本 PR 开出后 **未合** |
+| 13 | dsh CI 兼容指南 + 独立 workflow | ✅ r2 CLEAN @ `d6ff538`；finish-work ✅；**未合**（merge SHA pending） |
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-13 | dsh CI 指南 #68 ready：r2 CLEAN @ `d6ff538`；REQUIRED_CHANGES=none；r1 nits closed；finish-work ✅；archive `09-12-dsh-ci-compat-guides`；**未合**（merge SHA pending） |
 | 2026-09-12 | dsh CI 指南：宿主兼容 + 640-skills pin；独立 `dsh-*` workflow；不 npm / 不改 omp-* |
 | 2026-09-12 | T16 #64 → main `2fe061d`（TODO merge-SHA backfill） |
 | 2026-09-12 | T16 #64 scheme A finish/merge：PASS 8/8；r2 CLEAN @ `97e365c`；REQUIRED_CHANGES=none；squash `2fe061d`；不发布包 |
