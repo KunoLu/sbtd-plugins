@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/dsh-sbtd/backend/index.md", "reason": "Verify docs do not contradict host pin and manuals pin"}
+{"file": ".trellis/spec/dsh-sbtd/frontend/host-contract.md", "reason": "Verify docs do not invent extra host operations"}
