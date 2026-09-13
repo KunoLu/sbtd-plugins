@@ -11,7 +11,7 @@
 1. 上游发布新的 `@deepseek-ai/dsh`（含 rc / alpha），准备评估当前插件能否继续用。
 2. 准备把 `peerDependencies` / 兼容矩阵从 `0.1.1-rc.2` 扩到候选版本。
 3. 怀疑宿主 schema / Cordis `register` / tool `output.schema` 行为变了（T16 / FU4 同类）。
-4. 手动 `workflow_dispatch`：`.github/workflows/dsh-host-compat.yml`。本地等价：`pnpm --filter @kunolu/dsh-sbtd test` + pack（须含 `dist/`）。
+4. 手动 `workflow_dispatch`：`.github/workflows/dsh-host-compat.yml`。本地等价：`pnpm --filter @kunolu/dsh-sbtd test` + pack（须含 `dist/`）+ 临时 cell 的 pinned register smoke。
 
 未触发：只改 omp 文档、只改 manuals pin、只改无关 markdown。
 
@@ -20,7 +20,7 @@
 | 门 | 命令 / Actions | 级别 | 期望 |
 |---|---|---|---|
 | 单测 | `pnpm --filter @kunolu/dsh-sbtd test`（=`tsc` + `node --test test/*.test.mjs`） | **REQUIRED** | 退出码 0。含 `test/fu4-host-schema.test.mjs` |
-| FU4 pinned-host register smoke | 套件内 `fu4-host-schema.test.mjs`；`dsh-host-compat` job `unit-pack` temp cell | **REQUIRED** | 钉死 `@deepseek-ai/dsh@0.1.1-rc.2` 与 `@kunolu/dsh-sbtd@0.1.0-rc.1`；Cordis `register/load` 接受 `sbtd_clarify` / `sbtd_spec` / `sbtd_tickets` 的 `output.schema`；`properties.*.type` 不是数组。本地：`pnpm --filter @kunolu/dsh-sbtd test` |
+| FU4 pinned-host register smoke | 套件内 `fu4-host-schema.test.mjs`；`dsh-host-compat` job `unit-pack` temp cell | **REQUIRED** | 钉死 `@deepseek-ai/dsh@0.1.1-rc.2` 与 `@kunolu/dsh-sbtd@0.1.0-rc.1`；Cordis `register/load` 接受 `sbtd_clarify` / `sbtd_spec` / `sbtd_tickets` 的 `output.schema`；`properties.*.type` 不是数组。本地：仓库 `test` **加上** 下一节临时 cell（`DSH_PIN_SMOKE=1`） |
 | pack 含 `dist/` | `pnpm --filter @kunolu/dsh-sbtd pack --pack-destination <tmp>` 后检查 tarball | **REQUIRED** | tarball 内有 `package/dist/` 且至少有 `package/dist/index.js`（T16 坑：漏 `dist/` 的包无法加载） |
 | pack→temp install→smoke | 同一 tarball：`pnpm add @deepseek-ai/dsh@0.1.1-rc.2 <tgz>` 到空目录再跑 register smoke | **REQUIRED** | 证明 pack 产物可被钉死宿主加载。复用 omp-runtime-linux-probe 的 pack→临时目录→smoke 模式，不改 omp workflow |
 | 独立 Actions | `dsh-host-compat`（`.github/workflows/dsh-host-compat.yml`） | **REQUIRED（dispatch）** | `workflow_dispatch`；job `unit-pack` 红即停。不改 omp ledger |
@@ -28,7 +28,7 @@
 
 前置（GHA）：runner 必须能按 lockfile 安装 `@deepseek-ai/dsh@0.1.1-rc.2`。若 GitHub 没有该 registry，不要把 `dsh-host-compat` 改成 `pull_request` 必绿；保持 `workflow_dispatch`。本地命令始终可用。禁止为打通 CI 去 npm publish。
 
-本地等价：
+本地等价（仓库根；`test` + pack `dist/` 检查 **后** 再跑临时 cell，与 GHA `unit-pack` 同路径）：
 
 ```bash
 pnpm --filter @kunolu/dsh-sbtd test
@@ -37,9 +37,18 @@ pack_dir="$(mktemp -d)"
 pnpm --filter @kunolu/dsh-sbtd pack --pack-destination "$pack_dir"
 tgz="$(echo "$pack_dir"/kunolu-dsh-sbtd-*.tgz)"
 tar tzf "$tgz" | grep -E '^package/dist/index\.js$'
+
+cell="$(mktemp -d)"
+printf '%s\n' '{"name":"dsh-host-cell","private":true}' > "$cell/package.json"
+cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
+(
+  cd "$cell"
+  pnpm add @deepseek-ai/dsh@0.1.1-rc.2 "$tgz"
+  DSH_PIN_SMOKE=1 DSH_VERSION=0.1.1-rc.2 node smoke.mjs
+)
 ```
 
-`test` 已包含 `tsc`，pack 前不要跳过它。`dist/` 默认 gitignore，pack 依赖当场编译结果。
+`test` 已包含 `tsc`，pack 前不要跳过它。`dist/` 默认 gitignore，pack 依赖当场编译结果。临时 cell 用共享 smoke（`.github/workflows/scripts/dsh-host-register-smoke.mjs`），不要再写一份 heredoc。advisory 矩阵同一脚本、`DSH_PIN_SMOKE=0` 且 `DSH_VERSION` 为候选版本。
 
 ## 人工最少清单
 
