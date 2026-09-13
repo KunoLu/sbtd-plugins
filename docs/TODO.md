@@ -85,6 +85,7 @@
 | OMP 配置（provider / fallback / 模型别名） | 🔒 **只读**；未经用户明确允许不得改 |
 | `omp-compatibility-certification` | workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧（2026-09-08） |
 | dsh host/manuals CI 指南 | ✅ #68 → `c6c1d80`；scheme A finish；r2 CLEAN @ `d6ff538`；REQUIRED_CHANGES=none；archive `09-12-dsh-ci-compat-guides`；不改 omp-*；不 npm |
+| dsh @next pitfall | ✅ #72 r1 CLEAN @ `615c5dd`；REQUIRED_CHANGES=none；archive `09-13-dsh-next-pitfall`；**未合**（merge SHA pending）；prefer explicit `@kunolu/dsh-sbtd@<version>`；`@next` can stick via profile pnpm lock |
 
 ---
 
@@ -115,11 +116,13 @@
 | 12 | **T16** 端到端验收 | ✅ #64 → `2fe061d` |
 | 13 | dsh CI 兼容指南 + 独立 workflow | ✅ #68 → `c6c1d80` |
 | 14 | `@kunolu/dsh-sbtd@0.1.0-rc.2` → `next` | ✅ #70 → `ae636e8`；sha256 `95d199e…bfd0ed`；`latest` 仍 `0.1.0-rc.1` |
+| 15 | dsh @next pitfall | ✅ #72 r1 CLEAN @ `615c5dd`；merge SHA pending |
 
 ## 9. 变更日志（本文件）
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-13 | dsh @next pitfall #72 ready：r1 CLEAN @ `615c5dd`；REQUIRED_CHANGES=none；finish-work ✅；archive `09-13-dsh-next-pitfall`；**未合**（merge SHA pending） |
 | 2026-09-13 | dsh-sbtd 0.1.0-rc.2 #70 → main `ae636e8`（TODO merge-SHA backfill） |
 | 2026-09-13 | dsh-sbtd 0.1.0-rc.2 #70 scheme A finish/merge：r3 CLEAN @ `534895f5`；REQUIRED_CHANGES=none；squash `ae636e8`；不二次 publish；`next=0.1.0-rc.2`；`latest` 仍 `0.1.0-rc.1` |
 | 2026-09-13 | npm `@kunolu/dsh-sbtd@0.1.0-rc.2` → `next`（`latest` 仍 `0.1.0-rc.1`）；#70 tip `0b15ed9`；REQUIRED 331/331 + pack dist |
