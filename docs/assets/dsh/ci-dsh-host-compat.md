@@ -111,5 +111,6 @@ advisory 矩阵绿？
 | 单测绿但宿主拒 schema | 对照 `test/fu4-host-schema.test.mjs`；确认装的就是 `0.1.1-rc.2`，不是本机另一个 rc。 |
 | pack 只有 `cordis.patch.yml` / `manuals/` | 没跑 `tsc` 或 `files` 漏 `dist/`。`package.json` 的 `files` 必须含 `dist/`。 |
 | `dsh plugin add` 同版本无效果 | 先 `remove` 再 `add`。 |
+| `add @kunolu/dsh-sbtd@next` 仍装出旧 RC（registry `next` 已是新版） | 本机装新 RC：优先 `dsh plugin --profile web add @kunolu/dsh-sbtd@<version>` 显式版本。`@next` 易被 profile pnpm 锁/解析粘到旧版。同版本先 `remove` 再 `add`（见上表）。 |
 | 抽检无弹窗 | 路径是不是 `frontend/src`；cwd 是不是仓库根；有没有已有 plan。 |
 | 有人把本检查写进 `omp-compatibility-*` | 撤回。独立文件是 `dsh-host-compat.yml`。 |
