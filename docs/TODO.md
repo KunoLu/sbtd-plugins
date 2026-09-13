@@ -7,7 +7,7 @@
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-13（上海） |
-| 同步时 main | `1c0903b`（#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
+| 同步时 main | `1a9e809`（#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（本轮未跑 `npm view`；按 Lord 绑定） |
@@ -74,4 +74,6 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-13 | TODO archive/FU5 #74 → main `1a9e809`（TODO merge-SHA backfill） |
+| 2026-09-13 | TODO archive/FU5 #74 scheme A finish/merge：r1 CLEAN @ `f64f726`；REQUIRED_CHANGES=none；squash `1a9e809`；不发布包 |
 | 2026-09-13 | 归档 P0–P3 / FU1–FU4 / T0–T16 / CI / rc.2 / @next pitfall 至 `docs/assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md`；活队列改为 FU5 + 640-skills v1.0.15；同步时 main `1c0903b`（#73） |
