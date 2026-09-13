@@ -83,7 +83,7 @@
 | Trellis 历史积压 archive | ✅ #34 → `69a6acf`（T5/T4/pr10/pr12/v1.2） |
 | OMP 配置（provider / fallback / 模型别名） | 🔒 **只读**；未经用户明确允许不得改 |
 | `omp-compatibility-certification` | workflow_dispatch-only（无 cron）；Environments Required reviewers 移除为用户侧（2026-09-08） |
-| dsh host/manuals CI 指南 | 🟡 本 PR `docs/dsh-ci-compat-guides`：`docs/assets/dsh/ci-*.md`；独立 `dsh-*.yml` 因 token 缺 `workflow` scope **未入库**；不改 omp-*；不 npm |
+| dsh host/manuals CI 指南 | 🟡 #68 `docs/dsh-ci-compat-guides`：`docs/assets/dsh/ci-*.md` + 独立 `dsh-host-compat.yml` / `dsh-manuals-pin.yml`（已入库）；不改 omp-*；不 npm |
 
 ---
 

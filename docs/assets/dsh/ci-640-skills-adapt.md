@@ -2,7 +2,7 @@
 
 适用包：`@kunolu/dsh-sbtd@0.1.0-rc.1`。manuals **钉死** `KunoLu/640-skills` **`1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
 
-宿主钉仍是 `peerDependencies["@deepseek-ai/dsh"] = 0.1.1-rc.2`。现有 Actions 全是 `omp-*`。拟议独立门：`dsh-manuals-pin` 与（发版前）`dsh-host-compat`。禁止改 `omp-compatibility-*`。**本 PR 未入库** `.github/workflows/dsh-*.yml`（OAuth 缺 `workflow` scope）；未入库前不要 dispatch 这些名字，跑本页命令。
+宿主钉仍是 `peerDependencies["@deepseek-ai/dsh"] = 0.1.1-rc.2`。现有 Actions 全是 `omp-*`。独立门：`dsh-manuals-pin` 与（发版前）`dsh-host-compat`（YAML 已入库本 PR）。禁止改 `omp-compatibility-*`。
 
 ## 触发条件
 
@@ -11,7 +11,7 @@
 1. 准备把 manuals 从 `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630` 迁到新的 `640-skills` tag / commit。
 2. 准备发 `@kunolu/dsh-sbtd` 新版本（bump `0.1.0-rc.1` 之后）。
 3. `packages/dsh-sbtd/scripts/sync-manuals.sh`、`manuals/MANIFEST.json` 或 whitelist 有改动。
-4. 拟议手动 `workflow_dispatch`：`.github/workflows/dsh-manuals-pin.yml`（**pending / 本 PR 未入库**）。未入库前跑 MANIFEST 断言 + t4 + `sync-manuals.sh`。
+4. 手动 `workflow_dispatch` / PR paths：`.github/workflows/dsh-manuals-pin.yml`。本地等价：MANIFEST 断言 + t4 + `sync-manuals.sh`。
 
 未触发：只评估上游 `dsh` 宿主、不动 manuals（走 [ci-dsh-host-compat.md](./ci-dsh-host-compat.md)）。
 
@@ -24,7 +24,7 @@
 | t4 单测 | `node --test packages/dsh-sbtd/test/t4-manuals.test.mjs packages/dsh-sbtd/test/t4-sync-exit.test.mjs` | **REQUIRED** | MANIFEST 与 dest sha256 一致；whitelist 目录一致；错误 SOURCE 非 0 |
 | 全量单测 | `pnpm --filter @kunolu/dsh-sbtd test` | **REQUIRED（发新版前）** | `tsc` + 全部 `test/*.test.mjs`，含 FU4 `fu4-host-schema.test.mjs`（clarify/spec/tickets `output.schema` × `@deepseek-ai/dsh@0.1.1-rc.2`） |
 | pack 含 `dist/` | 同宿主指南 | **REQUIRED（发新版前）** | tarball 含 `package/dist/`（T16 坑） |
-| Actions | 拟议名 `dsh-manuals-pin` | **pending** | **本 PR 未入库**。意图：静态 MANIFEST + t4 + 对 pin SHA clone 后跑 `sync-manuals.sh`，工作树 `manuals/` 必须仍干净。不依赖 `@deepseek-ai/dsh` registry。有 `workflow` scope 后再推 YAML |
+| Actions | `dsh-manuals-pin` | **REQUIRED** | 静态 MANIFEST + t4 + 对 pin SHA clone 后跑 `sync-manuals.sh`，工作树 `manuals/` 必须仍干净。不依赖 `@deepseek-ai/dsh` registry |
 
 脚本常量必须与 MANIFEST 一致：
 
@@ -107,4 +107,4 @@ advisory 宿主矩阵绿？
 | t4 过、全量 test 不过 | FU4 / 宿主 registry 问题，转到宿主指南；不要放宽 MANIFEST。 |
 | pack 无 dist | 发版前没 `tsc`。`files` 必须含 `dist/`。 |
 | `frontend/src` 抽检无弹窗 | 不是生产路径。改用 `packages/**/src` 或仓库根下 `src/`。 |
-| 想把 manuals 门挂到 `omp-compatibility-*` | 禁止。拟议独立文件是 `dsh-manuals-pin.yml`（本 PR **未入库**）。 |
+| 想把 manuals 门挂到 `omp-compatibility-*` | 禁止。独立文件是 `dsh-manuals-pin.yml`。 |
