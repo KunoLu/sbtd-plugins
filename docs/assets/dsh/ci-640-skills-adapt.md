@@ -1,6 +1,6 @@
 # 适配新 `640-skills` / 发 `dsh-sbtd` 新版前校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.1`。manuals **钉死** `KunoLu/640-skills` **`1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。manuals **钉死** `KunoLu/640-skills` **`1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
 
 宿主钉仍是 `peerDependencies["@deepseek-ai/dsh"] = 0.1.1-rc.2`。现有 Actions 全是 `omp-*`。独立门：`dsh-manuals-pin` 与（发版前）`dsh-host-compat`（YAML 已入库本 PR）。禁止改 `omp-compatibility-*`。
 
@@ -9,7 +9,7 @@
 出现任一情况即跑：
 
 1. 准备把 manuals 从 `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630` 迁到新的 `640-skills` tag / commit。
-2. 准备发 `@kunolu/dsh-sbtd` 新版本（bump `0.1.0-rc.1` 之后）。
+2. 准备发 `@kunolu/dsh-sbtd` 新版本（bump `0.1.0-rc.2` 之后）。
 3. `packages/dsh-sbtd/scripts/sync-manuals.sh`、`manuals/MANIFEST.json` 或 whitelist 有改动。
 4. 手动 `workflow_dispatch` / PR paths：`.github/workflows/dsh-manuals-pin.yml`。本地等价：MANIFEST 断言 + t4 + `sync-manuals.sh`。
 

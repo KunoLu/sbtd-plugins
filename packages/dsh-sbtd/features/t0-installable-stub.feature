@@ -16,11 +16,12 @@ Feature: DSH T0 stub 可安装
     And 文档不出现裸包名安装或本地路径安装
     And 文档不出现 0.1.0-rc.7 或 0.1.2-alpha
 
-  Scenario: README 声明已发布 0.1.0-rc.1 到 dist-tag next
+  Scenario: README 声明 0.1.0-rc.2 已发布到 next 且 latest 仍为 0.1.0-rc.1
     Given 用户打开 packages/dsh-sbtd 的 README
-    Then 文档提到 0.1.0-rc.1 和 dist-tag next
-    And 文档没有尚未发布警告
-    And package.json 的 private 为 false、version 为 0.1.0-rc.1
+    Then 文档提到 0.1.0-rc.2 已发布到 next
+    And 文档提到 latest 仍为 0.1.0-rc.1
+    And 文档没有待发布或尚未发布到 npm 的失败警告
+    And package.json 的 private 为 false、version 为 0.1.0-rc.2
     And keywords 包含 dsh-plugin
 
   @todo

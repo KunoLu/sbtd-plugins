@@ -1,0 +1,29 @@
+{
+  "id": "dsh-sbtd-0.1.0-rc.2-bump",
+  "name": "dsh-sbtd-0.1.0-rc.2-bump",
+  "title": "chore(dsh-sbtd): bump 0.1.0-rc.2",
+  "description": "Bump @kunolu/dsh-sbtd to 0.1.0-rc.2, run local REQUIRED tests/pack/manuals pin, open Scheme A PR. Do not npm publish.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-13",
+  "completedAt": "2026-09-13",
+  "branch": "release/dsh-sbtd-0.1.0-rc.2",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "package": "dsh-sbtd",
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/70"
+  }
+}
