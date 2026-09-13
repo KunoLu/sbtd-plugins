@@ -1,0 +1,31 @@
+{
+  "id": "dsh-next-pitfall",
+  "name": "dsh-next-pitfall",
+  "title": "docs(dsh): note @next can stick to an older RC",
+  "description": "Docs-only pitfall row in ci-dsh-host-compat.md: prefer explicit @kunolu/dsh-sbtd@<version>; @next can stick via profile pnpm lock. Same PR #72 scheme A finish. No npm.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P3",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-13",
+  "completedAt": "2026-09-13",
+  "branch": "docs/dsh-next-pitfall",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/72",
+    "commit": "615c5dd",
+    "review_head": "615c5dd",
+    "note": "r1 CLEAN @ 615c5dd; REQUIRED_CHANGES=none; merge SHA pending"
+  }
+}
