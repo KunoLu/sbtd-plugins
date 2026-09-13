@@ -1,0 +1,186 @@
+# Independent dsh host-compat gate (not omp-*).
+# Pattern reuse only: pack → temp install → smoke (see omp-runtime-linux-probe).
+#
+# REQUIRED unit-pack:
+#   pnpm --filter @kunolu/dsh-sbtd test (tsc + node --test, includes fu4-host-schema)
+#   pack tarball must contain package/dist/ (T16)
+#   install that tarball with pinned @deepseek-ai/dsh@0.1.1-rc.2 in a temp cell
+#   and run FU4-style register smoke (version pins on).
+#
+# Advisory matrix: same packed tarball × candidate dsh in a fresh temp cell.
+# Smoke checks clarify/spec/tickets output.schema only — it does NOT run the
+# repo test suite (fu4-host-schema.test.mjs hard-asserts 0.1.1-rc.2).
+# continue-on-error; green for a while before promoting to REQUIRED.
+# Matrix green is not the only merge gate.
+#
+# workflow_dispatch: GitHub runners often cannot fetch @deepseek-ai/dsh.
+# Never npm publish from this workflow.
+name: dsh-host-compat
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidateDshVersions:
+        description: Comma-separated extra @deepseek-ai/dsh versions for advisory matrix (empty skips extra cells)
+        required: false
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: dsh-host-compat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-pack:
+    name: REQUIRED unit + pack dist/ + pinned temp smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies (needs @deepseek-ai/dsh@0.1.1-rc.2)
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit tests (tsc + node --test, includes fu4-host-schema)
+        run: pnpm --filter @kunolu/dsh-sbtd test
+
+      - name: Pack and require package/dist/
+        id: pack
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dest="${RUNNER_TEMP}/dsh-sbtd-pack"
+          mkdir -p "${dest}"
+          pnpm --filter @kunolu/dsh-sbtd pack --pack-destination "${dest}"
+          tarballs=("${dest}"/kunolu-dsh-sbtd-*.tgz)
+          if [ "${#tarballs[@]}" -ne 1 ]; then
+            echo "expected exactly one kunolu-dsh-sbtd-*.tgz under ${dest}, found ${#tarballs[@]}: ${tarballs[*]:-}" >&2
+            exit 1
+          fi
+          tarball="$(readlink -f "${tarballs[0]}")"
+          echo "tarball=${tarball}" >> "${GITHUB_OUTPUT}"
+          echo "packed ${tarball}"
+          if ! tar tzf "${tarball}" | grep -qx 'package/dist/index.js'; then
+            echo "T16 pit: pack tarball missing package/dist/index.js" >&2
+            tar tzf "${tarball}" >&2
+            exit 1
+          fi
+
+      - name: Upload packed plugin
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dsh-sbtd-pack
+          path: ${{ runner.temp }}/dsh-sbtd-pack/
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Temp install packed plugin + pinned dsh smoke
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          DSH_PIN_SMOKE: "1"
+          DSH_VERSION: "0.1.1-rc.2"
+        run: |
+          set -euo pipefail
+          cell="${RUNNER_TEMP}/dsh-host-cell-pin"
+          mkdir -p "${cell}"
+          printf '%s\n' '{"name":"dsh-host-cell","private":true}' > "${cell}/package.json"
+          cp "${GITHUB_WORKSPACE}/.github/workflows/scripts/dsh-host-register-smoke.mjs" "${cell}/smoke.mjs"
+          cd "${cell}"
+          pnpm add "@deepseek-ai/dsh@${DSH_VERSION}" "${TARBALL}"
+          node smoke.mjs
+
+
+  matrix-plan:
+    name: Parse advisory candidate versions
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      versions: ${{ steps.plan.outputs.versions }}
+    steps:
+      - name: Build JSON list
+        id: plan
+        env:
+          RAW: ${{ github.event.inputs.candidateDshVersions }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          raw = os.environ.get("RAW") or ""
+          versions = [part.strip() for part in raw.split(",") if part.strip()]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write("versions=" + json.dumps(versions) + "\n")
+          PY
+
+  advisory-dsh-matrix:
+    name: Advisory dsh ${{ matrix.dsh }} × packed dsh-sbtd
+    needs: [unit-pack, matrix-plan]
+    if: needs.matrix-plan.outputs.versions != '[]'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        dsh: ${{ fromJSON(needs.matrix-plan.outputs.versions) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Download packed plugin
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dsh-sbtd-pack
+          path: ${{ runner.temp }}/dsh-sbtd-pack
+
+      - name: Temp install packed plugin + candidate dsh smoke
+        env:
+          DSH_PIN_SMOKE: "0"
+          DSH_VERSION: ${{ matrix.dsh }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tarballs=("${RUNNER_TEMP}/dsh-sbtd-pack"/kunolu-dsh-sbtd-*.tgz)
+          if [ "${#tarballs[@]}" -ne 1 ]; then
+            echo "expected exactly one packed tarball, found ${#tarballs[@]}" >&2
+            exit 1
+          fi
+          tarball="$(readlink -f "${tarballs[0]}")"
+          cell="${RUNNER_TEMP}/dsh-host-cell-${DSH_VERSION}"
+          mkdir -p "${cell}"
+          printf '%s\n' '{"name":"dsh-host-cell","private":true}' > "${cell}/package.json"
+          cp "${GITHUB_WORKSPACE}/.github/workflows/scripts/dsh-host-register-smoke.mjs" "${cell}/smoke.mjs"
+          cd "${cell}"
+          pnpm add "@deepseek-ai/dsh@${DSH_VERSION}" "${tarball}"
+          node smoke.mjs

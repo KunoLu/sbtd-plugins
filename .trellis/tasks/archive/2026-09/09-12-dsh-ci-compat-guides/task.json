@@ -1,0 +1,32 @@
+{
+  "id": "dsh-ci-compat-guides",
+  "name": "dsh-ci-compat-guides",
+  "title": "docs(dsh): host compat + 640-skills CI guides",
+  "description": "Chinese CI guides for upstream dsh host compat and 640-skills pin, plus independent dsh-* GitHub workflows. No npm publish.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "640",
+  "assignee": "640",
+  "createdAt": "2026-09-12",
+  "completedAt": "2026-09-13",
+  "branch": "docs/dsh-ci-compat-guides",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/68",
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "pr_url": "https://github.com/KunoLu/sbtd-plugins/pull/68",
+    "commit": "d6ff538",
+    "review_head": "d6ff538",
+    "review_record": "/workspace/omp-tasks/dsh-pr68-review-r2-extract.md",
+    "note": "r2 CLEAN @ d6ff538; REQUIRED_CHANGES=none; r1 nits closed; merge SHA pending"
+  }
+}
