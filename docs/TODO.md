@@ -120,7 +120,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-13 | npm `@kunolu/dsh-sbtd@0.1.0-rc.2` → `next`（`latest` 仍 `0.1.0-rc.1`）；#70 tip `2cabe79`；REQUIRED 331/331 + pack dist |
+| 2026-09-13 | npm `@kunolu/dsh-sbtd@0.1.0-rc.2` → `next`（`latest` 仍 `0.1.0-rc.1`）；#70 tip `0b15ed9`；REQUIRED 331/331 + pack dist |
 | 2026-09-13 | dsh-sbtd `0.1.0-rc.2` published #70：`npm publish --tag next`；`next=0.1.0-rc.2`；`latest` 仍 `0.1.0-rc.1`；sha256 `95d199e435cf917cd2045e8ba0a7feb29a80fad16fd376f7df5101d408bfd0ed` |
 | 2026-09-13 | dsh CI 指南 #68 → main `c6c1d80`（TODO merge-SHA backfill） |
 | 2026-09-13 | dsh CI 指南 #68 scheme A finish/merge：r2 CLEAN @ `d6ff538`；REQUIRED_CHANGES=none；squash `c6c1d80`；不发布包 |

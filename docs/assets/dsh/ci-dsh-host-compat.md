@@ -1,6 +1,6 @@
 # 上游 `dsh` 发新版：宿主兼容校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（待发布；`next` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。
 
 现有 GitHub Actions 全部是 `omp-*`。dsh **拟**用独立 workflow 名 `dsh-host-compat`、`dsh-manuals-pin`，禁止改 `omp-compatibility-*`。独立 workflow 已入库：`.github/workflows/dsh-host-compat.yml`、`dsh-manuals-pin.yml`。可 `workflow_dispatch`；亦可用下面「本地等价」命令。禁止改 `omp-compatibility-*`。
 

@@ -1,6 +1,6 @@
 # 适配新 `640-skills` / 发 `dsh-sbtd` 新版前校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（待发布；`next` 仍为 `0.1.0-rc.1`）。manuals **钉死** `KunoLu/640-skills` **`1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。manuals **钉死** `KunoLu/640-skills` **`1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
 
 宿主钉仍是 `peerDependencies["@deepseek-ai/dsh"] = 0.1.1-rc.2`。现有 Actions 全是 `omp-*`。独立门：`dsh-manuals-pin` 与（发版前）`dsh-host-compat`（YAML 已入库本 PR）。禁止改 `omp-compatibility-*`。
 
