@@ -16,7 +16,7 @@ From origin/main tip `11571234ed109f2037f94615caefb6ecf5bd1d01`, bump `@kunolu/d
 - `packages/dsh-sbtd/package.json` version `0.1.0-rc.2`
 - In-repo pins that must match package.json version (tests, smoke, BDD, package README)
 - Consumer README / BDD claim `next=0.1.0-rc.2` and `latest=0.1.0-rc.1`
-- `docs/TODO.md` pending-publish note (publish to `next` already happened)
+- `docs/TODO.md` changelog record that `0.1.0-rc.2` was published to `next`
 - Local REQUIRED: `pnpm --filter @kunolu/dsh-sbtd test`; pack and assert `package/dist/index.js`; manuals MANIFEST `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`
 - Commit, push, open PR (Scheme A). Do not merge. Do not `npm publish` again.
 
