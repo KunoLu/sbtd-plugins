@@ -21,7 +21,7 @@ SBTD 宿主插件 monorepo：共享 workflow kit，以及 OMP / DSH 宿主适配
 | 包 | 路径 | 说明 |
 | --- | --- | --- |
 | `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow 插件。提供 `/sbtd`、内嵌 kit、`doctor` 与 `onboard`。版本 **0.1.0-rc.14**，发布在 `next` tag。 |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。版本 **0.1.0-rc.1**，发布在 `next` tag。宿主钉 `@deepseek-ai/dsh@0.1.1-rc.2`。 |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。仓内候选 **0.1.0-rc.2**（待发布）。dist-tag `next` 仍为 **0.1.0-rc.1**。宿主钉 `@deepseek-ai/dsh@0.1.1-rc.2`。 |
 | `@kunolu/sbtd-workflow-kit` | [`packages/sbtd-workflow-kit`](packages/sbtd-workflow-kit) | 共享 kit / 投影层。**不是**宿主插件。 |
 
 ## 安装
@@ -36,7 +36,7 @@ omp plugin install @kunolu/omp-sbtd@next
 
 DSH 宿主固定 @deepseek-ai/dsh@0.1.1-rc.2。
 
-DSH 插件版本 **0.1.0-rc.1**，发布在 dist-tag `next`。使用 `@kunolu/dsh-sbtd@next` 与宿主 `@deepseek-ai/dsh@0.1.1-rc.2` 安装。不要使用 `@latest` 或 github 路径。
+DSH 插件仓内候选 **0.1.0-rc.2**（待发布）。dist-tag `next` 仍为 **0.1.0-rc.1**。使用 `@kunolu/dsh-sbtd@next` 与宿主 `@deepseek-ai/dsh@0.1.1-rc.2` 安装。不要使用 `@latest` 或 github 路径。
 
 ```bash
 npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next

@@ -39,9 +39,9 @@ From origin/main tip `11571234ed109f2037f94615caefb6ecf5bd1d01`, bump `@kunolu/d
 - [x] `packages/dsh-sbtd/package.json` version is `0.1.0-rc.2`; peer host pin unchanged
 - [x] Matching test/BDD/smoke pins updated; docs distinguish candidate vs published `next`
 - [x] `pnpm --filter @kunolu/dsh-sbtd test` pass
-- [x] Packed tarball contains `package/dist/index.js`; sha256 recorded
+- [x] Packed tarball contains `package/dist/index.js`; sha256 `95d199e435cf917cd2045e8ba0a7feb29a80fad16fd376f7df5101d408bfd0ed`
 - [x] MANIFEST version `1.0.13` and sourceRevision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`
-- [ ] PR opened, not merged; TODO notes pending publish
+- [x] PR opened, not merged: https://github.com/KunoLu/sbtd-plugins/pull/70 ; TODO notes pending publish
 - [x] No `npm publish`
 
 ## grill-with-docs
@@ -56,4 +56,23 @@ From origin/main tip `11571234ed109f2037f94615caefb6ecf5bd1d01`, bump `@kunolu/d
 | book-legacy-change-safety | on-demand | not an existing-behavior bug | — | not-required |
 | book-ddd-distilled-modeling | on-demand | no grill; no domain model change | — | not-required |
 | book-ddia-data-design | on-demand | no persisted/shared data | — | not-required |
-| book-release-readiness | required | publish-path version/rollout prep | after validation | planned |
+| book-release-readiness | required | publish-path version/rollout prep | after validation | passed |
+
+## Release Readiness Review
+
+Status: ready
+
+Production path and affected users / systems: candidate npm tarball for `@kunolu/dsh-sbtd@0.1.0-rc.2`. Registry `next`/`latest` consumers still get `0.1.0-rc.1` until a later publish run.
+
+Failure modes and safeguards: claiming rc.2 is on `next` would mis-install; README/BDD/TODO keep candidate vs published distinct. `npm publish` not run.
+
+Capacity / backpressure / limits: not-applicable.
+
+Observability / alerts / runbook: 331 tests; pack `package/dist/index.js`; tarball sha256 `95d199e435cf917cd2045e8ba0a7feb29a80fad16fd376f7df5101d408bfd0ed`; MANIFEST `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`.
+
+Rollout / migration / rollback / cleanup: Scheme A PR #70 only; do not merge unless asked. Rollback: leave unmerged; registry unchanged.
+
+Required validation and result: `pnpm --filter @kunolu/dsh-sbtd test` 331/331; pack_dist=yes.
+
+Optional checks, accountable owner acceptance, and residual risk: npm publish deferred (User+Lord). Residual: registry still rc.1.
+
