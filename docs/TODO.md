@@ -74,7 +74,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-14 | FU5-C Round2 文档收口：锁 Q3C/Q4A/Q5A（Round1 Q1A/Q2A 仍有效）；peer 仍 `0.1.1-rc.2`；无 npm；无新 RC |
+| 2026-09-14 | FU5-C Round2 文档收口 #80：锁 Q3C/Q4A/Q5A（Round1 Q1A/Q2A 仍有效）；peer 仍 `0.1.1-rc.2`；无 npm；无新 RC |
 | 2026-09-14 | FU5 Mac ask PASS #78（`latest=0.1.5-rc.1`）：r1 CLEAN @ `ffe4b9d`；squash `12d2610`；Mac；plugin `@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins` 无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask` 含「尚未 sbtd_plan，请先调用 sbtd_plan。」；advisory tip `0.1.5-rc.2` 仍 tip-only；peer 未改；无 npm |
 | 2026-09-14 | FU5-C Round1 文档收口 #76：r2 CLEAN @ `a1c3716`；squash `1fd43c4`；锁 Q1A/Q2A；peer 仍 `0.1.1-rc.2`；无 npm |
 | 2026-09-13 | TODO archive/FU5 #74 → main `1a9e809`（TODO merge-SHA backfill） |
