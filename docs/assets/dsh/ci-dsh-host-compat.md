@@ -64,7 +64,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 
 `pnpm add` 解析：exact `0.1.2` / `0.1.3` 在 registry **404**，单元格用最近可装版本。不要把 `0.1.3-alpha.2` 当 ship pin。
 
-人工 `dsh web` 审批弹窗：**PASS**（2026-09-14 上海；Mac；宿主 `dsh=0.1.5-rc.1` = registry `latest`；plugin=`@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask`，文案含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。本 PASS **只**覆盖 `latest=0.1.5-rc.1`（**Q3C**）。advisory tip `0.1.5-rc.2` 仍仅 tip、**未**做本项人工抽检、**不**升 REQUIRED。把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask；本锁集 **Q4A** 不写入 peerRange。仅发版前强制 ask。
+人工 `dsh web` 审批弹窗：**PASS**（2026-09-14 上海；Mac；宿主 `dsh=0.1.5-rc.1` = registry `latest`；plugin=`@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask`，文案含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。本 PASS **只**覆盖 `latest=0.1.5-rc.1`（**Q3C**）。advisory tip `0.1.5-rc.2` 仍仅 tip、**未**做本项人工抽检、**不**升 REQUIRED。把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask；本锁集 **Q4A** 不写入 peerRange。除上述 peerRange 变更外，仅发版前强制 ask。
 
 ## 人工最少清单
 
