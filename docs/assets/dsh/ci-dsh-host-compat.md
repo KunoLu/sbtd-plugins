@@ -64,7 +64,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 
 `pnpm add` 解析：exact `0.1.2` / `0.1.3` 在 registry **404**，单元格用最近可装版本。不要把 `0.1.3-alpha.2` 当 ship pin。
 
-人工 `dsh web` 审批弹窗：**人工未跑**（Round1 不挡收口；peer Round2 前可选；仅发版前强制）。
+人工 `dsh web` 审批弹窗：**PASS**（2026-09-14 上海；Mac；宿主 `dsh=0.1.5-rc.1` = registry `latest`；plugin=`@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask`，文案含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。本 PASS **只**覆盖 `latest=0.1.5-rc.1`。advisory tip `0.1.5-rc.2` 仍仅 tip、**未**做本项人工抽检、**不**升 REQUIRED。peer Round2 前 tip 抽检仍可选；仅发版前强制。
 
 ## 人工最少清单
 
@@ -93,7 +93,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 **PASS**（可进入决策树「兼容」支）：
 
 - REQUIRED 单测 + FU4 smoke + pack 含 `dist/` 全绿。
-- 人工弹窗抽检出现上述 `ask` 文案（仅发版前强制；peer Round2 前可选；仅评估宿主、不发版时可记「人工未跑」。FU5-C Round1 **人工未跑**，不挡本轮文档收口）。
+- 人工弹窗抽检出现上述 `ask` 文案（仅发版前强制；peer Round2 前可选；仅评估宿主、不发版时可记「人工未跑」）。**latest-line**（`dsh=0.1.5-rc.1`）2026-09-14 Mac **PASS**（条件见上一节）。advisory tip `0.1.5-rc.2` **人工未跑**，不得把该 PASS 记到 tip。FU5-C Round1 收口时此项仍为人工未跑。
 - advisory 矩阵失败 **不** 单独把 REQUIRED 打红。
 
 **FAIL**：
