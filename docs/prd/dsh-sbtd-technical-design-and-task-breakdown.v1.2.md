@@ -869,7 +869,7 @@ dsh web                           # 进程能起来，无 failOnStartupError
 **目标**：用一个**已有** `.trellis/` 的真实仓库证明闭环。
 
 **依赖**：T8、T10、T13、T14、T15。  
-**输出**：验收记录（可附在 README 或 `docs/acceptance.md`）。
+**输出**：验收记录（可附在 README 或 `docs/assets/archive/dsh-sbtd-acceptance-t16.md`）。
 
 **验收仓**：默认真实仓 e2e 就是本仓 sbtd-plugins（已有 .trellis/）。不要 trellis init。不要优先私有 KPi。onboard 或 trellis init 前必须人工确认（默认不代执行）。不修改 640-skills。
 - 不修改 640-skills。

@@ -8,7 +8,7 @@ DDD-only boundary review after LIVE grill Q1A–Q6A. Acceptance record on siblin
 
 - Grill LIVE Q1A–Q6A. Do not reopen.
 - Consume T8/T10/T12/T13/T14/T15 as-is. Host pin `@deepseek-ai/dsh@0.1.1-rc.2`.
-- Q1A this-repo venue; Q2A all 8 scenarios; Q3A human `dsh web`; Q4A `docs/acceptance.md`; Q5A record-only fence; Q6A HEAD-based install, no npm.
+- Q1A this-repo venue; Q2A all 8 scenarios; Q3A human `dsh web`; Q4A `docs/assets/archive/dsh-sbtd-acceptance-t16.md`; Q5A record-only fence; Q6A HEAD-based install, no npm.
 
 ## Acceptance Criteria
 

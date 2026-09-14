@@ -25,4 +25,4 @@ Lock how to make tool `output.schema` host-compatible with `@deepseek-ai/dsh@0.1
 
 - Host pin `@deepseek-ai/dsh@0.1.1-rc.2`. Package `0.1.0-rc.1`.
 - Fence: clarify/spec/tickets (+ task-artifact omit helper) + host-context optional bags + `fu4-host-schema.test.mjs` + package.json `test=tsc&&node --test` + related tests/features. NO npm.
-- Q5A pending post-merge T16. Do not rewrite `docs/acceptance.md`.
+- Q5A pending post-merge T16. Do not rewrite `docs/assets/archive/dsh-sbtd-acceptance-t16.md`.
