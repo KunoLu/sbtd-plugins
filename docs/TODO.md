@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-14（上海；FU5 Round3 收口，PR/SHA 待填） |
-| 同步时 main | `bba3040`（本 PR Round3 收口 pending；#82 host-compat ask gate vs Q3C → `bba3040`；#81 TODO #80 merge SHA backfill → `afe6da6`；#80 FU5-C Round2 closeout Q3C/Q4A/Q5A → `081866b`；#79 TODO #78 merge SHA backfill → `93f853d`；#78 Mac ask PASS latest=`0.1.5-rc.1` → `12d2610`；#77 TODO #76 merge SHA backfill → `d9b3e5f`；#76 FU5-C Round1 closeout → `1fd43c4`；#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
+| 上次同步 | 2026-09-14（上海；FU5 Round3 收口 #83 @ `14c8058`） |
+| 同步时 main | `bba3040`（本 PR #83 closeout `14c8058`；#82 host-compat ask gate vs Q3C → `bba3040`；#81 TODO #80 merge SHA backfill → `afe6da6`；#80 FU5-C Round2 closeout Q3C/Q4A/Q5A → `081866b`；#79 TODO #78 merge SHA backfill → `93f853d`；#78 Mac ask PASS latest=`0.1.5-rc.1` → `12d2610`；#77 TODO #76 merge SHA backfill → `d9b3e5f`；#76 FU5-C Round1 closeout → `1fd43c4`；#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
@@ -74,7 +74,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-14 | FU5 Round3 收口：**不 bump**；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15`；无 peer/npm/src（PR #TBD） |
+| 2026-09-14 | FU5 Round3 收口：**不 bump**；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15`；无 peer/npm/src（PR #83 @ `14c8058`） |
 | 2026-09-14 | FU5-C Round2 文档收口 #80：r1 CLEAN @ `71525a8`；squash `081866b`；锁 Q3C/Q4A/Q5A（Round1 Q1A/Q2A 仍有效）；peer 仍 `0.1.1-rc.2`；无 npm；无新 RC |
 | 2026-09-14 | FU5 Mac ask PASS #78（`latest=0.1.5-rc.1`）：r1 CLEAN @ `ffe4b9d`；squash `12d2610`；Mac；plugin `@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins` 无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask` 含「尚未 sbtd_plan，请先调用 sbtd_plan。」；advisory tip `0.1.5-rc.2` 仍 tip-only；peer 未改；无 npm |
 | 2026-09-14 | FU5-C Round1 文档收口 #76：r2 CLEAN @ `a1c3716`；squash `1fd43c4`；锁 Q1A/Q2A；peer 仍 `0.1.1-rc.2`；无 npm |
