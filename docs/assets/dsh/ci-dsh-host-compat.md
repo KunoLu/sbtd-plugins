@@ -1,6 +1,6 @@
 # 上游 `dsh` 发新版：宿主兼容校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。FU5-C Round1 锁 **Q1A / Q2A**：peer 保持精确钉 `0.1.1-rc.2`（不放宽 peerRange）；advisory tip host = `@deepseek-ai/dsh@0.1.5-rc.2`（registry `next`）。**禁止**把 advisory tip 升为 REQUIRED / FU4 钉。`latest` 仍为 `0.1.5-rc.1`。本轮不改 `peerDependencies`、不 npm。
 
 现有 GitHub Actions 全部是 `omp-*`。dsh **拟**用独立 workflow 名 `dsh-host-compat`、`dsh-manuals-pin`，禁止改 `omp-compatibility-*`。独立 workflow 已入库：`.github/workflows/dsh-host-compat.yml`、`dsh-manuals-pin.yml`。可 `workflow_dispatch`；亦可用下面「本地等价」命令。禁止改 `omp-compatibility-*`。
 
@@ -50,6 +50,22 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 
 `test` 已包含 `tsc`，pack 前不要跳过它。`dist/` 默认 gitignore，pack 依赖当场编译结果。临时 cell 用共享 smoke（`.github/workflows/scripts/dsh-host-register-smoke.mjs`），不要再写一份 heredoc。advisory 矩阵同一脚本、`DSH_PIN_SMOKE=0` 且 `DSH_VERSION` 为候选版本。
 
+## FU5-B advisory 矩阵（same pack；2026-09-13）
+
+工作区证据：`/workspace/omp-tasks/fu5-b-matrix-report.md`（不入库）。同一 pack `@kunolu/dsh-sbtd@0.1.0-rc.2` register smoke：钉 + 解析后的候选宿主 **全 PASS**。矩阵绿 **不是** REQUIRED，也不是唯一合主线门。
+
+| 锁定标签 | 存在? | 解析版本 | Smoke |
+|---|---|---|---|
+| `0.1.1-rc.2`（REQUIRED pin） | yes | `0.1.1-rc.2` | **PASS** |
+| `0.1.2` | **no** | `0.1.2-rc.1` | **PASS** |
+| `0.1.3` | **no**（无 `0.1.3-rc`；`0.1.3-alpha.2` 非稳定钉） | `0.1.3-alpha.2` | **PASS** |
+| `0.1.5-rc.1`（`latest`） | yes | `0.1.5-rc.1` | **PASS** |
+| `0.1.5-rc.2`（`next`，**advisory tip**） | yes | `0.1.5-rc.2` | **PASS** |
+
+`pnpm add` 解析：exact `0.1.2` / `0.1.3` 在 registry **404**，单元格用最近可装版本。不要把 `0.1.3-alpha.2` 当 ship pin。
+
+人工 `dsh web` 审批弹窗：**人工未跑**（Round1 不挡收口；peer Round2 前可选；仅发版前强制）。
+
 ## 人工最少清单
 
 **只抽检** `dsh web` 审批弹窗（T16 step3 类）。CLI / 单测能证的不要进人工：plugin list、`/sbtd`、`sbtd_validate` skip-and-explain、`sbtd_e2e` blocked。
@@ -77,7 +93,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 **PASS**（可进入决策树「兼容」支）：
 
 - REQUIRED 单测 + FU4 smoke + pack 含 `dist/` 全绿。
-- 人工弹窗抽检出现上述 `ask` 文案（发版前才强制；仅评估宿主、不发版时可记「人工未跑」）。
+- 人工弹窗抽检出现上述 `ask` 文案（仅发版前强制；peer Round2 前可选；仅评估宿主、不发版时可记「人工未跑」。FU5-C Round1 **人工未跑**，不挡本轮文档收口）。
 - advisory 矩阵失败 **不** 单独把 REQUIRED 打红。
 
 **FAIL**：
@@ -102,6 +118,8 @@ advisory 矩阵绿？
 ```
 
 合主线：矩阵绿 ≠ 唯一门。dsh workflow 与 omp compatibility ledger / certification 互不替代。
+
+FU5-C Round1（Q1A）：不放宽 peerRange；只更新本文件矩阵注释 + advisory tip `0.1.5-rc.2`。peerRange / 升 REQUIRED 仍属 Round2。
 
 ## 故障排查
 

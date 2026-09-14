@@ -6,11 +6,11 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-13（上海） |
-| 同步时 main | `1a9e809`（#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
+| 上次同步 | 2026-09-14（上海） |
+| 同步时 main | `7e9d5ac`（#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
-| 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（本轮未跑 `npm view`；按 Lord 绑定） |
+| 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
 | manuals pin | `640-skills` `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630` |
 | 历史 P0–P3 / FU1–FU4 / T0–T16 / CI / rc.2 / @next pitfall | [`docs/assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md`](./assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md) |
 
@@ -28,7 +28,7 @@
 ## 2. 包与宿主钉现状
 
 - 插件：`@kunolu/dsh-sbtd@0.1.0-rc.2` → `next`；`latest` 仍 `0.1.0-rc.1`（保留；文档/安装只推 `next` 或显式版本）。
-- 宿主 peer 仍钉 `@deepseek-ai/dsh@0.1.1-rc.2`。上游 registry 已到 `0.1.5-rc.1` / `0.1.5-rc.2`；是否 bump peer / 发新插件 RC **等 FU5 锁完再编码**。
+- 宿主 peer 仍钉 `@deepseek-ai/dsh@0.1.1-rc.2`（FU5-C Round1 **Q1A**：不放宽 peerRange）。advisory tip（**Q2A**）= `0.1.5-rc.2`（registry `next`）；**禁止**升 REQUIRED / FU4 钉。不发新插件 RC。Round2（peerRange / RC / Mac ask / 升 REQUIRED）另开。
 - manuals 仍钉 `640-skills` `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`。不单独跟 `v1.0.14`；目标 `v1.0.15`（等 tag）。
 - Mac / 本机装新 RC：优先显式 `dsh plugin --profile web add @kunolu/dsh-sbtd@<version>`。`@next` 可能被 profile pnpm 锁粘到旧 RC（见 `docs/assets/dsh/ci-dsh-host-compat.md` 故障排查；#72）。同版本先 `remove` 再 `add`。
 
@@ -38,7 +38,7 @@
 
 | 顺序 | 项 | 状态 |
 |---|---|---|
-| 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ⬜ 主序优先；本行不改 peer |
+| 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ✅ Round1 收口（锁 Q1A/Q2A）；FU5-B 完；peer 未改；无 npm。Round2 另开 |
 | 2 | **640-skills** pin → **v1.0.15** | ⬜ 次优先；等 tag；跳过单独同步 v1.0.14 |
 
 ### FU5 — 宿主兼容调研（主序优先）
@@ -47,13 +47,13 @@
 
 遵循 [`docs/assets/dsh/ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md)。步骤：changelog / API surface → advisory 矩阵（**同一 pack** × 候选 dsh）→ 决定 peer bump / 是否发新插件 RC。
 
-**本规划行禁止立刻改 `peerDependencies`。** 编码只在 locks 之后。
+**本规划行禁止立刻改 `peerDependencies`。** FU5-C Round1 已锁 Q1A：精确钉 `0.1.1-rc.2`。编码 / peerRange / 发 RC 只在 Round2。
 
 | 子任务 | 内容 | 状态 |
 |---|---|---|
-| FU5-A | grill / locks（调研范围、候选版本、不改 peer 的冻结） | ⬜ |
-| FU5-B | advisory 矩阵证据（same pack × 候选 dsh；不跑会因 FU4 硬钉假红的全量仓库 test 当唯一门） | ⬜ |
-| FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ⬜ |
+| FU5-A | grill / locks（调研范围、候选版本、不改 peer 的冻结） | ✅ Q1B / Q2B / Q3C / Q4A / Q5B / Q6A |
+| FU5-B | advisory 矩阵证据（same pack × 候选 dsh；不跑会因 FU4 硬钉假红的全量仓库 test 当唯一门） | ✅ 钉 + 解析格全 PASS（`0.1.2`→`0.1.2-rc.1`，`0.1.3`→`0.1.3-alpha.2` 非稳定，`0.1.5-rc.1`/`rc.2`）；见 [`ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md) |
+| FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ✅ Round1 锁 **Q1A / Q2A**（精确钉 + advisory tip `0.1.5-rc.2`）；本 PR 文档收口。Round2（peerRange / RC / 升 REQUIRED / Mac ask）未开 |
 
 ### 640-skills pin → v1.0.15（次优先；等 tag）
 
@@ -74,6 +74,7 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-14 | FU5-C Round1 文档收口：锁 Q1A/Q2A；FU5-B 矩阵写入 `ci-dsh-host-compat.md`；peer 仍 `0.1.1-rc.2`；无 npm |
 | 2026-09-13 | TODO archive/FU5 #74 → main `1a9e809`（TODO merge-SHA backfill） |
 | 2026-09-13 | TODO archive/FU5 #74 scheme A finish/merge：r1 CLEAN @ `f64f726`；REQUIRED_CHANGES=none；squash `1a9e809`；不发布包 |
 | 2026-09-13 | 归档 P0–P3 / FU1–FU4 / T0–T16 / CI / rc.2 / @next pitfall 至 `docs/assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md`；活队列改为 FU5 + 640-skills v1.0.15；同步时 main `1c0903b`（#73） |
