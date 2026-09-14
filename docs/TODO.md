@@ -7,7 +7,7 @@
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-14（上海） |
-| 同步时 main | `7e9d5ac`（#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
+| 同步时 main | `1fd43c4`（#76 FU5-C Round1 closeout → `1fd43c4`；#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
@@ -53,7 +53,7 @@
 |---|---|---|
 | FU5-A | grill / locks（调研范围、候选版本、不改 peer 的冻结） | ✅ Q1B / Q2B / Q3C / Q4A / Q5B / Q6A |
 | FU5-B | advisory 矩阵证据（same pack × 候选 dsh；不跑会因 FU4 硬钉假红的全量仓库 test 当唯一门） | ✅ 钉 + 解析格全 PASS（`0.1.2`→`0.1.2-rc.1`，`0.1.3`→`0.1.3-alpha.2` 非稳定，`0.1.5-rc.1`/`rc.2`）；见 [`ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md) |
-| FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ✅ Round1 锁 **Q1A / Q2A**（精确钉 + advisory tip `0.1.5-rc.2`）；本 PR 文档收口。Round2（peerRange / RC / 升 REQUIRED / Mac ask）未开 |
+| FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ✅ Round1 锁 **Q1A / Q2A**（精确钉 + advisory tip `0.1.5-rc.2`）；#76 文档收口。Round2（peerRange / RC / 升 REQUIRED / Mac ask）未开 |
 
 ### 640-skills pin → v1.0.15（次优先；等 tag）
 
@@ -74,7 +74,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-14 | FU5-C Round1 文档收口：锁 Q1A/Q2A；FU5-B 矩阵写入 `ci-dsh-host-compat.md`；peer 仍 `0.1.1-rc.2`；无 npm |
+| 2026-09-14 | FU5-C Round1 文档收口 #76：r2 CLEAN @ `a1c3716`；squash `1fd43c4`；锁 Q1A/Q2A；peer 仍 `0.1.1-rc.2`；无 npm |
 | 2026-09-13 | TODO archive/FU5 #74 → main `1a9e809`（TODO merge-SHA backfill） |
 | 2026-09-13 | TODO archive/FU5 #74 scheme A finish/merge：r1 CLEAN @ `f64f726`；REQUIRED_CHANGES=none；squash `1a9e809`；不发布包 |
 | 2026-09-13 | 归档 P0–P3 / FU1–FU4 / T0–T16 / CI / rc.2 / @next pitfall 至 `docs/assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md`；活队列改为 FU5 + 640-skills v1.0.15；同步时 main `1c0903b`（#73） |
