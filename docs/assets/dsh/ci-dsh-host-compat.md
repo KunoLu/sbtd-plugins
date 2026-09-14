@@ -1,6 +1,6 @@
 # 上游 `dsh` 发新版：宿主兼容校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。FU5-C Round1 锁 **Q1A / Q2A**：peer 保持精确钉 `0.1.1-rc.2`（不放宽 peerRange）；advisory tip host = `@deepseek-ai/dsh@0.1.5-rc.2`（registry `next`）。**禁止**把 advisory tip 升为 REQUIRED / FU4 钉。`latest` 仍为 `0.1.5-rc.1`。本轮不改 `peerDependencies`、不 npm。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。FU5-C Round1 锁 **Q1A / Q2A**：peer 保持精确钉 `0.1.1-rc.2`（不放宽 peerRange）；advisory tip host = `@deepseek-ai/dsh@0.1.5-rc.2`（registry `next`）。**禁止**把 advisory tip 升为 REQUIRED / FU4 钉。`latest` 仍为 `0.1.5-rc.1`。FU5-C Round2 锁 **Q3C / Q4A / Q5A**：Mac ask PASS 只覆盖 `latest=0.1.5-rc.1`；把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask；peerRange 不放宽；REQUIRED/FU4 仍钉 `0.1.1-rc.2`；本锁集不发新插件 RC（Round3 未开）。本轮不改 `peerDependencies`、不 npm。
 
 现有 GitHub Actions 全部是 `omp-*`。dsh **拟**用独立 workflow 名 `dsh-host-compat`、`dsh-manuals-pin`，禁止改 `omp-compatibility-*`。独立 workflow 已入库：`.github/workflows/dsh-host-compat.yml`、`dsh-manuals-pin.yml`。可 `workflow_dispatch`；亦可用下面「本地等价」命令。禁止改 `omp-compatibility-*`。
 
@@ -64,7 +64,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 
 `pnpm add` 解析：exact `0.1.2` / `0.1.3` 在 registry **404**，单元格用最近可装版本。不要把 `0.1.3-alpha.2` 当 ship pin。
 
-人工 `dsh web` 审批弹窗：**PASS**（2026-09-14 上海；Mac；宿主 `dsh=0.1.5-rc.1` = registry `latest`；plugin=`@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask`，文案含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。本 PASS **只**覆盖 `latest=0.1.5-rc.1`。advisory tip `0.1.5-rc.2` 仍仅 tip、**未**做本项人工抽检、**不**升 REQUIRED。peer Round2 前 tip 抽检仍可选；仅发版前强制。
+人工 `dsh web` 审批弹窗：**PASS**（2026-09-14 上海；Mac；宿主 `dsh=0.1.5-rc.1` = registry `latest`；plugin=`@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask`，文案含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。本 PASS **只**覆盖 `latest=0.1.5-rc.1`（**Q3C**）。advisory tip `0.1.5-rc.2` 仍仅 tip、**未**做本项人工抽检、**不**升 REQUIRED。把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask；本锁集 **Q4A** 不写入 peerRange。仅发版前强制 ask。
 
 ## 人工最少清单
 
@@ -93,7 +93,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 **PASS**（可进入决策树「兼容」支）：
 
 - REQUIRED 单测 + FU4 smoke + pack 含 `dist/` 全绿。
-- 人工弹窗抽检出现上述 `ask` 文案（仅发版前强制；peer Round2 前可选；仅评估宿主、不发版时可记「人工未跑」）。**latest-line**（`dsh=0.1.5-rc.1`）2026-09-14 Mac **PASS**（条件见上一节）。advisory tip `0.1.5-rc.2` **人工未跑**，不得把该 PASS 记到 tip。FU5-C Round1 收口时此项仍为人工未跑。
+- 人工弹窗抽检出现上述 `ask` 文案（仅发版前强制；把 `0.1.5-rc.2` 写入 peerRange 前仍要 tip ask（**Q3C**）；仅评估宿主、不发版时可记「人工未跑」）。**latest-line**（`dsh=0.1.5-rc.1`）2026-09-14 Mac **PASS**（条件见上一节）。advisory tip `0.1.5-rc.2` **人工未跑**，不得把该 PASS 记到 tip。FU5-C Round2 收口（Q3C）：latest PASS 不覆盖 tip。
 - advisory 矩阵失败 **不** 单独把 REQUIRED 打红。
 
 **FAIL**：
@@ -119,7 +119,7 @@ advisory 矩阵绿？
 
 合主线：矩阵绿 ≠ 唯一门。dsh workflow 与 omp compatibility ledger / certification 互不替代。
 
-FU5-C Round1（Q1A）：不放宽 peerRange；只更新本文件矩阵注释 + advisory tip `0.1.5-rc.2`。peerRange / 升 REQUIRED 仍属 Round2。
+FU5-C Round1（Q1A / Q2A）：不放宽 peerRange；只更新本文件矩阵注释 + advisory tip `0.1.5-rc.2`。FU5-C Round2（**Q3C / Q4A / Q5A**）：peerRange 仍精确钉 `0.1.1-rc.2`；REQUIRED/FU4 仍 `0.1.1-rc.2`；latest ask PASS 不授权把 `0.1.5-rc.2` 写入 peerRange；本锁集不发新插件 RC。Round3 未开。
 
 ## 故障排查
 
