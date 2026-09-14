@@ -64,7 +64,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 
 `pnpm add` 解析：exact `0.1.2` / `0.1.3` 在 registry **404**，单元格用最近可装版本。不要把 `0.1.3-alpha.2` 当 ship pin。
 
-人工 `dsh web` 审批弹窗：**人工未跑**（评估宿主、不发版可记此项；peer Round2 / 发版前才强制）。
+人工 `dsh web` 审批弹窗：**人工未跑**（Round1 不挡收口；peer Round2 前可选；仅发版前强制）。
 
 ## 人工最少清单
 
@@ -93,7 +93,7 @@ cp .github/workflows/scripts/dsh-host-register-smoke.mjs "$cell/smoke.mjs"
 **PASS**（可进入决策树「兼容」支）：
 
 - REQUIRED 单测 + FU4 smoke + pack 含 `dist/` 全绿。
-- 人工弹窗抽检出现上述 `ask` 文案（发版前才强制；仅评估宿主、不发版时可记「人工未跑」。FU5-C Round1 **人工未跑**，不挡本轮文档收口）。
+- 人工弹窗抽检出现上述 `ask` 文案（仅发版前强制；peer Round2 前可选；仅评估宿主、不发版时可记「人工未跑」。FU5-C Round1 **人工未跑**，不挡本轮文档收口）。
 - advisory 矩阵失败 **不** 单独把 REQUIRED 打红。
 
 **FAIL**：
