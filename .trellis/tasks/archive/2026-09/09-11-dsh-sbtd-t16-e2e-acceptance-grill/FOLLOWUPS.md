@@ -4,7 +4,7 @@ Head at finish: r2 CLEAN `97e365cbbf34dac658af33dceaab6e325a9765a8`.
 Review: `/workspace/omp-tasks/t16-pr64-review-r2-extract.md`.
 PR: https://github.com/KunoLu/sbtd-plugins/pull/64
 
-Under-test subject (acceptance): `98edd712efa46274fce7644b650937c9f5361929` (FU4 merged). PR tip also adds root `.gitignore` `*.tgz`. `docs/acceptance.md` blob unchanged from r1 `99a1c41`.
+Under-test subject (acceptance): `98edd712efa46274fce7644b650937c9f5361929` (FU4 merged). PR tip also adds root `.gitignore` `*.tgz`. `docs/assets/archive/dsh-sbtd-acceptance-t16.md` blob unchanged from r1 `99a1c41`.
 
 ## Residual — parked (non-blocking)
 

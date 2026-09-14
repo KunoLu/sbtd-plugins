@@ -6,7 +6,7 @@ PR: https://github.com/KunoLu/sbtd-plugins/pull/65
 
 ## Residual — parked (non-blocking)
 
-- Q5A pending post-merge T16: rebuild tarball; re-run T16 from step 2. Do not rewrite `docs/acceptance.md`.
+- Q5A pending post-merge T16: rebuild tarball; re-run T16 from step 2. Do not rewrite `docs/assets/archive/dsh-sbtd-acceptance-t16.md`.
 - Non-blocking review nits: `=== null` vs `!= null` in omit helpers; lone `node --test test/fu4-host-schema.test.mjs` without package `test` can load pre-existing `dist/`; t8 written-path does not assert `mode === "written"`.
 
 ## Not in this PR
