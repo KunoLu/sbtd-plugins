@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-14（上海） |
-| 同步时 main | `081866b`（#80 FU5-C Round2 closeout Q3C/Q4A/Q5A → `081866b`；#79 TODO #78 merge SHA backfill → `93f853d`；#78 Mac ask PASS latest=`0.1.5-rc.1` → `12d2610`；#77 TODO #76 merge SHA backfill → `d9b3e5f`；#76 FU5-C Round1 closeout → `1fd43c4`；#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
+| 上次同步 | 2026-09-14（上海；FU5 Round3 收口，PR/SHA 待填） |
+| 同步时 main | `bba3040`（本 PR Round3 收口 pending；#82 host-compat ask gate vs Q3C → `bba3040`；#81 TODO #80 merge SHA backfill → `afe6da6`；#80 FU5-C Round2 closeout Q3C/Q4A/Q5A → `081866b`；#79 TODO #78 merge SHA backfill → `93f853d`；#78 Mac ask PASS latest=`0.1.5-rc.1` → `12d2610`；#77 TODO #76 merge SHA backfill → `d9b3e5f`；#76 FU5-C Round1 closeout → `1fd43c4`；#75 TODO #74 merge SHA backfill → `7e9d5ac`；#74 TODO archive/FU5 → `1a9e809`；#73 TODO backfill after #72 @next pitfall → `578251b`；#70 rc.2 → `ae636e8`；#68 dsh CI → `c6c1d80`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
@@ -28,7 +28,7 @@
 ## 2. 包与宿主钉现状
 
 - 插件：`@kunolu/dsh-sbtd@0.1.0-rc.2` → `next`；`latest` 仍 `0.1.0-rc.1`（保留；文档/安装只推 `next` 或显式版本）。
-- 宿主 peer 仍钉 `@deepseek-ai/dsh@0.1.1-rc.2`（FU5-C Round1 **Q1A** + Round2 **Q4A**：不放宽 peerRange）。REQUIRED / FU4 仍钉 `0.1.1-rc.2`（**Q5A**）。advisory tip（**Q2A**）= `0.1.5-rc.2`（registry `next`）；**禁止**升 REQUIRED / FU4 钉。Mac ask latest-line（dsh=`0.1.5-rc.1`）2026-09-14 **PASS**（**Q3C**：只覆盖该版本；把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask）。本锁集不发新插件 RC（Round3 未开）。
+- 宿主 peer 仍钉 `@deepseek-ai/dsh@0.1.1-rc.2`（FU5-C Round1 **Q1A** + Round2 **Q4A**：不放宽 peerRange）。REQUIRED / FU4 仍钉 `0.1.1-rc.2`（**Q5A**）。advisory tip（**Q2A**）= `0.1.5-rc.2`（registry `next`）；**禁止**升 REQUIRED / FU4 钉。Mac ask latest-line（dsh=`0.1.5-rc.1`）2026-09-14 **PASS**（**Q3C**：只覆盖该版本；把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask）。Round3 已收口：明确 **不 bump** / 不发新 RC；FU5 ✅ 收口。
 - manuals 仍钉 `640-skills` `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`。不单独跟 `v1.0.14`；目标 `v1.0.15`（等 tag）。
 - Mac / 本机装新 RC：优先显式 `dsh plugin --profile web add @kunolu/dsh-sbtd@<version>`。`@next` 可能被 profile pnpm 锁粘到旧 RC（见 `docs/assets/dsh/ci-dsh-host-compat.md` 故障排查；#72）。同版本先 `remove` 再 `add`。
 
@@ -38,24 +38,24 @@
 
 | 顺序 | 项 | 状态 |
 |---|---|---|
-| 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ✅ Round1 收口 Q1A/Q2A；Round2 收口 Q3C/Q4A/Q5A；FU5-B 完；Mac ask `latest=0.1.5-rc.1` PASS；peer 未改；无 npm；无新 RC。Round3 未开 |
-| 2 | **640-skills** pin → **v1.0.15** | ⬜ 次优先；等 tag；跳过单独同步 v1.0.14 |
+| 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ✅ Round3 收口：**不 bump**；FU5 正式关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15` |
+| 2 | **640-skills** pin → **v1.0.15** | ⬜ 主序优先 / 现行主线；等 tag；跳过单独同步 v1.0.14 |
 
-### FU5 — 宿主兼容调研（主序优先）
+### FU5 — 宿主兼容调研（✅ Round3 已收口）
 
 目标：调研现有 `@kunolu/dsh-sbtd@0.1.0-rc.2` 相对宿主 `0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`（及中间 0.1.2 / 0.1.3）的 break surface。
 
 遵循 [`docs/assets/dsh/ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md)。步骤：changelog / API surface → advisory 矩阵（**同一 pack** × 候选 dsh）→ 决定 peer bump / 是否发新插件 RC。
 
-**本规划行禁止立刻改 `peerDependencies`。** FU5-C Round1 已锁 Q1A：精确钉 `0.1.1-rc.2`。Round2 已锁 **Q3C / Q4A / Q5A**：不放宽 peerRange；REQUIRED/FU4 仍 `0.1.1-rc.2`；latest ask PASS 不覆盖 tip；本锁集不发新 RC。编码 / 新 RC 只在后续 Round3（未开）。
+**本规划行禁止立刻改 `peerDependencies`。** FU5-C Round1 已锁 Q1A：精确钉 `0.1.1-rc.2`。Round2 已锁 **Q3C / Q4A / Q5A**：不放宽 peerRange；REQUIRED/FU4 仍 `0.1.1-rc.2`；latest ask PASS 不覆盖 tip。Round3 已收口：明确 **不 bump** / 不发新 RC；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional。
 
 | 子任务 | 内容 | 状态 |
 |---|---|---|
 | FU5-A | grill / locks（调研范围、候选版本、不改 peer 的冻结） | ✅ Q1B / Q2B / Q3C / Q4A / Q5B / Q6A |
 | FU5-B | advisory 矩阵证据（same pack × 候选 dsh；不跑会因 FU4 硬钉假红的全量仓库 test 当唯一门） | ✅ 钉 + 解析格全 PASS（`0.1.2`→`0.1.2-rc.1`，`0.1.3`→`0.1.3-alpha.2` 非稳定，`0.1.5-rc.1`/`rc.2`）；见 [`ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md) |
-| FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ✅ Round1 锁 **Q1A / Q2A**（精确钉 + advisory tip `0.1.5-rc.2`）；#76 文档收口。Mac ask **PASS** on `latest=0.1.5-rc.1` #78（2026-09-14 上海；plugin `@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask` 含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。tip `0.1.5-rc.2` 仍 tip-only、人工未跑。Round2 锁 **Q3C / Q4A / Q5A** #80 → `081866b`：peer/REQUIRED/FU4 仍精确钉 `0.1.1-rc.2`（不放宽 peerRange）；latest PASS 只覆盖 `0.1.5-rc.1`；写入 `0.1.5-rc.2` 到 peerRange 仍要 tip ask；本锁集无新插件 RC。Round3 未开 |
+| FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ✅ Round1 锁 **Q1A / Q2A**（精确钉 + advisory tip `0.1.5-rc.2`）；#76 文档收口。Mac ask **PASS** on `latest=0.1.5-rc.1` #78（2026-09-14 上海；plugin `@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask` 含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。tip `0.1.5-rc.2` 仍 tip-only、人工未跑。Round2 锁 **Q3C / Q4A / Q5A** #80 → `081866b`：peer/REQUIRED/FU4 仍精确钉 `0.1.1-rc.2`（不放宽 peerRange）；latest PASS 只覆盖 `0.1.5-rc.1`；写入 `0.1.5-rc.2` 到 peerRange 仍要 tip ask；本锁集无新插件 RC。Round3 收口（不 bump；FU5 ✅；tip ask optional；无 peer/npm/src） |
 
-### 640-skills pin → v1.0.15（次优先；等 tag）
+### 640-skills pin → v1.0.15（主序优先 / 现行主线；等 tag）
 
 - 现行 pin：`v1.0.13`。
 - **跳过单独同步到 v1.0.14**（已有 tag；先跟 14 再跟 15 = 双次 sync-manuals）。
@@ -74,6 +74,7 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-14 | FU5 Round3 收口：**不 bump**；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15`；无 peer/npm/src（PR #TBD） |
 | 2026-09-14 | FU5-C Round2 文档收口 #80：r1 CLEAN @ `71525a8`；squash `081866b`；锁 Q3C/Q4A/Q5A（Round1 Q1A/Q2A 仍有效）；peer 仍 `0.1.1-rc.2`；无 npm；无新 RC |
 | 2026-09-14 | FU5 Mac ask PASS #78（`latest=0.1.5-rc.1`）：r1 CLEAN @ `ffe4b9d`；squash `12d2610`；Mac；plugin `@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins` 无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask` 含「尚未 sbtd_plan，请先调用 sbtd_plan。」；advisory tip `0.1.5-rc.2` 仍 tip-only；peer 未改；无 npm |
 | 2026-09-14 | FU5-C Round1 文档收口 #76：r2 CLEAN @ `a1c3716`；squash `1fd43c4`；锁 Q1A/Q2A；peer 仍 `0.1.1-rc.2`；无 npm |

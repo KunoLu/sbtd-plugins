@@ -1,6 +1,6 @@
 # 上游 `dsh` 发新版：宿主兼容校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。FU5-C Round1 锁 **Q1A / Q2A**：peer 保持精确钉 `0.1.1-rc.2`（不放宽 peerRange）；advisory tip host = `@deepseek-ai/dsh@0.1.5-rc.2`（registry `next`）。**禁止**把 advisory tip 升为 REQUIRED / FU4 钉。`latest` 仍为 `0.1.5-rc.1`。FU5-C Round2 锁 **Q3C / Q4A / Q5A**：Mac ask PASS 只覆盖 `latest=0.1.5-rc.1`；把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask；peerRange 不放宽；REQUIRED/FU4 仍钉 `0.1.1-rc.2`；本锁集不发新插件 RC（Round3 未开）。本轮不改 `peerDependencies`、不 npm。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。现行 `peerDependencies`：`@deepseek-ai/dsh: 0.1.1-rc.2`。本指南不替代合主线审查，也不授权 npm 发布。FU5-C Round1 锁 **Q1A / Q2A**：peer 保持精确钉 `0.1.1-rc.2`（不放宽 peerRange）；advisory tip host = `@deepseek-ai/dsh@0.1.5-rc.2`（registry `next`）。**禁止**把 advisory tip 升为 REQUIRED / FU4 钉。`latest` 仍为 `0.1.5-rc.1`。FU5-C Round2 锁 **Q3C / Q4A / Q5A**：Mac ask PASS 只覆盖 `latest=0.1.5-rc.1`；把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask；peerRange 不放宽；REQUIRED/FU4 仍钉 `0.1.1-rc.2`。FU5 Round3 已收口：不 bump / 不发新 RC；FU5 ✅；tip `0.1.5-rc.2` ask 留 optional。本轮不改 `peerDependencies`、不 npm。
 
 现有 GitHub Actions 全部是 `omp-*`。dsh **拟**用独立 workflow 名 `dsh-host-compat`、`dsh-manuals-pin`，禁止改 `omp-compatibility-*`。独立 workflow 已入库：`.github/workflows/dsh-host-compat.yml`、`dsh-manuals-pin.yml`。可 `workflow_dispatch`；亦可用下面「本地等价」命令。禁止改 `omp-compatibility-*`。
 
@@ -119,7 +119,7 @@ advisory 矩阵绿？
 
 合主线：矩阵绿 ≠ 唯一门。dsh workflow 与 omp compatibility ledger / certification 互不替代。
 
-FU5-C Round1（Q1A / Q2A）：不放宽 peerRange；只更新本文件矩阵注释 + advisory tip `0.1.5-rc.2`。FU5-C Round2（**Q3C / Q4A / Q5A**）：peerRange 仍精确钉 `0.1.1-rc.2`；REQUIRED/FU4 仍 `0.1.1-rc.2`；latest ask PASS 不授权把 `0.1.5-rc.2` 写入 peerRange；本锁集不发新插件 RC。Round3 未开。
+FU5-C Round1（Q1A / Q2A）：不放宽 peerRange；只更新本文件矩阵注释 + advisory tip `0.1.5-rc.2`。FU5-C Round2（**Q3C / Q4A / Q5A**）：peerRange 仍精确钉 `0.1.1-rc.2`；REQUIRED/FU4 仍 `0.1.1-rc.2`；latest ask PASS 不授权把 `0.1.5-rc.2` 写入 peerRange。FU5 Round3 已收口：不 bump / 不发新 RC；tip ask 留 optional。
 
 ## 故障排查
 
