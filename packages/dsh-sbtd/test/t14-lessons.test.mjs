@@ -1128,3 +1128,79 @@ test("docs-flat: legacy IDs without **topic:** keep full multi-hyphen slug", () 
   assert.equal(three.hits[0].topic, "api-client-timeout");
 });
 
+test("docs-flat: exact heading owner survives longer legacy prefix in another block", () => {
+  const root = fixtureRoot("flat-heading-prefix-collision");
+  plantDeveloper(root, "alice");
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(
+    join(root, "docs", "lessons.md"),
+    `# Lessons
+
+<!-- lessons:bob:start -->
+## LESSON-20260101-alice-refactor-extra
+
+**event:** bug-fix
+**summary:** longer legacy-looking id under bob
+
+<!-- lessons:bob:end -->
+
+<!-- lessons:alice:start -->
+## LESSON-20260101-alice-refactor
+
+**event:** bug-fix
+**summary:** shorter new-format id under alice, no topic line
+
+<!-- lessons:alice:end -->
+`,
+    "utf8",
+  );
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", topic: "refactor" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits.length, 1);
+  assert.equal(match.hits[0].id, "LESSON-20260101-alice-refactor");
+  assert.equal(match.hits[0].topic, "refactor");
+
+  const read = sbtdLessons(
+    "s1",
+    { intent: "read", topic: "refactor" },
+    { cwd: root },
+  );
+  assert.equal(read.status, "read");
+  assert.equal(read.hits[0].id, "LESSON-20260101-alice-refactor");
+  assert.equal(read.hits[0].topic, "refactor");
+});
+
+test("docs-flat: legacy slug that prefixes the enclosing name keeps full topic via **topic:**", () => {
+  const root = fixtureRoot("flat-legacy-needs-topic-in-name-block");
+  plantDeveloper(root, "alice");
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(
+    join(root, "docs", "lessons.md"),
+    `# Lessons
+
+<!-- lessons:alice:start -->
+## LESSON-20260101-alice-refactor
+
+**event:** bug-fix
+**topic:** alice-refactor
+**summary:** legacy full slug documented via topic line
+
+<!-- lessons:alice:end -->
+`,
+    "utf8",
+  );
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", topic: "alice-refactor" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits[0].topic, "alice-refactor");
+});
+

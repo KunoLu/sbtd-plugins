@@ -357,8 +357,7 @@ function nextLessonId(name: string, topic: string, ids: Set<string>): string {
 
 /** Owning split-name for a lesson heading from enclosing markers, if any. */
 function nameOwningLessonId(content: string, id: string): string | undefined {
-  const marker = `## ${id}`;
-  const idx = content.indexOf(marker);
+  const idx = indexOfLessonHeading(content, id);
   if (idx === -1) return undefined;
   const before = content.slice(0, idx);
   const re = /<!--\s*lessons:([a-z0-9]+):start\s*-->/g;
@@ -379,9 +378,14 @@ function nameOwningLessonId(content: string, id: string): string | undefined {
 }
 
 /** Topic slug from lesson id when **topic:** is absent.
- * With a known split-name (enclosing <!-- lessons:<name>:... --> block):
- *   LESSON-YYYYMMDD-<name>-<slug> → <slug>
- * Without a name hint (legacy / unmarked): LESSON-YYYYMMDD-<slug> → full remainder.
+ * Migration / format rule:
+ * - Marker blocks (`<!-- lessons:<name>:... -->`) hold new-format IDs
+ *   `LESSON-YYYYMMDD-<name>-<slug>`; the enclosing name is stripped.
+ * - Legacy `LESSON-YYYYMMDD-<slug>` IDs live unmarked or MUST carry an explicit
+ *   `**topic:**` line when placed inside a name block whose name is a prefix of
+ *   the legacy slug (byte-identical with a new ID, e.g. legacy topic
+ *   `alice-refactor` inside `lessons:alice`).
+ * - Tool-written records always persist `**topic:**` (preferred over this fallback).
  */
 function topicSlugFromLessonId(id: string, nameHint?: string): string {
   if (nameHint != null && SPLIT_NAME_RE.test(nameHint)) {
@@ -502,9 +506,27 @@ function topicFileHeader(topic: string): string {
   return `# ${topic}\n\n`;
 }
 
+/** Index of a complete `## ${id}` heading (line-anchored; not a longer-id prefix). */
+function indexOfLessonHeading(content: string, id: string): number {
+  const needle = `## ${id}`;
+  let from = 0;
+  while (from <= content.length) {
+    const idx = content.indexOf(needle, from);
+    if (idx === -1) return -1;
+    const atLineStart = idx === 0 || content[idx - 1] === "\n";
+    const after = idx + needle.length;
+    const ch = after < content.length ? content[after] : undefined;
+    const atHeadingEnd =
+      ch === undefined || ch === "\n" || ch === "\r" || ch === " " || ch === "\t";
+    if (atLineStart && atHeadingEnd) return idx;
+    from = idx + 1;
+  }
+  return -1;
+}
+
 function extractSection(content: string, lessonId: string): string | null {
   const marker = `## ${lessonId}`;
-  const idx = content.indexOf(marker);
+  const idx = indexOfLessonHeading(content, lessonId);
   if (idx === -1) return null;
   const rest = content.slice(idx + marker.length);
   const next = rest.search(/\n## /);
