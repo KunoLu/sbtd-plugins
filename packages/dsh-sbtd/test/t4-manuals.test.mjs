@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const manuals = join(pkgRoot, "manuals");
-const PIN = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
+const PIN = "bc8eec1549928fb0966254751b96b611b6334183";
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 function whitelistFromScript(scriptPath) {
   const body = readFileSync(scriptPath, "utf8");
@@ -34,7 +34,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
   const manifest = JSON.parse(readFileSync(join(manuals, "MANIFEST.json"), "utf8"));
   assert.equal(manifest.sourceRevision, PIN);
   assert.equal(manifest.source, "KunoLu/640-skills");
-  assert.equal(manifest.version, "1.0.13");
+  assert.equal(manifest.version, "1.0.15");
   const dirs = readdirSync(manuals, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -83,7 +83,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
   }
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /不要手改/);
-  assert.match(readme, /f8aa0d7225a26c5e00b81d2f1b05121108e63630/);
+  assert.match(readme, /bc8eec1549928fb0966254751b96b611b6334183/);
   assert.match(readme, /SKILL\.md/);
   assert.match(readme, /references\//);
   assert.doesNotMatch(readme, /skill-root markdown/);

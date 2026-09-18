@@ -1,6 +1,6 @@
 # 适配新 `640-skills` / 发 `dsh-sbtd` 新版前校验
 
-适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。manuals **钉死** `KunoLu/640-skills` **`1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
+适用包：`@kunolu/dsh-sbtd@0.1.0-rc.2`（已发布到 `next`；`latest` 仍为 `0.1.0-rc.1`）。manuals **钉死** `KunoLu/640-skills` **`1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`**。该 SHA 与某次本机 `640-skills` tip **无关**；本机 dirty / 更新的 clone 不能当 pin。
 
 宿主钉仍是 `peerDependencies["@deepseek-ai/dsh"] = 0.1.1-rc.2`。现有 Actions 全是 `omp-*`。独立门：`dsh-manuals-pin` 与（发版前）`dsh-host-compat`（YAML 已入库本 PR）。禁止改 `omp-compatibility-*`。
 
@@ -8,7 +8,7 @@
 
 出现任一情况即跑：
 
-1. 准备把 manuals 从 `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630` 迁到新的 `640-skills` tag / commit。
+1. 准备把 manuals 从 `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183` 迁到新的 `640-skills` tag / commit。
 2. 准备发 `@kunolu/dsh-sbtd` 新版本（bump `0.1.0-rc.2` 之后）。
 3. `packages/dsh-sbtd/scripts/sync-manuals.sh`、`manuals/MANIFEST.json` 或 whitelist 有改动。
 4. 手动 `workflow_dispatch` / PR paths：`.github/workflows/dsh-manuals-pin.yml`。本地等价：MANIFEST 断言 + t4 + `sync-manuals.sh`。
@@ -19,8 +19,8 @@
 
 | 门 | 命令 / Actions | 级别 | 期望 |
 |---|---|---|---|
-| MANIFEST SHA | 读 `packages/dsh-sbtd/manuals/MANIFEST.json` | **REQUIRED** | `source=KunoLu/640-skills`，`version=1.0.13`，`sourceRevision=f8aa0d7225a26c5e00b81d2f1b05121108e63630`（迁 pin 前必须仍是这组；迁 pin 的 PR 才改这三处并同步脚本常量） |
-| sync-manuals | `packages/dsh-sbtd/scripts/sync-manuals.sh [SOURCE]` | **REQUIRED，失败即红** | SOURCE 的 `HEAD` 必须等于 pin SHA，否则 stderr `SHA mismatch: got … expected f8aa0d7225a26c5e00b81d2f1b05121108e63630` 且非 0。缺源、拷贝失败、checksum 失败同样非 0 |
+| MANIFEST SHA | 读 `packages/dsh-sbtd/manuals/MANIFEST.json` | **REQUIRED** | `source=KunoLu/640-skills`，`version=1.0.15`，`sourceRevision=bc8eec1549928fb0966254751b96b611b6334183`（迁 pin 前必须仍是这组；迁 pin 的 PR 才改这三处并同步脚本常量） |
+| sync-manuals | `packages/dsh-sbtd/scripts/sync-manuals.sh [SOURCE]` | **REQUIRED，失败即红** | SOURCE 的 `HEAD` 必须等于 pin SHA，否则 stderr `SHA mismatch: got … expected bc8eec1549928fb0966254751b96b611b6334183` 且非 0。缺源、拷贝失败、checksum 失败同样非 0 |
 | t4 单测 | `node --test packages/dsh-sbtd/test/t4-manuals.test.mjs packages/dsh-sbtd/test/t4-sync-exit.test.mjs` | **REQUIRED** | MANIFEST 与 dest sha256 一致；whitelist 目录一致；错误 SOURCE 非 0 |
 | 全量单测 | `pnpm --filter @kunolu/dsh-sbtd test` | **REQUIRED（发新版前）** | `tsc` + 全部 `test/*.test.mjs`，含 FU4 `fu4-host-schema.test.mjs`（clarify/spec/tickets `output.schema` × `@deepseek-ai/dsh@0.1.1-rc.2`） |
 | pack 含 `dist/` | 同宿主指南 | **REQUIRED（发新版前）** | tarball 含 `package/dist/`（T16 坑） |
@@ -29,8 +29,8 @@
 脚本常量必须与 MANIFEST 一致：
 
 ```text
-PINNED_REVISION=f8aa0d7225a26c5e00b81d2f1b05121108e63630
-PINNED_VERSION=1.0.13
+PINNED_REVISION=bc8eec1549928fb0966254751b96b611b6334183
+PINNED_VERSION=1.0.15
 SOURCE_ID=KunoLu/640-skills
 ```
 
@@ -65,7 +65,7 @@ git diff --exit-code -- packages/dsh-sbtd/manuals
 
 **PASS**
 
-- MANIFEST 三元组与脚本常量一致（未迁 pin 时必须仍是 `1.0.13` / `f8aa0d7225a26c5e00b81d2f1b05121108e63630`）。
+- MANIFEST 三元组与脚本常量一致（未迁 pin 时必须仍是 `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`）。
 - `sync-manuals.sh` 退出 0，且 `manuals/` 无意外 diff。
 - t4 测试绿。
 - 发新版前：全量 `test`（含 FU4）绿 + pack 含 `dist/` + 人工弹窗抽检通过。
@@ -81,7 +81,7 @@ git diff --exit-code -- packages/dsh-sbtd/manuals
 ## 发版 / 不发版决策树
 
 ```
-只是 640-skills 上游有新 tag，当前插件仍钉 1.0.13？
+只是 640-skills 上游有新 tag，当前插件仍钉 1.0.15？
  ├─ 不迁 pin → 不发版。文档里记下「已知更新未跟」即可。
  └─ 要迁 pin → 适配 PR：改 PINNED_* + 跑 sync + 更新 t4 PIN。
       manuals 正文 / skill 契约是否改变插件行为？
@@ -101,7 +101,7 @@ advisory 宿主矩阵绿？
 
 | 现象 | 先查 |
 |---|---|
-| `SHA mismatch: got <本机 HEAD>, expected f8aa0d7…` | SOURCE 不是 pin。不要「先 pull 再 sync」。 |
+| `SHA mismatch: got <本机 HEAD>, expected bc8eec1…` | SOURCE 不是 pin。不要「先 pull 再 sync」。 |
 | checksum-fail | 手改了 `manuals/` 或 sync 中途被打断。删改回，重新跑脚本。 |
 | CI clone `640-skills` 失败 | YAML 入库后对该仓不可见时保持 `workflow_dispatch`；现在本机 `sync-manuals.sh`。不要把 omp workflow 当备用。 |
 | t4 过、全量 test 不过 | FU4 / 宿主 registry 问题，转到宿主指南；不要放宽 MANIFEST。 |
