@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 const fixtures = join(pkgRoot, "test", "fixtures", "sync-manuals");
-const PIN = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
+const PIN = "bc8eec1549928fb0966254751b96b611b6334183";
 function whitelistFromScript(scriptPath) {
   const body = readFileSync(scriptPath, "utf8");
   const match = body.match(/^WHITELIST=\([\s\S]*?^\)/m);
@@ -38,7 +38,7 @@ test("sync-manuals exits non-zero on missing source or SHA mismatch", () => {
   const mismatch = spawnSync("bash", [script, repoRoot], { encoding: "utf8" });
   assert.notEqual(mismatch.status, 0);
   assert.match(mismatch.stderr, /SHA mismatch: got /);
-  assert.match(mismatch.stderr, /expected f8aa0d7225a26c5e00b81d2f1b05121108e63630/);
+  assert.match(mismatch.stderr, /expected bc8eec1549928fb0966254751b96b611b6334183/);
 });
 
 function git(cwd, args) {

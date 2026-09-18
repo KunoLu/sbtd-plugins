@@ -6,10 +6,12 @@
  * No GitNexus; no writeArtifact; no trellis init; no manuals nest.
  */
 
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   lstatSync,
   mkdirSync,
+  opendirSync,
   readFileSync,
   realpathSync,
   writeFileSync,
@@ -254,8 +256,8 @@ function topicFromDetail(detail: string): string | null {
 }
 
 function trellisPresent(cwd: string): boolean {
-  const det = detect(cwd);
-  return det.exists || det.workflowPresent;
+  // .trellis/.developer alone is metadata, not a Trellis lessons store.
+  return detect(cwd).workflowPresent;
 }
 
 function resolveStore(cwd: string, present: boolean): StoreLayout {
@@ -315,34 +317,108 @@ function parseIndexRows(content: string): IndexRow[] {
   return rows;
 }
 
-function indexHeader(): string {
-  return `# Lessons index
-
-| id | tags | read_when | summary | detail |
-|---|---|---|---|---|
-`;
-}
-
-function ensureIndex(content: string): string {
-  if (content.trim().length === 0) return indexHeader();
-  return content.endsWith("\n") ? content : `${content}\n`;
-}
+const SPLIT_NAME_RE = /^[a-z0-9]+$/;
+const LESSON_HEADING_RE = /^## (LESSON-\d{8}-[^\s]+)/gm;
 
 function utcDateStamp(): string {
   return new Date().toISOString().slice(0, 10).replace(/-/g, "");
 }
 
-function nextLessonIdFromRows(topic: string, rows: IndexRow[]): string {
-  const base = `LESSON-${utcDateStamp()}-${topic}`;
-  const ids = new Set(rows.map((r) => r.id));
-  if (!ids.has(base)) return base;
-  let n = 2;
-  while (ids.has(`${base}-${n}`)) n += 1;
-  return `${base}-${n}`;
+function collectLessonIds(...contents: string[]): Set<string> {
+  const ids = new Set<string>();
+  for (const content of contents) {
+    for (const row of parseIndexRows(content)) ids.add(row.id);
+    LESSON_HEADING_RE.lastIndex = 0;
+    let match = LESSON_HEADING_RE.exec(content);
+    while (match !== null) {
+      if (match[1] !== undefined) ids.add(match[1]);
+      match = LESSON_HEADING_RE.exec(content);
+    }
+  }
+  return ids;
 }
 
-function nextLessonId(topic: string, indexContent: string): string {
-  return nextLessonIdFromRows(topic, parseIndexRows(indexContent));
+function nextLessonId(name: string, topic: string, ids: Set<string>): string {
+  const date = utcDateStamp();
+  let n = 1;
+  while (true) {
+    const slug = n === 1 ? topic : `${topic}-${n}`;
+    const id = `LESSON-${date}-${name}-${slug}`;
+    if (!ids.has(id)) return id;
+    n += 1;
+  }
+}
+
+
+function indexTableHeader(): string {
+  return `| id | tags | read_when | summary | detail |\n|---|---|---|---|---|\n`;
+}
+
+function formatIndexRow(row: IndexRow): string {
+  return `| ${row.id} | ${row.tags} | ${row.read_when} | ${row.summary} | ${row.detail} |\n`;
+}
+
+function markerStart(name: string): string {
+  return `<!-- lessons:${name}:start -->`;
+}
+
+function markerEnd(name: string): string {
+  return `<!-- lessons:${name}:end -->`;
+}
+
+function ensureTrailingNewline(content: string): string {
+  return content.endsWith("\n") ? content : `${content}\n`;
+}
+
+function appendInNameBlock(
+  content: string,
+  name: string,
+  chunk: string,
+  emptyIntro: string,
+): string | null {
+  const startTag = markerStart(name);
+  const endTag = markerEnd(name);
+  const body = chunk.endsWith("\n") ? chunk : `${chunk}\n`;
+  const start = content.indexOf(startTag);
+  if (start === -1) {
+    const intro =
+      content.length === 0 ? emptyIntro : ensureTrailingNewline(content);
+    return `${intro}${startTag}\n${body}${endTag}\n`;
+  }
+  const end = content.indexOf(endTag, start + startTag.length);
+  if (end === -1) return null;
+  const before = content.slice(0, end);
+  const after = content.slice(end);
+  const gap = before.endsWith("\n") ? "" : "\n";
+  return `${before}${gap}${body}${after}`;
+}
+
+function appendIndexRowInNameBlock(
+  content: string,
+  name: string,
+  row: IndexRow,
+): string | null {
+  const startTag = markerStart(name);
+  const endTag = markerEnd(name);
+  const rowLine = formatIndexRow(row);
+  const start = content.indexOf(startTag);
+  if (start === -1) {
+    const intro =
+      content.trim().length === 0
+        ? `# Lessons index\n\n`
+        : ensureTrailingNewline(content);
+    return `${intro}${startTag}\n${indexTableHeader()}${rowLine}${endTag}\n`;
+  }
+  const end = content.indexOf(endTag, start + startTag.length);
+  if (end === -1) return null;
+  const inner = content.slice(start + startTag.length, end);
+  const insertion = /\|\s*id\s*\|/.test(inner)
+    ? rowLine
+    : `${indexTableHeader()}${rowLine}`;
+  const before = content.slice(0, end);
+  const after = content.slice(end);
+  const gap = before.endsWith("\n") ? "" : "\n";
+  return `${before}${gap}${insertion}${after}`;
 }
 
 function resolveTopicSlug(
@@ -377,10 +453,6 @@ function formatRecordSection(
   return lines.join("\n");
 }
 
-function appendIndexRow(indexContent: string, row: IndexRow): string {
-  const base = ensureIndex(indexContent);
-  return `${base}| ${row.id} | ${row.tags} | ${row.read_when} | ${row.summary} | ${row.detail} |\n`;
-}
 
 function topicFileHeader(topic: string): string {
   return `# ${topic}\n\n`;
@@ -567,14 +639,177 @@ function buildHit(
   return hit;
 }
 
-function skipped(intent: string, kind: string): LessonsToolResult {
+type SplitNameOk = {
+  ok: true;
+  name: string;
+  source: ".developer" | "main-worktree";
+};
+
+type SplitNameErr = {
+  ok: false;
+  kind: "split-name-unresolved" | "split-name-invalid";
+  note: string;
+};
+
+function parseNameEquals(text: string): string | undefined {
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed.length === 0 || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    if (trimmed.slice(0, eq).trim() !== "name") continue;
+    return trimmed.slice(eq + 1).trim();
+  }
+  return undefined;
+}
+
+function listWorkspaceCandidates(cwd: string): string[] {
+  const dir = join(cwd, ".trellis", "workspace");
+  if (!existsSync(dir)) return [];
+  try {
+    const names: string[] = [];
+    const handle = opendirSync(dir);
+    try {
+      let entry = handle.readSync();
+      while (entry !== null) {
+        if (entry.isDirectory() && SPLIT_NAME_RE.test(entry.name)) {
+          names.push(entry.name);
+        }
+        entry = handle.readSync();
+      }
+    } finally {
+      handle.close();
+    }
+    names.sort();
+    return names;
+  } catch {
+    return [];
+  }
+}
+
+function mainWorktreeRoot(cwd: string): string | null {
+  try {
+    const result = spawnSync("git", ["worktree", "list", "--porcelain"], {
+      cwd,
+      encoding: "utf8",
+      timeout: 8000,
+      maxBuffer: 1024 * 1024,
+    });
+    if (result.error != null || result.status !== 0) return null;
+    const stdout = result.stdout ?? "";
+    for (const line of stdout.split("\n")) {
+      if (!line.startsWith("worktree ")) continue;
+      const root = line.slice("worktree ".length).trim();
+      return root.length > 0 ? root : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function initDeveloperHint(): string {
+  return "Provide a conforming split name / run python3 ./.trellis/scripts/init_developer.py <name>.";
+}
+
+function unresolvedSplitNote(cwd: string): string {
+  const candidates = listWorkspaceCandidates(cwd);
+  const extra =
+    candidates.length > 0
+      ? ` Candidates in .trellis/workspace: ${candidates.join(", ")}.`
+      : "";
+  return `Split name unresolved: no name= in .trellis/.developer (and no main-worktree .developer). Do not guess from TRELLIS_DEVELOPER, git config, commit authors, env vars, or workspace dirs. ${initDeveloperHint()}${extra}`;
+}
+
+function invalidSplitNote(raw: string, source: string): string {
+  return `Split name invalid: read ${JSON.stringify(raw)} from ${source} (must match ^[a-z0-9]+$; lowercase letters and digits only, no separators). Never rewritten or normalized. ${initDeveloperHint()}`;
+}
+
+function judgeDeveloperName(
+  raw: string | undefined,
+  sourceLabel: string,
+  source: SplitNameOk["source"],
+): SplitNameOk | SplitNameErr {
+  if (raw == null) {
+    return {
+      ok: false,
+      kind: "split-name-invalid",
+      note: invalidSplitNote("", sourceLabel),
+    };
+  }
+  if (!SPLIT_NAME_RE.test(raw)) {
+    return {
+      ok: false,
+      kind: "split-name-invalid",
+      note: invalidSplitNote(raw, sourceLabel),
+    };
+  }
+  return { ok: true, name: raw, source };
+}
+
+function resolveSplitName(cwd: string): SplitNameOk | SplitNameErr {
+  const localPath = join(cwd, ".trellis", ".developer");
+  if (existsSync(localPath)) {
+    try {
+      return judgeDeveloperName(
+        parseNameEquals(readFileSync(localPath, "utf8")),
+        ".trellis/.developer",
+        ".developer",
+      );
+    } catch {
+      return {
+        ok: false,
+        kind: "split-name-unresolved",
+        note: unresolvedSplitNote(cwd),
+      };
+    }
+  }
+
+  const mainRoot = mainWorktreeRoot(cwd);
+  if (mainRoot != null) {
+    const cwdKey = tryRealpath(cwd) ?? resolve(cwd);
+    const mainKey = tryRealpath(mainRoot) ?? resolve(mainRoot);
+    if (cwdKey !== mainKey) {
+      const mainPath = join(mainRoot, ".trellis", ".developer");
+      if (existsSync(mainPath)) {
+        try {
+          return judgeDeveloperName(
+            parseNameEquals(readFileSync(mainPath, "utf8")),
+            "main-worktree .trellis/.developer",
+            "main-worktree",
+          );
+        } catch {
+          return {
+            ok: false,
+            kind: "split-name-unresolved",
+            note: unresolvedSplitNote(cwd),
+          };
+        }
+      }
+    }
+  }
+
   return {
+    ok: false,
+    kind: "split-name-unresolved",
+    note: unresolvedSplitNote(cwd),
+  };
+}
+
+function skipped(
+  intent: string,
+  kind: string,
+  note?: string,
+): LessonsToolResult {
+  const result: LessonsToolResult = {
     ok: false,
     intent,
     status: "skipped",
     kind,
     mutation: "none",
   };
+  if (note != null) result.note = note;
+  return result;
 }
 
 function recordLesson(
@@ -585,22 +820,22 @@ function recordLesson(
   const topic = resolveTopicSlug(input, event);
   if (topic == null) return skipped("record", "unsafe-path");
 
+  const split = resolveSplitName(cwd);
+  if (!split.ok) return skipped("record", split.kind, split.note);
+
   const present = trellisPresent(cwd);
   const store = resolveStore(cwd, present);
   const summary = sanitizeCell(input.summary?.trim() ?? "");
   const sanitizedTags = sanitizeTags(input.tags);
+  const splitNote = `Lessons split name: ${split.name}\nSource: ${split.source}`;
 
   if (store.kind === "docs-flat") {
     if (!lessonPathAllowed(cwd, store.filePath)) {
       return skipped("record", "unsafe-path");
     }
-    mkdirSync(join(cwd, "docs"), { recursive: true });
     const existing = readTextIfAllowed(cwd, store.filePath);
     if (existing == null) return skipped("record", "unsafe-path");
-    const id = nextLessonIdFromRows(
-      topic,
-      parseFlatSections(existing, store.filePath),
-    );
+    const id = nextLessonId(split.name, topic, collectLessonIds(existing));
     const section = formatRecordSection(
       id,
       event,
@@ -608,8 +843,21 @@ function recordLesson(
       summary,
       sanitizedTags,
     );
-    const prefix = existing.length === 0 ? `# Lessons\n\n` : "";
-    writeFileSync(store.filePath, `${existing}${prefix}${section}`, "utf8");
+    const next = appendInNameBlock(
+      existing,
+      split.name,
+      section,
+      "# Lessons\n\n",
+    );
+    if (next == null) {
+      return skipped(
+        "record",
+        "malformed-marker",
+        `Existing lessons:${split.name} start marker has no matching end; refusing a second block.`,
+      );
+    }
+    mkdirSync(join(cwd, "docs"), { recursive: true });
+    writeFileSync(store.filePath, next, "utf8");
     return {
       ok: true,
       intent: "record",
@@ -618,6 +866,7 @@ function recordLesson(
       path: store.filePath,
       store: "docs",
       mutation: "write",
+      note: splitNote,
     };
   }
 
@@ -628,10 +877,8 @@ function recordLesson(
     return skipped("record", "unsafe-path");
   }
 
-  mkdirSync(store.topicsDir, { recursive: true });
   const indexContent = readTextIfAllowed(cwd, store.indexPath);
   if (indexContent == null) return skipped("record", "unsafe-path");
-  const id = nextLessonId(topic, indexContent);
   const topicPath = join(store.topicsDir, `${topic}.md`);
   if (!lessonPathAllowed(cwd, topicPath)) {
     return skipped("record", "unsafe-path");
@@ -639,15 +886,18 @@ function recordLesson(
 
   const topicExisting = readTextIfAllowed(cwd, topicPath);
   if (topicExisting == null) return skipped("record", "unsafe-path");
-  const topicPrefix =
-    topicExisting.length === 0
-      ? topicFileHeader(topic)
-      : topicExisting.endsWith("\n")
-        ? topicExisting
-        : `${topicExisting}\n`;
+  const id = nextLessonId(
+    split.name,
+    topic,
+    collectLessonIds(indexContent, topicExisting),
+  );
   const section = formatRecordSection(id, event, topic, summary, sanitizedTags);
-  writeFileSync(topicPath, `${topicPrefix}${section}`, "utf8");
-
+  const nextTopic = appendInNameBlock(
+    topicExisting,
+    split.name,
+    section,
+    topicFileHeader(topic),
+  );
   const indexRow: IndexRow = {
     id,
     tags: buildTagsColumn(event, sanitizedTags),
@@ -655,11 +905,21 @@ function recordLesson(
     summary,
     detail: `topics/${topic}.md#${id}`,
   };
-  writeFileSync(
-    store.indexPath,
-    appendIndexRow(indexContent, indexRow),
-    "utf8",
+  const nextIndex = appendIndexRowInNameBlock(
+    indexContent,
+    split.name,
+    indexRow,
   );
+  if (nextTopic == null || nextIndex == null) {
+    return skipped(
+      "record",
+      "malformed-marker",
+      `Existing lessons:${split.name} start marker has no matching end; refusing a second block.`,
+    );
+  }
+  mkdirSync(store.topicsDir, { recursive: true });
+  writeFileSync(topicPath, nextTopic, "utf8");
+  writeFileSync(store.indexPath, nextIndex, "utf8");
 
   return {
     ok: true,
@@ -669,6 +929,7 @@ function recordLesson(
     path: topicPath,
     store: present ? "trellis" : "docs",
     mutation: "write",
+    note: splitNote,
   };
 }
 
