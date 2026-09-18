@@ -6,8 +6,8 @@
 |---|---|
 | 仓库 | `KunoLu/sbtd-plugins` |
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
-| 上次同步 | 2026-09-18（上海；manuals pin 1.0.15 + lessons.ts write align，本 PR） |
-| 同步时 main | `c914a11`（#85 archive T16 acceptance TODO backfill；#85 squash `953109d`；#84 TODO #83 merge SHA backfill → `149f759`；#83 FU5 Round3 closeout no bump → `e6bc4c8`） |
+| 上次同步 | 2026-09-18（上海；manuals pin 1.0.15 + lessons.ts write align #87 squash `46ac3e6`） |
+| 同步时 main | `46ac3e6`（#87 manuals pin 1.0.15 + lessons align → `46ac3e6`；#86 TODO #85 merge SHA backfill → `c914a11`；#85 archive T16 acceptance → `953109d`；#84 TODO #83 merge SHA backfill → `149f759`；#83 FU5 Round3 closeout no bump → `e6bc4c8`） |
 | 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
@@ -39,7 +39,7 @@
 | 顺序 | 项 | 状态 |
 |---|---|---|
 | 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ✅ Round3 收口：**不 bump**；FU5 正式关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15` |
-| 2 | **640-skills** pin → **v1.0.15** | ✅ 本 PR：tag `v1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`；sync+MANIFEST+t4；`lessons.ts` write align；无 npm；whitelist 不变；无 package bump；无 peer |
+| 2 | **640-skills** pin → **v1.0.15** | ✅ #87 → `46ac3e6`：tag `v1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`；sync+MANIFEST+t4；`lessons.ts` write align；无 npm；whitelist 不变；无 package bump；无 peer |
 
 ### FU5 — 宿主兼容调研（✅ Round3 已收口）
 
@@ -59,13 +59,13 @@
 
 - 现行 pin：`v1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`。
 - 已跳过单独同步到 v1.0.14。
-- Freeze：Q1A pin+sync+gates only（无 npm）；Q2A whitelist 不变；Q3A 无 package version bump；无 peer/host 改动。本 PR 另对齐 `packages/dsh-sbtd/src/tools/lessons.ts` 的 split-name / marker / ID 写语义。
+- Freeze：Q1A pin+sync+gates only（无 npm）；Q2A whitelist 不变；Q3A 无 package version bump；无 peer/host 改动。#87 另对齐 `packages/dsh-sbtd/src/tools/lessons.ts` 的 split-name / marker / ID 写语义。
 
 | 子任务 | 内容 | 状态 |
 |---|---|---|
 | 15-A | 等待 `640-skills` **v1.0.15** tag | ✅ tag 存在 / freeze locked |
-| 15-B | `sync-manuals` + MANIFEST + t4 / 全量 test | ✅ 本 PR（sync+MANIFEST+t4+tests） |
-| 15-C | 若 skill 契约变了：适配 + 可能新插件 RC（仅 `next`）；契约兼容默认可不发 | ⬜ 本 PR 已适配 lessons write（无 npm / 无 bump） |
+| 15-B | `sync-manuals` + MANIFEST + t4 / 全量 test | ✅ #87 → `46ac3e6`（sync+MANIFEST+t4+tests） |
+| 15-C | 若 skill 契约变了：适配 + 可能新插件 RC（仅 `next`）；契约兼容默认可不发 | ✅ #87 已适配 lessons write（无 npm / 无 bump） |
 
 ---
 
@@ -73,7 +73,7 @@
 
 | 日期 | 说明 |
 |---|---|
-| 2026-09-18 | manuals pin `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183` + `lessons.ts` split-name/marker/ID 对齐；Q1A 无 npm；Q2A whitelist 不变；Q3A 不 bump `0.1.0-rc.2`；无 peer |
+| 2026-09-18 | manuals pin `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183` + `lessons.ts` split-name/marker/ID 对齐；Q1A 无 npm；Q2A whitelist 不变；Q3A 不 bump `0.1.0-rc.2`；无 peer：r4 CLEAN @ `bdbc5ee`；squash `46ac3e6` |
 | 2026-09-14 | T16 acceptance 归档 #85：`docs/acceptance.md` → `docs/assets/archive/dsh-sbtd-acceptance-t16.md`；r1 CLEAN @ `5a1354f`；squash `953109d`；无 npm；无 peer/src |
 | 2026-09-14 | FU5 Round3 收口：**不 bump**；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15`；无 peer/npm/src：r1 CLEAN @ `d84f5ad`；squash `e6bc4c8` |
 | 2026-09-14 | FU5-C Round2 文档收口 #80：r1 CLEAN @ `71525a8`；squash `081866b`；锁 Q3C/Q4A/Q5A（Round1 Q1A/Q2A 仍有效）；peer 仍 `0.1.1-rc.2`；无 npm；无新 RC |
