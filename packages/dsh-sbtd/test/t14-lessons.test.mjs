@@ -1041,7 +1041,7 @@ test("R6b: forged lessons end-marker in summary is neutralized and does not hija
   assert.ok(secondIdx !== -1 && secondIdx < endIdx);
 });
 
-test("docs-flat: name-bearing ID without **topic:** falls back to slug not name-slug", () => {
+test("docs-flat: name-bearing ID without **topic:** drops enclosing name (incl. one-segment custom)", () => {
   const root = fixtureRoot("flat-id-topic-fallback");
   plantDeveloper(root, "alice");
   mkdirSync(join(root, "docs"), { recursive: true });
@@ -1053,25 +1053,40 @@ test("docs-flat: name-bearing ID without **topic:** falls back to slug not name-
 ## LESSON-20260101-alice-bug-fix
 
 **event:** bug-fix
-**summary:** no topic line here
+**summary:** hyphenated topic no topic line
+
+## LESSON-20260101-alice-refactor
+
+**event:** bug-fix
+**summary:** one-segment custom topic no topic line
 
 <!-- lessons:alice:end -->
 `,
     "utf8",
   );
 
-  const match = sbtdLessons(
+  const hyphenated = sbtdLessons(
     "s1",
     { intent: "match", topic: "bug-fix" },
     { cwd: root },
   );
-  assert.equal(match.status, "matched");
-  assert.equal(match.hits.length, 1);
-  assert.equal(match.hits[0].id, "LESSON-20260101-alice-bug-fix");
-  assert.equal(match.hits[0].topic, "bug-fix");
+  assert.equal(hyphenated.status, "matched");
+  assert.equal(hyphenated.hits.length, 1);
+  assert.equal(hyphenated.hits[0].id, "LESSON-20260101-alice-bug-fix");
+  assert.equal(hyphenated.hits[0].topic, "bug-fix");
+
+  const custom = sbtdLessons(
+    "s1",
+    { intent: "match", topic: "refactor" },
+    { cwd: root },
+  );
+  assert.equal(custom.status, "matched");
+  assert.equal(custom.hits.length, 1);
+  assert.equal(custom.hits[0].id, "LESSON-20260101-alice-refactor");
+  assert.equal(custom.hits[0].topic, "refactor");
 });
 
-test("docs-flat: legacy ID without **topic:** still yields full hyphenated slug", () => {
+test("docs-flat: legacy IDs without **topic:** keep full multi-hyphen slug", () => {
   const root = fixtureRoot("flat-legacy-id-topic");
   plantDeveloper(root, "alice");
   mkdirSync(join(root, "docs"), { recursive: true });
@@ -1083,19 +1098,33 @@ test("docs-flat: legacy ID without **topic:** still yields full hyphenated slug"
 ## LESSON-20260903-dsh-sbtd
 
 **event:** bug-fix
-**summary:** legacy id
+**summary:** legacy two-segment
+
+## LESSON-20260903-api-client-timeout
+
+**event:** bug-fix
+**summary:** legacy three-segment
 
 <!-- lessons:alice:end -->
 `,
     "utf8",
   );
 
-  const match = sbtdLessons(
+  const two = sbtdLessons(
     "s1",
     { intent: "match", topic: "dsh-sbtd" },
     { cwd: root },
   );
-  assert.equal(match.status, "matched");
-  assert.equal(match.hits[0].topic, "dsh-sbtd");
+  assert.equal(two.status, "matched");
+  assert.equal(two.hits[0].topic, "dsh-sbtd");
+
+  const three = sbtdLessons(
+    "s1",
+    { intent: "match", topic: "api-client-timeout" },
+    { cwd: root },
+  );
+  assert.equal(three.status, "matched");
+  assert.equal(three.hits[0].id, "LESSON-20260903-api-client-timeout");
+  assert.equal(three.hits[0].topic, "api-client-timeout");
 });
 

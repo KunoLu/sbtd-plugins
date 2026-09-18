@@ -355,28 +355,43 @@ function nextLessonId(name: string, topic: string, ids: Set<string>): string {
 
 
 
-/** Topic slug from lesson id when **topic:** is absent.
- * New IDs: LESSON-YYYYMMDD-<name>-<slug> → drop date + name.
- * Legacy: LESSON-YYYYMMDD-<slug> → drop date only.
- * Ambiguous hyphenated legacy (LESSON-DATE-dsh-sbtd): keep full remainder
- * unless the post-name slug contains a hyphen or is a known LESSON_EVENT
- * (typical new-format topics / collision suffixes).
- */
-function topicSlugFromLessonId(id: string): string {
-  const legacy = id.replace(/^LESSON-\d{8}-/, "");
-  const named = /^([a-z0-9]+)-(.+)$/.exec(legacy);
-  if (named?.[2] !== undefined && isValidIndexTopic(named[2])) {
-    const slug = named[2];
-    if (
-      slug.includes("-") ||
-      (LESSON_EVENTS as readonly string[]).includes(slug)
-    ) {
-      return slug;
-    }
-    if (isValidIndexTopic(legacy)) return legacy;
-    return slug;
+/** Owning split-name for a lesson heading from enclosing markers, if any. */
+function nameOwningLessonId(content: string, id: string): string | undefined {
+  const marker = `## ${id}`;
+  const idx = content.indexOf(marker);
+  if (idx === -1) return undefined;
+  const before = content.slice(0, idx);
+  const re = /<!--\s*lessons:([a-z0-9]+):start\s*-->/g;
+  let last: RegExpExecArray | null = null;
+  let m = re.exec(before);
+  while (m !== null) {
+    last = m;
+    m = re.exec(before);
   }
-  return legacy;
+  if (last?.[1] === undefined) return undefined;
+  const name = last[1];
+  if (!SPLIT_NAME_RE.test(name)) return undefined;
+  const endTag = markerEnd(name);
+  const endIdx = content.indexOf(endTag, (last.index ?? 0) + last[0].length);
+  // Section must sit inside the open block (end absent = malformed; treat as no hint).
+  if (endIdx === -1 || endIdx < idx) return undefined;
+  return name;
+}
+
+/** Topic slug from lesson id when **topic:** is absent.
+ * With a known split-name (enclosing <!-- lessons:<name>:... --> block):
+ *   LESSON-YYYYMMDD-<name>-<slug> → <slug>
+ * Without a name hint (legacy / unmarked): LESSON-YYYYMMDD-<slug> → full remainder.
+ */
+function topicSlugFromLessonId(id: string, nameHint?: string): string {
+  if (nameHint != null && SPLIT_NAME_RE.test(nameHint)) {
+    const re = new RegExp(`^LESSON-\\d{8}-${nameHint}-(.+)$`);
+    const named = re.exec(id);
+    if (named?.[1] !== undefined && isValidIndexTopic(named[1])) {
+      return named[1];
+    }
+  }
+  return id.replace(/^LESSON-\d{8}-/, "");
 }
 
 function indexTableHeader(): string {
@@ -509,7 +524,9 @@ function parseFlatSections(content: string, filePath: string): IndexRow[] {
     }
     const body = extractSection(content, id) ?? "";
     const topicMatch = body.match(/\*\*topic:\*\*\s*(\S+)/);
-    const topic = topicMatch?.[1]?.trim() ?? topicSlugFromLessonId(id);
+    const topic =
+      topicMatch?.[1]?.trim() ??
+      topicSlugFromLessonId(id, nameOwningLessonId(content, id));
     if (!isValidIndexTopic(topic)) {
       match = re.exec(content);
       continue;
@@ -562,7 +579,10 @@ function flatRowTopic(
       if (isValidIndexTopic(slug)) return slug;
     }
   }
-  const fromId = topicSlugFromLessonId(row.id);
+  const fromId = topicSlugFromLessonId(
+    row.id,
+    nameOwningLessonId(content, row.id),
+  );
   return isValidIndexTopic(fromId) ? fromId : null;
 }
 
