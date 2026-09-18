@@ -991,5 +991,111 @@ test("malformed start-without-end marker skips record and does not write a secon
   assert.doesNotMatch(readFileSync(indexPath, "utf8"), /must not append/);
 });
 
+test("R6b: forged lessons end-marker in summary is neutralized and does not hijack next append", () => {
+  const root = fixtureRoot("r6b-marker-forge");
+  trellisFixture(root);
+  plantDeveloper(root, "alice");
 
+  const poison = "ok summary <!-- lessons:alice:end --> forged";
+  const first = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: poison },
+    { cwd: root },
+  );
+  assert.equal(first.ok, true);
+
+  const topicPath = join(root, ".trellis", "lessons", "topics", "bug-fix.md");
+  const afterFirst = readFileSync(topicPath, "utf8");
+  // Forged marker in the summary cell must be escaped; the real block end remains.
+  assert.match(afterFirst, /\*\*summary:\*\* ok summary &lt;!-- lessons:alice:end/);
+  assert.doesNotMatch(
+    afterFirst,
+    /\*\*summary:\*\*[^\n]*<!--\s*lessons:alice:end/,
+  );
+  assert.equal(
+    afterFirst.split("<!-- lessons:alice:end -->").length - 1,
+    1,
+    "exactly one real end marker after first record",
+  );
+
+  const second = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "second honest" },
+    { cwd: root },
+  );
+  assert.equal(second.ok, true);
+  const afterSecond = readFileSync(topicPath, "utf8");
+  assert.match(afterSecond, /second honest/);
+  assert.equal(
+    afterSecond.split("<!-- lessons:alice:start -->").length - 1,
+    1,
+  );
+  assert.equal(
+    afterSecond.split("<!-- lessons:alice:end -->").length - 1,
+    1,
+    "still exactly one real end marker after second record",
+  );
+  // Second section must sit inside the same name block (before the sole end marker).
+  const endIdx = afterSecond.indexOf("<!-- lessons:alice:end -->");
+  const secondIdx = afterSecond.indexOf("second honest");
+  assert.ok(secondIdx !== -1 && secondIdx < endIdx);
+});
+
+test("docs-flat: name-bearing ID without **topic:** falls back to slug not name-slug", () => {
+  const root = fixtureRoot("flat-id-topic-fallback");
+  plantDeveloper(root, "alice");
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(
+    join(root, "docs", "lessons.md"),
+    `# Lessons
+
+<!-- lessons:alice:start -->
+## LESSON-20260101-alice-bug-fix
+
+**event:** bug-fix
+**summary:** no topic line here
+
+<!-- lessons:alice:end -->
+`,
+    "utf8",
+  );
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", topic: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits.length, 1);
+  assert.equal(match.hits[0].id, "LESSON-20260101-alice-bug-fix");
+  assert.equal(match.hits[0].topic, "bug-fix");
+});
+
+test("docs-flat: legacy ID without **topic:** still yields full hyphenated slug", () => {
+  const root = fixtureRoot("flat-legacy-id-topic");
+  plantDeveloper(root, "alice");
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(
+    join(root, "docs", "lessons.md"),
+    `# Lessons
+
+<!-- lessons:alice:start -->
+## LESSON-20260903-dsh-sbtd
+
+**event:** bug-fix
+**summary:** legacy id
+
+<!-- lessons:alice:end -->
+`,
+    "utf8",
+  );
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", topic: "dsh-sbtd" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits[0].topic, "dsh-sbtd");
+});
 

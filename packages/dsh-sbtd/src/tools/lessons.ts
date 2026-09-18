@@ -224,6 +224,10 @@ function sanitizeCell(value: string): string {
     .replace(/\r?\n/g, " ")
     .replace(/\|/g, "/")
     .replace(/##\s*LESSON-/gi, "LESSON-")
+    // Neutralize forged lessons block markers (same class as ## LESSON- R6).
+    // Otherwise a model-supplied summary/tag can embed <!-- lessons:<name>:end -->
+    // and hijack appendInNameBlock / appendIndexRowInNameBlock indexOf insertion.
+    .replace(/<!--\s*lessons:/gi, "&lt;!-- lessons:")
     .trim();
 }
 
@@ -349,6 +353,31 @@ function nextLessonId(name: string, topic: string, ids: Set<string>): string {
   }
 }
 
+
+
+/** Topic slug from lesson id when **topic:** is absent.
+ * New IDs: LESSON-YYYYMMDD-<name>-<slug> → drop date + name.
+ * Legacy: LESSON-YYYYMMDD-<slug> → drop date only.
+ * Ambiguous hyphenated legacy (LESSON-DATE-dsh-sbtd): keep full remainder
+ * unless the post-name slug contains a hyphen or is a known LESSON_EVENT
+ * (typical new-format topics / collision suffixes).
+ */
+function topicSlugFromLessonId(id: string): string {
+  const legacy = id.replace(/^LESSON-\d{8}-/, "");
+  const named = /^([a-z0-9]+)-(.+)$/.exec(legacy);
+  if (named?.[2] !== undefined && isValidIndexTopic(named[2])) {
+    const slug = named[2];
+    if (
+      slug.includes("-") ||
+      (LESSON_EVENTS as readonly string[]).includes(slug)
+    ) {
+      return slug;
+    }
+    if (isValidIndexTopic(legacy)) return legacy;
+    return slug;
+  }
+  return legacy;
+}
 
 function indexTableHeader(): string {
   return `| id | tags | read_when | summary | detail |\n|---|---|---|---|---|\n`;
@@ -480,7 +509,7 @@ function parseFlatSections(content: string, filePath: string): IndexRow[] {
     }
     const body = extractSection(content, id) ?? "";
     const topicMatch = body.match(/\*\*topic:\*\*\s*(\S+)/);
-    const topic = topicMatch?.[1]?.trim() ?? id.replace(/^LESSON-\d{8}-/, "");
+    const topic = topicMatch?.[1]?.trim() ?? topicSlugFromLessonId(id);
     if (!isValidIndexTopic(topic)) {
       match = re.exec(content);
       continue;
@@ -522,7 +551,7 @@ function flatRowTopic(
 ): string | null {
   const content = readTextIfAllowed(cwd, filePath);
   if (content == null) {
-    const fromId = row.id.replace(/^LESSON-\d{8}-/, "");
+    const fromId = topicSlugFromLessonId(row.id);
     return isValidIndexTopic(fromId) ? fromId : null;
   }
   const body = extractSection(content, row.id);
@@ -533,7 +562,7 @@ function flatRowTopic(
       if (isValidIndexTopic(slug)) return slug;
     }
   }
-  const fromId = row.id.replace(/^LESSON-\d{8}-/, "");
+  const fromId = topicSlugFromLessonId(row.id);
   return isValidIndexTopic(fromId) ? fromId : null;
 }
 
