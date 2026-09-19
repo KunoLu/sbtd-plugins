@@ -8,7 +8,7 @@
 | 设计文档 | `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` |
 | 上次同步 | 2026-09-18（上海；manuals pin 1.0.15 + lessons.ts write align #87 squash `46ac3e6`） |
 | 同步时 main | `46ac3e6`（#87 manuals pin 1.0.15 + lessons align → `46ac3e6`；#86 TODO #85 merge SHA backfill → `c914a11`；#85 archive T16 acceptance → `953109d`；#84 TODO #83 merge SHA backfill → `149f759`；#83 FU5 Round3 closeout no bump → `e6bc4c8`） |
-| 包 | `@kunolu/dsh-sbtd@0.1.0-rc.2` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
+| 包 | `@kunolu/dsh-sbtd@0.1.0-rc.3` dist-tag `next`（`latest` 仍 `0.1.0-rc.1`） |
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
 | manuals pin | `640-skills` `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183` |
@@ -27,7 +27,7 @@
 
 ## 2. 包与宿主钉现状
 
-- 插件：`@kunolu/dsh-sbtd@0.1.0-rc.2` → `next`；`latest` 仍 `0.1.0-rc.1`（保留；文档/安装只推 `next` 或显式版本）。
+- 插件：`@kunolu/dsh-sbtd@0.1.0-rc.3` → `next`；`latest` 仍 `0.1.0-rc.1`（保留；文档/安装只推 `next` 或显式版本）。
 - 宿主 peer 仍钉 `@deepseek-ai/dsh@0.1.1-rc.2`（FU5-C Round1 **Q1A** + Round2 **Q4A**：不放宽 peerRange）。REQUIRED / FU4 仍钉 `0.1.1-rc.2`（**Q5A**）。advisory tip（**Q2A**）= `0.1.5-rc.2`（registry `next`）；**禁止**升 REQUIRED / FU4 钉。Mac ask latest-line（dsh=`0.1.5-rc.1`）2026-09-14 **PASS**（**Q3C**：只覆盖该版本；把 `0.1.5-rc.2` 写入 peerRange 仍要 tip ask）。Round3 已收口：明确 **不 bump** / 不发新 RC；FU5 ✅ 收口。
 - manuals 钉 `640-skills` `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`。本 PR：pin+sync+gates + `lessons.ts` split-name/marker/ID 对齐。Freeze **Q1A** 仅 pin+sync+gates、**无 npm publish**；**Q2A** whitelist 12 skills 不变；**Q3A** 不 bump `@kunolu/dsh-sbtd@0.1.0-rc.2`；不改 peer / host compat。
 - Mac / 本机装新 RC：优先显式 `dsh plugin --profile web add @kunolu/dsh-sbtd@<version>`。`@next` 可能被 profile pnpm 锁粘到旧 RC（见 `docs/assets/dsh/ci-dsh-host-compat.md` 故障排查；#72）。同版本先 `remove` 再 `add`。
@@ -73,6 +73,7 @@
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-19 | bump `@kunolu/dsh-sbtd` `0.1.0-rc.2` → `0.1.0-rc.3`；已 `npm publish --tag next`（`next=0.1.0-rc.3`）；`latest` 仍 `0.1.0-rc.1`；peer 仍 `@deepseek-ai/dsh@0.1.1-rc.2`；本 PR **勿再 publish**；tarball sha256 `738522b61d4be80e2ac4b6bc11c373a8cfe9991a21d587255ec87c37c2611aa8` |
 | 2026-09-18 | manuals pin `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183` + `lessons.ts` split-name/marker/ID 对齐；Q1A 无 npm；Q2A whitelist 不变；Q3A 不 bump `0.1.0-rc.2`；无 peer：r4 CLEAN @ `bdbc5ee`；squash `46ac3e6` |
 | 2026-09-14 | T16 acceptance 归档 #85：`docs/acceptance.md` → `docs/assets/archive/dsh-sbtd-acceptance-t16.md`；r1 CLEAN @ `5a1354f`；squash `953109d`；无 npm；无 peer/src |
 | 2026-09-14 | FU5 Round3 收口：**不 bump**；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15`；无 peer/npm/src：r1 CLEAN @ `d84f5ad`；squash `e6bc4c8` |

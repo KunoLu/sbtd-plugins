@@ -2,7 +2,7 @@
 
 DSH 宿主上的 SBTD workflow 适配器。`apply()` 注册短中文 sbtd section、hooks、`sbtd_plan`、`sbtd_review`、`sbtd_clarify`、`sbtd_spec`、`sbtd_tickets`、`sbtd_validate`、`sbtd_bdd`、`sbtd_e2e`、`sbtd_lessons`，以及人类命令 `/sbtd`。不修改 `640-skills` 源仓；MCP 可选且缺失时降级。非目标：不执行 `trellis init`、不静默安装 app/JDK/Maestro、不改宿主钉。
 
-版本 **0.1.0-rc.2** 已发布到 dist-tag `next`（`latest` 仍为 0.1.0-rc.1）。目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
+版本 **0.1.0-rc.3** 已发布到 dist-tag `next`（`latest` 仍为 0.1.0-rc.1）。目标宿主：`@deepseek-ai/dsh@0.1.1-rc.2`。
 
 ## 安装
 

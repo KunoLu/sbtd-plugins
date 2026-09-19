@@ -26,7 +26,7 @@ function assertNoTypeArrays(schema) {
 
 test("pinned dsh@0.1.1-rc.2 Cordis register/load 接受 clarify/spec/tickets output.schema", async () => {
   const pluginPkg = readJson(join(pkgRoot, "package.json"));
-  assert.equal(pluginPkg.version, "0.1.0-rc.2");
+  assert.equal(pluginPkg.version, "0.1.0-rc.3");
   assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
 
   const dshPkgPath = requireFromPkg.resolve("@deepseek-ai/dsh/package.json");
