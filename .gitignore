@@ -110,9 +110,20 @@ tests/e2e/**/*.trace.zip
 .maestro/reports/
 
 # ---------- AI Tools ----------
-.agents/
 .worktrees/
-/AGENTS.md*
 
 # Onboard backup-then-overwrite: AGENTS.md.YYYY-MM-DD-N beside the live file
 /AGENTS.md.*
+
+/docs/handoffs
+/graft
+/.graft
+/.sbtd
+
+# ---------- SBTD ----------
+# Shared task documents stay trackable; task reports stay local at every depth.
+/ai/tasks/**/reports
+
+.impeccable/config.local.json
+
+# ---------- Graft ----------

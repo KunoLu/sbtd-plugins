@@ -1,0 +1,5 @@
+{"file": "ai/tasks/archive/2026-Q3/dsh-sbtd-fu3-multi-fact-persist/prd.md", "reason": "FU3 acceptance and Q1-Q5 locks incl Q4B re-lock"}
+{"file": "ai/tasks/archive/2026-Q3/dsh-sbtd-fu3-multi-fact-persist/design.md", "reason": "matching-set DDD-only alias and sticky merge design"}
+{"file": "docs/TODO.md", "reason": "FU3 progress row and Q4B re-lock note"}
+{"file": "docs/spec/dsh-sbtd/backend/quality-guidelines.md", "reason": "package quality guidelines for verify"}
+{"file": "docs/spec/dsh-sbtd/backend/index.md", "reason": "FU3 delivered matching-set identity + mergeGate stickiness"}

@@ -75,6 +75,8 @@ pnpm build
 pnpm test
 ```
 
+Repository maintenance uses the SBTD `v2.0.0-rc.4` project template and managed Graft block; this does not upgrade the plugins' embedded kit or published versions. Before changing a component or layer, read its guidelines under [docs/spec](docs/spec/), and consult the [lesson index](docs/lessons/index.md). Shared history is in `ai/tasks/`; unowned legacy documents are preserved under `docs/legacy-archive/`. Reports and local state remain ignored.
+
 ## License
 
 Apache-2.0.
