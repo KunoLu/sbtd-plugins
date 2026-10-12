@@ -1,0 +1,2 @@
+{"file": "docs/spec/dsh-sbtd/backend/index.md", "reason": "Host pin and package scripts; no production code in this docs task"}
+{"file": "docs/spec/dsh-sbtd/frontend/host-contract.md", "reason": "DSH plugin surface; confirm no extra host ops"}

@@ -75,6 +75,8 @@ pnpm build
 pnpm test
 ```
 
+仓库维护使用 SBTD `v2.0.0-rc.4` 项目模板及受管 Graft 块，不改变插件内嵌 kit 或已发布版本。修改组件或层之前先读 [docs/spec](docs/spec/) 对应规范，并按[lesson 索引](docs/lessons/index.md)查阅经验。共享历史位于 `ai/tasks/`，未归属具体任务的旧文档保留在 `docs/legacy-archive/`；报告与本地状态继续忽略。
+
 ## 许可证
 
 Apache-2.0.
