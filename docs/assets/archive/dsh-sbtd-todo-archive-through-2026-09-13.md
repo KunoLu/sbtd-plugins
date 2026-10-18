@@ -1,6 +1,6 @@
 # Archive — dsh-sbtd TODO through 2026-09-13
 
-Archived from `docs/TODO.md` on 2026-09-13. Historical through #72 / #73 (`1c0903b`). **Not the live queue.** Live queue: `docs/TODO.md`.
+Archived from `docs/TODO.md` on 2026-09-13. Historical through #72 / #73 (`1c0903b`). **Not the live queue.** **注（2026-10-18）：** `docs/TODO.md` 已于 2026-10-18 退役，归档至 [`docs/legacy-archive/dsh-sbtd-todo-through-2026-09-19.md`](../../legacy-archive/dsh-sbtd-todo-through-2026-09-19.md)；活进度记录于对应 PRD，如 [`docs/prd/dsh-sbtd-0.2.0-rc.1.md`](../../prd/dsh-sbtd-0.2.0-rc.1.md)。
 
 ---
 

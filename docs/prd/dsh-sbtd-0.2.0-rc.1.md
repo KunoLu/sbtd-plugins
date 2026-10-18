@@ -35,6 +35,7 @@
 - Q5 A：冻结工具名；gitnexus 改名 graft 并写迁移说明。
 - Q6 B（Reviewy 22:24 精化）：pack 后完整 A 清单。回退判据：在下限上用 `npm install` 装 dsh@0.2.0-rc.2 加本插件，报 ERESOLVE 即退回 `>=0.2.1-rc.2 <0.3.0-0`；按现有 host-compat 跑 `pnpm add`，失败才算 T0 失败，peer 警告只记录、不触发回退；跨 patch rc 的 peer 警告或 ERESOLVE 只写进 CHANGELOG 部署边界。T0 记录逐步写明所用包管理器与 strict-peer-dependencies 设置（Reviewy 评审必查）。
 - Q7 B：方案和任务表都在 docs/prd/dsh-sbtd-0.2.0-rc.1.md；docs/TODO.md 每个里程碑只加一行指针。回填规则：每个任务的 merge SHA 和 done 时间由下一个任务的 PR 回填；PR-D 合并后用一个小 docs PR 回填自己那行。
+  - 注（2026-10-18）：其中「TODO 每个里程碑加一行指针」部分已于 2026-10-18 作废——`docs/TODO.md` 当日退役，归档至 `docs/legacy-archive/dsh-sbtd-todo-through-2026-09-19.md`；此后所有进度只记录在本 PRD。回填规则中针对本 PRD 任务表的部分仍有效。
 - Q8 双语：packages/dsh-sbtd 内 CHANGELOG.md（英文）与 CHANGELOG.zh.md（中文）一一对应、最新在前、都加入 files；发版前 [Unreleased]，PR-D 改为版本+日期。
 - Q9 A：三种模式都只告警；strict 下该项标为「未证明」而非 passed，交付需用其他证据补。
 
@@ -78,7 +79,7 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 | A | manuals：白名单删 trellis-workflow、加 sbtd-task 含整个 references/；MANIFEST 逐文件 sha256；t4 字节比对覆盖 `task-data.schema.json`；PINNED_REVISION → v2.0.2 SHA `1d82494d` | 2 | in-progress | PR-A | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-a-manuals/task.md` |
 | B | 后端：sbtd-task 只读层 + workflow_mode 分层；hooks/section 模式门禁；lessons v2 落点；Graft 后端 + 六 reason | 3 | planned | PR-B | — | — | —（开发前新建 strict 任务） |
 | C | 宿主适配 + T0：V4 `kind:'dsh-sbtd'` 且识别兼容 `'plugin:dsh-sbtd'`；runPreStep 保留 `startsRequestSeries`；peer/engines.dsh 同范围；CI 两行 REQUIRED；npm ERESOLVE / pnpm add 判据 | 4 | planned | PR-C | — | — | —（开发前新建 strict 任务） |
-| D | 文档/CHANGELOG 双语 [Unreleased]：`packages/dsh-sbtd/CHANGELOG.md` + `CHANGELOG.zh.md` 一一对应、最新在前、加入 files；TODO 指针 | 5 | planned | 文档 PR（PR-C 后、PR-D 前） | — | — | —（开发前新建 strict 任务） |
+| D | 文档/CHANGELOG 双语 [Unreleased]：`packages/dsh-sbtd/CHANGELOG.md` + `CHANGELOG.zh.md` 一一对应、最新在前、加入 files | 5 | planned | 文档 PR（PR-C 后、PR-D 前） | — | — | —（开发前新建 strict 任务） |
 | E | 发版：bump `0.2.0-rc.1`、`npm publish --tag next`、双语 Release/tag 走 bilingual-release-notes | 6 | planned | PR-D | — | — | —（开发前新建 strict 任务） |
 | F | PR-D 合并后小 docs PR：回填 E 行的 merge SHA 与 done 时间 | 7 | planned | 小 docs PR | — | — | —（开发前新建 strict 任务） |
 
@@ -179,6 +180,8 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 - C. 方案和任务表都追加进 v1.2 新章；TODO 等到发版再改。
 
 推荐 A。理由：TODO 已经是进度真源，整表再放进 PRD 会有两个 writer；v1.2 是上一代设计，不应改成这份未决草案。
+
+> 注（2026-10-18）：B 中「TODO 每个里程碑只加一行指针」部分已于 2026-10-18 作废——`docs/TODO.md` 当日退役（见 §2.1 注）。
 
 ---
 

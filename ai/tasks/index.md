@@ -1,6 +1,7 @@
 # Shared tasks
 
 <!-- sbtd-task-index:start -->
+- [docs-retire-todo](docs-retire-todo/task.md)
 - [dsh-ci-compat-guides](archive/2026-Q3/dsh-ci-compat-guides/task.md)
 - [dsh-next-pitfall](archive/2026-Q3/dsh-next-pitfall/task.md)
 - [dsh-sbtd-0-2-0-rc-1-plan](dsh-sbtd-0-2-0-rc-1-plan/task.md)
