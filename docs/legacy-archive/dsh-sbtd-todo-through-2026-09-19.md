@@ -1,3 +1,5 @@
+> 已于 2026-10-18 退役（归档）。后续进度只记录在对应 PRD（如 docs/prd/dsh-sbtd-0.2.0-rc.1.md）。
+
 # dsh-sbtd / sbtd-plugins — TODO & Progress
 
 > **维护规则（强制）**：本文件是进度真源摘要。每次里程碑（合 PR、开/关任务、改计划、发 npm）后必须同步更新；优先与对应功能/chore PR 同进 `main`，否则紧随单独 docs PR。由 Lord 协调，OMP 落地代码仓改动。
@@ -12,7 +14,7 @@
 | 宿主钉（peer） | `@deepseek-ai/dsh@0.1.1-rc.2`（本文件规划行**不**改 `peerDependencies`） |
 | 上游 registry `@deepseek-ai/dsh` | `latest=0.1.5-rc.1`，`next=0.1.5-rc.2`（FU5-B 已核；advisory tip = `0.1.5-rc.2`，**不**升 REQUIRED） |
 | manuals pin | `640-skills` `1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183` |
-| 历史 P0–P3 / FU1–FU4 / T0–T16 / CI / rc.2 / @next pitfall | [`docs/assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md`](./assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md) |
+| 历史 P0–P3 / FU1–FU4 / T0–T16 / CI / rc.2 / @next pitfall | [`docs/assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md`](../assets/archive/dsh-sbtd-todo-archive-through-2026-09-13.md) |
 
 ---
 
@@ -40,20 +42,19 @@
 |---|---|---|
 | 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ✅ Round3 收口：**不 bump**；FU5 正式关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15` |
 | 2 | **640-skills** pin → **v1.0.15** | ✅ #87 → `46ac3e6`：tag `v1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`；sync+MANIFEST+t4；`lessons.ts` write align；无 npm；whitelist 不变；无 package bump；无 peer |
-| 3 | **dsh-sbtd 0.2.0-rc.1 升级**：方案与任务表见 [`docs/prd/dsh-sbtd-0.2.0-rc.1.md`](./prd/dsh-sbtd-0.2.0-rc.1.md)（不复制整表） | 🚧 PRD 撰写中 |
 
 ### FU5 — 宿主兼容调研（✅ Round3 已收口）
 
 目标：调研现有 `@kunolu/dsh-sbtd@0.1.0-rc.2` 相对宿主 `0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`（及中间 0.1.2 / 0.1.3）的 break surface。
 
-遵循 [`docs/assets/dsh/ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md)。步骤：changelog / API surface → advisory 矩阵（**同一 pack** × 候选 dsh）→ 决定 peer bump / 是否发新插件 RC。
+遵循 [`docs/assets/dsh/ci-dsh-host-compat.md`](../assets/dsh/ci-dsh-host-compat.md)。步骤：changelog / API surface → advisory 矩阵（**同一 pack** × 候选 dsh）→ 决定 peer bump / 是否发新插件 RC。
 
 **本规划行禁止立刻改 `peerDependencies`。** FU5-C Round1 已锁 Q1A：精确钉 `0.1.1-rc.2`。Round2 已锁 **Q3C / Q4A / Q5A**：不放宽 peerRange；REQUIRED/FU4 仍 `0.1.1-rc.2`；latest ask PASS 不覆盖 tip。Round3 已收口：明确 **不 bump** / 不发新 RC；FU5 ✅ 关闭；tip `0.1.5-rc.2` ask 留 optional。
 
 | 子任务 | 内容 | 状态 |
 |---|---|---|
 | FU5-A | grill / locks（调研范围、候选版本、不改 peer 的冻结） | ✅ Q1B / Q2B / Q3C / Q4A / Q5B / Q6A |
-| FU5-B | advisory 矩阵证据（same pack × 候选 dsh；不跑会因 FU4 硬钉假红的全量仓库 test 当唯一门） | ✅ 钉 + 解析格全 PASS（`0.1.2`→`0.1.2-rc.1`，`0.1.3`→`0.1.3-alpha.2` 非稳定，`0.1.5-rc.1`/`rc.2`）；见 [`ci-dsh-host-compat.md`](./assets/dsh/ci-dsh-host-compat.md) |
+| FU5-B | advisory 矩阵证据（same pack × 候选 dsh；不跑会因 FU4 硬钉假红的全量仓库 test 当唯一门） | ✅ 钉 + 解析格全 PASS（`0.1.2`→`0.1.2-rc.1`，`0.1.3`→`0.1.3-alpha.2` 非稳定，`0.1.5-rc.1`/`rc.2`）；见 [`ci-dsh-host-compat.md`](../assets/dsh/ci-dsh-host-compat.md) |
 | FU5-C | 决策：compat 不 bump vs 适配 PR + 仅 `next` 发新 RC | ✅ Round1 锁 **Q1A / Q2A**（精确钉 + advisory tip `0.1.5-rc.2`）；#76 文档收口。Mac ask **PASS** on `latest=0.1.5-rc.1` #78（2026-09-14 上海；plugin `@kunolu/dsh-sbtd@0.1.0-rc.2` 显式 add；workspace=`sbtd-plugins`；无 `sbtd_plan`；edit `packages/dsh-sbtd/src/section.ts`；`kind=ask` 含「尚未 sbtd_plan，请先调用 sbtd_plan。」）。tip `0.1.5-rc.2` 仍 tip-only、人工未跑。Round2 锁 **Q3C / Q4A / Q5A** #80 → `081866b`：peer/REQUIRED/FU4 仍精确钉 `0.1.1-rc.2`（不放宽 peerRange）；latest PASS 只覆盖 `0.1.5-rc.1`；写入 `0.1.5-rc.2` 到 peerRange 仍要 tip ask；本锁集无新插件 RC。Round3 收口 #83 → `e6bc4c8`（不 bump；FU5 ✅；tip ask optional；无 peer/npm/src） |
 
 ### 640-skills pin → v1.0.15（主序优先 / 现行主线）
