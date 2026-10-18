@@ -9,7 +9,28 @@ import { type PlanToolExec, sessionIdFromExec } from "./tools/plan.js";
 
 export const PRE_EXECUTE_EVENT = "tools/pre-execute";
 export const PRE_STEP_EVENT = "agent/pre-step";
-export const PLUGIN_NAME = "dsh-sbtd";
+
+/**
+ * V4 (session format v4) producer-owned source kind for this plugin's
+ * messages. V4 native admission refuses the retired V3 wrapper
+ * `{ kind: "plugin", plugin: "dsh-sbtd" }`; producers declare their own kind.
+ */
+export const SBTD_SOURCE_KIND = "dsh-sbtd";
+/**
+ * The V3→V4 session migration rewrites this plugin's retired V3 wrapper
+ * `{ kind: "plugin", plugin: "dsh-sbtd" }` to this kind in durable logs.
+ */
+export const LEGACY_SBTD_SOURCE_KIND = "plugin:dsh-sbtd";
+
+/**
+ * Recognize this plugin's own message source in both forms a consumer can
+ * meet: native V4 (`dsh-sbtd`) and migrated V3 history (`plugin:dsh-sbtd`).
+ * The retired `plugin` wrapper itself is never recognized.
+ */
+export function isSbtdSource(source: unknown): boolean {
+  const kind = asRecord(source)?.kind;
+  return kind === SBTD_SOURCE_KIND || kind === LEGACY_SBTD_SOURCE_KIND;
+}
 
 export type PreToolDecision =
   | { kind: "allow" }
@@ -18,7 +39,12 @@ export type PreToolDecision =
 
 export type PreStepDecision =
   | { kind: "reject" }
-  | { kind: "enter"; messages: PreStepMessage[] };
+  | {
+      kind: "enter";
+      messages: PreStepMessage[];
+      /** Start a distinct model-message series before the admitted messages. */
+      startsRequestSeries?: true;
+    };
 
 export type ToolExec = {
   name: string;
@@ -406,7 +432,7 @@ export async function runPreStep(
   }
   const modeText = `workflowMode: ${mode.mode}; workflowModeSource: ${mode.source}；${describeWorkflowMode(mode)}`;
   return {
-    kind: "enter",
+    ...decision,
     messages: [
       ...decision.messages,
       {
@@ -417,8 +443,7 @@ export async function runPreStep(
           text: `${notice}\n${modeText}${mode.note ? `\n${mode.note}` : ""}`,
         }],
         source: {
-          kind: "plugin",
-          plugin: PLUGIN_NAME,
+          kind: SBTD_SOURCE_KIND,
           form: "notice",
           summary: `${summary} ${modeText}`,
         },

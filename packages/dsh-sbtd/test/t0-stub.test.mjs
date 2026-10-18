@@ -47,7 +47,11 @@ test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   assert.doesNotMatch(readme, /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/);
   assert.doesNotMatch(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd(?!@next)/);
   assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
-  assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
+  assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], ">=0.2.0-rc.2 <0.3.0-0");
+  // 0.2.1+ hosts let engines.dsh decide alone; it must carry the same range.
+  assert.equal(pkg.engines.dsh, ">=0.2.0-rc.2 <0.3.0-0");
+  // Local build/test host fact: exact pin at the range floor (R2 Q2 A).
+  assert.equal(pkg.devDependencies["@deepseek-ai/dsh"], "0.2.0-rc.2");
   assert.deepEqual(pkg.files, ["dist/", "cordis.patch.yml", "manuals/"]);
 });
 

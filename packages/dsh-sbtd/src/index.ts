@@ -81,8 +81,11 @@ export type {
   CommandResult,
 } from "./commands/sbtd.js";
 export {
+  LEGACY_SBTD_SOURCE_KIND,
   PRE_EXECUTE_EVENT,
   PRE_STEP_EVENT,
+  SBTD_SOURCE_KIND,
+  isSbtdSource,
   registerHooks,
 } from "./hooks.js";
 export {

@@ -77,7 +77,15 @@ Feature: DSH T3 hooks 门禁
     When 宿主触发 agent/pre-step
     Then 处理器先 await next
     And 不返回 reject
-    And 注入 source.kind 为 plugin 的 notice 要求先 sbtd_plan
+    And 注入 source.kind 为 dsh-sbtd 的 notice 要求先 sbtd_plan
+    And 保留 next 决策的 startsRequestSeries
+
+  Scenario: isSbtdSource 识别 V4 kind 与迁移后的 plugin:dsh-sbtd
+    Given V4 原生消息 source.kind 为 dsh-sbtd
+    And V3 迁移历史消息 source.kind 为 plugin:dsh-sbtd
+    When 插件识别自己的消息来源
+    Then 两种形式都被识别为 dsh-sbtd 插件来源
+    And 退役的 V3 wrapper kind plugin 不被识别
 
   Scenario: 门禁按 T1 T2 session 隔离
     Given 两个不同 agent.id 的 session
