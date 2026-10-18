@@ -1,67 +1,102 @@
 {
   "source": "KunoLu/640-skills",
-  "version": "1.0.15",
-  "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183",
+  "version": "2.0.2",
+  "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
   "files": [
     {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
       "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/grill-me/SKILL.md",
       "sha256": "caaf8b8de1684f96e26b28f3c29189db5c89cce4b73e1c93d86164f66ef88637",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/grill-with-docs/SKILL.md",
       "sha256": "7de372c13488f1ee96cc11cd8907b56b6809cc93eef776eeddd37de6b6cbe3fe",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/grilling/SKILL.md",
       "sha256": "10ff989e7498b23b5acb49d5048f11dcd906757d2f79c5cdf8a00001381296f2",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/to-spec/SKILL.md",
       "sha256": "43ad9cf318e5e7d3d1fa360253a37021796dc87a0c2e595ad262661a10f85088",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/assets/external-skills/stable/skills/to-tickets/SKILL.md",
       "sha256": "5c9fba69845c2519b9b35b9af42ae5142c21f8ca15ac2123dc2722002c8058ae",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/templates/skills/book-ddd-distilled-modeling/SKILL.md",
-      "sha256": "b8006abc3f2e61c5b62ed7a1a79fad517bbcc614da8156e7157092ebdc20f62a",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sha256": "c93bc44e6005c1fc3af82c0aa23e0aff877f121a03ead74e08b1e2bc1e2e8f7e",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/templates/skills/book-ddia-data-design/SKILL.md",
-      "sha256": "87e63a9595d66343ad6e64813b701fbfea74479a7ee986230592664f289a3d2b",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sha256": "c5ef7682ef80bb65fa06e64cb428d14642c4fd9a24f0fc247544724197e85ca6",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/templates/skills/book-legacy-change-safety/SKILL.md",
-      "sha256": "f3ade56807980d58874bd92694ebd5f26df7e836ace609c65e0aaf355d08fcea",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sha256": "b10f27a3b32718bf4b84591746fe9206adf1242fed2608eb01e3f1fe30031392",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/templates/skills/book-refactoring-pass/SKILL.md",
-      "sha256": "36a255121e040b962d7019c642fdd9962979a1dd3fc600e5ce0d6cd897faad7f",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sha256": "bf220f8c85438b4b3faecddb13d95189142fe78b7c00219eae3cdefcceec8ac8",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
       "sourcePath": "sbtd-workflow-onboard/templates/skills/book-release-readiness/SKILL.md",
-      "sha256": "1c572b8c31a0411d4be956ea17fb3a8b709b2d84c66385502092a61399e58fa5",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sha256": "359da496b438652458a8ef2964f7792fa857c72817be6f7893c73259abdef8e1",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     },
     {
-      "sourcePath": "sbtd-workflow-onboard/templates/skills/trellis-workflow/SKILL.md",
-      "sha256": "252fe970283e8e934f5b24986764fe698504805be8beabedb5e2fc87ec9f98a3",
-      "sourceRevision": "bc8eec1549928fb0966254751b96b611b6334183"
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/SKILL.md",
+      "sha256": "31231f5f035a470bb478cdef8df3a7bc395d4b1fc45fe7313ff1232d1e5ec073",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/handoff.md",
+      "sha256": "c0925015eb44a412f7a6f3e321d60ddc45bfec64576e5249373324868e79d985",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/methods.md",
+      "sha256": "3ed050225ea79da299109302cb317b3872de3092793d1340319174346f02e190",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/presentation.md",
+      "sha256": "7b94d7f632ab71bd5500a538f676cd1602f050a2a3a4ae02238a25d5a92fa4b4",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/state.md",
+      "sha256": "d9a7ac589d17061bdfa12cc93cb1143e6bafb1bd548964cf19433bfacafc26d7",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/strict.md",
+      "sha256": "4e65ea7252d909e0b60f1585d51575aa949d0bbb6ab07ff07619abee0942543f",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/task-data.schema.json",
+      "sha256": "fe7ef99baab8d9da506be2c3d2d986b16958c3d09a9e04995318f2dc885a8fd6",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
+    },
+    {
+      "sourcePath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/tooling.md",
+      "sha256": "bbf5c67d20d200d5b11d57b6cd44da44a6968b3667f8f33d701447c424ed216d",
+      "sourceRevision": "1d82494d74f6df9bca7dccef2da409f87091883e"
     }
   ]
 }

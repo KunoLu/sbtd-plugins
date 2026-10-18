@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sbtd:task-data:schema:1",
+  "title": "SBTD task data contracts",
+  "$ref": "#/$defs/taskFrontmatter",
+  "$defs": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "logicalId": {
+      "type": "string",
+      "pattern": "^(?![~/])(?![A-Za-z]:)(?!.*(?:^|/)\\.{1,2}(?:/|$))[^/\\\\\u0000-\u001f\u007f-\u009f]+(?:/[^/\\\\\u0000-\u001f\u007f-\u009f]+)*(?![\\s\\S])"
+    },
+    "status": { "enum": ["planned", "in-progress", "checking", "done", "blocked", "cancelled"] },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})(?![\\s\\S])"
+    },
+    "historicalTimestamp": {
+      "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }]
+    },
+    "taskFrontmatter": {
+      "type": "object",
+      "required": ["schema_version", "id", "workflow_mode", "mode_source", "mode_note", "status", "branch", "created_at", "updated_at", "completed_at"],
+      "properties": {
+        "schema_version": { "$ref": "#/$defs/schemaVersion" },
+        "id": { "$ref": "#/$defs/logicalId" },
+        "workflow_mode": { "enum": ["default", "lite", "strict", null] },
+        "mode_source": { "enum": ["default", "user", "migration-unknown"] },
+        "mode_note": { "type": "string", "pattern": "\\S" },
+        "status": { "$ref": "#/$defs/status" },
+        "parent": { "anyOf": [{ "$ref": "#/$defs/logicalId" }, { "type": "null" }] },
+        "branch": { "type": ["string", "null"], "minLength": 1 },
+        "created_at": { "$ref": "#/$defs/historicalTimestamp" },
+        "updated_at": { "$ref": "#/$defs/historicalTimestamp" },
+        "completed_at": { "$ref": "#/$defs/historicalTimestamp" },
+        "blocked_reason": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true,
+      "not": { "required": ["blocked_from"] },
+      "allOf": [
+        {
+          "if": { "properties": { "mode_source": { "const": "migration-unknown" } }, "required": ["mode_source"] },
+          "then": { "properties": { "workflow_mode": { "type": "null" } } },
+          "else": { "properties": { "workflow_mode": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "mode_source": { "const": "default" } }, "required": ["mode_source"] },
+          "then": { "properties": { "workflow_mode": { "const": "default" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "blocked" } }, "required": ["status"] },
+          "then": {
+            "required": ["blocked_reason"],
+            "properties": { "blocked_reason": { "type": "string", "pattern": "\\S" } }
+          },
+          "else": { "properties": { "blocked_reason": { "enum": [null, ""] } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "done" } }, "required": ["status"] },
+          "else": { "properties": { "completed_at": { "type": "null" } } }
+        }
+      ]
+    },
+    "activeTask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "task_id", "task_path"],
+      "properties": {
+        "schema_version": { "$ref": "#/$defs/schemaVersion" },
+        "task_id": { "$ref": "#/$defs/logicalId" },
+        "task_path": {
+          "allOf": [
+            { "$ref": "#/$defs/logicalId" },
+            { "pattern": "^(?:\\.sbtd/tasks|ai/tasks)/.+/task\\.md(?![\\s\\S])" }
+          ]
+        }
+      }
+    },
+    "stateEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "from", "to", "reason", "evidence"],
+      "properties": {
+        "at": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "const": "unknown" }] },
+        "from": { "anyOf": [{ "$ref": "#/$defs/status" }, { "const": "unknown" }] },
+        "to": { "$ref": "#/$defs/status" },
+        "reason": { "type": "string", "pattern": "\\S" },
+        "evidence": { "type": "string", "pattern": "\\S" }
+      },
+      "oneOf": [
+        { "properties": { "from": { "const": "planned" }, "to": { "enum": ["planned", "in-progress", "blocked", "cancelled"] } } },
+        { "properties": { "from": { "const": "in-progress" }, "to": { "enum": ["in-progress", "checking", "blocked", "cancelled"] } } },
+        { "properties": { "from": { "const": "checking" }, "to": { "enum": ["checking", "in-progress", "done", "blocked", "cancelled"] } } },
+        { "properties": { "from": { "const": "done" }, "to": { "enum": ["done", "planned"] } } },
+        { "properties": { "from": { "const": "blocked" }, "to": { "enum": ["blocked", "planned", "in-progress", "checking", "cancelled"] } } },
+        { "properties": { "from": { "const": "cancelled" }, "to": { "enum": ["cancelled", "planned"] } } },
+        { "properties": { "from": { "const": "unknown" }, "to": { "enum": ["done", "cancelled", "blocked"] } } }
+      ]
+    },
+    "blockEntryEvent": {
+      "allOf": [
+        { "$ref": "#/$defs/stateEvent" },
+        {
+          "properties": {
+            "at": { "$ref": "#/$defs/timestamp" },
+            "from": { "enum": ["planned", "in-progress", "checking"] },
+            "to": { "const": "blocked" }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,17 +1,17 @@
 ---
 name: book-ddia-data-design
-description: Guides data-intensive design checks for consistency, reliability, schema evolution, and data flow risks. Mandatory before design stabilizes or implementation begins when changing persisted/shared data, schemas, migrations, shared/persistent/cross-request/cross-process caches, async or cross-service flows, data ownership, or recovery; otherwise use on demand.
+description: Guides data-intensive design checks for consistency, reliability, schema evolution, and data flow risks. In strict tasks, mandatory before design stabilizes or implementation begins when changing persisted/shared data, schemas, migrations, shared/persistent/cross-request/cross-process caches, async or cross-service flows, data ownership, or recovery; in default/lite tasks, use on demand when those risks or explicit delivery requirements are present.
 ---
 
 # Book DDIA Data Design
 
 Use this Skill when a change can fail because of data semantics, distributed behavior, or operational reality rather than ordinary code structure.
 
-It is derived from the `mini` rule style of `agent-rules-books` and should complement project architecture, Trellis design, GitNexus impact analysis, tests, and production validation.
+It is derived from the `mini` rule style of `agent-rules-books` and should complement project architecture, task design, source/LSP/contract impact analysis, tests, and production validation.
 
-## Mandatory Development Gate
+## Strict Development Gate
 
-Run this Skill before design artifacts become stable or implementation begins when a development task changes any of the following:
+In a strict task, run this Skill before design artifacts become stable or implementation begins when the task changes any of the following:
 
 - Persisted or shared data, databases, schemas, or migrations.
 - shared, persistent, cross-request, or cross-process caches; queues, events, streams, jobs, ETL, or analytics pipelines.
@@ -39,7 +39,7 @@ Required tests: ...
 
 ## When To Use
 
-- Mandatory: every development task matching a persisted/shared-data, shared-cache, async-flow, cross-service-flow, ownership, migration, or recovery trigger above.
+- Strict: every development task matching a persisted/shared-data, shared-cache, async-flow, cross-service-flow, ownership, migration, or recovery trigger above. In default/lite, use this Skill when those risks, project rules, or explicit delivery requirements apply.
 - A change affects databases, schemas, migrations, shared / persistent / cross-request / cross-process caches, queues, streams, jobs, ETL, analytics, or cross-service APIs.
 - The system must handle duplicate messages, retries, partial failure, reordering, eventual consistency, or replay.
 - A feature changes data ownership, source of truth, transactional boundaries, or read/write paths.
@@ -59,7 +59,7 @@ When no mandatory trigger matches, do not use this Skill for purely local UI wor
 
 ## Output
 
-Always emit the visible `DDIA Data Design Review` for a mandatory gate. For Trellis tasks, also write concise design/check notes:
+Always emit the visible `DDIA Data Design Review` for a strict gate. For task-level records, also write concise design/check notes:
 
 - Data owner and source of truth.
 - Consistency model.
@@ -67,7 +67,7 @@ Always emit the visible `DDIA Data Design Review` for a mandatory gate. For Trel
 - Migration/backfill/rollback plan.
 - Required tests and validation.
 
-Promote only long-lived data architecture rules to `.trellis/spec`.
+Promote only long-lived data architecture rules to `docs/spec`.
 
 ## Guardrails
 

@@ -54,7 +54,7 @@ await sbtd_review({
 
 ## manuals
 
-`manuals/` 是从 `KunoLu/640-skills` v1.0.15（sourceRevision `bc8eec1549928fb0966254751b96b611b6334183`）只读同步的 skill 正文。每个 skill 只拷贝 `SKILL.md` 与该 skill 自己的 `references/`。不要手改 manuals 正文。
+`manuals/` 是从 `KunoLu/640-skills` v2.0.2（sourceRevision `1d82494d74f6df9bca7dccef2da409f87091883e`）只读同步的 skill 正文。每个 skill 只拷贝 `SKILL.md` 与该 skill 自己的 `references/`。不要手改 manuals 正文。
 
 重新同步：给本地 SOURCE 目录，或省略参数让脚本 clone 到钉死 SHA。
 

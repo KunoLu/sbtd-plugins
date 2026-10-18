@@ -1,6 +1,6 @@
 # Independent dsh manuals pin gate (not omp-*).
 # MANIFEST SHA + scripts/sync-manuals.sh must fail red.
-# Pin is 640-skills 1.0.15 / bc8eec1549928fb0966254751b96b611b6334183
+# Pin is 640-skills 2.0.2 / 1d82494d74f6df9bca7dccef2da409f87091883e
 # (not a local 640-skills tip). Does not install @deepseek-ai/dsh.
 name: dsh-manuals-pin
 
@@ -45,8 +45,8 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          pin_rev = "bc8eec1549928fb0966254751b96b611b6334183"
-          pin_ver = "1.0.15"
+          pin_rev = "1d82494d74f6df9bca7dccef2da409f87091883e"
+          pin_ver = "2.0.2"
           manifest = json.loads(Path("packages/dsh-sbtd/manuals/MANIFEST.json").read_text(encoding="utf-8"))
           script = Path("packages/dsh-sbtd/scripts/sync-manuals.sh").read_text(encoding="utf-8")
           assert manifest["source"] == "KunoLu/640-skills", manifest["source"]
@@ -63,7 +63,7 @@ jobs:
       - name: sync-manuals.sh against cloned pin (fail red)
         run: |
           set -euo pipefail
-          pin="bc8eec1549928fb0966254751b96b611b6334183"
+          pin="1d82494d74f6df9bca7dccef2da409f87091883e"
           clone="${RUNNER_TEMP}/640-skills"
           git clone --filter=blob:none --no-checkout https://github.com/KunoLu/640-skills.git "${clone}"
           git -C "${clone}" fetch --depth=1 origin "${pin}"

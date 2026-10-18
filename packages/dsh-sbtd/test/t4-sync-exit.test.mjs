@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 const fixtures = join(pkgRoot, "test", "fixtures", "sync-manuals");
-const PIN = "bc8eec1549928fb0966254751b96b611b6334183";
+const PIN = "1d82494d74f6df9bca7dccef2da409f87091883e";
 function whitelistFromScript(scriptPath) {
   const body = readFileSync(scriptPath, "utf8");
   const match = body.match(/^WHITELIST=\([\s\S]*?^\)/m);
@@ -38,7 +38,7 @@ test("sync-manuals exits non-zero on missing source or SHA mismatch", () => {
   const mismatch = spawnSync("bash", [script, repoRoot], { encoding: "utf8" });
   assert.notEqual(mismatch.status, 0);
   assert.match(mismatch.stderr, /SHA mismatch: got /);
-  assert.match(mismatch.stderr, /expected bc8eec1549928fb0966254751b96b611b6334183/);
+  assert.match(mismatch.stderr, /expected 1d82494d74f6df9bca7dccef2da409f87091883e/);
 });
 
 function git(cwd, args) {
@@ -54,7 +54,7 @@ function layoutSkills(sourceRoot, extraRel, extraSrc) {
   const stub = join(fixtures, "SKILL.md");
   for (const id of WHITELIST) {
     const dir =
-      id.startsWith("book-") || id === "trellis-workflow"
+      id.startsWith("book-") || id === "sbtd-task"
         ? join(sourceRoot, "sbtd-workflow-onboard", "templates", "skills", id)
         : join(
             sourceRoot,
@@ -149,39 +149,45 @@ test("sync-manuals exits non-zero on checksum-fail from in-repo fixture", (t) =>
   }
 });
 
-test("sync-manuals copies fixture blobs with and without trailing newline", (t) => {
+test("sync-manuals preserves SKILL.md and non-Markdown schema blob bytes", (t) => {
   const nonewline = join(fixtures, "SKILL.nonewline.md");
-  const source = initSourceRepo(t, "ok-bytes", undefined, undefined, (root) => {
-    const trellis = join(
-      root,
-      "sbtd-workflow-onboard",
-      "templates",
-      "skills",
-      "trellis-workflow",
-      "SKILL.md",
-    );
-    cpSync(nonewline, trellis);
-  });
+  const schemaPath = "sbtd-workflow-onboard/templates/skills/sbtd-task/references/task-data.schema.json";
+  const source = initSourceRepo(
+    t,
+    "ok-bytes",
+    schemaPath,
+    join(pkgRoot, "manuals", "sbtd-task", "references", "task-data.schema.json"),
+    (root) => {
+      const sbtdTask = join(
+        root,
+        "sbtd-workflow-onboard",
+        "templates",
+        "skills",
+        "sbtd-task",
+        "SKILL.md",
+      );
+      cpSync(nonewline, sbtdTask);
+    },
+  );
   const pkg = isolatedPkg(t, source.sha);
   try {
     const result = spawnSync("bash", [pkg.script, source.root], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
-    const destTrellis = readFileSync(join(pkg.root, "manuals", "trellis-workflow", "SKILL.md"));
+    const destSbtdTask = readFileSync(join(pkg.root, "manuals", "sbtd-task", "SKILL.md"));
     const destBook = readFileSync(join(pkg.root, "manuals", "book-ddd-distilled-modeling", "SKILL.md"));
-    assert.notEqual(destTrellis[destTrellis.length - 1], 0x0a);
+    assert.notEqual(destSbtdTask[destSbtdTask.length - 1], 0x0a);
     assert.equal(destBook[destBook.length - 1], 0x0a);
-    const blob = spawnSync(
-      "git",
-      [
+    for (const rel of ["SKILL.md", "references/task-data.schema.json"]) {
+      const blob = spawnSync("git", [
         "-C",
         source.root,
         "cat-file",
         "blob",
-        `${source.sha}:sbtd-workflow-onboard/templates/skills/trellis-workflow/SKILL.md`,
-      ],
-    );
-    assert.equal(blob.status, 0);
-    assert.deepEqual(destTrellis, blob.stdout);
+        `${source.sha}:sbtd-workflow-onboard/templates/skills/sbtd-task/${rel}`,
+      ]);
+      assert.equal(blob.status, 0, blob.stderr.toString());
+      assert.deepEqual(readFileSync(join(pkg.root, "manuals", "sbtd-task", rel)), blob.stdout);
+    }
     assert.equal(source.root.includes("/tmp/640-skills"), false);
   } finally {
     rmSync(source.root, { recursive: true, force: true });
