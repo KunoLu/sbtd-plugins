@@ -83,6 +83,8 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 | E | 发版：bump `0.2.0-rc.1`、`npm publish --tag next`、双语 Release/tag 走 bilingual-release-notes | 6 | in-progress | 发版 PR（分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-e-release`） | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-e-release/task.md` |
 | F | PR-D 合并后小 docs PR：回填 E 行的 merge SHA 与 done 时间 | 7 | planned | 小 docs PR | — | — | —（开发前新建 strict 任务） |
 
+> 注（2026-10-19，行 E）：行 E 拆为两步。第一步为 release bump PR（分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-e-release`）：仅 bump `packages/dsh-sbtd` version 至 `0.2.0-rc.1`、双语 CHANGELOG 打 `## [0.2.0-rc.1] - 2026-10-19` 戳、更新钉版测试断言；**不** publish、不打 tag、不建 Release，本行暂无 publish 证据。第二步在该 PR squash-merge 且评审 CLEAN 后由后续任务执行：`npm publish --tag next`（`latest` 不动）+ 按 `bilingual-release-notes` 做双语 Release/annotated tag（prerelease），其 publish 证据再回填本行。
+
 ## 4. 验收要点
 
 - **T0 清单**（引用锁定，不复制）：R1 Q6 B 精化（pack 后完整 A 清单；npm 下限 ERESOLVE 退回 range；pnpm add 失败才算 T0 失败；peer 警告只记 CHANGELOG 部署边界；记录包管理器与 strict-peer-dependencies）+ R2 Q1 A（两行矩阵，双失败不发）+ R3 Q3 A（`dsh-host-compat.yml` unit-pack 两行 REQUIRED、workflow_dispatch、红即停）。

@@ -72,7 +72,9 @@ test("README 声明 0.1.0-rc.3 已发布到 next，latest 仍为 0.1.0-rc.1", ()
   assert.doesNotMatch(readme, /尚未发布到 npm/);
   assert.doesNotMatch(readme, /复制粘贴.*会失败/);
   assert.equal(pkg.private, false);
-  assert.equal(pkg.version, "0.1.0-rc.3");
+  // Pending release version; README above describes current npm dist-tags
+  // (next=0.1.0-rc.3) until the 0.2.0-rc.1 publish lands.
+  assert.equal(pkg.version, "0.2.0-rc.1");
   assert.ok(pkg.keywords.includes("dsh-plugin"));
 });
 

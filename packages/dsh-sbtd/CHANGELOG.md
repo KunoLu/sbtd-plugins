@@ -4,7 +4,7 @@ All notable changes to `@kunolu/dsh-sbtd` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); newest
 first. Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
-## [Unreleased]
+## [0.2.0-rc.1] - 2026-10-19
 
 ### Added
 

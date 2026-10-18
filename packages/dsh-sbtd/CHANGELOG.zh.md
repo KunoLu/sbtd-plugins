@@ -4,7 +4,7 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，最新在前。
 英文对照：[CHANGELOG.md](CHANGELOG.md)。
 
-## [Unreleased]
+## [0.2.0-rc.1] - 2026-10-19
 
 ### Added（新增）
 
