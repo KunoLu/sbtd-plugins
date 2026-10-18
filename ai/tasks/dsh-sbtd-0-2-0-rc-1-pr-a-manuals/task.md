@@ -7,8 +7,8 @@ mode_note: 用户要求每个 task 都用 strict
 status: "done"
 branch: feat/dsh-sbtd-0.2.0-rc.1-pr-a-manuals
 created_at: '2026-10-18T09:11:53+08:00'
-updated_at: "2026-10-18T09:47:25.136691+08:00"
-completed_at: "2026-10-18T09:47:25.136691+08:00"
+updated_at: "2026-10-18T10:07:19+08:00"
+completed_at: "2026-10-18T10:07:19+08:00"
 ---
 
 # PR-A manuals：钉 640-skills v2.0.2 + 白名单换 sbtd-task
@@ -77,6 +77,13 @@ completed_at: "2026-10-18T09:47:25.136691+08:00"
 
 - 复跑计数：`node --test test/t4-manuals.test.mjs test/t4-sync-exit.test.mjs test/t5-review.test.mjs test/t6-clarify.test.mjs test/t7-trellis.test.mjs` = 74 passed / 0 failed / 0 skipped，退出 0（raw `reports/t4-t7-focused-20261018-0944.txt` + 同 stem 中文 `.md`）；`cd packages/dsh-sbtd && npm test` = 342 passed / 0 failed / 0 skipped，退出 0（raw `reports/package-full-20261018-0944.txt` + 同 stem 中文 `.md`）。本轮无 src/测试代码改动，仅文档与 task.md。
 
+### Reviewy r1 pin 修复证据（2026-10-18）
+
+- 问题：`.github/workflows/dsh-manuals-pin.yml` 仍钉旧 640-skills 1.0.15 / `bc8eec1549928fb0966254751b96b611b6334183`，与已同步至 v2.0.2 的 MANIFEST 冲突，CI 报 `AssertionError: 2.0.2`。
+- 修复：同一文件三处更新——line 3 注释、line 48–49 `pin_rev` / `pin_ver`、line 66 clone `pin=`，统一为 `2.0.2` / `1d82494d74f6df9bca7dccef2da409f87091883e`；与 `manuals/MANIFEST.json`、`scripts/sync-manuals.sh`（PINNED_REVISION/PINNED_VERSION）、两个 t4 测试的 PIN 一致。
+- 遗漏排查：`rg -n "bc8eec15|1\.0\.15" .github packages/dsh-sbtd` 修复后无命中；历史命中无遗留（本轮范围内 docs 不在该两条路径下）。
+- 验证：`python3 -c 'import yaml,sys;yaml.safe_load(open(sys.argv[1]))' .github/workflows/dsh-manuals-pin.yml` 退出 0；`cd packages/dsh-sbtd && npm test` = 342 passed / 0 failed / 0 skipped，退出 0。未 commit/push，本地 CI 等价步骤（YAML + npm test）通过不代表宿主 CI 已绿。
+
 ## 状态事件
 
 | at | from | to | reason | evidence |
@@ -90,3 +97,6 @@ completed_at: "2026-10-18T09:47:25.136691+08:00"
 | 2026-10-18T09:47:24.733238+08:00 | planned | in-progress | 执行跟进项：恢复 TODO 至 origin/main、task.md 范围/证据修订、逐条引用决定表、测试复跑 | git checkout origin/main -- docs/TODO.md；diff 为空 |
 | 2026-10-18T09:47:24.935336+08:00 | in-progress | checking | 跟进修订完成，复跑验证完成，进入验收 | t4/t5/t6/t7 74 passed（reports/t4-t7-focused-20261018-0944.txt）；npm test 342 passed（reports/package-full-20261018-0944.txt） |
 | 2026-10-18T09:47:25.136691+08:00 | checking | done | 跟进三项决策全部落实；仍仅本地就绪，不代表合并或发布 | TODO 与 origin/main 一致；t4 schema 字节比对引用确认（t4-sync-exit.test.mjs:152/180-189）；74+342 全绿；无 commit/push |
+| 2026-10-18T10:04:19+08:00 | done | in-progress | Reviewy r1 blocking：dsh-manuals-pin.yml 仍钉旧 pin 1.0.15/bc8eec15…，CI AssertionError: 2.0.2；用户指示修复 | Reviewy r1 反馈；用户消息 2026-10-18 |
+| 2026-10-18T10:06:19+08:00 | in-progress | checking | workflow 三处 pin 统一更新至 2.0.2/1d82494d…；rg 确认 CI/package 范围无其他 live 旧 pin 命中 | dsh-manuals-pin.yml:3,48-49,66；rg -n "bc8eec15\|1\.0\.15" .github packages/dsh-sbtd 无命中 |
+| 2026-10-18T10:07:19+08:00 | checking | done | Reviewy r1 修复验收完成；本地验证全绿，仍不代表宿主 CI 或合并/发布 | YAML safe_load 退出 0；npm test 342 passed/0 failed；无 commit/push |
