@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-1-pr-c-host
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求每个 task 都用 strict
-status: "checking"
+status: "done"
 branch: feat/dsh-sbtd-0.2.0-rc.1-pr-c-host
 created_at: '2026-10-18T20:35:53+08:00'
-updated_at: '2026-10-19T01:37:49+08:00'
-completed_at: null
+updated_at: '2026-10-19T02:07:27+08:00'
+completed_at: '2026-10-19T02:07:27+08:00'
 ---
 
 # PR-C 宿主适配 + T0
@@ -88,3 +88,4 @@ omp 正在实现。范围见 PRD 行 C。
 |---|---|---|---|---|
 | 2026-10-18T20:35:53+08:00 | planned | in-progress | PR-C 开发开始（首个 commit 回填 PRD 行 B） | 7b5ba89 |
 | 2026-10-19T01:37:49+08:00 | in-progress | checking | 实现+T0+门禁完成，进入交付（commit/push/PR） | 本文件「T0 记录」「验证」节 |
+| 2026-10-19T02:07:27+08:00 | checking | done | PR-C 已开（#97），验收项齐：实现+T0 双行绿+npm 下限无 ERESOLVE+335/335+门禁全 passed | https://github.com/KunoLu/sbtd-plugins/pull/97；tip 737d4933e73d3cb46a95e9612f4e6f9db5fda577 |
