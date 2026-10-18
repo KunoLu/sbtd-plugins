@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-1-prd-f-backfill
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求每个 task 都用 strict
-status: "checking"
+status: "done"
 branch: docs/dsh-sbtd-0.2.0-rc.1-prd-f-backfill
 created_at: '2026-10-19T04:46:30+08:00'
-updated_at: '2026-10-19T04:52:00+08:00'
-completed_at: null
+updated_at: '2026-10-19T04:53:00+08:00'
+completed_at: '2026-10-19T04:53:00+08:00'
 ---
 
 # PR-F：PRD 行 E 回填小 docs PR（PRD 行 F）
@@ -47,3 +47,4 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-19T04:46:30+08:00 | planned | in-progress | 任务启动（小 docs PR 回填 PRD 行 E） | 分支 docs/dsh-sbtd-0.2.0-rc.1-prd-f-backfill @ 1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831 |
 | 2026-10-19T04:52:00+08:00 | in-progress | checking | 行 E 回填 + publish 证据 + README 版本提及完成，335/335 绿 | gh pr view 99 / npm view 实测核对；测试输出 pass 335 / fail 0 |
+| 2026-10-19T04:53:00+08:00 | checking | done | 验收（push + 开 PR）达成 | PR #100 https://github.com/KunoLu/sbtd-plugins/pull/100 |
