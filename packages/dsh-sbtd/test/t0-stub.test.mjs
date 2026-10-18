@@ -61,19 +61,17 @@ test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   ]);
 });
 
-test("README 声明 0.1.0-rc.3 已发布到 next，latest 仍为 0.1.0-rc.1", () => {
+test("README 声明 0.2.0-rc.1 已发布到 next，latest 仍为 0.1.0-rc.1", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 
-  assert.match(readme, /0\.1\.0-rc\.3/);
+  assert.match(readme, /0\.2\.0-rc\.1/);
   assert.match(readme, /已发布到 dist-tag `next`/);
   assert.match(readme, /`latest` 仍为 0\.1\.0-rc\.1/);
   assert.doesNotMatch(readme, /待发布/);
   assert.doesNotMatch(readme, /尚未发布到 npm/);
   assert.doesNotMatch(readme, /复制粘贴.*会失败/);
   assert.equal(pkg.private, false);
-  // Pending release version; README above describes current npm dist-tags
-  // (next=0.1.0-rc.3) until the 0.2.0-rc.1 publish lands.
   assert.equal(pkg.version, "0.2.0-rc.1");
   assert.ok(pkg.keywords.includes("dsh-plugin"));
 });
