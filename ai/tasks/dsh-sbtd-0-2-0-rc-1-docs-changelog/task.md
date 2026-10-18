@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-1-docs-changelog
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求每个 task 都用 strict
-status: "in-progress"
+status: "done"
 branch: feat/dsh-sbtd-0.2.0-rc.1-docs-changelog
 created_at: '2026-10-19T03:35:53+08:00'
-updated_at: '2026-10-19T03:35:53+08:00'
-completed_at: null
+updated_at: '2026-10-19T04:07:33+08:00'
+completed_at: '2026-10-19T04:07:33+08:00'
 ---
 
 # PR-D 前置：文档/CHANGELOG 双语（PRD 行 D）
@@ -63,3 +63,5 @@ omp 正在实现。范围见 PRD `docs/prd/dsh-sbtd-0.2.0-rc.1.md` 行 D。本�
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 | 2026-10-19T03:35:53+08:00 | planned | in-progress | 任务启动（首个 commit 回填 PRD 行 C） | 50f1b8b |
+| 2026-10-19T03:55:00+08:00 | in-progress | checking | 双语 CHANGELOG + files 白名单完成，评审修正（删未实现的 graft 工具名）后 amend | c5117b0 |
+| 2026-10-19T04:07:33+08:00 | checking | done | PR 已开（#98）：pack dry-run 含双 CHANGELOG、335/335 绿、未 bump/publish/tag | https://github.com/KunoLu/sbtd-plugins/pull/98；tip c5117b019bd08785e376c4683d542a76cb7864d0 |
