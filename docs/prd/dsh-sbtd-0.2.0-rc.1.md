@@ -74,7 +74,7 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 | 序号 | 任务 | 优先级 | 状态 | PR | merge SHA | done 时间 | strict 任务记录路径 |
 |---|---|---|---|---|---|---|---|
-| 0 | PRD 本文档 | 1 | in-progress | 本 PR（docs/dsh-sbtd-0.2.0-rc.1-prd） | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` |
+| 0 | PRD 本文档 | 1 | in-progress | [#93](https://github.com/KunoLu/sbtd-plugins/pull/93) | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` |
 | A | manuals：白名单删 trellis-workflow、加 sbtd-task 含整个 references/；MANIFEST 逐文件 sha256；t4 字节比对覆盖 `task-data.schema.json`；PINNED_REVISION → v2.0.2 SHA `1d82494d` | 2 | planned | PR-A | — | — | —（开发前新建 strict 任务） |
 | B | 后端：sbtd-task 只读层 + workflow_mode 分层；hooks/section 模式门禁；lessons v2 落点；Graft 后端 + 六 reason | 3 | planned | PR-B | — | — | —（开发前新建 strict 任务） |
 | C | 宿主适配 + T0：V4 `kind:'dsh-sbtd'` 且识别兼容 `'plugin:dsh-sbtd'`；runPreStep 保留 `startsRequestSeries`；peer/engines.dsh 同范围；CI 两行 REQUIRED；npm ERESOLVE / pnpm add 判据 | 4 | planned | PR-C | — | — | —（开发前新建 strict 任务） |
@@ -104,7 +104,6 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 # Grill Round 1 — dsh-sbtd 0.2.0-rc.1
 
-未选定答案，等待群投票。已锁定决策不重问。完整 grill 未结束，所以还没跑 DDD Boundary Review，本轮也不改 `docs/CONTEXT.md`。
 
 术语冲突（不单独成题，由 Q4 决定）：`docs/CONTEXT.md` 的 Runtime Mode 是 `enforced|advisory`（Avoid: strict mode），Policy Profile 是 `strict|relaxed`。本轮的 `strict|default|lite` 是 sbtd-task 的 workflow_mode，插件源码里没有这个字段。
 
@@ -210,7 +209,6 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 # Grill Round 2 — dsh-sbtd 0.2.0-rc.1
 
-未选定答案，等待群投票。输入：Round 1 锁定（2026-10-17 22:19，Q1–Q9 采纳 Reviewy 版本）。已锁定不重问。
 
 ---
 
@@ -278,7 +276,6 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 # Grill Round 3 — dsh-sbtd 0.2.0-rc.1
 
-未选定答案，等待群投票。输入：Round 1+2 全部锁定（采纳 Reviewy 版本）。已锁定不重问。
 
 ---
 
