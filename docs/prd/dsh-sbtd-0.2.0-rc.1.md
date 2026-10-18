@@ -80,10 +80,12 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 | B | 后端：sbtd-task 只读层 + workflow_mode 分层；hooks/section 模式门禁；lessons v2 落点；Graft 后端 + 六 reason | 3 | done | [#96](https://github.com/KunoLu/sbtd-plugins/pull/96) | `609766b1d911f1a4597e5ee7117877d2238a548f` | 2026-10-18T20:35:02+08:00 | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-b-backend/task.md` |
 | C | 宿主适配 + T0：V4 `kind:'dsh-sbtd'` 且识别兼容 `'plugin:dsh-sbtd'`；runPreStep 保留 `startsRequestSeries`；peer/engines.dsh 同范围；CI 两行 REQUIRED；npm ERESOLVE / pnpm add 判据 | 4 | done | [#97](https://github.com/KunoLu/sbtd-plugins/pull/97) | `155982bf1992463556b06126b74aa275fd6839f9` | 2026-10-19T03:17:27+08:00 | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-c-host/task.md` |
 | D | 文档/CHANGELOG 双语 [Unreleased]：`packages/dsh-sbtd/CHANGELOG.md` + `CHANGELOG.zh.md` 一一对应、最新在前、加入 files | 5 | done | [#98](https://github.com/KunoLu/sbtd-plugins/pull/98) | `73f0ca525bf73577560b6ce86d9e7a43ccb94517` | 2026-10-19T04:11:26+08:00 | `ai/tasks/dsh-sbtd-0-2-0-rc-1-docs-changelog/task.md` |
-| E | 发版：bump `0.2.0-rc.1`、`npm publish --tag next`、双语 Release/tag 走 bilingual-release-notes | 6 | in-progress | 发版 PR（分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-e-release`） | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-e-release/task.md` |
-| F | PR-D 合并后小 docs PR：回填 E 行的 merge SHA 与 done 时间 | 7 | planned | 小 docs PR | — | — | —（开发前新建 strict 任务） |
+| E | 发版：bump `0.2.0-rc.1`、`npm publish --tag next`、双语 Release/tag 走 bilingual-release-notes | 6 | done | [#99](https://github.com/KunoLu/sbtd-plugins/pull/99) | `1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831` | 2026-10-19T04:39:45+08:00（以 merge commit 时间记，非 API merged_at） | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-e-release/task.md` |
+| F | PR-D 合并后小 docs PR：回填 E 行的 merge SHA 与 done 时间 | 7 | in-progress | [#100](https://github.com/KunoLu/sbtd-plugins/pull/100) | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-prd-f-backfill/task.md` |
 
 > 注（2026-10-19，行 E）：行 E 拆为两步。第一步为 release bump PR（分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-e-release`）：仅 bump `packages/dsh-sbtd` version 至 `0.2.0-rc.1`、双语 CHANGELOG 打 `## [0.2.0-rc.1] - 2026-10-19` 戳、更新钉版测试断言；**不** publish、不打 tag、不建 Release，本行暂无 publish 证据。第二步在该 PR squash-merge 且评审 CLEAN 后由后续任务执行：`npm publish --tag next`（`latest` 不动）+ 按 `bilingual-release-notes` 做双语 Release/annotated tag（prerelease），其 publish 证据再回填本行。
+
+> 注（2026-10-19，行 E publish 证据，由行 F 回填）：第二步已执行。`npm publish --tag next` → `@kunolu/dsh-sbtd@0.2.0-rc.1`，registry shasum `0b4f3ef93703963757cd8cb991a65bb1d0cd35e6`；dist-tags `next=0.2.0-rc.1`，`latest` 仍为 `0.1.0-rc.1`（`npm view` 实测核对）。annotated tag + GitHub prerelease：`dsh-sbtd-v0.2.0-rc.1`（https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.1）。
 
 ## 4. 验收要点
 
