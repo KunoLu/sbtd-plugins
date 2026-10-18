@@ -52,7 +52,13 @@ test("README 钉 0.1.1-rc.2 并说明 @next 安装命令", () => {
   assert.equal(pkg.engines.dsh, ">=0.2.0-rc.2 <0.3.0-0");
   // Local build/test host fact: exact pin at the range floor (R2 Q2 A).
   assert.equal(pkg.devDependencies["@deepseek-ai/dsh"], "0.2.0-rc.2");
-  assert.deepEqual(pkg.files, ["dist/", "cordis.patch.yml", "manuals/"]);
+  assert.deepEqual(pkg.files, [
+    "dist/",
+    "cordis.patch.yml",
+    "manuals/",
+    "CHANGELOG.md",
+    "CHANGELOG.zh.md",
+  ]);
 });
 
 test("README 声明 0.1.0-rc.3 已发布到 next，latest 仍为 0.1.0-rc.1", () => {
