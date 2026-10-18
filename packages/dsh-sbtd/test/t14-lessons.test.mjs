@@ -11,7 +11,6 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { writeArtifact } from "../dist/backends/trellis.js";
 import { apply, inject, name, SBTD_LESSONS_TOOL_NAME } from "../dist/index.js";
 import {
   createLessonsTool,
@@ -41,15 +40,70 @@ function loadPlugin(host = {}) {
   return { tools };
 }
 
-function trellisFixture(root) {
-  mkdirSync(join(root, ".trellis"), { recursive: true });
-  writeFileSync(join(root, ".trellis", "workflow.md"), "# workflow\n", "utf8");
+/** Identity is host-planted .sbtd/developer (name=<name>); the plugin never writes it. */
+function plantDeveloper(root, name = "test") {
+  mkdirSync(join(root, ".sbtd"), { recursive: true });
+  writeFileSync(join(root, ".sbtd", "developer"), `name=${name}\n`, "utf8");
 }
 
-function plantDeveloper(root, name = "test") {
-  mkdirSync(join(root, ".trellis"), { recursive: true });
-  writeFileSync(join(root, ".trellis", ".developer"), `name=${name}\n`, "utf8");
+function layeredIndexPath(root) {
+  return join(root, "docs", "lessons", "index.md");
 }
+
+function layeredTopicPath(root, topic) {
+  return join(root, "docs", "lessons", "topics", `${topic}.md`);
+}
+
+/** Existing layered store (docs/lessons/{index.md,topics/}) with optional content. */
+function plantLayeredStore(
+  root,
+  indexContent = `# Lessons index
+
+| id | tags | read_when | summary | detail |
+|---|---|---|---|---|
+`,
+) {
+  mkdirSync(join(root, "docs", "lessons", "topics"), { recursive: true });
+  writeFileSync(layeredIndexPath(root), indexContent, "utf8");
+}
+
+/** Read-only legacy flat store (v1 artifact): docs/lessons.md. */
+function plantLegacyFlat(root, content) {
+  mkdirSync(join(root, "docs"), { recursive: true });
+  writeFileSync(join(root, "docs", "lessons.md"), content, "utf8");
+}
+
+/** Read-only legacy Trellis tree: .trellis/lessons/{index.md,topics/}. */
+function plantLegacyTrellis(root, indexContent, topicContent) {
+  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
+  writeFileSync(
+    join(root, ".trellis", "lessons", "index.md"),
+    indexContent,
+    "utf8",
+  );
+  if (topicContent != null) {
+    writeFileSync(
+      join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+      topicContent,
+      "utf8",
+    );
+  }
+}
+
+const LEGACY_TRELLIS_INDEX = `# Lessons index
+
+| id | tags | read_when | summary | detail |
+|---|---|---|---|---|
+| LESSON-20260101-bug-fix | bug-fix | when fail | indexed only | topics/bug-fix.md#LESSON-20260101-bug-fix |
+`;
+
+const LEGACY_TRELLIS_TOPIC = `# bug-fix
+
+## LESSON-20260101-bug-fix
+
+**event:** bug-fix
+**summary:** indexed only
+`;
 
 test("apply registers sbtd_lessons after sbtd_e2e (Q2A)", () => {
   const { tools } = loadPlugin();
@@ -89,7 +143,6 @@ test("Q4A: pickLessonsInput rejects T10 trust keys", () => {
 
 test("Q1A: ordinary/unknown record => skipped; no file", () => {
   const root = fixtureRoot("ordinary");
-  trellisFixture(root);
   const before = readdirSync(root, { recursive: true }).length;
 
   const missing = sbtdLessons("s1", { intent: "record" }, { cwd: root });
@@ -108,8 +161,8 @@ test("Q1A: ordinary/unknown record => skipped; no file", () => {
 
   const after = readdirSync(root, { recursive: true }).length;
   assert.equal(after, before);
-  assert.equal(existsSync(join(root, "lessons.md")), false);
-  assert.equal(existsSync(join(root, ".trellis", "spec", "lessons.md")), false);
+  assert.equal(existsSync(join(root, "docs")), false);
+  assert.equal(existsSync(join(root, ".sbtd")), false);
 });
 
 test("Q4A: absolute topic on record => skipped; no write", () => {
@@ -122,16 +175,14 @@ test("Q4A: absolute topic on record => skipped; no write", () => {
   assert.equal(result.ok, false);
   assert.equal(result.status, "skipped");
   assert.equal(result.kind, "unsafe-path");
-  assert.equal(existsSync(join(root, "docs", "lessons.md")), false);
+  assert.equal(existsSync(join(root, "docs")), false);
 });
 
 test("security: invalid index topic cannot read outside lessons root", () => {
   const root = fixtureRoot("index-traversal");
-  trellisFixture(root);
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
   writeFileSync(join(root, "OUTSIDE_SECRET.md"), "LEAKED\n", "utf8");
-  writeFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 | id | tags | read_when | summary | detail |
@@ -139,10 +190,9 @@ test("security: invalid index topic cannot read outside lessons root", () => {
 | LESSON-20260101-evil | bug-fix | when | stolen summary | ../../../OUTSIDE_SECRET.md |
 | LESSON-20260101-good | bug-fix | when | safe summary | topics/bug-fix.md#LESSON-20260101-good |
 `,
-    "utf8",
   );
   writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    layeredTopicPath(root, "bug-fix"),
     `# bug-fix
 
 ## LESSON-20260101-good
@@ -180,9 +230,8 @@ test("security: invalid index topic cannot read outside lessons root", () => {
   assert.doesNotMatch(readGood.hits[0].body ?? "", /LEAKED/);
 });
 
-test("Q3A: five-event Trellis record => topic+index; no root lessons.md", () => {
-  const root = fixtureRoot("trellis-five");
-  trellisFixture(root);
+test("Q3A: five-event record with nothing present creates docs/lessons/ layered", () => {
+  const root = fixtureRoot("layered-five");
   plantDeveloper(root);
 
   for (const event of LESSON_EVENTS) {
@@ -198,51 +247,22 @@ test("Q3A: five-event Trellis record => topic+index; no root lessons.md", () => 
     );
     assert.equal(result.ok, true, event);
     assert.equal(result.status, "recorded");
-    assert.equal(result.store, "trellis");
+    assert.equal(result.store, "docs");
   }
 
-  assert.equal(existsSync(join(root, "lessons.md")), false);
-  assert.equal(
-    existsSync(join(root, ".trellis", "spec", "lessons.md")),
-    false,
-  );
-  assert.ok(existsSync(join(root, ".trellis", "lessons", "index.md")));
+  assert.ok(existsSync(layeredIndexPath(root)));
   for (const event of LESSON_EVENTS) {
-    assert.ok(
-      existsSync(join(root, ".trellis", "lessons", "topics", `${event}.md`)),
-    );
+    assert.ok(existsSync(layeredTopicPath(root, event)), event);
   }
+  // Flat legacy file and short-entry file are never created by the plugin.
+  assert.equal(existsSync(join(root, "docs", "lessons.md")), false);
+  assert.equal(existsSync(join(root, "docs", "spec", "lessons.md")), false);
+  assert.equal(existsSync(join(root, ".trellis")), false);
 });
 
-test("Q3A: no-Trellis record => docs/lessons.md", () => {
-  const root = fixtureRoot("docs-flat");
-  plantDeveloper(root);
-  const result = sbtdLessons(
-    "s1",
-    { intent: "record", event: "rollback", summary: "reverted bad deploy" },
-    { cwd: root },
-  );
-  assert.equal(result.ok, true);
-  assert.equal(result.store, "docs");
-  const path = join(root, "docs", "lessons.md");
-  assert.ok(existsSync(path));
-  const body = readFileSync(path, "utf8");
-  assert.match(body, /## LESSON-/);
-  assert.match(body, /rollback/);
-});
-
-test("Q3A: layered docs store when docs/lessons/index.md exists", () => {
+test("Q3A: existing docs/lessons/index.md keeps the layered store", () => {
   const root = fixtureRoot("docs-layered");
-  mkdirSync(join(root, "docs", "lessons", "topics"), { recursive: true });
-  writeFileSync(
-    join(root, "docs", "lessons", "index.md"),
-    `# Lessons index
-
-| id | tags | read_when | summary | detail |
-|---|---|---|---|---|
-`,
-    "utf8",
-  );
+  plantLayeredStore(root);
   plantDeveloper(root);
 
   const result = sbtdLessons(
@@ -252,43 +272,133 @@ test("Q3A: layered docs store when docs/lessons/index.md exists", () => {
   );
   assert.equal(result.ok, true);
   assert.equal(result.store, "docs");
-  assert.ok(existsSync(join(root, "docs", "lessons", "topics", "tool-misjudge.md")));
-  assert.match(readFileSync(join(root, "docs", "lessons", "index.md"), "utf8"), /tool-misjudge/);
+  assert.ok(existsSync(layeredTopicPath(root, "tool-misjudge")));
+  assert.match(readFileSync(layeredIndexPath(root), "utf8"), /tool-misjudge/);
+});
+
+test("Q3A: existing docs/spec/lessons.md short entry gets appended (never created)", () => {
+  const root = fixtureRoot("docs-short");
+  mkdirSync(join(root, "docs", "spec"), { recursive: true });
+  const shortPath = join(root, "docs", "spec", "lessons.md");
+  writeFileSync(shortPath, "# Lessons\n\n", "utf8");
+  plantDeveloper(root, "alice");
+
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "validation-fail", summary: "flaky gate" },
+    { cwd: root },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "recorded");
+  assert.equal(result.store, "docs");
+  assert.equal(result.path, shortPath);
+
+  const body = readFileSync(shortPath, "utf8");
+  assert.match(body, /<!-- lessons:alice:start -->/);
+  assert.match(body, /## LESSON-\d{8}-alice-validation-fail/);
+  assert.match(body, /flaky gate/);
+  // No layered store is created when the short file already exists.
+  assert.equal(existsSync(layeredIndexPath(root)), false);
+});
+
+test("Q3A: legacy flat docs/lessons.md => record migration-skip; match/read still read", () => {
+  const root = fixtureRoot("legacy-flat-skip");
+  const flat = `# Lessons
+
+## LESSON-20260101-rollback
+
+**event:** rollback
+**summary:** legacy flat entry
+`;
+  plantLegacyFlat(root, flat);
+  plantDeveloper(root);
+
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "must not write" },
+    { cwd: root },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "skipped");
+  assert.equal(result.kind, "migration-skip");
+  assert.equal(result.store, "docs");
+  assert.equal(result.mutation, "none");
+  assert.equal(readFileSync(join(root, "docs", "lessons.md"), "utf8"), flat);
+  assert.equal(existsSync(layeredIndexPath(root)), false);
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", event: "rollback" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits.length, 1);
+  assert.equal(match.hits[0].id, "LESSON-20260101-rollback");
+});
+
+test("Q3A: legacy .trellis/lessons tree => record migration-skip; match/read still read", () => {
+  const root = fixtureRoot("legacy-trellis-skip");
+  plantLegacyTrellis(root, LEGACY_TRELLIS_INDEX, LEGACY_TRELLIS_TOPIC);
+  plantDeveloper(root);
+
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "must not write" },
+    { cwd: root },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "skipped");
+  assert.equal(result.kind, "migration-skip");
+  assert.equal(result.store, "trellis");
+  assert.equal(result.mutation, "none");
+  assert.match(
+    readFileSync(join(root, ".trellis", "lessons", "index.md"), "utf8"),
+    /indexed only/,
+  );
+  assert.doesNotMatch(
+    readFileSync(join(root, ".trellis", "lessons", "index.md"), "utf8"),
+    /must not write/,
+  );
+  assert.equal(existsSync(join(root, "docs")), false);
+
+  const match = sbtdLessons(
+    "s1",
+    { intent: "match", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(match.status, "matched");
+  assert.equal(match.hits.length, 1);
+  assert.equal(match.hits[0].id, "LESSON-20260101-bug-fix");
+
+  const read = sbtdLessons(
+    "s1",
+    { intent: "read", event: "bug-fix" },
+    { cwd: root },
+  );
+  assert.equal(read.status, "read");
+  assert.match(read.hits[0].body ?? "", /indexed only/);
 });
 
 test("Q6A: match/read does not enumerate topics/archive (decoy ignored)", () => {
   const root = fixtureRoot("match-on-demand");
-  trellisFixture(root);
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
-  writeFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 | id | tags | read_when | summary | detail |
 |---|---|---|---|---|
 | LESSON-20260101-bug-fix | bug-fix | when fail | indexed only | topics/bug-fix.md#LESSON-20260101-bug-fix |
 `,
-    "utf8",
   );
+  writeFileSync(layeredTopicPath(root, "bug-fix"), LEGACY_TRELLIS_TOPIC, "utf8");
   writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
-    `# bug-fix
-
-## LESSON-20260101-bug-fix
-
-**event:** bug-fix
-**summary:** indexed only
-`,
-    "utf8",
-  );
-  writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "secret.md"),
+    layeredTopicPath(root, "secret"),
     "# secret decoy\n\nnot in index\n",
     "utf8",
   );
-  mkdirSync(join(root, ".trellis", "lessons", "archive"), { recursive: true });
+  mkdirSync(join(root, "docs", "lessons", "archive"), { recursive: true });
   writeFileSync(
-    join(root, ".trellis", "lessons", "archive", "old.md"),
+    join(root, "docs", "lessons", "archive", "old.md"),
     "# archive decoy\n",
     "utf8",
   );
@@ -313,50 +423,42 @@ test("Q6A: match/read does not enumerate topics/archive (decoy ignored)", () => 
 
   const miss = sbtdLessons(
     "s1",
-    { intent: "match", event: "gitnexus-mismatch" },
+    { intent: "match", event: "graft-mismatch" },
     { cwd: root },
   );
   assert.equal(miss.status, "not-found");
   assert.deepEqual(miss.hits, []);
 });
 
-test("Q6A: lessons.ts never imports readdirSync (no topic walk)", () => {
+test("Q6A: lessons.ts never imports readdirSync or deleted backends (no topic walk)", () => {
   const src = readFileSync(
     join(import.meta.dirname, "..", "src", "tools", "lessons.ts"),
     "utf8",
   );
   assert.doesNotMatch(src, /readdirSync/);
   assert.doesNotMatch(src, /backends\/gitnexus/);
-  assert.doesNotMatch(src, /from\s+["'].*gitnexus\.js["']/i);
+  assert.doesNotMatch(src, /backends\/trellis/);
+  assert.doesNotMatch(src, /from\s+["'].*(?:gitnexus|trellis)\.js["']/i);
 });
 
-test("gitnexus-mismatch record writes lesson without GitNexus import", () => {
-  const root = fixtureRoot("gitnexus-event");
+test("graft-mismatch record writes a layered topic file", () => {
+  const root = fixtureRoot("graft-event");
   plantDeveloper(root);
   const result = sbtdLessons(
     "s1",
     {
       intent: "record",
-      event: "gitnexus-mismatch",
+      event: "graft-mismatch",
       summary: "impact under-reported",
     },
     { cwd: root },
   );
   assert.equal(result.ok, true);
-  assert.ok(existsSync(join(root, "docs", "lessons.md")));
-});
-
-test("writeArtifact still task-dir whitelist only (T7 unchanged)", () => {
-  const root = fixtureRoot("write-artifact");
-  trellisFixture(root);
-  mkdirSync(join(root, ".trellis", "tasks", "demo-task"), { recursive: true });
-
-  const ok = writeArtifact(root, "demo-task", "prd.md", "# prd\n");
-  assert.equal(ok.ok, true);
-
-  assert.throws(
-    () => writeArtifact(root, "demo-task", "lessons.md", "# lessons\n"),
-    /name rejected \(not whitelisted\)/,
+  assert.equal(result.status, "recorded");
+  assert.ok(existsSync(layeredTopicPath(root, "graft-mismatch")));
+  assert.match(
+    readFileSync(layeredTopicPath(root, "graft-mismatch"), "utf8"),
+    /impact under-reported/,
   );
 });
 
@@ -369,7 +471,6 @@ test("isConcurrencySafe: read/match true; record false", () => {
 
 test("R1: index round-trip keeps empty read_when in established column order", () => {
   const root = fixtureRoot("r1-roundtrip");
-  trellisFixture(root);
   plantDeveloper(root);
 
   const recorded = sbtdLessons(
@@ -378,26 +479,23 @@ test("R1: index round-trip keeps empty read_when in established column order", (
       intent: "record",
       event: "bug-fix",
       summary: "round-trip summary",
-      tags: ["trellis"],
+      tags: ["roundtrip"],
     },
     { cwd: root },
   );
   assert.equal(recorded.ok, true);
   assert.equal(recorded.status, "recorded");
 
-  const indexBody = readFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
-    "utf8",
-  );
+  const indexBody = readFileSync(layeredIndexPath(root), "utf8");
   assert.match(indexBody, /\| id \| tags \| read_when \| summary \| detail \|/);
   assert.match(
     indexBody,
-    /\| LESSON-[^|]+ \| bug-fix, trellis \| *\| round-trip summary \| topics\/bug-fix\.md#LESSON-/,
+    /\| LESSON-[^|]+ \| bug-fix, roundtrip \| *\| round-trip summary \| topics\/bug-fix\.md#LESSON-/,
   );
 
   const matched = sbtdLessons(
     "s1",
-    { intent: "match", tags: ["trellis"] },
+    { intent: "match", tags: ["roundtrip"] },
     { cwd: root },
   );
   assert.equal(matched.status, "matched");
@@ -415,20 +513,17 @@ test("R1: index round-trip keeps empty read_when in established column order", (
 
 test("R1/R4: existing-style index row is matchable via topics detail", () => {
   const root = fixtureRoot("r1-existing-style");
-  trellisFixture(root);
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
-  writeFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 | id | tags | read_when | summary | detail |
 |---|---|---|---|---|
 | LESSON-20260903-dsh-sbtd | dsh-sbtd, t4 | when changing manuals | Copy only SKILL.md | topics/dsh-sbtd.md#lesson-anchor |
 `,
-    "utf8",
   );
   writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "dsh-sbtd.md"),
+    layeredTopicPath(root, "dsh-sbtd"),
     `# dsh-sbtd
 
 ## LESSON-20260903-dsh-sbtd
@@ -457,31 +552,28 @@ test("R2: summary mentioning docs/lessons.md path is allowed on record", () => {
       intent: "record",
       event: "bug-fix",
       summary: "fixed docs/lessons.md",
-      tags: ["trellis"],
+      tags: ["docs"],
     },
     { cwd: root },
   );
   assert.equal(result.ok, true);
   assert.equal(result.status, "recorded");
-  assert.ok(existsSync(join(root, "docs", "lessons.md")));
+  assert.ok(existsSync(layeredTopicPath(root, "bug-fix")));
 });
 
 test("R3: unqualified read returns index-only hits without bodies", () => {
   const root = fixtureRoot("r3-index-only-read");
-  trellisFixture(root);
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
-  writeFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 | id | tags | read_when | summary | detail |
 |---|---|---|---|---|
 | LESSON-20260101-bug-fix | bug-fix | | indexed only | topics/bug-fix.md#LESSON-20260101-bug-fix |
 `,
-    "utf8",
   );
   writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    layeredTopicPath(root, "bug-fix"),
     `# bug-fix
 
 ## LESSON-20260101-bug-fix
@@ -501,33 +593,20 @@ test("R3: unqualified read returns index-only hits without bodies", () => {
 
 test("R4: match covers tags column and read_when substring", () => {
   const root = fixtureRoot("r4-tags-readwhen");
-  trellisFixture(root);
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
-  writeFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 | id | tags | read_when | summary | detail |
 |---|---|---|---|---|
-| LESSON-20260101-bug-fix | bug-fix, trellis | consult trellis gate docs | tag lesson | topics/bug-fix.md#LESSON-20260101-bug-fix |
+| LESSON-20260101-bug-fix | bug-fix, gate | consult release gate docs | tag lesson | topics/bug-fix.md#LESSON-20260101-bug-fix |
 `,
-    "utf8",
   );
-  writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
-    `# bug-fix
-
-## LESSON-20260101-bug-fix
-
-**event:** bug-fix
-**summary:** tag lesson
-`,
-    "utf8",
-  );
+  writeFileSync(layeredTopicPath(root, "bug-fix"), LEGACY_TRELLIS_TOPIC, "utf8");
 
   const byTag = sbtdLessons(
     "s1",
-    { intent: "match", tags: ["trellis"] },
+    { intent: "match", tags: ["gate"] },
     { cwd: root },
   );
   assert.equal(byTag.status, "matched");
@@ -535,16 +614,15 @@ test("R4: match covers tags column and read_when substring", () => {
 
   const byReadWhen = sbtdLessons(
     "s1",
-    { intent: "match", tags: ["gate"] },
+    { intent: "match", tags: ["release"] },
     { cwd: root },
   );
   assert.equal(byReadWhen.status, "matched");
   assert.equal(byReadWhen.hits.length, 1);
 });
 
-test("R5: symlink lessons store outside cwd refuses record", () => {
+test("R5: symlink docs/lessons store outside cwd refuses record", () => {
   const root = fixtureRoot("r5-symlink-store");
-  trellisFixture(root);
   plantDeveloper(root);
   const outsideDir = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-outside-"));
   const outsideLessons = join(outsideDir, "lessons");
@@ -552,7 +630,8 @@ test("R5: symlink lessons store outside cwd refuses record", () => {
   mkdirSync(join(outsideLessons, "topics"), { recursive: true });
   writeFileSync(join(outsideLessons, "index.md"), "# Lessons index\n", "utf8");
 
-  const lessonsLink = join(root, ".trellis", "lessons");
+  mkdirSync(join(root, "docs"), { recursive: true });
+  const lessonsLink = join(root, "docs", "lessons");
   try {
     symlinkSync(outsideLessons, lessonsLink, "dir");
   } catch (err) {
@@ -576,9 +655,10 @@ test("R5: symlink lessons store outside cwd refuses record", () => {
   );
 });
 
-
-test("R4 docs-flat: parseFlatSections unions event and user tags", () => {
-  const root = fixtureRoot("r4-flat-event-tags");
+test("R4 docs-short: parseFlatSections unions event and user tags", () => {
+  const root = fixtureRoot("r4-short-event-tags");
+  mkdirSync(join(root, "docs", "spec"), { recursive: true });
+  writeFileSync(join(root, "docs", "spec", "lessons.md"), "# Lessons\n\n", "utf8");
   plantDeveloper(root);
   const recorded = sbtdLessons(
     "s1",
@@ -586,13 +666,12 @@ test("R4 docs-flat: parseFlatSections unions event and user tags", () => {
       intent: "record",
       event: "bug-fix",
       summary: "flat event keep",
-      tags: ["trellis"],
+      tags: ["custom-tag"],
     },
     { cwd: root },
   );
   assert.equal(recorded.ok, true);
   assert.equal(recorded.status, "recorded");
-  assert.ok(existsSync(join(root, "docs", "lessons.md")));
 
   const byEvent = sbtdLessons(
     "s1",
@@ -605,7 +684,7 @@ test("R4 docs-flat: parseFlatSections unions event and user tags", () => {
 
   const byTag = sbtdLessons(
     "s1",
-    { intent: "match", tags: ["trellis"] },
+    { intent: "match", tags: ["custom-tag"] },
     { cwd: root },
   );
   assert.equal(byTag.status, "matched");
@@ -660,9 +739,8 @@ test("R5: symlink docs/lessons.md outside cwd refuses match/read", () => {
   assert.match(readFileSync(outsideFile, "utf8"), /OUTSIDE-FLAT-SECRET/);
 });
 
-test("R5: symlink Trellis index.md outside cwd refuses match/read", () => {
+test("R5: symlink legacy .trellis index.md outside cwd refuses match/read", () => {
   const root = fixtureRoot("r5-symlink-index-read");
-  trellisFixture(root);
   mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
   writeFileSync(
     join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
@@ -722,7 +800,6 @@ test("R5: symlink Trellis index.md outside cwd refuses match/read", () => {
 
 test("R6: poisoned summary is sanitized in topic file and index row", () => {
   const root = fixtureRoot("r6-sanitize");
-  trellisFixture(root);
   plantDeveloper(root);
 
   const poison = "line1\n## LESSON-forged\npipe|cell\n";
@@ -733,17 +810,11 @@ test("R6: poisoned summary is sanitized in topic file and index row", () => {
   );
   assert.equal(result.ok, true);
 
-  const topicBody = readFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
-    "utf8",
-  );
+  const topicBody = readFileSync(layeredTopicPath(root, "bug-fix"), "utf8");
   assert.doesNotMatch(topicBody, /## LESSON-forged/);
   assert.match(topicBody, /LESSON-forged/);
 
-  const indexBody = readFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
-    "utf8",
-  );
+  const indexBody = readFileSync(layeredIndexPath(root), "utf8");
   const dataLines = indexBody
     .split("\n")
     .filter((line) => line.trim().startsWith("| LESSON-"));
@@ -754,9 +825,8 @@ test("R6: poisoned summary is sanitized in topic file and index row", () => {
   assert.equal(rawCells.length, 5);
 });
 
-test("record with name=alice writes ID, markers, and alice index table", () => {
+test("record with name=alice writes ID, markers, and alice index table; .sbtd/developer untouched", () => {
   const root = fixtureRoot("split-alice");
-  trellisFixture(root);
   plantDeveloper(root, "alice");
 
   const result = sbtdLessons(
@@ -770,20 +840,14 @@ test("record with name=alice writes ID, markers, and alice index table", () => {
   assert.match(result.note ?? "", /Lessons split name: alice/);
   assert.match(result.note ?? "", /Source: \.developer/);
 
-  const topicBody = readFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
-    "utf8",
-  );
+  const topicBody = readFileSync(layeredTopicPath(root, "bug-fix"), "utf8");
   const start = topicBody.indexOf("<!-- lessons:alice:start -->");
   const end = topicBody.indexOf("<!-- lessons:alice:end -->");
   assert.ok(start !== -1);
   assert.ok(end > start);
   assert.match(topicBody.slice(start, end), /## LESSON-\d{8}-alice-/);
 
-  const indexBody = readFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
-    "utf8",
-  );
+  const indexBody = readFileSync(layeredIndexPath(root), "utf8");
   const indexStart = indexBody.indexOf("<!-- lessons:alice:start -->");
   const indexEnd = indexBody.indexOf("<!-- lessons:alice:end -->");
   assert.ok(indexStart !== -1);
@@ -792,12 +856,19 @@ test("record with name=alice writes ID, markers, and alice index table", () => {
   assert.match(aliceTable, /\| id \| tags \| read_when \| summary \| detail \|/);
   assert.match(aliceTable, /\| LESSON-\d{8}-alice-[^|]+ \|/);
   assert.match(indexBody, /^# Lessons index/m);
+
+  // The plugin never writes or rewrites the identity file.
+  assert.equal(
+    readFileSync(join(root, ".sbtd", "developer"), "utf8"),
+    "name=alice\n",
+  );
 });
 
-test("missing .developer skips record with split-name-unresolved and no write", () => {
+test("missing .sbtd/developer skips record with split-name-unresolved and no write", () => {
   const root = fixtureRoot("split-missing");
-  trellisFixture(root);
+  // Decoys that must never be guessed as identity.
   mkdirSync(join(root, ".trellis", "workspace", "alice"), { recursive: true });
+  mkdirSync(join(root, ".sbtd"), { recursive: true });
 
   const result = sbtdLessons(
     "s1",
@@ -808,15 +879,15 @@ test("missing .developer skips record with split-name-unresolved and no write", 
   assert.equal(result.status, "skipped");
   assert.equal(result.kind, "split-name-unresolved");
   assert.equal(result.mutation, "none");
-  assert.match(result.note ?? "", /init_developer\.py/);
-  assert.match(result.note ?? "", /alice/);
-  assert.equal(existsSync(join(root, ".trellis", "lessons", "index.md")), false);
-  assert.equal(existsSync(join(root, "docs", "lessons.md")), false);
+  assert.match(result.note ?? "", /Split name unresolved/);
+  assert.match(result.note ?? "", /\.sbtd\/developer/);
+  assert.match(result.note ?? "", /name=<name>/);
+  assert.equal(existsSync(join(root, ".sbtd", "developer")), false);
+  assert.equal(existsSync(join(root, "docs")), false);
 });
 
-test("non-conforming .developer name skips invalid without write or normalize", () => {
+test("non-conforming .sbtd/developer name skips invalid without write or normalize", () => {
   const root = fixtureRoot("split-invalid");
-  trellisFixture(root);
   plantDeveloper(root, "Alice");
 
   const result = sbtdLessons(
@@ -829,11 +900,15 @@ test("non-conforming .developer name skips invalid without write or normalize", 
   assert.equal(result.kind, "split-name-invalid");
   assert.equal(result.mutation, "none");
   assert.match(result.note ?? "", /Alice/);
-  assert.doesNotMatch(result.note ?? "", /name=alice[^.]/);
-  assert.equal(existsSync(join(root, ".trellis", "lessons", "index.md")), false);
+  assert.doesNotMatch(result.note ?? "", /name=alice[^<]/);
+  assert.equal(existsSync(join(root, "docs")), false);
+  // Identity file is never rewritten or normalized.
+  assert.equal(
+    readFileSync(join(root, ".sbtd", "developer"), "utf8"),
+    "name=Alice\n",
+  );
 
   const root2 = fixtureRoot("split-invalid-underscore");
-  trellisFixture(root2);
   plantDeveloper(root2, "zhang_san");
   const result2 = sbtdLessons(
     "s1",
@@ -842,12 +917,11 @@ test("non-conforming .developer name skips invalid without write or normalize", 
   );
   assert.equal(result2.kind, "split-name-invalid");
   assert.match(result2.note ?? "", /zhang_san/);
-  assert.equal(existsSync(join(root2, ".trellis", "lessons", "index.md")), false);
+  assert.equal(existsSync(join(root2, "docs")), false);
 });
 
 test("second record for same name extends the same marker block", () => {
   const root = fixtureRoot("split-extend");
-  trellisFixture(root);
   plantDeveloper(root, "alice");
 
   const first = sbtdLessons(
@@ -864,10 +938,7 @@ test("second record for same name extends the same marker block", () => {
   assert.equal(second.ok, true);
   assert.notEqual(first.id, second.id);
 
-  const topicBody = readFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
-    "utf8",
-  );
+  const topicBody = readFileSync(layeredTopicPath(root, "bug-fix"), "utf8");
   assert.equal(
     topicBody.split("<!-- lessons:alice:start -->").length - 1,
     1,
@@ -879,10 +950,7 @@ test("second record for same name extends the same marker block", () => {
   assert.match(inner, /first/);
   assert.match(inner, /second/);
 
-  const indexBody = readFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
-    "utf8",
-  );
+  const indexBody = readFileSync(layeredIndexPath(root), "utf8");
   assert.equal(
     indexBody.split("<!-- lessons:alice:start -->").length - 1,
     1,
@@ -897,11 +965,8 @@ test("second record for same name extends the same marker block", () => {
 
 test("match/read sees lessons from another name's markers", () => {
   const root = fixtureRoot("split-unscoped-read");
-  trellisFixture(root);
-  plantDeveloper(root, "alice");
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
-  writeFileSync(
-    join(root, ".trellis", "lessons", "index.md"),
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 <!-- lessons:bob:start -->
@@ -910,10 +975,9 @@ test("match/read sees lessons from another name's markers", () => {
 | LESSON-20260101-bob-bug-fix | bug-fix | | bob secret | topics/bug-fix.md#LESSON-20260101-bob-bug-fix |
 <!-- lessons:bob:end -->
 `,
-    "utf8",
   );
   writeFileSync(
-    join(root, ".trellis", "lessons", "topics", "bug-fix.md"),
+    layeredTopicPath(root, "bug-fix"),
     `# bug-fix
 
 <!-- lessons:bob:start -->
@@ -947,11 +1011,7 @@ test("match/read sees lessons from another name's markers", () => {
 
 test("malformed start-without-end marker skips record and does not write a second block", () => {
   const root = fixtureRoot("malformed-marker");
-  trellisFixture(root);
   plantDeveloper(root, "alice");
-  mkdirSync(join(root, ".trellis", "lessons", "topics"), { recursive: true });
-  const topicPath = join(root, ".trellis", "lessons", "topics", "bug-fix.md");
-  const indexPath = join(root, ".trellis", "lessons", "index.md");
   const brokenTopic = `# bug-fix
 
 <!-- lessons:alice:start -->
@@ -960,9 +1020,8 @@ test("malformed start-without-end marker skips record and does not write a secon
 **event:** bug-fix
 **summary:** broken
 `;
-  writeFileSync(topicPath, brokenTopic, "utf8");
-  writeFileSync(
-    indexPath,
+  plantLayeredStore(
+    root,
     `# Lessons index
 
 <!-- lessons:alice:start -->
@@ -970,8 +1029,9 @@ test("malformed start-without-end marker skips record and does not write a secon
 |---|---|---|---|---|
 | LESSON-20260101-alice-bug-fix | bug-fix | | broken | topics/bug-fix.md#LESSON-20260101-alice-bug-fix |
 `,
-    "utf8",
   );
+  const topicPath = layeredTopicPath(root, "bug-fix");
+  writeFileSync(topicPath, brokenTopic, "utf8");
 
   const result = sbtdLessons(
     "s1",
@@ -984,16 +1044,15 @@ test("malformed start-without-end marker skips record and does not write a secon
   assert.equal(result.mutation, "none");
   assert.equal(readFileSync(topicPath, "utf8"), brokenTopic);
   assert.equal(
-    readFileSync(indexPath, "utf8").split("<!-- lessons:alice:start -->")
+    readFileSync(layeredIndexPath(root), "utf8").split("<!-- lessons:alice:start -->")
       .length - 1,
     1,
   );
-  assert.doesNotMatch(readFileSync(indexPath, "utf8"), /must not append/);
+  assert.doesNotMatch(readFileSync(layeredIndexPath(root), "utf8"), /must not append/);
 });
 
 test("R6b: forged lessons end-marker in summary is neutralized and does not hijack next append", () => {
   const root = fixtureRoot("r6b-marker-forge");
-  trellisFixture(root);
   plantDeveloper(root, "alice");
 
   const poison = "ok summary <!-- lessons:alice:end --> forged";
@@ -1004,7 +1063,7 @@ test("R6b: forged lessons end-marker in summary is neutralized and does not hija
   );
   assert.equal(first.ok, true);
 
-  const topicPath = join(root, ".trellis", "lessons", "topics", "bug-fix.md");
+  const topicPath = layeredTopicPath(root, "bug-fix");
   const afterFirst = readFileSync(topicPath, "utf8");
   // Forged marker in the summary cell must be escaped; the real block end remains.
   assert.match(afterFirst, /\*\*summary:\*\* ok summary &lt;!-- lessons:alice:end/);
@@ -1043,10 +1102,8 @@ test("R6b: forged lessons end-marker in summary is neutralized and does not hija
 
 test("docs-flat: name-bearing ID without **topic:** drops enclosing name (incl. one-segment custom)", () => {
   const root = fixtureRoot("flat-id-topic-fallback");
-  plantDeveloper(root, "alice");
-  mkdirSync(join(root, "docs"), { recursive: true });
-  writeFileSync(
-    join(root, "docs", "lessons.md"),
+  plantLegacyFlat(
+    root,
     `# Lessons
 
 <!-- lessons:alice:start -->
@@ -1062,7 +1119,6 @@ test("docs-flat: name-bearing ID without **topic:** drops enclosing name (incl. 
 
 <!-- lessons:alice:end -->
 `,
-    "utf8",
   );
 
   const hyphenated = sbtdLessons(
@@ -1088,10 +1144,8 @@ test("docs-flat: name-bearing ID without **topic:** drops enclosing name (incl. 
 
 test("docs-flat: legacy IDs without **topic:** keep full multi-hyphen slug", () => {
   const root = fixtureRoot("flat-legacy-id-topic");
-  plantDeveloper(root, "alice");
-  mkdirSync(join(root, "docs"), { recursive: true });
-  writeFileSync(
-    join(root, "docs", "lessons.md"),
+  plantLegacyFlat(
+    root,
     `# Lessons
 
 <!-- lessons:alice:start -->
@@ -1107,7 +1161,6 @@ test("docs-flat: legacy IDs without **topic:** keep full multi-hyphen slug", () 
 
 <!-- lessons:alice:end -->
 `,
-    "utf8",
   );
 
   const two = sbtdLessons(
@@ -1130,10 +1183,8 @@ test("docs-flat: legacy IDs without **topic:** keep full multi-hyphen slug", () 
 
 test("docs-flat: exact heading owner survives longer legacy prefix in another block", () => {
   const root = fixtureRoot("flat-heading-prefix-collision");
-  plantDeveloper(root, "alice");
-  mkdirSync(join(root, "docs"), { recursive: true });
-  writeFileSync(
-    join(root, "docs", "lessons.md"),
+  plantLegacyFlat(
+    root,
     `# Lessons
 
 <!-- lessons:bob:start -->
@@ -1152,7 +1203,6 @@ test("docs-flat: exact heading owner survives longer legacy prefix in another bl
 
 <!-- lessons:alice:end -->
 `,
-    "utf8",
   );
 
   const match = sbtdLessons(
@@ -1177,10 +1227,8 @@ test("docs-flat: exact heading owner survives longer legacy prefix in another bl
 
 test("docs-flat: legacy slug that prefixes the enclosing name keeps full topic via **topic:**", () => {
   const root = fixtureRoot("flat-legacy-needs-topic-in-name-block");
-  plantDeveloper(root, "alice");
-  mkdirSync(join(root, "docs"), { recursive: true });
-  writeFileSync(
-    join(root, "docs", "lessons.md"),
+  plantLegacyFlat(
+    root,
     `# Lessons
 
 <!-- lessons:alice:start -->
@@ -1192,7 +1240,6 @@ test("docs-flat: legacy slug that prefixes the enclosing name keeps full topic v
 
 <!-- lessons:alice:end -->
 `,
-    "utf8",
   );
 
   const match = sbtdLessons(
@@ -1203,4 +1250,3 @@ test("docs-flat: legacy slug that prefixes the enclosing name keeps full topic v
   assert.equal(match.status, "matched");
   assert.equal(match.hits[0].topic, "alice-refactor");
 });
-

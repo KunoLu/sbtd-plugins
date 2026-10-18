@@ -23,8 +23,17 @@ import {
   registerLessonsTool,
   resolveLessonsHost,
 } from "./tools/lessons.js";
-import { registerPlanTool, type ToolsHost } from "./tools/plan.js";
-import { registerReviewTool } from "./tools/review.js";
+import {
+  registerPlanTool,
+  resolvePlanHost,
+  type PlanPluginHost,
+  type ToolsHost,
+} from "./tools/plan.js";
+import {
+  registerReviewTool,
+  resolveReviewHost,
+  type ReviewPluginHost,
+} from "./tools/review.js";
 import { registerSpecTool } from "./tools/spec.js";
 import { registerTicketsTool } from "./tools/tickets.js";
 import {
@@ -40,6 +49,8 @@ export const inject = ["tools", "systemPrompt", "commands"] as const;
 export type PluginHost = SectionHost &
   ToolsHost &
   HooksHost &
+  PlanPluginHost &
+  ReviewPluginHost &
   CommandsHost &
   ValidatePluginHost &
   BddPluginHost &
@@ -178,8 +189,8 @@ export {
 export function apply(ctx: PluginHost): void {
   console.log("[dsh-sbtd] plugin loaded (T0 stub)");
   registerSection(ctx);
-  registerPlanTool(ctx);
-  registerReviewTool(ctx);
+  registerPlanTool(ctx, resolvePlanHost(ctx));
+  registerReviewTool(ctx, resolveReviewHost(ctx));
   registerClarifyTool(ctx);
   registerSpecTool(ctx);
   registerTicketsTool(ctx);

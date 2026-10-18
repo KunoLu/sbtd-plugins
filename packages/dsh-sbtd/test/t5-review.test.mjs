@@ -36,7 +36,7 @@ const PASS_TUPLES = [
   ["release", "ready", "deploy production path job", "Release Readiness Review"],
 ];
 
-function loadPlugin() {
+function loadPlugin(host = {}) {
   const tools = [];
   const hooks = new Map();
   apply({
@@ -51,6 +51,7 @@ function loadPlugin() {
     on(event, handler) {
       hooks.set(event, handler);
     },
+    ...host,
   });
   return { tools, hooks };
 }
@@ -298,7 +299,7 @@ test("on-demand ddia confirmed 提升 required 重置 planned 并拦 schema.sql"
   assert.equal(promoted.plan.gates.ddia.fact, "persistence");
   assert.match(promoted.markdown, /promoted from on-demand; reset inherited pass/);
 
-  const { hooks } = loadPlugin();
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
   const data = await hooks.get(PRE_EXECUTE_EVENT)(
     {
       name: "str_replace_editor",
@@ -334,7 +335,7 @@ test("required+passed ddia persist 再 plan schema 重置并拦 schema.sql", asy
   assert.match(reset.markdown, /persistence/);
   assert.match(reset.markdown, /database\/schema/);
 
-  const { hooks } = loadPlugin();
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
   const data = await hooks.get(PRE_EXECUTE_EVENT)(
     {
       name: "str_replace_editor",
@@ -376,7 +377,7 @@ test("A→B reviewed →C 必须 planned 并继续拦 schema.sql；同触发可�
   assert.match(toC.markdown, /database\/schema/);
   assert.match(toC.markdown, /cache/);
 
-  const { hooks } = loadPlugin();
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
   const denied = await hooks.get(PRE_EXECUTE_EVENT)(
     {
       name: "str_replace_editor",
@@ -471,7 +472,7 @@ test("required 未通过的 refactor 拦生产 write", async () => {
     ],
   });
   sbtdReview(id, { kind: "legacy", status: "characterized" });
-  const { hooks } = loadPlugin();
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
   const refactorDeny = await hooks.get(PRE_EXECUTE_EVENT)(
     writeSrc(id),
     nextAllow,
@@ -501,7 +502,7 @@ test("更早门禁通过后 required 未通过的 ddd 仍拦 write", async () =>
 test("required 未通过的 ddia 拦数据路径", async () => {
   const ddiaId = "t5-ddia";
   sbtdPlan(ddiaId, { task_summary: "persist schema cache" });
-  const { hooks } = loadPlugin();
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
   const pre = hooks.get(PRE_EXECUTE_EVENT);
   let nextCalled = false;
   const code = await pre(writeSrc(ddiaId), async () => {
@@ -525,7 +526,7 @@ test("required 未通过的 ddia 拦数据路径", async () => {
 test("required 未通过的 release 拦 publish-family bash 不拦普通编辑", async () => {
   const relId = "t5-release";
   sbtdPlan(relId, { task_summary: "deploy production path job" });
-  const { hooks } = loadPlugin();
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
   const pre = hooks.get(PRE_EXECUTE_EVENT);
   let editNext = false;
   const edit = await pre(writeSrc(relId), async () => {

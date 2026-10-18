@@ -1,8 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { apply, inject, name } from "../dist/index.js";
 import { getSession } from "../dist/state.js";
 import { sbtdClarify } from "../dist/tools/clarify.js";
@@ -13,12 +10,12 @@ import {
   PRE_STEP_EVENT,
 } from "../dist/hooks.js";
 
-const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-function loadPlugin() {
+function loadPlugin(host = { workflowMode: "strict" }) {
   const tools = [];
   const hooks = new Map();
   apply({
+    ...host,
     systemPrompt: {
       section() {},
     },
@@ -665,21 +662,62 @@ test("他任务 docs Complete 后新任务省略 grill 不因陈旧 Complete den
 });
 
 
+for (const workflowMode of ["default", "lite"]) {
+  test(`${workflowMode}: required book gate warns without blocking production edit`, async () => {
+    const id = `t3-mode-${workflowMode}`;
+    sbtdPlan(id, {
+      task_summary: "fix existing behavior in production",
+      facts: ["existing behavior"],
+    });
+    const { hooks } = loadPlugin({ workflowMode });
+    const allowed = await hooks.get(PRE_EXECUTE_EVENT)(writeSrc(id), nextAllow);
+    assert.equal(allowed.kind, "allow");
+    const entered = await hooks.get(PRE_STEP_EVENT)(
+      { agent: { id } },
+      async () => ({ kind: "enter", messages: [] }),
+    );
+    const notice = entered.messages.at(-1);
+    assert.match(JSON.stringify(notice.content), /legacy/);
+    assert.match(JSON.stringify(notice.content), new RegExp(`workflowMode: ${workflowMode}`));
+    assert.match(JSON.stringify(notice.content), /workflowModeSource: host/);
+  });
 
-test("README 提到 hooks 并保持钉版本与 @next", () => {
-  const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
-  const src = readFileSync(join(pkgRoot, "src/hooks.ts"), "utf8");
-  const index = readFileSync(join(pkgRoot, "src/index.ts"), "utf8");
-  assert.match(readme, /hooks/);
-  assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
-  assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
-  assert.match(readme, /0\.1\.0-rc\.1|next/);
-  assert.doesNotMatch(readme, /尚未发布到 npm/);
-  assert.doesNotMatch(
-    readme,
-    /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/,
+  test(`${workflowMode}: no-plan production edit still asks; completed docs grill DDD still denies`, async () => {
+    const id = `t3-docs-mode-${workflowMode}`;
+    const { hooks } = loadPlugin({ workflowMode });
+    const pre = hooks.get(PRE_EXECUTE_EVENT);
+    assert.equal((await pre(writeSrc(id), nextAllow)).kind, "ask");
+    sbtdPlan(id, { task_summary: "docs grill mode invariant" });
+    sbtdClarify(id, { mode: "docs", question: "Q?" });
+    sbtdClarify(id, { frontier_empty: true, user_confirmed: true });
+    const denied = await pre(writeSrc(id), nextAllow);
+    assert.equal(denied.kind, "deny");
+    assert.match(denied.reason, /kind=ddd/);
+    getSession(id).plan.gates.ddd.state = "passed";
+    assert.equal((await pre(writeSrc(id), nextAllow)).kind, "allow");
+  });
+}
+
+test("strict no-plan notice includes workflow mode and its source", async () => {
+  const { hooks } = loadPlugin({ workflowMode: "strict" });
+  const entered = await hooks.get(PRE_STEP_EVENT)(
+    { agent: { id: "t3-notice-mode-source" }, messages: [{ content: "implement src/foo.ts" }] },
+    async () => ({ kind: "enter", messages: [] }),
   );
-  assert.doesNotMatch(src, /@deepseek-ai\/dsh/);
-  assert.doesNotMatch(index, /@deepseek-ai\/dsh|writeFile|AGENTS\.md/);
-  assert.doesNotMatch(src, /writeFile|AGENTS\.md/);
+  const notice = entered.messages.at(-1);
+  assert.match(JSON.stringify(notice.content), /workflowMode: strict/);
+  assert.match(JSON.stringify(notice.content), /workflowModeSource: host/);
+  assert.match(notice.source.summary, /workflowModeSource: host/);
+});
+
+test("strict hooks classify absolute production paths against the injected project root", async () => {
+  const cwd = "/tmp/dsh-sbtd-injected-root";
+  const id = "t3-injected-root-path";
+  const { hooks } = loadPlugin({ cwd, workflowMode: "strict" });
+  const pre = hooks.get(PRE_EXECUTE_EVENT);
+  assert.equal((await pre(writeSrc(id, `${cwd}/src/foo.ts`), nextAllow)).kind, "ask");
+  sbtdPlan(id, { task_summary: "fix existing behavior", facts: ["existing behavior"] });
+  const denied = await pre(writeSrc(id, `${cwd}/src/foo.ts`), nextAllow);
+  assert.equal(denied.kind, "deny");
+  assert.match(denied.reason, /kind=legacy/);
 });

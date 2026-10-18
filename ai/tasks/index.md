@@ -5,6 +5,7 @@
 - [dsh-ci-compat-guides](archive/2026-Q3/dsh-ci-compat-guides/task.md)
 - [dsh-next-pitfall](archive/2026-Q3/dsh-next-pitfall/task.md)
 - [dsh-sbtd-0-2-0-rc-1-plan](dsh-sbtd-0-2-0-rc-1-plan/task.md)
+- [dsh-sbtd-0-2-0-rc-1-pr-b-backend](dsh-sbtd-0-2-0-rc-1-pr-b-backend/task.md)
 - [dsh-sbtd-0.1.0-rc.2-bump](archive/2026-Q3/dsh-sbtd-0.1.0-rc.2-bump/task.md)
 - [dsh-sbtd-fu3-multi-fact-persist](archive/2026-Q3/dsh-sbtd-fu3-multi-fact-persist/task.md)
 - [dsh-sbtd-fu4-clarify-schema-ddd](archive/2026-Q3/dsh-sbtd-fu4-clarify-schema-ddd/task.md)

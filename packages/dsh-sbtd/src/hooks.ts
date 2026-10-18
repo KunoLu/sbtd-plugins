@@ -1,4 +1,9 @@
 import { relative, resolve, sep } from "node:path";
+import {
+  describeWorkflowMode,
+  resolveWorkflowMode,
+} from "./backends/sbtd-task.js";
+import { optionalHostBag, optionalHostCwd } from "./host-context.js";
 import { getSession } from "./state.js";
 import { type PlanToolExec, sessionIdFromExec } from "./tools/plan.js";
 
@@ -34,6 +39,10 @@ export type PreStepPayload = {
 };
 
 export type HooksHost = {
+  /** Project root for the read-only workflow_mode lookup. */
+  cwd?: string;
+  /** Host-injected workflow_mode (layer 2; R1 Q4). */
+  workflowMode?: string;
   on: {
     (
       event: "tools/pre-execute",
@@ -121,8 +130,8 @@ function pathOf(args: unknown): string | undefined {
   );
 }
 
-function relToCwd(file: string): string {
-  return relative(process.cwd(), resolve(process.cwd(), file))
+function relToCwd(file: string, cwd: string): string {
+  return relative(cwd, resolve(cwd, file))
     .split(sep)
     .join("/");
 }
@@ -199,6 +208,7 @@ function isMutatingBash(command: string): boolean {
 
 function primaryClass(
   exec: ToolExec,
+  cwd: string,
 ): "readme" | "exempt" | "production" | "other" {
   const args = exec.arguments;
   const direct = pathOf(args);
@@ -210,7 +220,7 @@ function primaryClass(
   let sawExempt = false;
   let sawReadme = false;
   for (const file of files) {
-    const kind = classifyRel(relToCwd(file));
+    const kind = classifyRel(relToCwd(file, cwd));
     if (kind === "production") {
       return "production";
     }
@@ -236,13 +246,13 @@ function isDataPathExec(exec: ToolExec): boolean {
   return DATA_PATH.test(hay);
 }
 
-function isRmOrPkgBusiness(exec: ToolExec): boolean {
+function isRmOrPkgBusiness(exec: ToolExec, cwd: string): boolean {
   if (exec.name !== "bash") {
     return false;
   }
   const command = commandOf(exec.arguments);
   if (RM_BASH.test(command)) {
-    const cls = primaryClass(exec);
+    const cls = primaryClass(exec, cwd);
     return cls === "production" || cls === "other";
   }
   if (PKG_MGR.test(command)) {
@@ -253,7 +263,10 @@ function isRmOrPkgBusiness(exec: ToolExec): boolean {
   return false;
 }
 
-export function gatePreExecute(exec: ToolExec): PreToolDecision | undefined {
+export function gatePreExecute(
+  exec: ToolExec,
+  host?: Pick<HooksHost, "cwd" | "workflowMode">,
+): PreToolDecision | undefined {
   const name = exec.name;
   if (name === "view") {
     return undefined;
@@ -272,13 +285,14 @@ export function gatePreExecute(exec: ToolExec): PreToolDecision | undefined {
     return undefined;
   }
 
-  const cls = primaryClass(exec);
+  const cwd = host?.cwd ?? process.cwd();
+  const cls = primaryClass(exec, cwd);
   if (cls === "readme") {
     return undefined;
   }
   const session = getSession(sessionFromAgent(exec.agent));
   const plan = session.plan;
-  if (isRmOrPkgBusiness(exec) && plan === undefined) {
+  if (isRmOrPkgBusiness(exec, cwd) && plan === undefined) {
     return { kind: "ask", reason: ASK_RM_PKG };
   }
   if (plan === undefined) {
@@ -289,6 +303,18 @@ export function gatePreExecute(exec: ToolExec): PreToolDecision | undefined {
   }
 
   if (cls === "exempt") {
+    return undefined;
+  }
+  // R2 Q3 A: required book gate denies are strict-only; default/lite 降级为
+  // pre-step inject notice，不拦截。无 plan 的 ask 在所有模式保留。
+  const strict =
+    resolveWorkflowMode({ host: host?.workflowMode, cwd: host?.cwd }).mode ===
+    "strict";
+  if (!strict) {
+    // Full docs-grill DDD remains mandatory in every workflow mode.
+    if (cls === "production" && unpassedRequired(plan.gates.ddd)) {
+      return denyReview("ddd");
+    }
     return undefined;
   }
   if (
@@ -351,6 +377,7 @@ function messagesText(messages: PreStepMessage[] | undefined): string {
 export async function runPreStep(
   payload: PreStepPayload,
   next: () => Promise<PreStepDecision>,
+  host?: Pick<HooksHost, "cwd" | "workflowMode">,
 ): Promise<PreStepDecision> {
   const decision = await next();
   if (decision.kind !== "enter") {
@@ -358,35 +385,60 @@ export async function runPreStep(
   }
   const session = getSession(sessionFromAgent(payload.agent));
   const text = `${messagesText(payload.messages)}\n${messagesText(decision.messages)}`;
+  const mode = resolveWorkflowMode({
+    host: host?.workflowMode,
+    cwd: host?.cwd,
+  });
+  let notice: string;
+  let summary: string;
   if (session.plan === undefined && DEV_INTENT.test(text)) {
-    return {
-      kind: "enter",
-      messages: [
-        ...decision.messages,
-        {
-          id: "dsh-sbtd-pre-step-notice",
-          role: "user",
-          content: [{ type: "text", text: NOTICE_TEXT }],
-          source: {
-            kind: "plugin",
-            plugin: PLUGIN_NAME,
-            form: "notice",
-            summary: NOTICE_SUMMARY,
-          },
-        },
-      ],
-    };
+    notice = NOTICE_TEXT;
+    summary = NOTICE_SUMMARY;
+  } else if (session.plan !== undefined && mode.mode !== "strict") {
+    const pending = Object.entries(session.plan.gates)
+      .filter(([kind, gate]) => kind !== "ddd" && unpassedRequired(gate))
+      .map(([kind]) => kind);
+    if (pending.length === 0) return decision;
+    notice = `required book gate 未 passed：${pending.join(", ")}。请调用 sbtd_review；当前模式仅告警，不拦截。`;
+    summary = "required book gate 未 passed，仅告警。";
+  } else {
+    return decision;
   }
-  return decision;
+  const modeText = `workflowMode: ${mode.mode}; workflowModeSource: ${mode.source}；${describeWorkflowMode(mode)}`;
+  return {
+    kind: "enter",
+    messages: [
+      ...decision.messages,
+      {
+        id: "dsh-sbtd-pre-step-notice",
+        role: "user",
+        content: [{
+          type: "text",
+          text: `${notice}\n${modeText}${mode.note ? `\n${mode.note}` : ""}`,
+        }],
+        source: {
+          kind: "plugin",
+          plugin: PLUGIN_NAME,
+          form: "notice",
+          summary: `${summary} ${modeText}`,
+        },
+      },
+    ],
+  };
 }
 
 export function registerHooks(ctx: HooksHost): void {
+  const workflowMode = optionalHostBag<string>(ctx, "workflowMode");
+  const host = {
+    cwd: optionalHostCwd(ctx),
+    ...(workflowMode !== undefined ? { workflowMode } : {}),
+  };
   ctx.on(PRE_EXECUTE_EVENT, async (exec, next) => {
-    const decision = gatePreExecute(exec);
+    const decision = gatePreExecute(exec, host);
     if (decision === undefined) {
       return next();
     }
     return decision;
   });
-  ctx.on(PRE_STEP_EVENT, async (payload, next) => runPreStep(payload, next));
+  ctx.on(PRE_STEP_EVENT, async (payload, next) => runPreStep(payload, next, host));
 }

@@ -1,4 +1,10 @@
 import { createHash } from "node:crypto";
+import {
+  resolveWorkflowMode,
+  type WorkflowMode,
+  type WorkflowModeSource,
+} from "../backends/sbtd-task.js";
+import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import { type BookGatePlan, type GateState, getSession } from "../state.js";
 
 export const SBTD_PLAN_TOOL_NAME = "sbtd_plan";
@@ -16,11 +22,28 @@ export type GateKind = (typeof GATE_KINDS)[number];
 export type PlanInput = {
   task_summary: string;
   facts?: string[];
+  /** Optional workflow_mode override (R1 Q4 layer 1: tool param). */
+  workflow_mode?: string;
 };
 
 export type PlanToolResult = {
   plan: BookGatePlan;
   markdown: string;
+  /** Resolved workflow mode + source layer (R3 Q4 A). */
+  workflowMode: WorkflowMode;
+  workflowModeSource: WorkflowModeSource;
+  workflowModeNote?: string;
+};
+
+/** Host-injected trust handles (R1 Q4 layer 1: host injection). */
+export type PlanHostOptions = {
+  cwd?: string;
+  workflowMode?: string;
+};
+
+export type PlanPluginHost = ToolsHost & {
+  cwd?: string;
+  planHost?: PlanHostOptions;
 };
 
 export type PlanToolExec = {
@@ -57,7 +80,7 @@ export type ToolsHost = {
     schemas?: (scope?: unknown) => Array<{ name: string }>;
     /**
      * Optional: execute a registered tool (production ToolRuntime.execute).
-     * Used only as a host-owned MCP bridge for GitNexus — never model-controlled.
+     * Used only as a host-owned MCP bridge for Graft — never model-controlled.
      */
     execute?: (exec: {
       callId: string;
@@ -379,11 +402,21 @@ export function formatPlanMarkdown(
   return parts.join("\n");
 }
 
-export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
+export function sbtdPlan(
+  sessionId: string,
+  input: PlanInput,
+  host: PlanHostOptions = {},
+): PlanToolResult {
   const summary = input.task_summary.trim();
   if (summary.length === 0) {
     throw new Error("sbtd_plan: task_summary must be a non-empty string");
   }
+
+  const modeResolution = resolveWorkflowMode({
+    param: input.workflow_mode,
+    host: host.workflowMode,
+    cwd: host.cwd,
+  });
 
   const session = getSession(sessionId);
   const taskId = taskIdFromSummary(summary);
@@ -415,13 +448,22 @@ export function sbtdPlan(sessionId: string, input: PlanInput): PlanToolResult {
     gates,
   };
   session.plan = plan;
-  return { plan, markdown: formatPlanMarkdown(plan, notes) };
+  const result: PlanToolResult = {
+    plan,
+    markdown: formatPlanMarkdown(plan, notes),
+    workflowMode: modeResolution.mode,
+    workflowModeSource: modeResolution.source,
+  };
+  if (modeResolution.note !== undefined) {
+    result.workflowModeNote = modeResolution.note;
+  }
+  return result;
 }
 
 export const SBTD_PLAN_DESCRIPTION =
   "Register or update the session Book Gate Plan. Pass task_summary; optional facts are objective trigger strings. Required gates are inferred from PRD 3.4 predicates, never from subjective risk. Repeat calls for the same goal keep passed gates only while their requirement remains required and the trigger fact is unchanged; reset a pass when a trigger disappears, the trigger fact changes, or the gate is promoted from on-demand. Exception: docs Clarify Complete stickies Forced Docs DDD only for the completing taskId; same-task omitted grill facts stay required, but a Complete from another task does not.";
 
-export function createPlanTool(): PlanToolDefinition {
+export function createPlanTool(host: PlanHostOptions = {}): PlanToolDefinition {
   return {
     name: SBTD_PLAN_TOOL_NAME,
     description: SBTD_PLAN_DESCRIPTION,
@@ -438,6 +480,12 @@ export function createPlanTool(): PlanToolDefinition {
             "Optional objective trigger facts (PRD 3.4). Also inferred from task_summary.",
           items: { type: "string" },
         },
+        workflow_mode: {
+          type: "string",
+          enum: ["strict", "default", "lite"],
+          description:
+            "Optional workflow_mode override (layer 1). Absent ⇒ host injection → active task.md → default.",
+        },
       },
       required: ["task_summary"],
     },
@@ -448,21 +496,45 @@ export function createPlanTool(): PlanToolDefinition {
         properties: {
           plan: { type: "object" },
           markdown: { type: "string" },
+          workflowMode: { type: "string" },
+          workflowModeSource: { type: "string" },
+          workflowModeNote: { type: "string" },
         },
       },
       render(_args, value) {
-        return [{ type: "text", text: value.markdown }];
+        const lines = [
+          value.markdown,
+          "",
+          `workflowMode: ${value.workflowMode}`,
+          `workflowModeSource: ${value.workflowModeSource}`,
+        ];
+        if (value.workflowModeNote !== undefined) {
+          lines.push(`workflowModeNote: ${value.workflowModeNote}`);
+        }
+        return [{ type: "text", text: lines.join("\n") }];
       },
     },
     isConcurrencySafe() {
       return false;
     },
     async execute(args, exec) {
-      return sbtdPlan(sessionIdFromExec(exec), args);
+      return sbtdPlan(sessionIdFromExec(exec), args, host);
     },
   };
 }
 
-export function registerPlanTool(ctx: ToolsHost): void {
-  ctx.tools.register(createPlanTool());
+export function resolvePlanHost(ctx: PlanPluginHost): PlanHostOptions {
+  const explicit = optionalHostBag<PlanHostOptions>(ctx, "planHost") ?? {};
+  const out: PlanHostOptions = { cwd: optionalHostCwd(ctx, explicit.cwd) };
+  if (explicit.workflowMode !== undefined) {
+    out.workflowMode = explicit.workflowMode;
+  }
+  return out;
+}
+
+export function registerPlanTool(
+  ctx: ToolsHost,
+  host: PlanHostOptions = {},
+): void {
+  ctx.tools.register(createPlanTool(host));
 }

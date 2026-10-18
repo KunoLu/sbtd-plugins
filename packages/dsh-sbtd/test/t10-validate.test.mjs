@@ -36,13 +36,12 @@ function mcpStub(toolMap) {
   };
 }
 
-function withIndex(root, lastCommit = "abc") {
-  mkdirSync(join(root, ".gitnexus"), { recursive: true });
-  writeFileSync(
-    join(root, ".gitnexus", "meta.json"),
-    JSON.stringify({ lastCommit }),
-    "utf8",
-  );
+function graftMcp(toolMap) {
+  return mcpStub({
+    "mcp__sbtd-graft__graft_check_freshness": async () =>
+      "graph in sync with the code",
+    ...toolMap,
+  });
 }
 
 function loadPlugin() {
@@ -77,6 +76,7 @@ test("Q1A: model schema forbids cwd/mcp/runRefresh/serverName/toolNames", () => 
     "phase",
     "scope",
     "target",
+    "workflow_mode",
   ]);
   assert.deepEqual(tool.parameters.required, ["phase"]);
   assert.equal(tool.parameters.additionalProperties, false);
@@ -86,8 +86,8 @@ test("Q2A/Q3 clar: pre without target => validate.pre=skipped; no tests", async 
   const id = "t10-pre-no-target";
   const result = await sbtdValidate(id, { phase: "pre" }, { cwd: fixtureRoot("pre-miss") });
   assert.equal(result.phase, "pre");
-  assert.equal(result.gitnexus.status, "skipped");
-  assert.equal(result.gitnexus.reason, "missing-target");
+  assert.equal(result.graft.status, "skipped");
+  assert.equal(result.graft.reason, "missing-target");
   assert.equal(result.validate.pre, "skipped");
   assert.equal(result.tests, undefined);
   assert.equal(getSession(id).validate.pre, "skipped");
@@ -99,67 +99,54 @@ test("Q2A/Q3 clar: pre with T9 skipped => validate.pre=skipped", async () => {
   const result = await sbtdValidate(
     id,
     { phase: "pre", target: "Foo" },
-    { cwd: root, gitnexus: {} },
+    { cwd: root, graft: {} },
   );
-  assert.equal(result.gitnexus.status, "skipped");
+  assert.equal(result.graft.status, "skipped");
   assert.equal(result.validate.pre, "skipped");
   assert.equal(result.tests, undefined);
   assert.equal(getSession(id).validate.pre, "skipped");
 });
 
-test("Q3 clar: pre with T9 advisory => validate.pre=done; advisory printed", async () => {
-  const id = "t10-pre-advisory";
-  const root = fixtureRoot("pre-adv");
-  withIndex(root, "head1");
+test("Q3 clar: pre with graft call-failed => validate.pre=skipped (never advisory)", async () => {
+  const id = "t10-pre-call-failed";
+  const root = fixtureRoot("pre-call-failed");
   const mcp = mcpStub({
-    "mcp__gitnexus__impact": async () => {
+    "mcp__sbtd-graft__graft_check_freshness": async () => {
       throw new Error("boom");
     },
   });
   const result = await sbtdValidate(
     id,
     { phase: "pre", target: "Bar", direction: "upstream" },
-    {
-      cwd: root,
-      gitnexus: {
-        mcp,
-        resolveHead: () => "head1",
-        resolveIndexedCommit: () => "head1",
-      },
-    },
+    { cwd: root, graft: { mcp } },
   );
-  assert.equal(result.gitnexus.status, "advisory");
-  assert.equal(result.gitnexus.advisory, true);
-  assert.equal(result.validate.pre, "done");
-  assert.match(result.gitnexus.summary, /boom|impact failed/i);
-  assert.equal(getSession(id).validate.pre, "done");
+  assert.equal(result.graft.status, "skipped");
+  assert.equal(result.graft.reason, "call-failed");
+  assert.equal(result.validate.pre, "skipped");
+  assert.match(result.graft.summary, /boom/);
+  assert.equal(getSession(id).validate.pre, "skipped");
 });
 
-test("Q3 clar: pre with T9 ok => validate.pre=done", async () => {
+test("Q3 clar: pre with graft ok => validate.pre=done", async () => {
   const id = "t10-pre-ok";
   const root = fixtureRoot("pre-ok");
-  withIndex(root, "h");
-  const mcp = mcpStub({
-    "mcp__gitnexus__impact": async (args) => ({ hit: args.target }),
+  const mcp = graftMcp({
+    "mcp__sbtd-graft__graft_find_code": async (args) => ({
+      hit: args.query,
+    }),
   });
   const result = await sbtdValidate(
     id,
     { phase: "pre", target: "Sym" },
-    {
-      cwd: root,
-      gitnexus: {
-        mcp,
-        resolveHead: () => "h",
-        resolveIndexedCommit: () => "h",
-      },
-    },
+    { cwd: root, graft: { mcp } },
   );
-  assert.equal(result.gitnexus.status, "ok");
+  assert.equal(result.graft.status, "ok");
+  assert.match(result.graft.summary, /Sym/);
   assert.equal(result.validate.pre, "done");
   assert.equal(getSession(id).validate.pre, "done");
 });
 
-test("Q2A/Q3A: post with GitNexus skipped still runs tests; post not blocked from skip", async () => {
+test("Q2A/Q3A: post with graft skipped still runs tests; post not blocked from skip", async () => {
   const id = "t10-post-gn-skip-tests";
   const root = fixtureRoot("post-skip");
   let testsCalled = 0;
@@ -168,14 +155,14 @@ test("Q2A/Q3A: post with GitNexus skipped still runs tests; post not blocked fro
     { phase: "post", scope: "pkg" },
     {
       cwd: root,
-      gitnexus: {},
+      graft: {},
       runTests: async () => {
         testsCalled += 1;
         return { status: "done", summary: "injected ok" };
       },
     },
   );
-  assert.equal(result.gitnexus.status, "skipped");
+  assert.equal(result.graft.status, "skipped");
   assert.equal(testsCalled, 1);
   assert.equal(result.tests.status, "done");
   assert.equal(result.validate.post, "done");
@@ -189,7 +176,7 @@ test("Q4A: no test script => tests skipped + residual risk; post=done; never pas
   const result = await sbtdValidate(
     id,
     { phase: "post" },
-    { cwd: root, gitnexus: {} },
+    { cwd: root, graft: {} },
   );
   assert.equal(result.tests.status, "skipped");
   assert.match(result.tests.summary, /Residual risk/i);
@@ -206,7 +193,7 @@ test("Q4A: failed tests => tests.failed + validate.post=blocked", async () => {
     { phase: "post" },
     {
       cwd: root,
-      gitnexus: {},
+      graft: {},
       runTests: async () => ({
         status: "failed",
         summary: "boom fail",
@@ -218,12 +205,11 @@ test("Q4A: failed tests => tests.failed + validate.post=blocked", async () => {
   assert.equal(getSession(id).validate.post, "blocked");
 });
 
-test("Q3A: GitNexus advisory on post does not set post=blocked when tests done", async () => {
-  const id = "t10-post-adv-ok-tests";
-  const root = fixtureRoot("post-adv");
-  withIndex(root, "h2");
+test("Q3A: graft skipped on post does not set post=blocked when tests done", async () => {
+  const id = "t10-post-skip-ok-tests";
+  const root = fixtureRoot("post-skip-dc");
   const mcp = mcpStub({
-    "mcp__gitnexus__detect_changes": async () => {
+    "mcp__sbtd-graft__graft_check_freshness": async () => {
       throw new Error("dc fail");
     },
   });
@@ -232,15 +218,12 @@ test("Q3A: GitNexus advisory on post does not set post=blocked when tests done",
     { phase: "post" },
     {
       cwd: root,
-      gitnexus: {
-        mcp,
-        resolveHead: () => "h2",
-        resolveIndexedCommit: () => "h2",
-      },
+      graft: { mcp },
       runTests: async () => ({ status: "done", summary: "ok" }),
     },
   );
-  assert.equal(result.gitnexus.status, "advisory");
+  assert.equal(result.graft.status, "skipped");
+  assert.equal(result.graft.reason, "call-failed");
   assert.equal(result.validate.post, "done");
 });
 
@@ -279,7 +262,7 @@ test("return envelope shape (Q4A)", async () => {
     },
   );
   assert.equal(result.phase, "post");
-  assert.ok(result.gitnexus);
+  assert.ok(result.graft);
   assert.ok(result.tests);
   assert.ok(result.validate);
   assert.equal(result.validate.post, "done");
@@ -317,12 +300,13 @@ test("discoverProjectTestCommand: bun lockfile uses bun run test", () => {
   assert.deepEqual(cmd.args, ["run", "test"]);
 });
 
-test("Q1A production: apply validateHost injects GitNexus into registered execute", async () => {
+test("Q1A production: apply validateHost injects graft into registered execute", async () => {
   const root = fixtureRoot("inject-host");
-  withIndex(root, "h");
   const tools = [];
-  const mcp = mcpStub({
-    "mcp__gitnexus__impact": async (args) => ({ hit: args.target }),
+  const mcp = graftMcp({
+    "mcp__sbtd-graft__graft_find_code": async (args) => ({
+      hit: args.query,
+    }),
   });
   apply({
     systemPrompt: { section() {} },
@@ -335,11 +319,7 @@ test("Q1A production: apply validateHost injects GitNexus into registered execut
     cwd: root,
     validateHost: {
       cwd: root,
-      gitnexus: {
-        mcp,
-        resolveHead: () => "h",
-        resolveIndexedCommit: () => "h",
-      },
+      graft: { mcp },
     },
   });
   const validate = tools.find((t) => t.name === SBTD_VALIDATE_TOOL_NAME);
@@ -348,16 +328,20 @@ test("Q1A production: apply validateHost injects GitNexus into registered execut
     { phase: "pre", target: "Sym", cwd: "/evil", mcp: null },
     { agent: { id: "t10-inject" } },
   );
-  assert.equal(result.gitnexus.status, "ok");
+  assert.equal(result.graft.status, "ok");
   assert.equal(result.validate.pre, "done");
 });
 
-test("Q1A production: apply bridges tools.schemas/execute into GitNexus mcp", async () => {
+test("Q1A production: apply bridges tools.schemas/execute into graft mcp", async () => {
   const root = fixtureRoot("inject-bridge");
-  withIndex(root, "h");
   const tools = [];
   const toolMap = {
-    "mcp__gitnexus__impact": async (args) => ({ via: "bridge", t: args.target }),
+    "mcp__sbtd-graft__graft_check_freshness": async () =>
+      "graph in sync with the code",
+    "mcp__sbtd-graft__graft_find_code": async (args) => ({
+      via: "bridge",
+      t: args.query,
+    }),
   };
   apply({
     systemPrompt: { section() {} },
@@ -376,12 +360,7 @@ test("Q1A production: apply bridges tools.schemas/execute into GitNexus mcp", as
     },
     on() {},
     cwd: root,
-    validateHost: {
-      gitnexus: {
-        resolveHead: () => "h",
-        resolveIndexedCommit: () => "h",
-      },
-    },
+    validateHost: { cwd: root },
   });
   const validate = tools.find((t) => t.name === SBTD_VALIDATE_TOOL_NAME);
   assert.ok(validate);
@@ -389,8 +368,8 @@ test("Q1A production: apply bridges tools.schemas/execute into GitNexus mcp", as
     { phase: "pre", target: "BridgeSym" },
     { agent: { id: "t10-bridge" } },
   );
-  assert.equal(result.gitnexus.status, "ok");
-  assert.match(result.gitnexus.summary, /BridgeSym|bridge/i);
+  assert.equal(result.graft.status, "ok");
+  assert.match(result.graft.summary, /BridgeSym|bridge/i);
 });
 
 test("pickValidateInput drops trust-handle keys", async () => {
@@ -424,7 +403,7 @@ test("defaultRunTests honors testTimeoutMs via sbtdValidate host", async () => {
     const result = await sbtdValidate(
       "t10-timeout",
       { phase: "post" },
-      { cwd: root, gitnexus: {}, testTimeoutMs: 800 },
+      { cwd: root, graft: {}, testTimeoutMs: 800 },
     );
     const elapsed = Date.now() - started;
     assert.equal(result.tests.status, "failed");
@@ -505,7 +484,7 @@ test("Q3A: cancel aborts without persisting validate.post=blocked", async () => 
     const pending = sbtdValidate(
       id,
       { phase: "post" },
-      { cwd: root, gitnexus: {}, signal: ac.signal, testTimeoutMs: 60_000 },
+      { cwd: root, graft: {}, signal: ac.signal, testTimeoutMs: 60_000 },
     );
     await new Promise((r) => setTimeout(r, 150));
     ac.abort();
@@ -522,7 +501,7 @@ test("Q3A: cancel aborts without persisting validate.post=blocked", async () => 
 test("createToolsMcpBridge composes outer abort into nested execute signal", async () => {
   let nestedSignal;
   const tools = {
-    schemas: () => [{ name: "mcp__gitnexus__impact" }],
+    schemas: () => [{ name: "mcp__sbtd-graft__graft_find_code" }],
     execute: async ({ signal }) => {
       nestedSignal = signal;
       return { isError: false, value: { ok: 1 }, content: [] };
@@ -531,7 +510,7 @@ test("createToolsMcpBridge composes outer abort into nested execute signal", asy
   const mcp = createToolsMcpBridge(tools);
   const ac = new AbortController();
   bindBridgeSignal(mcp, ac.signal);
-  await mcp.callTool("mcp__gitnexus__impact", { target: "X" });
+  await mcp.callTool("mcp__sbtd-graft__graft_find_code", { target: "X" });
   assert.ok(nestedSignal, "nested execute should receive a signal");
   assert.equal(nestedSignal.aborted, false);
   ac.abort();
@@ -576,7 +555,7 @@ test("Q3A: cancel with no test script does not persist post=done", async () => {
     sbtdValidate(
       id,
       { phase: "post" },
-      { cwd: root, gitnexus: {}, signal: ac.signal },
+      { cwd: root, graft: {}, signal: ac.signal },
     ),
     (err) => {
       assert.equal(err?.name, "AbortError");
@@ -596,7 +575,7 @@ test("Q3A: injected runTests failed after abort does not persist post=blocked", 
       { phase: "post" },
       {
         cwd: root,
-        gitnexus: {},
+        graft: {},
         signal: ac.signal,
         runTests: async () => {
           ac.abort();
@@ -615,7 +594,7 @@ test("Q3A: injected runTests failed after abort does not persist post=blocked", 
 test("createToolsMcpBridge forwards outer agent + parent token into nested execute", async () => {
   let nested;
   const tools = {
-    schemas: () => [{ name: "mcp__gitnexus__impact" }],
+    schemas: () => [{ name: "mcp__sbtd-graft__graft_find_code" }],
     execute: async (exec) => {
       nested = exec;
       return { isError: false, value: { ok: 1 }, content: [] };
@@ -631,7 +610,7 @@ test("createToolsMcpBridge forwards outer agent + parent token into nested execu
     callId: "validate-call-1",
     rootCallId: "validate-root-1",
   });
-  await mcp.callTool("mcp__gitnexus__impact", { target: "X" });
+  await mcp.callTool("mcp__sbtd-graft__graft_find_code", { target: "X" });
   assert.ok(nested, "nested execute should be called");
   assert.equal(nested.agent, agent);
   assert.equal(nested.parent, token);

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -48,9 +49,12 @@ test("apply 注册人类 sbtd 命令且不注册同名模型 tool", () => {
 });
 
 test("空会话裸 /sbtd 只读 no-plan 且给出 maestro missing", async () => {
-  const out = await runSbtdCommand("", { sessionId: "t15-empty" });
+  const cwd = mkdtempSync(join(tmpdir(), "t15-empty-"));
+  const out = await runSbtdCommand("", { sessionId: "t15-empty", cwd });
   assert.match(out, /no-plan/);
   assert.match(out, /maestro missing: none/);
+  assert.match(out, /workflowMode: default/);
+  assert.match(out, /workflowModeSource: default/);
   assert.equal(serialize("t15-empty").plan, undefined);
 });
 
@@ -81,6 +85,8 @@ test("/sbtd plan 只查看会话 plan 不创建", async () => {
   const planOut = await runSbtdCommand("plan", { sessionId: "t15-plan" });
   assert.match(planOut, /Book Gate Plan/);
   assert.doesNotMatch(planOut, /maestro missing/);
+  // R3 Q4 A：仅 /sbtd status 显示模式层，plan 视图不带
+  assert.doesNotMatch(planOut, /workflowMode/);
   const src = readFileSync(
     join(pkgRoot, "src/commands/sbtd.ts"),
     "utf8",
@@ -117,6 +123,45 @@ test("/sbtd maestro 复用 T12 preflight 且不静默安装", async () => {
   assert.doesNotMatch(src, /brew install/);
 });
 
+test("/sbtd status 显示 workflowMode 与来源层（R3 Q4 A）", async () => {
+  // 宿主注入层：commandHost.workflowMode 经 apply → resolveCommandHost 到达命令
+  const hostDir = mkdtempSync(join(tmpdir(), "t15-mode-host-"));
+  const { commands } = loadPlugin({
+    commandHost: { cwd: hostDir, workflowMode: "lite" },
+  });
+  const hosted = await commands[0].handler({
+    agent: { id: "t15-mode-host" },
+    rawInput: "",
+  });
+  assert.equal(hosted.kind, "success");
+  assert.match(hosted.text, /workflowMode: lite/);
+  assert.match(hosted.text, /workflowModeSource: host/);
+  assert.doesNotMatch(hosted.text, /workflowModeNote/);
+
+  // 无效宿主注入：退回缺省并写明提示，不拒载
+  const invalid = await runSbtdCommand("", {
+    sessionId: "t15-mode-invalid",
+    cwd: hostDir,
+    workflowMode: "bogus",
+  });
+  assert.match(invalid, /workflowMode: default/);
+  assert.match(invalid, /workflowModeSource: default/);
+  assert.match(invalid, /workflowModeNote: 宿主注入 workflow_mode 无效/);
+
+  // 无注入、无 .sbtd 指针：缺省层 + 指针缺失提示
+  const emptyDir = mkdtempSync(join(tmpdir(), "t15-mode-empty-"));
+  const missing = await runSbtdCommand("", {
+    sessionId: "t15-mode-default",
+    cwd: emptyDir,
+  });
+  assert.match(missing, /workflowMode: default/);
+  assert.match(missing, /workflowModeSource: default/);
+  assert.match(
+    missing,
+    /workflowModeNote: \.sbtd\/active-task\.json 指针缺失或损坏/,
+  );
+});
+
 test("handler uses dsh-commands invocation shape and returns CommandResult", async () => {
   const { commands } = loadPlugin({
     commandHost: { cwd: "/tmp/t15-host" },
@@ -128,7 +173,7 @@ test("handler uses dsh-commands invocation shape and returns CommandResult", asy
   });
   assert.deepEqual(result, {
     kind: "success",
-    text: "no-plan\n\nmaestro missing: none",
+    text: "no-plan\n\nworkflowMode: default\nworkflowModeSource: default\nworkflowModeNote: .sbtd/active-task.json 指针缺失或损坏\n\nmaestro missing: none",
   });
   assert.equal(serialize("t15-agent").plan, undefined);
 });

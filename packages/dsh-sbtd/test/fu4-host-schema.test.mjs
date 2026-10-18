@@ -66,10 +66,11 @@ test("pinned dsh@0.1.1-rc.2 Cordis register/load 接受 clarify/spec/tickets out
 
   assert.equal(clarify.output.schema.properties.mode.type, "string");
   assert.equal(clarify.output.schema.properties.currentQuestion.type, "string");
-  assert.equal(spec.output.schema.properties.slug.type, "string");
-  assert.equal(spec.output.schema.properties.source.type, "string");
-  assert.equal(tickets.output.schema.properties.slug.type, "string");
-  assert.equal(tickets.output.schema.properties.source.type, "string");
+  // Draft-only schema (R1 Q2 A): no slug/source; the plugin writes no task files.
+  assert.equal(spec.output.schema.properties.mode.type, "string");
+  assert.equal(spec.output.schema.properties.artifact.type, "string");
+  assert.equal(tickets.output.schema.properties.mode.type, "string");
+  assert.equal(tickets.output.schema.properties.artifact.type, "string");
 
   assertNoTypeArrays(clarify.output.schema);
   assertNoTypeArrays(spec.output.schema);

@@ -1,9 +1,14 @@
 /**
  * sbtd_lessons (T14) — record / match / read durable project lessons.
  *
- * Locks: Q1A / Q2A / Q3A / Q4A / Q5A / Q6A.
+ * Lessons v2 (0.2.0-rc.1): identity is <cwd>/.sbtd/developer (name=<name>,
+ * ^[a-z0-9]+$; read-only main-worktree probe for linked worktrees); the plugin
+ * never writes that file. Store landing chain: existing docs/lessons/index.md
+ * layered store → existing docs/spec/lessons.md short entry → legacy flat
+ * docs/lessons.md or old .trellis/lessons tree (record = migration-skip,
+ * match/read still read) → otherwise create docs/lessons/ layered.
  * Host injects cwd; model never supplies trust handles.
- * No GitNexus; no writeArtifact; no trellis init; no manuals nest.
+ * No Graft writes; no writeArtifact; no trellis init; no manuals nest.
  */
 
 import { spawnSync } from "node:child_process";
@@ -11,13 +16,11 @@ import {
   existsSync,
   lstatSync,
   mkdirSync,
-  opendirSync,
   readFileSync,
   realpathSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
-import { detect } from "../backends/trellis.js";
 import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import {
   type PlanToolExec,
@@ -35,7 +38,7 @@ export const LESSON_EVENTS = [
   "rollback",
   "tool-misjudge",
   "validation-fail",
-  "gitnexus-mismatch",
+  "graft-mismatch",
 ] as const;
 export type LessonEvent = (typeof LESSON_EVENTS)[number];
 
@@ -107,7 +110,7 @@ const FORBIDDEN_MODEL_KEYS = [
 const SAFE_SLUG_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 
 export const SBTD_LESSONS_DESCRIPTION =
-  "Record, match, or read durable project lessons. Five event kinds only (bug-fix, rollback, tool-misjudge, validation-fail, gitnexus-mismatch). Ordinary/unknown record is refused with no file write. Trellis present: .trellis/lessons/topics/<topic>.md + index.md. No Trellis: docs/lessons.md or docs/lessons/ layered store. Match/read are on-demand via index filters; never walks all topics/archive. No GitNexus; no writeArtifact; no trellis init.";
+  "Record, match, or read durable project lessons (lessons v2). Five event kinds only (bug-fix, rollback, tool-misjudge, validation-fail, graft-mismatch). Ordinary/unknown record is refused with no file write. Identity: <cwd>/.sbtd/developer with name=<name> (^[a-z0-9]+$; linked worktrees probe the main checkout read-only); never guessed from env/git, and the plugin never writes it. Record lands in the first existing store of: docs/lessons/index.md layered store (docs/lessons/{index.md,topics/}), an existing docs/spec/lessons.md short-entry file (append only, never created). Legacy flat docs/lessons.md or an old .trellis/lessons tree make record return skipped kind=migration-skip (no auto-migration) while match/read still read them. With nothing present, record creates docs/lessons/ layered. Match/read follow the same chain and are on-demand via index filters; never walks all topics/archive. No Graft writes; no writeArtifact; no trellis init.";
 
 type IndexRow = {
   id: string;
@@ -119,6 +122,8 @@ type IndexRow = {
 
 type StoreLayout =
   | {
+      // Read-only legacy: an old Trellis lessons tree (.trellis/lessons).
+      // match/read still read it; record returns migration-skip.
       kind: "trellis";
       root: string;
       indexPath: string;
@@ -131,9 +136,23 @@ type StoreLayout =
       topicsDir: string;
     }
   | {
+      // Short-entry flat file. Writable only because it already exists;
+      // the plugin never creates docs/spec/lessons.md.
+      kind: "docs-short";
+      filePath: string;
+    }
+  | {
+      // Read-only legacy flat docs/lessons.md (v1 plugin artifact).
+      // match/read still read it; record returns migration-skip.
       kind: "docs-flat";
       filePath: string;
     };
+
+type FlatStoreLayout = Extract<StoreLayout, { filePath: string }>;
+
+function isFlatLayout(store: StoreLayout): store is FlatStoreLayout {
+  return store.kind === "docs-short" || store.kind === "docs-flat";
+}
 
 function isLessonIntent(value: string): value is LessonIntent {
   return (LESSON_INTENTS as readonly string[]).includes(value);
@@ -259,32 +278,49 @@ function topicFromDetail(detail: string): string | null {
   return isValidIndexTopic(slug) ? slug : null;
 }
 
-function trellisPresent(cwd: string): boolean {
-  // .trellis/.developer alone is metadata, not a Trellis lessons store.
-  return detect(cwd).workflowPresent;
+function layeredStore(root: string): StoreLayout {
+  return {
+    kind: "docs-layered",
+    root,
+    indexPath: join(root, "index.md"),
+    topicsDir: join(root, "topics"),
+  };
 }
 
-function resolveStore(cwd: string, present: boolean): StoreLayout {
-  if (present) {
-    const root = join(cwd, ".trellis", "lessons");
+/**
+ * Lessons v2 landing chain (record / match / read share it):
+ * 1. existing docs/lessons/index.md  → layered store;
+ * 2. existing docs/spec/lessons.md   → short-entry flat file (append-only);
+ * 3. existing docs/lessons.md        → legacy flat (read; record skips);
+ * 4. existing .trellis/lessons/index.md → old Trellis tree (read; record skips);
+ * 5. nothing                         → null (record creates docs/lessons/ layered).
+ * An old tree counts only via its lessons index; .trellis/workflow.md alone
+ * does not. The plugin never creates docs/spec/lessons.md.
+ */
+function resolveStore(cwd: string): StoreLayout | null {
+  const layeredRoot = join(cwd, "docs", "lessons");
+  if (existsSync(join(layeredRoot, "index.md"))) {
+    return layeredStore(layeredRoot);
+  }
+  const shortPath = join(cwd, "docs", "spec", "lessons.md");
+  if (existsSync(shortPath)) {
+    return { kind: "docs-short", filePath: shortPath };
+  }
+  const flatPath = join(cwd, "docs", "lessons.md");
+  if (existsSync(flatPath)) {
+    return { kind: "docs-flat", filePath: flatPath };
+  }
+  const trellisRoot = join(cwd, ".trellis", "lessons");
+  const trellisIndex = join(trellisRoot, "index.md");
+  if (existsSync(trellisIndex)) {
     return {
       kind: "trellis",
-      root,
-      indexPath: join(root, "index.md"),
-      topicsDir: join(root, "topics"),
+      root: trellisRoot,
+      indexPath: trellisIndex,
+      topicsDir: join(trellisRoot, "topics"),
     };
   }
-  const layeredIndex = join(cwd, "docs", "lessons", "index.md");
-  if (existsSync(layeredIndex)) {
-    const root = join(cwd, "docs", "lessons");
-    return {
-      kind: "docs-layered",
-      root,
-      indexPath: layeredIndex,
-      topicsDir: join(root, "topics"),
-    };
-  }
-  return { kind: "docs-flat", filePath: join(cwd, "docs", "lessons.md") };
+  return null;
 }
 
 function readTextIfAllowed(cwd: string, absPath: string): string | null {
@@ -609,7 +645,7 @@ function flatRowTopic(
 }
 
 function rowTopic(row: IndexRow, store: StoreLayout, cwd: string): string {
-  if (store.kind === "docs-flat") {
+  if (isFlatLayout(store)) {
     return flatRowTopic(row, store.filePath, cwd) ?? "";
   }
   return topicFromDetail(row.detail) ?? "";
@@ -667,7 +703,7 @@ function safeDetailPathForRow(
   row: IndexRow,
   cwd: string,
 ): { ok: true; path: string } | { ok: false } {
-  if (store.kind === "docs-flat") {
+  if (isFlatLayout(store)) {
     if (!lessonPathAllowed(cwd, store.filePath)) return { ok: false };
     return { ok: true, path: store.filePath };
   }
@@ -681,7 +717,7 @@ function safeDetailPathForRow(
 }
 
 function loadIndexRows(store: StoreLayout, cwd: string): IndexRow[] {
-  if (store.kind === "docs-flat") {
+  if (isFlatLayout(store)) {
     const text = readTextIfAllowed(cwd, store.filePath);
     if (text == null) return [];
     return parseFlatSections(text, store.filePath);
@@ -734,30 +770,6 @@ function parseNameEquals(text: string): string | undefined {
   return undefined;
 }
 
-function listWorkspaceCandidates(cwd: string): string[] {
-  const dir = join(cwd, ".trellis", "workspace");
-  if (!existsSync(dir)) return [];
-  try {
-    const names: string[] = [];
-    const handle = opendirSync(dir);
-    try {
-      let entry = handle.readSync();
-      while (entry !== null) {
-        if (entry.isDirectory() && SPLIT_NAME_RE.test(entry.name)) {
-          names.push(entry.name);
-        }
-        entry = handle.readSync();
-      }
-    } finally {
-      handle.close();
-    }
-    names.sort();
-    return names;
-  } catch {
-    return [];
-  }
-}
-
 function mainWorktreeRoot(cwd: string): string | null {
   try {
     const result = spawnSync("git", ["worktree", "list", "--porcelain"], {
@@ -780,16 +792,11 @@ function mainWorktreeRoot(cwd: string): string | null {
 }
 
 function initDeveloperHint(): string {
-  return "Provide a conforming split name / run python3 ./.trellis/scripts/init_developer.py <name>.";
+  return "Create .sbtd/developer containing name=<name> (lowercase letters and digits only, matching ^[a-z0-9]+$). The plugin never writes or rewrites this file.";
 }
 
-function unresolvedSplitNote(cwd: string): string {
-  const candidates = listWorkspaceCandidates(cwd);
-  const extra =
-    candidates.length > 0
-      ? ` Candidates in .trellis/workspace: ${candidates.join(", ")}.`
-      : "";
-  return `Split name unresolved: no name= in .trellis/.developer (and no main-worktree .developer). Do not guess from TRELLIS_DEVELOPER, git config, commit authors, env vars, or workspace dirs. ${initDeveloperHint()}${extra}`;
+function unresolvedSplitNote(): string {
+  return `Split name unresolved: no name= in .sbtd/developer (and no main-worktree .sbtd/developer). Do not guess from TRELLIS_DEVELOPER, git config, commit authors, env vars, or workspace dirs. ${initDeveloperHint()}`;
 }
 
 function invalidSplitNote(raw: string, source: string): string {
@@ -819,41 +826,43 @@ function judgeDeveloperName(
 }
 
 function resolveSplitName(cwd: string): SplitNameOk | SplitNameErr {
-  const localPath = join(cwd, ".trellis", ".developer");
+  const localPath = join(cwd, ".sbtd", "developer");
   if (existsSync(localPath)) {
     try {
       return judgeDeveloperName(
         parseNameEquals(readFileSync(localPath, "utf8")),
-        ".trellis/.developer",
+        ".sbtd/developer",
         ".developer",
       );
     } catch {
       return {
         ok: false,
         kind: "split-name-unresolved",
-        note: unresolvedSplitNote(cwd),
+        note: unresolvedSplitNote(),
       };
     }
   }
 
+  // Linked worktree: read-only probe of the main checkout's .sbtd/developer.
+  // An existing-but-invalid main file is split-name-invalid, never a bypass.
   const mainRoot = mainWorktreeRoot(cwd);
   if (mainRoot != null) {
     const cwdKey = tryRealpath(cwd) ?? resolve(cwd);
     const mainKey = tryRealpath(mainRoot) ?? resolve(mainRoot);
     if (cwdKey !== mainKey) {
-      const mainPath = join(mainRoot, ".trellis", ".developer");
+      const mainPath = join(mainRoot, ".sbtd", "developer");
       if (existsSync(mainPath)) {
         try {
           return judgeDeveloperName(
             parseNameEquals(readFileSync(mainPath, "utf8")),
-            "main-worktree .trellis/.developer",
+            "main-worktree .sbtd/developer",
             "main-worktree",
           );
         } catch {
           return {
             ok: false,
             kind: "split-name-unresolved",
-            note: unresolvedSplitNote(cwd),
+            note: unresolvedSplitNote(),
           };
         }
       }
@@ -863,7 +872,7 @@ function resolveSplitName(cwd: string): SplitNameOk | SplitNameErr {
   return {
     ok: false,
     kind: "split-name-unresolved",
-    note: unresolvedSplitNote(cwd),
+    note: unresolvedSplitNote(),
   };
 }
 
@@ -894,13 +903,34 @@ function recordLesson(
   const split = resolveSplitName(cwd);
   if (!split.ok) return skipped("record", split.kind, split.note);
 
-  const present = trellisPresent(cwd);
-  const store = resolveStore(cwd, present);
+  const store =
+    resolveStore(cwd) ?? layeredStore(join(cwd, "docs", "lessons"));
   const summary = sanitizeCell(input.summary?.trim() ?? "");
   const sanitizedTags = sanitizeTags(input.tags);
   const splitNote = `Lessons split name: ${split.name}\nSource: ${split.source}`;
 
+  // Legacy stores stay readable but are never written: no auto-migration.
+  if (store.kind === "trellis") {
+    const result = skipped(
+      "record",
+      "migration-skip",
+      "Legacy Trellis lessons tree detected (.trellis/lessons/index.md). record does not auto-migrate legacy stores; match/read still read the old tree. Move the lessons into the docs/lessons/ layered store to enable record.",
+    );
+    result.store = "trellis";
+    return result;
+  }
   if (store.kind === "docs-flat") {
+    const result = skipped(
+      "record",
+      "migration-skip",
+      "Legacy flat lessons file detected (docs/lessons.md). record does not auto-migrate legacy stores; match/read still read it. Move the lessons into the docs/lessons/ layered store to enable record.",
+    );
+    result.store = "docs";
+    return result;
+  }
+
+  if (store.kind === "docs-short") {
+    // Short-entry flat file: appended into only because it already exists.
     if (!lessonPathAllowed(cwd, store.filePath)) {
       return skipped("record", "unsafe-path");
     }
@@ -927,7 +957,6 @@ function recordLesson(
         `Existing lessons:${split.name} start marker has no matching end; refusing a second block.`,
       );
     }
-    mkdirSync(join(cwd, "docs"), { recursive: true });
     writeFileSync(store.filePath, next, "utf8");
     return {
       ok: true,
@@ -998,7 +1027,7 @@ function recordLesson(
     status: "recorded",
     id,
     path: topicPath,
-    store: present ? "trellis" : "docs",
+    store: "docs",
     mutation: "write",
     note: splitNote,
   };
@@ -1013,9 +1042,17 @@ function queryLessons(
     return skipped(intent, "unsafe-path");
   }
 
-  const present = trellisPresent(cwd);
-  const store = resolveStore(cwd, present);
-  if (store.kind === "docs-flat") {
+  const store = resolveStore(cwd);
+  if (store == null) {
+    return {
+      ok: true,
+      intent,
+      status: "not-found",
+      hits: [],
+      mutation: "none",
+    };
+  }
+  if (isFlatLayout(store)) {
     if (!lessonPathAllowed(cwd, store.filePath)) {
       return skipped(intent, "unsafe-path");
     }
@@ -1083,7 +1120,7 @@ function queryLessons(
     intent,
     status: indexOnlyRead ? "matched" : intent === "read" ? "read" : "matched",
     hits,
-    store: present ? "trellis" : "docs",
+    store: store.kind === "trellis" ? "trellis" : "docs",
     mutation: "none",
   };
 }
