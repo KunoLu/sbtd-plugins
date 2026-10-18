@@ -82,7 +82,7 @@ jobs:
           tarball="$(readlink -f "${tarballs[0]}")"
           echo "tarball=${tarball}" >> "${GITHUB_OUTPUT}"
           echo "packed ${tarball}"
-          if ! tar tzf "${tarball}" | grep -qx 'package/dist/index.js'; then
+          if ! tar tzf "${tarball}" | grep -x 'package/dist/index.js' >/dev/null; then
             echo "T16 pit: pack tarball missing package/dist/index.js" >&2
             tar tzf "${tarball}" >&2
             exit 1
