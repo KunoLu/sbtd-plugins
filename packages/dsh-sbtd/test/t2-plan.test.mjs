@@ -579,7 +579,7 @@ test("createPlanTool parameters 为 JSON Schema object 根，plan type 为 objec
 test("README 提到 sbtd_plan 并保持钉版本与 @next", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /sbtd_plan/);
-  assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
+  assert.match(readme, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/);
   assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
   assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
   assert.doesNotMatch(

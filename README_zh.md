@@ -21,7 +21,7 @@ SBTD 宿主插件 monorepo：共享 workflow kit，以及 OMP / DSH 宿主适配
 | 包 | 路径 | 说明 |
 | --- | --- | --- |
 | `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow 插件。提供 `/sbtd`、内嵌 kit、`doctor` 与 `onboard`。版本 **0.1.0-rc.14**，发布在 `next` tag。 |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。已发布 **0.1.0-rc.3** 到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。宿主钉 `@deepseek-ai/dsh@0.1.1-rc.2`。 |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。已发布 **0.1.0-rc.3** 到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。宿主钉 `@deepseek-ai/dsh@0.2.0-rc.2`。 |
 | `@kunolu/sbtd-workflow-kit` | [`packages/sbtd-workflow-kit`](packages/sbtd-workflow-kit) | 共享 kit / 投影层。**不是**宿主插件。 |
 
 ## 安装
@@ -34,13 +34,13 @@ omp plugin install @kunolu/omp-sbtd@next
 
 这是 dist-tag next 上的 0.1.0-rc.14。不要推荐 @latest。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
 
-DSH 宿主固定 @deepseek-ai/dsh@0.1.1-rc.2。
+DSH 宿主固定 @deepseek-ai/dsh@0.2.0-rc.2。
 
-DSH 插件 **0.1.0-rc.3** 已发布到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。使用 `@kunolu/dsh-sbtd@next` 与宿主 `@deepseek-ai/dsh@0.1.1-rc.2` 安装。不要使用 `@latest` 或 github 路径。
+DSH 插件 **0.1.0-rc.3** 已发布到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。使用 `@kunolu/dsh-sbtd@next` 与宿主 `@deepseek-ai/dsh@0.2.0-rc.2` 安装。不要使用 `@latest` 或 github 路径。
 
 ```bash
-npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
-npx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
+npx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
+npx @deepseek-ai/dsh@0.2.0-rc.2 --profile web --dump-config
 ```
 
 dump-config 应含 id: sbtd。
@@ -48,7 +48,7 @@ dump-config 应含 id: sbtd。
 可选全局安装：
 
 ```bash
-npm i -g @deepseek-ai/dsh@0.1.1-rc.2
+npm i -g @deepseek-ai/dsh@0.2.0-rc.2
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
 dsh --profile web --dump-config
 dsh web --no-open

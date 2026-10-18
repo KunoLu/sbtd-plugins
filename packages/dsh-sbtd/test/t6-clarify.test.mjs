@@ -419,7 +419,7 @@ test("section 要求完整 docs grill 后所有模式都有 DDD 复审通过态"
 test("README 提到 sbtd_clarify 并保持钉版本", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /sbtd_clarify/);
-  assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
+  assert.match(readme, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/);
   assert.match(readme, /0\.1\.0-rc\.1/);
 });
 
