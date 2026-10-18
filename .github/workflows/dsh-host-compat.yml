@@ -147,7 +147,9 @@ jobs:
           printf '%s\n' '{"name":"dsh-host-cell","private":true}' > "${cell}/package.json"
           cp "${GITHUB_WORKSPACE}/.github/workflows/scripts/dsh-host-register-smoke.mjs" "${cell}/smoke.mjs"
           cd "${cell}"
-          pnpm add "@deepseek-ai/dsh@${DSH_VERSION}" "${tarball}"
+          # pnpm 10+/11 ignores dependency build scripts by default and fails the install
+          # (ERR_PNPM_IGNORED_BUILDS); temp cells must allow builds so dsh native deps and the smoke can run.
+          pnpm add --config.dangerouslyAllowAllBuilds=true "@deepseek-ai/dsh@${DSH_VERSION}" "${tarball}"
           node smoke.mjs
 
 
@@ -225,5 +227,7 @@ jobs:
           printf '%s\n' '{"name":"dsh-host-cell","private":true}' > "${cell}/package.json"
           cp "${GITHUB_WORKSPACE}/.github/workflows/scripts/dsh-host-register-smoke.mjs" "${cell}/smoke.mjs"
           cd "${cell}"
-          pnpm add "@deepseek-ai/dsh@${DSH_VERSION}" "${tarball}"
+          # pnpm 10+/11 ignores dependency build scripts by default and fails the install
+          # (ERR_PNPM_IGNORED_BUILDS); temp cells must allow builds so dsh native deps and the smoke can run.
+          pnpm add --config.dangerouslyAllowAllBuilds=true "@deepseek-ai/dsh@${DSH_VERSION}" "${tarball}"
           node smoke.mjs
