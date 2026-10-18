@@ -19,6 +19,7 @@ import {
   readFileSync,
   realpathSync,
   writeFileSync,
+  type Stats,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { optionalHostBag, optionalHostCwd } from "../host-context.js";
@@ -754,7 +755,7 @@ type SplitNameOk = {
 
 type SplitNameErr = {
   ok: false;
-  kind: "split-name-unresolved" | "split-name-invalid";
+  kind: "split-name-unresolved" | "split-name-invalid" | "unsafe-path";
   note: string;
 };
 
@@ -803,6 +804,10 @@ function invalidSplitNote(raw: string, source: string): string {
   return `Split name invalid: read ${JSON.stringify(raw)} from ${source} (must match ^[a-z0-9]+$; lowercase letters and digits only, no separators). Never rewritten or normalized. ${initDeveloperHint()}`;
 }
 
+function unsafeSplitNote(source: string): string {
+  return `Split name source unsafe: ${source} is a symlink or resolves outside its root; identity resolution stopped (never followed, no main-worktree fallback, no lesson write). Replace it with a regular file inside the project. ${initDeveloperHint()}`;
+}
+
 function judgeDeveloperName(
   raw: string | undefined,
   sourceLabel: string,
@@ -825,23 +830,50 @@ function judgeDeveloperName(
   return { ok: true, name: raw, source };
 }
 
-function resolveSplitName(cwd: string): SplitNameOk | SplitNameErr {
-  const localPath = join(cwd, ".sbtd", "developer");
-  if (existsSync(localPath)) {
-    try {
-      return judgeDeveloperName(
-        parseNameEquals(readFileSync(localPath, "utf8")),
-        ".sbtd/developer",
-        ".developer",
-      );
-    } catch {
-      return {
-        ok: false,
-        kind: "split-name-unresolved",
-        note: unresolvedSplitNote(),
-      };
-    }
+/**
+ * Safe-identity guard: the identity file must be a safe regular file —
+ * present via lstat (dangling symlinks count as present), not itself a
+ * symlink, and contained under its root after realpath projection (reuses
+ * the lessons-store path helpers). Anything else stops identity resolution
+ * entirely: the file is never followed and there is no fallback probe.
+ */
+function readDeveloperFile(
+  root: string,
+  sourceLabel: string,
+  source: SplitNameOk["source"],
+): SplitNameOk | SplitNameErr | null {
+  const path = join(root, ".sbtd", "developer");
+  let stat: Stats;
+  try {
+    stat = lstatSync(path);
+  } catch {
+    return null; // absent — caller may probe the next source
   }
+  if (stat.isSymbolicLink() || !lessonPathAllowed(root, path)) {
+    return {
+      ok: false,
+      kind: "unsafe-path",
+      note: unsafeSplitNote(sourceLabel),
+    };
+  }
+  try {
+    return judgeDeveloperName(
+      parseNameEquals(readFileSync(path, "utf8")),
+      sourceLabel,
+      source,
+    );
+  } catch {
+    return {
+      ok: false,
+      kind: "split-name-unresolved",
+      note: unresolvedSplitNote(),
+    };
+  }
+}
+
+function resolveSplitName(cwd: string): SplitNameOk | SplitNameErr {
+  const local = readDeveloperFile(cwd, ".sbtd/developer", ".developer");
+  if (local != null) return local;
 
   // Linked worktree: read-only probe of the main checkout's .sbtd/developer.
   // An existing-but-invalid main file is split-name-invalid, never a bypass.
@@ -850,22 +882,12 @@ function resolveSplitName(cwd: string): SplitNameOk | SplitNameErr {
     const cwdKey = tryRealpath(cwd) ?? resolve(cwd);
     const mainKey = tryRealpath(mainRoot) ?? resolve(mainRoot);
     if (cwdKey !== mainKey) {
-      const mainPath = join(mainRoot, ".sbtd", "developer");
-      if (existsSync(mainPath)) {
-        try {
-          return judgeDeveloperName(
-            parseNameEquals(readFileSync(mainPath, "utf8")),
-            "main-worktree .sbtd/developer",
-            "main-worktree",
-          );
-        } catch {
-          return {
-            ok: false,
-            kind: "split-name-unresolved",
-            note: unresolvedSplitNote(),
-          };
-        }
-      }
+      const main = readDeveloperFile(
+        mainRoot,
+        "main-worktree .sbtd/developer",
+        "main-worktree",
+      );
+      if (main != null) return main;
     }
   }
 

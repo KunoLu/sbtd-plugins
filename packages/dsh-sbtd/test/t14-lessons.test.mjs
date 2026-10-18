@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -918,6 +919,105 @@ test("non-conforming .sbtd/developer name skips invalid without write or normali
   assert.equal(result2.kind, "split-name-invalid");
   assert.match(result2.note ?? "", /zhang_san/);
   assert.equal(existsSync(join(root2, "docs")), false);
+});
+
+test("P1-3: symlink .sbtd/developer outside cwd refuses record; identity never followed", () => {
+  const root = fixtureRoot("p13-symlink-developer");
+  const outsideDir = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-p13-outside-"));
+  const outsideFile = join(outsideDir, "developer");
+  writeFileSync(outsideFile, "name=outsider0\n", "utf8");
+  mkdirSync(join(root, ".sbtd"), { recursive: true });
+  try {
+    symlinkSync(outsideFile, join(root, ".sbtd", "developer"));
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "EPERM") {
+      return;
+    }
+    throw err;
+  }
+
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "symlink identity probe" },
+    { cwd: root },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "skipped");
+  assert.equal(result.kind, "unsafe-path");
+  assert.equal(result.mutation, "none");
+  assert.match(result.note ?? "", /unsafe/i);
+  assert.doesNotMatch(JSON.stringify(result), /outsider0/);
+  assert.equal(existsSync(join(root, "docs")), false);
+
+  // Intermediate-component symlink (.sbtd itself) escapes the root too.
+  const root2 = fixtureRoot("p13-symlink-sbtd-dir");
+  try {
+    symlinkSync(outsideDir, join(root2, ".sbtd"), "dir");
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "EPERM") {
+      return;
+    }
+    throw err;
+  }
+  const result2 = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "symlink dir probe" },
+    { cwd: root2 },
+  );
+  assert.equal(result2.ok, false);
+  assert.equal(result2.status, "skipped");
+  assert.equal(result2.kind, "unsafe-path");
+  assert.equal(result2.mutation, "none");
+  assert.doesNotMatch(JSON.stringify(result2), /outsider0/);
+  assert.equal(existsSync(join(root2, "docs")), false);
+});
+
+test("P1-3: symlink main-worktree .sbtd/developer stops fallback identity resolution", () => {
+  const parent = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-p13-wt-"));
+  const main = join(parent, "main");
+  const linked = join(parent, "linked");
+  mkdirSync(main, { recursive: true });
+  const git = (args, cwd) => {
+    const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+    if (r.error != null || r.status !== 0) return null;
+    return r;
+  };
+  if (git(["init"], main) == null) return; // git unavailable
+  if (
+    git(
+      ["-c", "user.email=t14@example.invalid", "-c", "user.name=t14", "commit", "--allow-empty", "-m", "init"],
+      main,
+    ) == null
+  ) {
+    return;
+  }
+  if (git(["worktree", "add", linked], main) == null) return;
+
+  const outsideDir = mkdtempSync(join(tmpdir(), "dsh-sbtd-t14-p13-wt-outside-"));
+  const outsideFile = join(outsideDir, "developer");
+  writeFileSync(outsideFile, "name=outsider0\n", "utf8");
+  mkdirSync(join(main, ".sbtd"), { recursive: true });
+  try {
+    symlinkSync(outsideFile, join(main, ".sbtd", "developer"));
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "EPERM") {
+      return;
+    }
+    throw err;
+  }
+
+  // Linked worktree has no local identity; the unsafe main file must not be followed.
+  const result = sbtdLessons(
+    "s1",
+    { intent: "record", event: "bug-fix", summary: "worktree symlink probe" },
+    { cwd: linked },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "skipped");
+  assert.equal(result.kind, "unsafe-path");
+  assert.equal(result.mutation, "none");
+  assert.doesNotMatch(JSON.stringify(result), /outsider0/);
+  assert.equal(existsSync(join(linked, "docs")), false);
 });
 
 test("second record for same name extends the same marker block", () => {
