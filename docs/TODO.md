@@ -40,6 +40,7 @@
 |---|---|---|
 | 1 | **FU5** 宿主兼容调研（`0.1.1-rc.2` → `0.1.5-rc.1` / `0.1.5-rc.2`，含中间 0.1.2/0.1.3） | ✅ Round3 收口：**不 bump**；FU5 正式关闭；tip `0.1.5-rc.2` ask 留 optional；下一主线等 640 `v1.0.15` |
 | 2 | **640-skills** pin → **v1.0.15** | ✅ #87 → `46ac3e6`：tag `v1.0.15` / `bc8eec1549928fb0966254751b96b611b6334183`；sync+MANIFEST+t4；`lessons.ts` write align；无 npm；whitelist 不变；无 package bump；无 peer |
+| 3 | **dsh-sbtd 0.2.0-rc.1 升级**：方案与任务表见 [`docs/prd/dsh-sbtd-0.2.0-rc.1.md`](./prd/dsh-sbtd-0.2.0-rc.1.md)（不复制整表） | 🚧 PRD 撰写中 |
 
 ### FU5 — 宿主兼容调研（✅ Round3 已收口）
 

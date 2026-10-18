@@ -26,7 +26,7 @@ _Avoid_: OMP-only, OMP-native KPi
 
 **Runtime Mode**:
 The session-level choice between `enforced`, where KPi automatically governs the SBTD workflow, and `advisory`, where those automatic workflow controls are inactive.
-_Avoid_: strict mode, environment status
+_Avoid_: strict mode, environment status, sbtd-task `workflow_mode`
 
 **Effective Control State**:
 The non-persistent `active`, `advisory`, `preflight-only`, or `blocked` result derived only from the current Runtime Mode and freshly observed Environment Mode; commands never set it directly.
@@ -42,7 +42,11 @@ _Avoid_: Project Facts, a user-authored AGENTS block
 
 **Policy Profile**:
 The `strict` or `relaxed` setting that changes optional workflow checks without changing Runtime Mode or bypassing route-required Gates.
-_Avoid_: on/off mode, enforcement state
+_Avoid_: on/off mode, enforcement state, sbtd-task `workflow_mode`
+
+**workflow_mode** (sbtd-task / dsh-sbtd):
+The task-level execution mode recorded on `task.md` as `strict`, `default`, or `lite`. In `@kunolu/dsh-sbtd` it is resolved read-only in layers (tool argument or host injection → active-task `task.md` → `default`) and drives book-review gates and no-plan production-edit behavior. It is **not** Runtime Mode (`enforced`/`advisory`) and **not** Policy Profile (`strict`/`relaxed`); those three names must not be mixed. See `docs/prd/dsh-sbtd-0.2.0-rc.1.md` §2.4 DDD Boundary Review.
+_Avoid_: Runtime Mode, Policy Profile, clarify `docs`/`generic` interview mode
 
 **Onboard Profile**:
 The selected, non-policy installation baseline identified by a stable `onboardProfileId`; it declares each managed asset or capability as required or Optional for its Runtime and project scope. `AcceptedSkipV1` records and matches this identifier. It is independent of the `strict|relaxed` Policy Profile.
