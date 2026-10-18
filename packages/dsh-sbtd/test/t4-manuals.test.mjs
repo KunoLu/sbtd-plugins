@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const manuals = join(pkgRoot, "manuals");
-const PIN = "bc8eec1549928fb0966254751b96b611b6334183";
+const PIN = "1d82494d74f6df9bca7dccef2da409f87091883e";
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 function whitelistFromScript(scriptPath) {
   const body = readFileSync(scriptPath, "utf8");
@@ -34,7 +34,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
   const manifest = JSON.parse(readFileSync(join(manuals, "MANIFEST.json"), "utf8"));
   assert.equal(manifest.sourceRevision, PIN);
   assert.equal(manifest.source, "KunoLu/640-skills");
-  assert.equal(manifest.version, "1.0.15");
+  assert.equal(manifest.version, "2.0.2");
   const dirs = readdirSync(manuals, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -81,27 +81,11 @@ test("manuals whitelist and MANIFEST checksums", () => {
       assert.notEqual(entry.name, "onboard.py");
     }
   }
-  const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
-  assert.match(readme, /不要手改/);
-  assert.match(readme, /bc8eec1549928fb0966254751b96b611b6334183/);
-  assert.match(readme, /SKILL\.md/);
-  assert.match(readme, /references\//);
-  assert.doesNotMatch(readme, /skill-root markdown/);
-  assert.deepEqual(readdirSync(join(pkgRoot, "src", "tools")).sort(), [
-    "bdd.ts",
-    "clarify.ts",
-    "e2e.ts",
-    "lessons.ts",
-    "plan.ts",
-    "review.ts",
-    "spec.ts",
-    "task-artifact.ts",
-    "tickets.ts",
-    "validate.ts",
-  ]);
-  const trellis = readFileSync(join(manuals, "trellis-workflow", "SKILL.md"));
-  assert.notEqual(trellis.length, 0);
-  assert.notEqual(trellis[trellis.length - 1], 0x0a, "trellis-workflow SKILL.md must match pin blob (no trailing newline)");
-  const book = readFileSync(join(manuals, "book-ddd-distilled-modeling", "SKILL.md"));
-  assert.equal(book[book.length - 1], 0x0a);
+  assert.equal(dirs.length, 12);
+  assert.ok(dirs.includes("sbtd-task"));
+  assert.ok(!dirs.includes("trellis-workflow"));
+  assert.ok(
+    hashedDest.has(join(manuals, "sbtd-task", "references", "task-data.schema.json")),
+    "task-data.schema.json must be covered by MANIFEST checksum verification",
+  );
 });

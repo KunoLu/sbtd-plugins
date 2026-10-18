@@ -74,8 +74,8 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 | 序号 | 任务 | 优先级 | 状态 | PR | merge SHA | done 时间 | strict 任务记录路径 |
 |---|---|---|---|---|---|---|---|
-| 0 | PRD 本文档 | 1 | in-progress | [#93](https://github.com/KunoLu/sbtd-plugins/pull/93) | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` |
-| A | manuals：白名单删 trellis-workflow、加 sbtd-task 含整个 references/；MANIFEST 逐文件 sha256；t4 字节比对覆盖 `task-data.schema.json`；PINNED_REVISION → v2.0.2 SHA `1d82494d` | 2 | planned | PR-A | — | — | —（开发前新建 strict 任务） |
+| 0 | PRD 本文档 | 1 | done | [#93](https://github.com/KunoLu/sbtd-plugins/pull/93) | `3fafd73f828b0f61c3310e4828cfb63bbced3f9a` | 2026-10-18T09:11:01+08:00（以 merge commit 时间记，非 API merged_at） | `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` |
+| A | manuals：白名单删 trellis-workflow、加 sbtd-task 含整个 references/；MANIFEST 逐文件 sha256；t4 字节比对覆盖 `task-data.schema.json`；PINNED_REVISION → v2.0.2 SHA `1d82494d` | 2 | in-progress | PR-A | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-a-manuals/task.md` |
 | B | 后端：sbtd-task 只读层 + workflow_mode 分层；hooks/section 模式门禁；lessons v2 落点；Graft 后端 + 六 reason | 3 | planned | PR-B | — | — | —（开发前新建 strict 任务） |
 | C | 宿主适配 + T0：V4 `kind:'dsh-sbtd'` 且识别兼容 `'plugin:dsh-sbtd'`；runPreStep 保留 `startsRequestSeries`；peer/engines.dsh 同范围；CI 两行 REQUIRED；npm ERESOLVE / pnpm add 判据 | 4 | planned | PR-C | — | — | —（开发前新建 strict 任务） |
 | D | 文档/CHANGELOG 双语 [Unreleased]：`packages/dsh-sbtd/CHANGELOG.md` + `CHANGELOG.zh.md` 一一对应、最新在前、加入 files；TODO 指针 | 5 | planned | 文档 PR（PR-C 后、PR-D 前） | — | — | —（开发前新建 strict 任务） |
@@ -98,7 +98,7 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 ## 附录 A. 三轮 Grill 完整 Q&A（题干 + 选定答案）
 
-选定答案加粗。题干与选项来自 grill 原文；锁定来源见第 2 节。
+各轮末尾的「选定」汇总与第 2 节为锁定答案；下面保留原题与当时推荐，不用加粗标记选项。推荐与最终选定不同时，以锁定答案为准。
 
 ### A.1 Round 1
 
@@ -268,6 +268,7 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 - C. branch 不一致时该层报错（不拒载插件），仍按 default。
 
 推荐 A。理由：branch 裁决是 TaskStore 的职责；Q4 锁定只读 workflow_mode，插件不该解析 branch。
+> 锁定说明：本题最终选定 **B**；上方「推荐 A」仅保留当时的评审历史，实施按第 2.2 节 Q6 执行。
 
 
 **Round 2 选定：** Q1 A · Q2 A · Q3 A · Q4 A（reason 六值：`launcher-missing`、`version-unsupported`、`call-failed`、`guard-failed`、`graph-missing`、`graph-stale`）· Q5 A（含 `task-data.schema.json`）· Q6 B。

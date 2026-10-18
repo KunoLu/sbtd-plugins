@@ -3,8 +3,8 @@
 # Usage: sync-manuals.sh [SOURCE]
 set -euo pipefail
 
-PINNED_REVISION="bc8eec1549928fb0966254751b96b611b6334183"
-PINNED_VERSION="1.0.15"
+PINNED_REVISION="1d82494d74f6df9bca7dccef2da409f87091883e"
+PINNED_VERSION="2.0.2"
 SOURCE_REPO="https://github.com/KunoLu/640-skills.git"
 SOURCE_ID="KunoLu/640-skills"
 
@@ -20,7 +20,7 @@ WHITELIST=(
   domain-modeling
   to-spec
   to-tickets
-  trellis-workflow
+  sbtd-task
 )
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
