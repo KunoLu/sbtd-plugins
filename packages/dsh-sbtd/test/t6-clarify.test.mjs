@@ -405,8 +405,11 @@ test("createClarifyTool execute 复用 sessionIdFromExec", async () => {
   assert.equal(getSession("t6-exec-id").clarifyMode, "docs");
 });
 
-test("section 将 Forced DDD 收窄为 docs Complete", () => {
-  assert.match(SBTD_SECTION_TEXT, /仅 docs 模式 Complete 后必须有 DDD 复审通过态/);
+test("section 要求完整 docs grill 后所有模式都有 DDD 复审通过态", () => {
+  assert.match(
+    SBTD_SECTION_TEXT,
+    /完整 docs grill 后所有模式都必须有 DDD 复审通过态/,
+  );
   assert.doesNotMatch(
     SBTD_SECTION_TEXT,
     /澄清走 sbtd_clarify，完整澄清后必须有 DDD 复审通过态/,

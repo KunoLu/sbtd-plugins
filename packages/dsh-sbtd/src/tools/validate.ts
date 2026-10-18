@@ -2,7 +2,7 @@
  * sbtd_validate (T10) — pre impact / post detectChanges+tests.
  *
  * Locks: Q1A / Q2A / Q3A(+clar) / Q4A / Q5A.
- * Host injects cwd + GitNexusOptions. Model never supplies trust handles.
+ * Host injects cwd + GraftOptions. Model never supplies trust handles.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
@@ -11,10 +11,15 @@ import { join } from "node:path";
 import {
   type AnalysisResult,
   detectChanges,
-  type GitNexusOptions,
+  type GraftOptions,
   impact,
   type McpClient,
-} from "../backends/gitnexus.js";
+} from "../backends/graft.js";
+import {
+  resolveWorkflowMode,
+  type WorkflowMode,
+  type WorkflowModeSource,
+} from "../backends/sbtd-task.js";
 import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import { getSession } from "../state.js";
 import {
@@ -34,6 +39,8 @@ export type ValidateInput = {
   target?: string;
   direction?: string;
   scope?: string;
+  /** Optional workflow_mode override (R1 Q4 layer 1: tool param). */
+  workflow_mode?: string;
 };
 
 export type TestsResult = {
@@ -48,9 +55,18 @@ export type ValidateSessionSlice = {
 
 export type ValidateToolResult = {
   phase: ValidatePhase;
-  gitnexus: AnalysisResult;
+  graft: AnalysisResult;
   tests?: TestsResult;
   validate: ValidateSessionSlice;
+  /** Resolved workflow mode + source layer (R3 Q4 A). */
+  workflowMode: WorkflowMode;
+  workflowModeSource: WorkflowModeSource;
+  workflowModeNote?: string;
+  /**
+   * R1 Q9 A: strict mode + Graft skipped ⇒ structural evidence is
+   * 「未证明」 (skipped ≠ passed); delivery must substitute other evidence.
+   */
+  graftEvidence?: "未证明";
 };
 
 /**
@@ -59,7 +75,9 @@ export type ValidateToolResult = {
  */
 export type ValidateHostOptions = {
   cwd?: string;
-  gitnexus?: GitNexusOptions;
+  graft?: GraftOptions;
+  /** Host-injected workflow_mode (R1 Q4 layer 1: host injection). */
+  workflowMode?: string;
   /** Override project-test runner (tests / host). */
   runTests?: (cwd: string) => Promise<TestsResult>;
   /** Cap for spawned test commands. Default 120s. */
@@ -126,7 +144,7 @@ function isValidatePhase(value: string): value is ValidatePhase {
   return (VALIDATE_PHASES as readonly string[]).includes(value);
 }
 
-function mapPreFromGitNexus(
+function mapPreFromGraft(
   status: AnalysisResult["status"],
 ): "done" | "skipped" {
   // Q3 clar.: skipped → pre=skipped; ok|advisory → pre=done
@@ -134,7 +152,7 @@ function mapPreFromGitNexus(
   return "done";
 }
 
-function skippedGitNexus(summary: string, reason: string): AnalysisResult {
+function skippedGraft(summary: string, reason: string): AnalysisResult {
   return { status: "skipped", summary, reason };
 }
 
@@ -645,6 +663,9 @@ export function pickValidateInput(args: unknown): ValidateInput {
   if (typeof src.target === "string") out.target = src.target;
   if (typeof src.direction === "string") out.direction = src.direction;
   if (typeof src.scope === "string") out.scope = src.scope;
+  if (typeof src.workflow_mode === "string") {
+    out.workflow_mode = src.workflow_mode;
+  }
   return out;
 }
 
@@ -763,7 +784,7 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
     callTool: async (name, args) => {
       if (typeof tools.execute !== "function") {
         throw new Error(
-          `GitNexus MCP bridge: tools.execute missing for ${name}`,
+          `Graft MCP bridge: tools.execute missing for ${name}`,
         );
       }
       const outer = bridgeOuterSlots.get(client) ?? {};
@@ -791,7 +812,7 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
 }
 
 /**
- * Resolve host-owned cwd + GitNexusOptions for production registration (Q1A).
+ * Resolve host-owned cwd + GraftOptions for production registration (Q1A).
  * Explicit `validateHost` wins; otherwise derive cwd and bridge MCP from tools.
  */
 export function resolveValidateHost(
@@ -801,15 +822,15 @@ export function resolveValidateHost(
     optionalHostBag<ValidateHostOptions>(ctx, "validateHost") ?? {};
   const cwd = optionalHostCwd(ctx, explicit.cwd);
 
-  const gitnexus: GitNexusOptions = { ...(explicit.gitnexus ?? {}) };
-  if (gitnexus.mcp == null && canBridgeTools(ctx.tools)) {
-    gitnexus.mcp = createToolsMcpBridge(ctx.tools);
+  const graft: GraftOptions = { ...(explicit.graft ?? {}) };
+  if (graft.mcp == null && canBridgeTools(ctx.tools)) {
+    graft.mcp = createToolsMcpBridge(ctx.tools);
   }
 
   return {
     ...explicit,
     cwd,
-    gitnexus,
+    graft,
   };
 }
 
@@ -825,23 +846,40 @@ export async function sbtdValidate(
   }
   const phase = input.phase;
   const cwd = host.cwd ?? process.cwd();
-  const gnOpts: GitNexusOptions = host.gitnexus ?? {};
-  bindBridgeSignal(gnOpts.mcp, host.signal);
+  const graftOpts: GraftOptions = host.graft ?? {};
+  bindBridgeSignal(graftOpts.mcp, host.signal);
   const session = getSession(sessionId);
+  const modeResolution = resolveWorkflowMode({
+    param: input.workflow_mode,
+    host: host.workflowMode,
+    cwd,
+  });
+  const modeFields = {
+    workflowMode: modeResolution.mode,
+    workflowModeSource: modeResolution.source,
+    ...(modeResolution.note !== undefined
+      ? { workflowModeNote: modeResolution.note }
+      : {}),
+  };
+  // R1 Q9 A: strict + Graft skipped ⇒ evidence 「未证明」, never passed.
+  const graftEvidence = (graft: AnalysisResult) =>
+    modeResolution.mode === "strict" && graft.status === "skipped"
+      ? ({ graftEvidence: "未证明" } as const)
+      : {};
 
   if (phase === "pre") {
     const target = typeof input.target === "string" ? input.target.trim() : "";
-    let gitnexus: AnalysisResult;
+    let graft: AnalysisResult;
     if (!target) {
       // Q2A: skip impact when target missing
-      gitnexus = skippedGitNexus(
+      graft = skippedGraft(
         "Pre impact skipped: no target provided.",
         "missing-target",
       );
     } else {
-      gitnexus = await impact(cwd, target, input.direction, gnOpts);
+      graft = await impact(cwd, target, input.direction, graftOpts);
     }
-    const pre = mapPreFromGitNexus(gitnexus.status);
+    const pre = mapPreFromGraft(graft.status);
     session.validate.pre = pre;
     const validate: ValidateSessionSlice = { pre };
     if (session.validate.post !== undefined) {
@@ -849,13 +887,15 @@ export async function sbtdValidate(
     }
     return {
       phase,
-      gitnexus,
+      graft,
       validate,
+      ...modeFields,
+      ...graftEvidence(graft),
     };
   }
 
   // phase === "post"
-  const gitnexus = await detectChanges(cwd, input.scope, gnOpts);
+  const graft = await detectChanges(cwd, input.scope, graftOpts);
   const timeoutMs = host.testTimeoutMs ?? DEFAULT_TEST_TIMEOUT_MS;
   const tests = host.runTests
     ? await host.runTests(cwd)
@@ -868,7 +908,7 @@ export async function sbtdValidate(
   // and no-command skipped alike). Re-check before mutation.
   throwIfAborted(host.signal);
 
-  // Q3A: GitNexus skipped/advisory never sets post=blocked.
+  // Q3A: Graft skipped/advisory never sets post=blocked.
   // Q4A: failed tests ⇒ post=blocked; no-script skip ⇒ post=done.
   let post: "done" | "blocked";
   if (tests.status === "failed") {
@@ -884,14 +924,16 @@ export async function sbtdValidate(
   }
   return {
     phase,
-    gitnexus,
+    graft,
     tests,
     validate,
+    ...modeFields,
+    ...graftEvidence(graft),
   };
 }
 
 export const SBTD_VALIDATE_DESCRIPTION =
-  "Pre/post verification: phase=pre runs GitNexus impact (skip if unavailable or target missing); phase=post runs GitNexus detectChanges then project tests. Missing GitNexus never blocks post or skips tests. post=blocked only when tests fail. No test script ⇒ skipped/not-applicable + residual risk (never fake passed). cwd and GitNexus MCP/refresh options are host-injected — do not pass them.";
+  "Pre/post verification: phase=pre runs Graft impact (skip if unavailable or target missing); phase=post runs Graft detectChanges then project tests. Missing Graft never blocks post or skips tests. post=blocked only when tests fail. No test script ⇒ skipped/not-applicable + residual risk (never fake passed). cwd and Graft MCP/refresh options are host-injected — do not pass them.";
 
 export function createValidateTool(
   host: ValidateHostOptions = {},
@@ -907,7 +949,7 @@ export function createValidateTool(
           type: "string",
           enum: [...VALIDATE_PHASES],
           description:
-            "pre = GitNexus impact before edits; post = detectChanges then project tests.",
+            "pre = Graft impact before edits; post = detectChanges then project tests.",
         },
         target: {
           type: "string",
@@ -924,6 +966,12 @@ export function createValidateTool(
           description:
             "Optional detectChanges scope hint for phase=post (analysis hint only).",
         },
+        workflow_mode: {
+          type: "string",
+          enum: ["strict", "default", "lite"],
+          description:
+            "Optional workflow_mode override (layer 1). Absent ⇒ host injection → active task.md → default.",
+        },
       },
       required: ["phase"],
     },
@@ -933,21 +981,33 @@ export function createValidateTool(
         additionalProperties: false,
         properties: {
           phase: { type: "string" },
-          gitnexus: { type: "object" },
+          graft: { type: "object" },
           tests: { type: "object" },
           validate: { type: "object" },
+          workflowMode: { type: "string" },
+          workflowModeSource: { type: "string" },
+          workflowModeNote: { type: "string" },
+          graftEvidence: { type: "string" },
         },
       },
       render(_args, value) {
         const lines = [
           `phase: ${value.phase}`,
-          `gitnexus.status: ${value.gitnexus.status}`,
+          `graft.status: ${value.graft.status}`,
+          `workflowMode: ${value.workflowMode}`,
+          `workflowModeSource: ${value.workflowModeSource}`,
         ];
-        if (value.gitnexus.advisory === true) {
-          lines.push("gitnexus.advisory: true");
+        if (value.workflowModeNote !== undefined) {
+          lines.push(`workflowModeNote: ${value.workflowModeNote}`);
         }
-        if (value.gitnexus.reason !== undefined) {
-          lines.push(`gitnexus.reason: ${value.gitnexus.reason}`);
+        if (value.graftEvidence !== undefined) {
+          lines.push(`graftEvidence: ${value.graftEvidence}`);
+        }
+        if (value.graft.advisory === true) {
+          lines.push("graft.advisory: true");
+        }
+        if (value.graft.reason !== undefined) {
+          lines.push(`graft.reason: ${value.graft.reason}`);
         }
         if (value.tests !== undefined) {
           lines.push(`tests.status: ${value.tests.status}`);
@@ -958,7 +1018,7 @@ export function createValidateTool(
         if (value.validate.post !== undefined) {
           lines.push(`validate.post: ${value.validate.post}`);
         }
-        lines.push("", "--- gitnexus ---", value.gitnexus.summary);
+        lines.push("", "--- graft ---", value.graft.summary);
         if (value.tests !== undefined) {
           lines.push("", "--- tests ---", value.tests.summary);
         }
@@ -971,7 +1031,7 @@ export function createValidateTool(
     async execute(args, exec) {
       const modelArgs = pickValidateInput(args);
       const signal = exec.signal ?? host.signal;
-      bindBridgeOuter(host.gitnexus?.mcp, {
+      bindBridgeOuter(host.graft?.mcp, {
         ...(signal != null ? { signal } : {}),
         ...(exec.agent != null ? { agent: exec.agent } : {}),
         ...(exec.token != null ? { token: exec.token } : {}),

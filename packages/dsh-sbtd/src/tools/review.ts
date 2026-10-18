@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  resolveWorkflowMode,
+  type WorkflowMode,
+  type WorkflowModeSource,
+} from "../backends/sbtd-task.js";
+import { optionalHostBag, optionalHostCwd } from "../host-context.js";
 import { type GateState, getSession } from "../state.js";
 import {
   type PlanToolExec,
@@ -64,6 +70,8 @@ export type ReviewInput = {
   kind: string;
   status: string;
   conclusions?: string;
+  /** Optional workflow_mode override (R1 Q4 layer 1: tool param). */
+  workflow_mode?: string;
 };
 
 export type ReviewToolResult = {
@@ -75,6 +83,21 @@ export type ReviewToolResult = {
   conclusions: string;
   markdown: string;
   manual: string;
+  /** Resolved workflow mode + source layer (R3 Q4 A). */
+  workflowMode: WorkflowMode;
+  workflowModeSource: WorkflowModeSource;
+  workflowModeNote?: string;
+};
+
+/** Host-injected trust handles (R1 Q4 layer 1: host injection). */
+export type ReviewHostOptions = {
+  cwd?: string;
+  workflowMode?: string;
+};
+
+export type ReviewPluginHost = ToolsHost & {
+  cwd?: string;
+  reviewHost?: ReviewHostOptions;
 };
 
 export type ReviewToolDefinition = {
@@ -122,6 +145,7 @@ export function loadReviewManual(kind: ReviewKind): string {
 export function sbtdReview(
   sessionId: string,
   input: ReviewInput,
+  host: ReviewHostOptions = {},
 ): ReviewToolResult {
   if (!isReviewKind(input.kind)) {
     throw new Error(
@@ -175,7 +199,12 @@ export function sbtdReview(
     conclusions,
   ].join("\n");
 
-  return {
+  const modeResolution = resolveWorkflowMode({
+    param: input.workflow_mode,
+    host: host.workflowMode,
+    cwd: host.cwd,
+  });
+  const result: ReviewToolResult = {
     title,
     kind,
     reviewStatus: status,
@@ -184,13 +213,21 @@ export function sbtdReview(
     conclusions,
     markdown,
     manual,
+    workflowMode: modeResolution.mode,
+    workflowModeSource: modeResolution.source,
   };
+  if (modeResolution.note !== undefined) {
+    result.workflowModeNote = modeResolution.note;
+  }
+  return result;
 }
 
 export const SBTD_REVIEW_DESCRIPTION =
   "Record a book-gate review. kind is legacy|refactor|ddd|ddia|release only (no skill ids or aliases). status is the source-skill reviewer enum. Without a plan, call sbtd_plan first. Does not change requirement.";
 
-export function createReviewTool(): ReviewToolDefinition {
+export function createReviewTool(
+  host: ReviewHostOptions = {},
+): ReviewToolDefinition {
   return {
     name: SBTD_REVIEW_TOOL_NAME,
     description: SBTD_REVIEW_DESCRIPTION,
@@ -213,6 +250,12 @@ export function createReviewTool(): ReviewToolDefinition {
           description:
             "Review conclusions. Returned only; not written to disk.",
         },
+        workflow_mode: {
+          type: "string",
+          enum: ["strict", "default", "lite"],
+          description:
+            "Optional workflow_mode override (layer 1). Absent ⇒ host injection → active task.md → default.",
+        },
       },
       required: ["kind", "status"],
     },
@@ -229,21 +272,47 @@ export function createReviewTool(): ReviewToolDefinition {
           conclusions: { type: "string" },
           markdown: { type: "string" },
           manual: { type: "string" },
+          workflowMode: { type: "string" },
+          workflowModeSource: { type: "string" },
+          workflowModeNote: { type: "string" },
         },
       },
       render(_args, value) {
-        return [{ type: "text", text: `${value.markdown}\n\n${value.manual}` }];
+        const lines = [
+          value.markdown,
+          "",
+          value.manual,
+          "",
+          `workflowMode: ${value.workflowMode}`,
+          `workflowModeSource: ${value.workflowModeSource}`,
+        ];
+        if (value.workflowModeNote !== undefined) {
+          lines.push(`workflowModeNote: ${value.workflowModeNote}`);
+        }
+        return [{ type: "text", text: lines.join("\n") }];
       },
     },
     isConcurrencySafe() {
       return false;
     },
     async execute(args, exec) {
-      return sbtdReview(sessionIdFromExec(exec), args);
+      return sbtdReview(sessionIdFromExec(exec), args, host);
     },
   };
 }
 
-export function registerReviewTool(ctx: ToolsHost): void {
-  ctx.tools.register(createReviewTool());
+export function resolveReviewHost(ctx: ReviewPluginHost): ReviewHostOptions {
+  const explicit = optionalHostBag<ReviewHostOptions>(ctx, "reviewHost") ?? {};
+  const out: ReviewHostOptions = { cwd: optionalHostCwd(ctx, explicit.cwd) };
+  if (explicit.workflowMode !== undefined) {
+    out.workflowMode = explicit.workflowMode;
+  }
+  return out;
+}
+
+export function registerReviewTool(
+  ctx: ToolsHost,
+  host: ReviewHostOptions = {},
+): void {
+  ctx.tools.register(createReviewTool(host));
 }

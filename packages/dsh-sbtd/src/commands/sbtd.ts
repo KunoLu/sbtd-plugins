@@ -1,5 +1,6 @@
 import type { MaestroOptions, PreflightResult } from "../backends/maestro.js";
 import { FORBIDDEN_MODEL_KEYS, preflight } from "../backends/maestro.js";
+import { resolveWorkflowMode } from "../backends/sbtd-task.js";
 import { optionalHostBag } from "../host-context.js";
 import type { BookGatePlan } from "../state.js";
 import { serialize } from "../state.js";
@@ -29,6 +30,8 @@ export type CommandInvocation = {
 export type SbtdCommandHost = {
   sessionId?: string;
   cwd?: string;
+  /** Host-injected workflow_mode shown by `/sbtd` status (R1 Q4 layer 2). */
+  workflowMode?: string;
   preflight?: (options?: MaestroOptions) => Promise<PreflightResult>;
   maestro?: MaestroOptions;
 };
@@ -112,7 +115,20 @@ export async function runSbtdCommand(
     const snap = serialize(sessionId);
     const planBlock =
       snap.plan === undefined ? "no-plan" : formatPlanBlock(snap.plan);
-    return `${planBlock}\n\nmaestro missing: ${formatMissing(snap.maestro?.missing)}`;
+    // R3 Q4 A: /sbtd status surfaces resolved workflow mode + source layer
+    // via the read-only resolver (host injection → active task.md → default).
+    const mode = resolveWorkflowMode({
+      host: host.workflowMode,
+      cwd: host.cwd,
+    });
+    const modeLines = [
+      `workflowMode: ${mode.mode}`,
+      `workflowModeSource: ${mode.source}`,
+    ];
+    if (mode.note !== undefined) {
+      modeLines.push(`workflowModeNote: ${mode.note}`);
+    }
+    return `${planBlock}\n\n${modeLines.join("\n")}\n\nmaestro missing: ${formatMissing(snap.maestro?.missing)}`;
   }
 
   if (verb === "plan") {
@@ -196,6 +212,9 @@ export function resolveCommandHost(ctx: CommandsHost): SbtdCommandHost {
   }
   if (typeof explicit.cwd === "string" && explicit.cwd.length > 0) {
     out.cwd = explicit.cwd;
+  }
+  if (typeof explicit.workflowMode === "string") {
+    out.workflowMode = explicit.workflowMode;
   }
   if (explicit.preflight !== undefined) {
     out.preflight = explicit.preflight;
