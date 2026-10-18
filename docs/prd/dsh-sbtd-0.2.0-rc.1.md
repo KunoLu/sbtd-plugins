@@ -77,8 +77,8 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 |---|---|---|---|---|---|---|---|
 | 0 | PRD 本文档 | 1 | done | [#93](https://github.com/KunoLu/sbtd-plugins/pull/93) | `3fafd73f828b0f61c3310e4828cfb63bbced3f9a` | 2026-10-18T09:11:01+08:00（以 merge commit 时间记，非 API merged_at） | `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` |
 | A | manuals：白名单删 trellis-workflow、加 sbtd-task 含整个 references/；MANIFEST 逐文件 sha256；t4 字节比对覆盖 `task-data.schema.json`；PINNED_REVISION → v2.0.2 SHA `1d82494d` | 2 | done | [#94](https://github.com/KunoLu/sbtd-plugins/pull/94) | `0499af808ebe38a676668af98979c62355775542` | 2026-10-18T10:25:51+08:00 | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-a-manuals/task.md` |
-| B | 后端：sbtd-task 只读层 + workflow_mode 分层；hooks/section 模式门禁；lessons v2 落点；Graft 后端 + 六 reason | 3 | in-progress | PR-B | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-b-backend/task.md` |
-| C | 宿主适配 + T0：V4 `kind:'dsh-sbtd'` 且识别兼容 `'plugin:dsh-sbtd'`；runPreStep 保留 `startsRequestSeries`；peer/engines.dsh 同范围；CI 两行 REQUIRED；npm ERESOLVE / pnpm add 判据 | 4 | planned | PR-C | — | — | —（开发前新建 strict 任务） |
+| B | 后端：sbtd-task 只读层 + workflow_mode 分层；hooks/section 模式门禁；lessons v2 落点；Graft 后端 + 六 reason | 3 | done | [#96](https://github.com/KunoLu/sbtd-plugins/pull/96) | `609766b1d911f1a4597e5ee7117877d2238a548f` | 2026-10-18T20:35:02+08:00 | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-b-backend/task.md` |
+| C | 宿主适配 + T0：V4 `kind:'dsh-sbtd'` 且识别兼容 `'plugin:dsh-sbtd'`；runPreStep 保留 `startsRequestSeries`；peer/engines.dsh 同范围；CI 两行 REQUIRED；npm ERESOLVE / pnpm add 判据 | 4 | in-progress | PR-C（分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-c-host`） | — | — | `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-c-host/task.md` |
 | D | 文档/CHANGELOG 双语 [Unreleased]：`packages/dsh-sbtd/CHANGELOG.md` + `CHANGELOG.zh.md` 一一对应、最新在前、加入 files | 5 | planned | 文档 PR（PR-C 后、PR-D 前） | — | — | —（开发前新建 strict 任务） |
 | E | 发版：bump `0.2.0-rc.1`、`npm publish --tag next`、双语 Release/tag 走 bilingual-release-notes | 6 | planned | PR-D | — | — | —（开发前新建 strict 任务） |
 | F | PR-D 合并后小 docs PR：回填 E 行的 merge SHA 与 done 时间 | 7 | planned | 小 docs PR | — | — | —（开发前新建 strict 任务） |

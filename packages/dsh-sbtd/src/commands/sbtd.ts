@@ -6,7 +6,7 @@ import type { BookGatePlan } from "../state.js";
 import { serialize } from "../state.js";
 
 /**
- * Structural match for `@deepseek-ai/dsh-commands@0.1.1-rc.2` `CommandDefinition`
+ * Structural match for `@deepseek-ai/dsh-commands@0.2.0-rc.2` `CommandDefinition`
  * (verified in pnpm store; not inferred from omp-sbtd).
  */
 export const SBTD_COMMAND_NAME = "sbtd";

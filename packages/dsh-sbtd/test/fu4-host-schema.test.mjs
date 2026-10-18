@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { isSbtdSource } from "../dist/hooks.js";
 
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const requireFromPkg = createRequire(join(pkgRoot, "package.json"));
@@ -24,20 +25,9 @@ function assertNoTypeArrays(schema) {
   }
 }
 
-test("pinned dsh@0.1.1-rc.2 Cordis register/load 接受 clarify/spec/tickets output.schema", async () => {
-  const pluginPkg = readJson(join(pkgRoot, "package.json"));
-  assert.equal(pluginPkg.version, "0.1.0-rc.3");
-  assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], "0.1.1-rc.2");
-
+async function loadHostAndPlugin() {
   const dshPkgPath = requireFromPkg.resolve("@deepseek-ai/dsh/package.json");
-  const dshPkg = readJson(dshPkgPath);
-  assert.equal(dshPkg.name, "@deepseek-ai/dsh");
-  assert.equal(dshPkg.version, "0.1.1-rc.2");
-
   const fromDsh = createRequire(dshPkgPath);
-  const toolsPkg = readJson(fromDsh.resolve("@deepseek-ai/dsh-tools/package.json"));
-  assert.equal(toolsPkg.version, "0.1.1-rc.2");
-
   const [{ Context }, { default: SystemPrompt }, { default: ToolRuntime }, { default: CommandRuntime }, plugin] =
     await Promise.all([
       importPinned(fromDsh, "@deepseek-ai/cordis"),
@@ -56,6 +46,26 @@ test("pinned dsh@0.1.1-rc.2 Cordis register/load 接受 clarify/spec/tickets out
     inject: [...plugin.inject],
     apply: plugin.apply,
   });
+  return { ctx, plugin };
+}
+
+test("pinned dsh@0.2.0-rc.2 Cordis register/load 接受 clarify/spec/tickets output.schema", async () => {
+  const pluginPkg = readJson(join(pkgRoot, "package.json"));
+  assert.equal(pluginPkg.version, "0.1.0-rc.3");
+  assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], ">=0.2.0-rc.2 <0.3.0-0");
+  assert.equal(pluginPkg.engines.dsh, ">=0.2.0-rc.2 <0.3.0-0");
+  assert.equal(pluginPkg.devDependencies["@deepseek-ai/dsh"], "0.2.0-rc.2");
+
+  const dshPkgPath = requireFromPkg.resolve("@deepseek-ai/dsh/package.json");
+  const dshPkg = readJson(dshPkgPath);
+  assert.equal(dshPkg.name, "@deepseek-ai/dsh");
+  assert.equal(dshPkg.version, "0.2.0-rc.2");
+
+  const fromDsh = createRequire(dshPkgPath);
+  const toolsPkg = readJson(fromDsh.resolve("@deepseek-ai/dsh-tools/package.json"));
+  assert.equal(toolsPkg.version, "0.2.0-rc.2");
+
+  const { ctx } = await loadHostAndPlugin();
 
   const clarify = ctx.tools.get("sbtd_clarify");
   const spec = ctx.tools.get("sbtd_spec");
@@ -75,4 +85,27 @@ test("pinned dsh@0.1.1-rc.2 Cordis register/load 接受 clarify/spec/tickets out
   assertNoTypeArrays(clarify.output.schema);
   assertNoTypeArrays(spec.output.schema);
   assertNoTypeArrays(tickets.output.schema);
+});
+
+test("pinned dsh@0.2.0-rc.2 真实宿主 pre-step：notice kind=dsh-sbtd 且保留 startsRequestSeries", async () => {
+  const { ctx } = await loadHostAndPlugin();
+
+  const decision = await ctx.waterfall(
+    "agent/pre-step",
+    {
+      agent: { id: "fu4-prestep" },
+      messages: [
+        { content: [{ type: "text", text: "实现这个功能，改 src/ 生产代码" }] },
+      ],
+    },
+    async () => ({ kind: "enter", messages: [], startsRequestSeries: true }),
+  );
+
+  assert.equal(decision.kind, "enter");
+  assert.equal(decision.startsRequestSeries, true);
+  const notice = decision.messages.at(-1);
+  assert.ok(isSbtdSource(notice.source), "notice recognized as dsh-sbtd source");
+  assert.equal(notice.source.kind, "dsh-sbtd");
+  assert.equal(notice.source.form, "notice");
+  assert.match(notice.source.summary, /sbtd_plan/);
 });

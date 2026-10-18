@@ -6,8 +6,11 @@ import { sbtdClarify } from "../dist/tools/clarify.js";
 import { sbtdPlan } from "../dist/tools/plan.js";
 
 import {
+  LEGACY_SBTD_SOURCE_KIND,
   PRE_EXECUTE_EVENT,
   PRE_STEP_EVENT,
+  SBTD_SOURCE_KIND,
+  isSbtdSource,
 } from "../dist/hooks.js";
 
 
@@ -374,7 +377,7 @@ test("有 plan 时 rm features/test 放行", async () => {
   assert.equal(result.kind, "allow");
 });
 
-test("pre-step 先 await next，开发意图无 plan 时注入 plugin notice，不自己 reject", async () => {
+test("pre-step 先 await next，开发意图无 plan 时注入 dsh-sbtd notice，不自己 reject", async () => {
   const { hooks } = loadPlugin();
   const preStep = hooks.get(PRE_STEP_EVENT);
   let nextCalled = false;
@@ -398,11 +401,14 @@ test("pre-step 先 await next，开发意图无 plan 时注入 plugin notice，�
   assert.equal(nextCalled, true);
   assert.equal(entered.kind, "enter");
   const notice = entered.messages.at(-1);
-  assert.equal(notice.source.kind, "plugin");
-  assert.equal(notice.source.plugin, "dsh-sbtd");
+  // V4 (session format v4): producer-owned kind; the retired V3 wrapper
+  // {kind:'plugin',plugin:'dsh-sbtd'} is refused by V4 native admission.
+  assert.equal(notice.source.kind, "dsh-sbtd");
+  assert.equal(notice.source.plugin, undefined);
   assert.equal(notice.source.form, "notice");
   assert.match(notice.source.summary, /sbtd_plan/);
   assert.match(JSON.stringify(notice.content), /sbtd_plan/);
+  assert.ok(isSbtdSource(notice.source));
 
   const rejected = await preStep(
     {
@@ -412,6 +418,44 @@ test("pre-step 先 await next，开发意图无 plan 时注入 plugin notice，�
     async () => ({ kind: "reject" }),
   );
   assert.equal(rejected.kind, "reject");
+});
+
+test("pre-step 保留 next 决策的 startsRequestSeries", async () => {
+  const { hooks } = loadPlugin();
+  const preStep = hooks.get(PRE_STEP_EVENT);
+  const payload = {
+    agent: { id: "t3-prestep-series" },
+    messages: [{ content: [{ type: "text", text: "实现这个功能" }] }],
+  };
+  const withSeries = await preStep(payload, async () => ({
+    kind: "enter",
+    messages: [],
+    startsRequestSeries: true,
+  }));
+  assert.equal(withSeries.kind, "enter");
+  assert.equal(withSeries.startsRequestSeries, true);
+
+  const withoutSeries = await preStep(payload, async () => ({
+    kind: "enter",
+    messages: [],
+  }));
+  assert.equal(withoutSeries.kind, "enter");
+  assert.equal(withoutSeries.startsRequestSeries, undefined);
+});
+
+test("isSbtdSource 识别 V4 kind 与迁移后的 plugin:dsh-sbtd，拒绝退役 wrapper", () => {
+  assert.equal(SBTD_SOURCE_KIND, "dsh-sbtd");
+  assert.equal(LEGACY_SBTD_SOURCE_KIND, "plugin:dsh-sbtd");
+  assert.ok(isSbtdSource({ kind: "dsh-sbtd", form: "notice", summary: "x" }));
+  // V3→V4 session migration rewrites our V3 wrapper to this form.
+  assert.ok(isSbtdSource({ kind: "plugin:dsh-sbtd", form: "notice", summary: "x" }));
+  // Retired V3 wrapper: refused by V4 native admission, never recognized.
+  assert.equal(isSbtdSource({ kind: "plugin", plugin: "dsh-sbtd" }), false);
+  assert.equal(isSbtdSource({ kind: "plugin:other-plugin" }), false);
+  assert.equal(isSbtdSource({ kind: "user" }), false);
+  assert.equal(isSbtdSource(undefined), false);
+  assert.equal(isSbtdSource(null), false);
+  assert.equal(isSbtdSource("dsh-sbtd"), false);
 });
 
 test("门禁按 sessionIdFromExec 隔离", async () => {
