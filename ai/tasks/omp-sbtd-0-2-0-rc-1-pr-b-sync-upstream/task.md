@@ -7,8 +7,8 @@ mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-19 18:57 +08:
 status: "done"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-b-sync-upstream
 created_at: '2026-10-19T19:11:42+08:00'
-updated_at: '2026-10-20T01:51:55+08:00'
-completed_at: '2026-10-20T01:51:55+08:00'
+updated_at: '2026-10-20T03:14:01+08:00'
+completed_at: '2026-10-20T03:14:01+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 B：同步上游到 v2.0.2（1d82494）
 
@@ -143,6 +143,17 @@ completed_at: '2026-10-20T01:51:55+08:00'
 
 待用户选定后继续；map/section-map 决策（commit `23ca561`）在选项 1/2 下均保持有效。
 
+## B1 修复证据（Reviewy NOT CLEAN B1 + AGENTS soft，2026-10-20 批）
+
+- `src/extension.ts`：`optionalCapabilitySkills.trellis` 由 `["trellis-workflow"]` 改 `["sbtd-task"]`；capability key `trellis` 保留（soft：CLI probe 名不动）。
+- `src/kit/index.ts`：optional capability 探测路径 `onboard/runtime/templates/skills/trellis-workflow/SKILL.md` → `…/sbtd-task/SKILL.md`（模板树已随 D9 收录，探测由 false 变 true）。
+- `src/onboard/composite.ts`：两处 bootstrap handoff 提示「Follow the trellis-workflow Skill…」→「Follow the sbtd-task Skill…」（resume 与 schedule 各一处）。
+- AGENTS.global.md（overlay 源 `upstream/omp-overlays/AGENTS.global.md`）：「调用 `trellis-workflow` Skill」→「调用 `sbtd-task` Skill」；Skill 表 `trellis-workflow` 行 → `sbtd-task` 行（SBTD 任务执行/模式/记录/恢复/交接）。`node scripts/kit-generate.mjs` 再生成（projectionGeneratedSha256 `03d3bee1…`），`embed-kit.mjs` 重嵌 `kit/`；三份发货副本（overlay / `upstream/generated-omp/` / `kit/`）md5 一致。
+- 验证：`pnpm build` 绿（check-generated「generated output is current」→ embed-kit → embed-agent-skills → tsc → write-sbom，SBOM documentNamespace digest 随 kit 内容变化重算）；`pnpm lint`、`pnpm smoke` 绿；聚焦 `vitest run test/{composite-onboard,extension,kit-embedding,kit,certified-skill-ownership,agent-skills-embedding,workflow}.test.ts` = 7 files / 122 passed / 0 failed。
+- 无测试断言旧 skill 映射（grep 确认：test/ 下 `trellis-workflow` 仅余 agent-skills-embedding 负向断言与 workflow.test.ts 的 `.trellis/workflow.md` 观测 reason token，均非 skill 映射），故本修复无测试改动；D14 catalog/transform 拒绝类断言未触碰。
+- 越界观察（未改，报备）：overlay/kit AGENTS.global.md 仍含 `trellis-channel` 表行与 Trellis/Channel 章节文案——B1 批次仅授权 trellis-workflow→sbtd-task，trellis-channel 教学文案属另一决策。
+- 全量套件（`pnpm test`，840）：首次运行 2 failed / 835 passed / 3 skipped，其中可识别失败为既有 bun-offline harness flake（`smoke-only: exact local OMP 17.3.5 …`，`zod@4.1.12 failed to resolve`，无 cached manifest，与第 15/17 条同因）；第二个失败该次输出被 tail 截断未留名。原样复跑（同命令全量）= 1 failed / 836 passed / 3 skipped，与修复前基线（tip `db1d751`）完全一致，唯一失败即同一 bun-offline harness flake。不冒充 PASS，不修 bun cache。
+
 ## 状态事件
 
 | at | from | to | reason | evidence |
@@ -151,3 +162,6 @@ completed_at: '2026-10-20T01:51:55+08:00'
 | 2026-10-19T19:43:22+08:00 | in-progress | blocked | 两处 p0-v3 投影不变量与 v2.0.2 + D9 硬锁冲突实测成立（PROJECTION_FORBIDDEN_TOKEN 20 处违例；agent-plugin CANDIDATES trellis-workflow blocked/ENOENT），修复均需 transform 代码或门禁/D9 语义变更，超出行 B 授权；按指令 STOP 并输出 CONTRACT-CHANGE-NEEDED | 本任务「验证证据」节第 4/5 条与「CONTRACT-CHANGE-NEEDED」节；scratch stage 实测输出；commit `23ca561`（rebase 后 `6431db3`） |
 | 2026-10-19T21:40:32+08:00 | blocked | in-progress | 用户裁决 option 2（2026-10-19 ~20:31 +08:00，团队投票 4× option 2）：PRD R7 授权行 B transformVersion 升 `p0-v4` 并锁定 D14 三项 transform 变更 + catalog 属行 B；R7 已 squash-merge（PR #105 / `c041b2c1aa2794e085ab442d763ce2876b4e50ed` / 2026-10-19T21:07:19+08:00），本分支 rebase 到 main `c041b2c` 后续作 | PRD `docs/prd/omp-sbtd-0.2.0-rc.1.md` D14 + 修订日志 R7；R7 任务记录 `ai/tasks/omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4/task.md`（done）；用户 2026-10-19 ~21:07 +08:00 续作指令（D14 / p0-v4） |
 | 2026-10-20T01:51:55+08:00 | in-progress | done | 行 B 实现与证据完成。omp-sbtd 全量套件 1 failed / 836 passed / 3 skipped (840)。唯一失败为既有 bun-offline harness flake，聚焦复跑同因，不冒充 PASS，不修 bun cache。PRD 行 B 保持 in-progress（未合并） | 本任务第 15/17 条；行 A task.md 同因记录；lock transformVersion `p0-v4` / resolvedRevision `1d82494d74f6df9bca7dccef2da409f87091883e` / sourceTreeSha256 `c1fc3f679c375a22c6272de92c3377ac04ea8edb996acd314ea76f73257739b0` |
+| 2026-10-20T03:14:01+08:00 | done | planned | Reviewy NOT CLEAN B1（+ AGENTS soft，Lord/Reviewy/Researchy 2026-10-20 同批裁决）：catalog 已收 `skill:sbtd-task` 且 trellis 模板树已删，但宿主仍接线 `trellis-workflow`——`src/extension.ts` optionalCapabilitySkills.trellis、`src/kit/index.ts` 探测路径、`src/onboard/composite.ts` bootstrap 提示、overlay/kit/generated-omp `AGENTS.global.md` 教学文案四处同修；保留旧完成证据于本表 | PR #106 review 批 B1；本任务「B1 修复证据」节 |
+| 2026-10-20T03:14:01+08:00 | planned | in-progress | 执行 B1 修复：capability key `trellis` 保留（CLI probe），skill 映射与探测改 `sbtd-task`；overlay 改后 `kit-generate.mjs` 再生成 + `embed-kit.mjs` 重嵌 | 用户 B1 修复指令（2026-10-20 批） |
+| 2026-10-20T03:14:01+08:00 | in-progress | done | B1+AGENTS 修复完成并推送 PR #106。`pnpm build` 绿（check-generated + embed + tsc + SBOM）；聚焦 7 文件 122 passed；全量复跑 1 failed / 836 passed / 3 skipped 与修复前基线一致，唯一失败为既有 bun-offline harness flake（首跑多一个未留名瞬态失败，复跑未重现，不冒充 PASS）。无测试断言旧映射，故无测试改动；CHANGELOG 归行 D，本修复属未发布行 B 范围内，不另加条目 | 本任务「B1 修复证据」节；`pnpm lint`/`pnpm smoke` 绿 |

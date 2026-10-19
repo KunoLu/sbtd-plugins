@@ -165,7 +165,7 @@ export async function loadEmbeddedKitFromDirectory(
     trellis:
       assetText(
         assets,
-        "onboard/runtime/templates/skills/trellis-workflow/SKILL.md",
+        "onboard/runtime/templates/skills/sbtd-task/SKILL.md",
       ) !== undefined,
     gitnexus: globalAgents?.includes("GitNexus") === true,
     "bdd-tdd":

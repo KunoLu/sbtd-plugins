@@ -14,7 +14,7 @@
     "policyVersion": 1,
     "policySha256": "607d9c19a6c3750d6f3f4ece8e1a2f9bc7675491ce512b5dde814b4776dc0e8d",
     "decisionsSha256": "49d4df8c9b65caad67e730d8e26502af0d790202993441bd1f8b72c82f5de180",
-    "generatedSha256": "2b5aa05e9e4e66aa826f575cc9bc93e3802504d1ddc0dc2e3c1e5e06ec846713",
+    "generatedSha256": "03d3bee1e85b505843d4acee2ff2d040021d7986ff6112fd0959454061a0db23",
     "counts": {
       "included": 262,
       "omitted": 81,
@@ -22,7 +22,7 @@
     }
   },
   "overlayDigests": {
-    "AGENTS.global.md": "b8f1b98cc10a145bed40bf5fe0197292e945c1d72f298926f6a1838867b885a8",
+    "AGENTS.global.md": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
     "AGENTS.project-root.md": "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
     "onboard/runtime/catalog.json": "7f3bb2adff0d9f5fc5509b79190036fa34227ec2a987a01421ce327245f95e73",
     "onboard/runtime/catalog.schema.json": "f787490acf0209c8d09d260a0dd2c9ed3d20842d956ccab1a3095e0599c5489a",
@@ -33,13 +33,13 @@
     "onboard/runtime/templates/skills/web-ui-autotest-generator/README.zh-CN.md": "7f5e1aff2090739fdd358787e2ec68ddb5240d2f330a859fb62ee65f9d2cea7b"
   },
   "targets": {
-    "AGENTS.global.md": "b8f1b98cc10a145bed40bf5fe0197292e945c1d72f298926f6a1838867b885a8",
+    "AGENTS.global.md": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
     "AGENTS.project-root.md": "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
     "AGENTS.project-omp.md": "80206a600a10391ff32a7517d457418cd2f0f7ddc4c78a1cf075631edd7aca62"
   },
   "profileCatalogSha256": "a04a5d1705b374ffde6e7c19f642e32043e5ab9597a2ccb50e3d4097a5369bed",
   "assets": {
-    "AGENTS.global.md": "b8f1b98cc10a145bed40bf5fe0197292e945c1d72f298926f6a1838867b885a8",
+    "AGENTS.global.md": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
     "AGENTS.project-omp.md": "80206a600a10391ff32a7517d457418cd2f0f7ddc4c78a1cf075631edd7aca62",
     "AGENTS.project-root.md": "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
     "catalog.json": "a04a5d1705b374ffde6e7c19f642e32043e5ab9597a2ccb50e3d4097a5369bed",

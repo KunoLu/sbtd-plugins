@@ -1368,7 +1368,7 @@ export function createCompositeOnboardService(
         );
         const resumePrompt = [
           `Enter the project at ${record.projectRoot} and resume the Trellis task 00-bootstrap-guidelines.`,
-          "Follow the trellis-workflow Skill: run the before-dev, check, and finish-work gates for that task until Trellis records it completed.",
+          "Follow the sbtd-task Skill: run the before-dev, check, and finish-work gates for that task until Trellis records it completed.",
           "Do not create or complete any other task.",
         ].join(" ");
         await inputs.handoff.schedule(resumePrompt);
@@ -1417,7 +1417,7 @@ export function createCompositeOnboardService(
       );
       const prompt = [
         `Enter the project at ${record.projectRoot} and complete the Trellis task 00-bootstrap-guidelines.`,
-        "Follow the trellis-workflow Skill: run the before-dev, check, and finish-work gates for that task until Trellis records it completed.",
+        "Follow the sbtd-task Skill: run the before-dev, check, and finish-work gates for that task until Trellis records it completed.",
         "Do not create or complete any other task.",
       ].join(" ");
       await inputs.handoff.schedule(prompt);

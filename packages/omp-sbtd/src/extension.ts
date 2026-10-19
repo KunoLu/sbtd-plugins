@@ -151,7 +151,7 @@ function isReviewerStatus(value: string): value is ReviewerStatus {
 const optionalCapabilitySkills: Readonly<
   Record<string, readonly string[] | undefined>
 > = {
-  trellis: ["trellis-workflow"],
+  trellis: ["sbtd-task"],
   "bdd-tdd": ["gherkin-bdd", "tdd"],
   ui: ["ui-ux-pro-max"],
   release: ["book-release-readiness"],
