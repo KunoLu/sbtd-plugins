@@ -39,7 +39,7 @@ Do not import `@deepseek-ai/dsh` types. Local context type only.
 | [Quality Guidelines](./quality-guidelines.md) | Inherited toolchain conventions |
 
 When later tasks add tools or backends, model new guidance on the sibling specs
-(`../../omp-sbtd/backend/`, `../../sbtd-workflow-kit/backend/`) rather than reinstating generic
+(`../../omp-sbtd/backend/`, `../../omp-sbtd/kit/backend/`) rather than reinstating generic
 templates.
 
 ---

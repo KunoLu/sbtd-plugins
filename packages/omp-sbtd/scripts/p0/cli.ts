@@ -342,7 +342,7 @@ async function runAuthorizedValueStudy(
     verifyPluginReleaseArtifacts({
       workspaceRoot,
       pluginRoot: join(workspaceRoot, "packages/omp-sbtd"),
-      kitRoot: join(workspaceRoot, "packages/sbtd-workflow-kit"),
+      upstreamRoot: join(workspaceRoot, "packages/omp-sbtd/upstream"),
     }),
   ]);
   const store = createEvidenceStore({ evidenceRoot, temporaryRoot });
@@ -582,7 +582,7 @@ async function currentPackedCandidate(
     verifyPluginReleaseArtifacts({
       workspaceRoot,
       pluginRoot: join(workspaceRoot, "packages/omp-sbtd"),
-      kitRoot: join(workspaceRoot, "packages/sbtd-workflow-kit"),
+      upstreamRoot: join(workspaceRoot, "packages/omp-sbtd/upstream"),
     }),
     readFile(join(workspaceRoot, "packages/omp-sbtd/package.json"), "utf8"),
   ]);
@@ -625,7 +625,7 @@ async function currentSourceTreeSha256(): Promise<string> {
     await verifyPluginReleaseArtifacts({
       workspaceRoot,
       pluginRoot: join(workspaceRoot, "packages/omp-sbtd"),
-      kitRoot: join(workspaceRoot, "packages/sbtd-workflow-kit"),
+      upstreamRoot: join(workspaceRoot, "packages/omp-sbtd/upstream"),
     })
   ).sourceTreeSha256;
 }
@@ -725,7 +725,7 @@ async function runCommand(
     const report = await verifyPluginReleaseArtifacts({
       workspaceRoot,
       pluginRoot: join(workspaceRoot, "packages/omp-sbtd"),
-      kitRoot: join(workspaceRoot, "packages/sbtd-workflow-kit"),
+      upstreamRoot: join(workspaceRoot, "packages/omp-sbtd/upstream"),
     });
     const packedRoot = options.packed;
     if (packedRoot === undefined)
@@ -740,19 +740,11 @@ async function runCommand(
           },
         },
       };
-    const [sbom, sourcePackage, kitPackage, packedPackageRoot] =
-      await Promise.all([
-        readFile(
-          join(workspaceRoot, "packages/omp-sbtd/SBOM.spdx.json"),
-          "utf8",
-        ),
-        readFile(join(workspaceRoot, "packages/omp-sbtd/package.json"), "utf8"),
-        readFile(
-          join(workspaceRoot, "packages/sbtd-workflow-kit/package.json"),
-          "utf8",
-        ),
-        Promise.resolve(resolve(packedRoot)),
-      ]);
+    const [sbom, sourcePackage, packedPackageRoot] = await Promise.all([
+      readFile(join(workspaceRoot, "packages/omp-sbtd/SBOM.spdx.json"), "utf8"),
+      readFile(join(workspaceRoot, "packages/omp-sbtd/package.json"), "utf8"),
+      Promise.resolve(resolve(packedRoot)),
+    ]);
     const packedPackage = await readFile(
       join(packedPackageRoot, "package.json"),
       "utf8",
@@ -782,7 +774,7 @@ async function runCommand(
     verifyPackedPackageMetadata(
       JSON.parse(sourcePackage),
       JSON.parse(packedPackage),
-      { "@kunolu/sbtd-workflow-kit": JSON.parse(kitPackage) },
+      {},
     );
     return {
       status: "passed",

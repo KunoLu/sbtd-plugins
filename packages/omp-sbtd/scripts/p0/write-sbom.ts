@@ -10,9 +10,8 @@ const workspaceRoot = resolve(
   process.env.KPI_SBOM_WORKSPACE_ROOT ??
     fileURLToPath(new URL("../../../..", import.meta.url)),
 );
-const kitRoot = resolve(
-  process.env.KPI_SBOM_KIT_ROOT ??
-    `${workspaceRoot}/packages/sbtd-workflow-kit`,
+const upstreamRoot = resolve(
+  process.env.KPI_SBOM_UPSTREAM_ROOT ?? `${pluginRoot}/upstream`,
 );
 const releaseRoot =
   process.env.KPI_SBOM_RELEASE_ROOT === "staged-promotion"
@@ -21,7 +20,7 @@ const releaseRoot =
 const result = await writePluginSpdxSbom({
   workspaceRoot,
   pluginRoot,
-  kitRoot,
+  upstreamRoot,
   releaseRoot,
 });
 process.stdout.write(`${JSON.stringify(result)}\n`);

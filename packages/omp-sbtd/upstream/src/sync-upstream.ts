@@ -33,15 +33,22 @@ import {
 } from "./index.js";
 import { checkOmpProjection, generateOmpProjection } from "./omp-projection.js";
 
-const PLUGIN_TOOLING_ROOT = fileURLToPath(
-  new URL("../../../packages/omp-sbtd/", import.meta.url),
-);
+const PLUGIN_TOOLING_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const WORKSPACE_TOOLING_ROOT = fileURLToPath(
-  new URL("../../..", import.meta.url),
+  new URL("../../../..", import.meta.url),
 );
 
 const execFileAsync = promisify(execFile);
 const SOURCE_ROOT = "vendor/sbtd-workflow-kit-upstream";
+
+/**
+ * Single default for the Plugin root: the CLI layout is
+ * `<plugin>/upstream` as packageRoot, so the Plugin root is its parent.
+ * Used by every entry point so preflight and staging cannot disagree.
+ */
+export function defaultPluginRoot(packageRoot: string): string {
+  return join(packageRoot, "..");
+}
 
 type SyncMode = "plan" | "apply";
 type ReplacePath = (source: string, destination: string) => Promise<void>;
@@ -368,7 +375,7 @@ async function runPluginSbom(
         env: {
           ...process.env,
           KPI_SBOM_PLUGIN_ROOT: stagePlugin,
-          KPI_SBOM_KIT_ROOT: stageKit,
+          KPI_SBOM_UPSTREAM_ROOT: stageKit,
           KPI_SBOM_WORKSPACE_ROOT: WORKSPACE_TOOLING_ROOT,
           KPI_SBOM_RELEASE_ROOT: "staged-promotion",
         },
@@ -424,7 +431,7 @@ export async function promotionDirtyPreflight(
 ): Promise<DirtyPreflight> {
   const packageRoot = await realpath(resolve(options.packageRoot));
   const pluginRoot = await realpath(
-    resolve(options.pluginRoot ?? join(packageRoot, "../../packages/omp-sbtd")),
+    resolve(options.pluginRoot ?? defaultPluginRoot(packageRoot)),
   );
   const repositoryRoot = await gitRepositoryRoot(packageRoot);
   const pluginRepositoryRoot = await gitRepositoryRoot(pluginRoot);
@@ -632,7 +639,7 @@ async function stageCandidate(
 ): Promise<Candidate> {
   const packageRoot = resolve(options.packageRoot);
   const pluginRoot = resolve(
-    options.pluginRoot ?? join(packageRoot, "../../packages/omp-sbtd"),
+    options.pluginRoot ?? defaultPluginRoot(packageRoot),
   );
   const sourceRoot = resolve(options.sourceRoot);
   const source = await verifySource(packageRoot, sourceRoot, options.revision);

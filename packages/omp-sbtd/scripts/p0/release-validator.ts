@@ -4294,13 +4294,8 @@ export interface SbomFile {
 export function renderPluginSpdxSbom(
   input: Readonly<{
     plugin: z.infer<typeof packageMetadataSchema>;
-    kit: z.infer<typeof packageMetadataSchema>;
     sourceTreeSha256: string;
     files: readonly SbomFile[];
-    kitManifest: Readonly<{
-      canonical: Readonly<{ resolvedRevision: string }>;
-      projection: Readonly<{ generatedSha256: string }>;
-    }>;
   }>,
 ): string {
   const files = [...input.files]
@@ -4317,7 +4312,6 @@ export function renderPluginSpdxSbom(
       };
     });
   const pluginSpdxId = "SPDXRef-Package-kunolu-omp-sbtd";
-  const kitSpdxId = "SPDXRef-Package-kunolu-sbtd-workflow-kit";
   const relationships = files.map((file) => ({
     spdxElementId: pluginSpdxId,
     relationshipType: "CONTAINS",
@@ -4345,38 +4339,9 @@ export function renderPluginSpdxSbom(
         licenseDeclared: "Apache-2.0",
         copyrightText: "NOASSERTION",
       },
-      {
-        SPDXID: kitSpdxId,
-        name: input.kit.name,
-        versionInfo: input.kit.version,
-        downloadLocation: "NOASSERTION",
-        filesAnalyzed: false,
-        licenseConcluded: "Apache-2.0",
-        licenseDeclared: "Apache-2.0",
-        copyrightText: "NOASSERTION",
-        externalRefs: [
-          {
-            referenceCategory: "OTHER",
-            referenceType: "kpi-upstream-revision",
-            referenceLocator: input.kitManifest.canonical.resolvedRevision,
-          },
-          {
-            referenceCategory: "OTHER",
-            referenceType: "kpi-generated-sha256",
-            referenceLocator: input.kitManifest.projection.generatedSha256,
-          },
-        ],
-      },
     ],
     files,
-    relationships: [
-      ...relationships,
-      {
-        spdxElementId: pluginSpdxId,
-        relationshipType: "CONTAINS",
-        relatedSpdxElement: kitSpdxId,
-      },
-    ],
+    relationships,
   });
 }
 
@@ -4412,20 +4377,20 @@ export async function inspectPackageMetadata(
   input: Readonly<{
     workspaceRoot: string;
     pluginRoot: string;
-    kitRoot: string;
+    upstreamRoot: string;
     files?: P0FileSystem;
   }>,
 ): Promise<
   Readonly<{
     plugin: z.infer<typeof packageMetadataSchema>;
-    kit: z.infer<typeof packageMetadataSchema>;
+    upstream: z.infer<typeof packageMetadataSchema>;
   }>
 > {
   const files = input.files ?? createNodeFileSystem();
-  const [rootRaw, pluginRaw, kitRaw] = await Promise.all([
+  const [rootRaw, pluginRaw, upstreamRaw] = await Promise.all([
     files.readText(join(input.workspaceRoot, "package.json")),
     files.readText(join(input.pluginRoot, "package.json")),
-    files.readText(join(input.kitRoot, "package.json")),
+    files.readText(join(input.upstreamRoot, "package.json")),
   ]);
   const root = parsedJson(
     rootPackageMetadataSchema,
@@ -4437,7 +4402,11 @@ export async function inspectPackageMetadata(
     pluginRaw,
     "Plugin package metadata",
   );
-  const kit = parsedJson(packageMetadataSchema, kitRaw, "Kit package metadata");
+  const upstream = parsedJson(
+    packageMetadataSchema,
+    upstreamRaw,
+    "moved upstream supply-chain package metadata",
+  );
   const requiredPluginFiles = [
     "dist",
     "kit",
@@ -4461,9 +4430,9 @@ export async function inspectPackageMetadata(
     throw new P0ValidationError(
       "LICENSE_MISMATCH",
       "Root package metadata must declare Apache-2.0.",
-      "Align root, Plugin, and Kit license metadata before release validation.",
+      "Align root, Plugin, and upstream supply-chain license metadata before release validation.",
     );
-  return { plugin, kit };
+  return { plugin, upstream };
 }
 
 const publicEventSchema = z.discriminatedUnion("kind", [
@@ -5421,7 +5390,7 @@ export async function writePluginSpdxSbom(
   input: Readonly<{
     workspaceRoot: string;
     pluginRoot: string;
-    kitRoot: string;
+    upstreamRoot: string;
     releaseRoot?: PluginReleaseRoot;
     files?: P0FileSystem;
   }>,
@@ -5437,12 +5406,13 @@ export async function writePluginSpdxSbom(
     files,
     input.releaseRoot ?? "source-package",
   );
+  // PRD R6: the kit package identity no longer exists after the move, so the
+  // digest input is exactly plugin name/version, kit generatedSha256, and the
+  // file inventory; documentNamespace changes accordingly.
   const sourceTreeSha256 = digest(
     stableJson({
       plugin: { name: metadata.plugin.name, version: metadata.plugin.version },
       kit: {
-        name: metadata.kit.name,
-        version: metadata.kit.version,
         generatedSha256: kitManifest.projection.generatedSha256,
       },
       files: inventory,
@@ -5450,10 +5420,8 @@ export async function writePluginSpdxSbom(
   );
   const sbom = renderPluginSpdxSbom({
     plugin: metadata.plugin,
-    kit: metadata.kit,
     sourceTreeSha256,
     files: inventory,
-    kitManifest,
   });
   await files.writeText(join(input.pluginRoot, "SBOM.spdx.json"), sbom);
   return { sourceTreeSha256, sbomSha256: digest(sbom) };
@@ -6058,24 +6026,24 @@ export async function verifyPluginReleaseArtifacts(
   input: Readonly<{
     workspaceRoot: string;
     pluginRoot: string;
-    kitRoot: string;
+    upstreamRoot: string;
     files?: P0FileSystem;
   }>,
 ): Promise<Readonly<{ sourceTreeSha256: string; sbomSha256: string }>> {
   const files = input.files ?? createNodeFileSystem();
   const metadata = await inspectPackageMetadata({ ...input, files });
-  const [rootLicense, pluginLicense, kitLicense, notices, committedSbom] =
+  const [rootLicense, pluginLicense, upstreamLicense, notices, committedSbom] =
     await Promise.all([
       files.readText(join(input.workspaceRoot, "LICENSE")),
       files.readText(join(input.pluginRoot, "LICENSE")),
-      files.readText(join(input.kitRoot, "LICENSE")),
+      files.readText(join(input.upstreamRoot, "LICENSE")),
       files.readText(join(input.pluginRoot, "THIRD_PARTY_NOTICES.md")),
       files.readText(join(input.pluginRoot, "SBOM.spdx.json")),
     ]);
-  if (pluginLicense !== rootLicense || kitLicense !== rootLicense)
+  if (pluginLicense !== rootLicense || upstreamLicense !== rootLicense)
     throw new P0ValidationError(
       "LICENSE_MISMATCH",
-      "Root, Plugin, and Kit GPLv3 license files must be byte-identical.",
+      "Root, Plugin, and upstream supply-chain license files must be byte-identical.",
       "Regenerate package license artifacts from the repository root license.",
     );
   if (
@@ -6096,12 +6064,13 @@ export async function verifyPluginReleaseArtifacts(
     files,
     "source-package",
   );
+  // PRD R6: the kit package identity no longer exists after the move, so the
+  // digest input is exactly plugin name/version, kit generatedSha256, and the
+  // file inventory; documentNamespace changes accordingly.
   const sourceTreeSha256 = digest(
     stableJson({
       plugin: { name: metadata.plugin.name, version: metadata.plugin.version },
       kit: {
-        name: metadata.kit.name,
-        version: metadata.kit.version,
         generatedSha256: kitManifest.projection.generatedSha256,
       },
       files: inventory,
@@ -6109,10 +6078,8 @@ export async function verifyPluginReleaseArtifacts(
   );
   const regenerated = renderPluginSpdxSbom({
     plugin: metadata.plugin,
-    kit: metadata.kit,
     sourceTreeSha256,
     files: inventory,
-    kitManifest,
   });
   if (committedSbom !== regenerated)
     throw new P0ValidationError(

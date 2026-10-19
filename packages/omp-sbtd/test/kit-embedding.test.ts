@@ -14,10 +14,9 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { embedKit, pluginNoticesFor } from "../scripts/embed-kit.mjs";
 
-const generatedManifest = import.meta.resolve(
-  "@kunolu/sbtd-workflow-kit/generated-omp/manifest.json",
+const generatedRoot = fileURLToPath(
+  new URL("../upstream/generated-omp", import.meta.url),
 );
-const generatedRoot = fileURLToPath(new URL(".", generatedManifest));
 const pluginRoot = fileURLToPath(new URL("..", import.meta.url));
 
 async function files(root: string, base = root): Promise<string[]> {

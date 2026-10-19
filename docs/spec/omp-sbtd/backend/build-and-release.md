@@ -10,7 +10,7 @@
 `pnpm --filter @kunolu/omp-sbtd build` runs, in order:
 
 ```
-pnpm --filter @kunolu/sbtd-workflow-kit check-generated
+node scripts/kit-check-generated.mjs
   && node scripts/embed-kit.mjs
   && node scripts/embed-agent-skills.mjs
   && node scripts/clean-dist.mjs
@@ -18,8 +18,8 @@ pnpm --filter @kunolu/sbtd-workflow-kit check-generated
   && tsx scripts/p0/write-sbom.ts
 ```
 
-- The kit drift gate runs FIRST — stale `generated-omp/` output in the sibling package fails this
-  build before anything is embedded.
+- The kit drift gate runs FIRST — stale `upstream/generated-omp/` output in the same package fails
+  this build before anything is embedded.
 - `scripts/embed-kit.mjs` copies the kit's `generated-omp/` projection into `kit/`, validates
   manifest/asset digests, enforces the zero-Codex token scan, and installs via atomic staged
   rename. Env overrides exist (`KPI_KIT_SOURCE`, `KPI_EMBED_DESTINATION`, …) for tests.
@@ -36,7 +36,7 @@ and SBOM are part of the artifact contract.
 
 `kit/`, `skills/`, `SBOM.spdx.json`, `dist/`. `kit/manifest.json` carries per-asset sha256;
 `test/kit-stable-provenance.test.ts` and `test/kit-embedding.test.ts` enforce the binding. Change
-the inputs in `@kunolu/sbtd-workflow-kit` and rebuild instead.
+the inputs in `packages/omp-sbtd/upstream/` and rebuild instead.
 
 ## Version Facts
 

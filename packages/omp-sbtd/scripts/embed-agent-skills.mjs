@@ -16,10 +16,9 @@ import { fileURLToPath } from "node:url";
  */
 
 function defaultSource() {
-  const manifestUrl = import.meta.resolve(
-    "@kunolu/sbtd-workflow-kit/generated-agent-plugin/manifest.json",
+  return fileURLToPath(
+    new URL("../upstream/generated-agent-plugin", import.meta.url),
   );
-  return fileURLToPath(new URL(".", manifestUrl));
 }
 const defaultDestination = fileURLToPath(new URL("../skills", import.meta.url));
 

@@ -1,15 +1,15 @@
-# sbtd-workflow-kit Directory Structure
+# Kit Projection Directory Structure
 
-> Real layout of `packages/sbtd-workflow-kit/`. Every entry below exists in the repo today.
+> Real layout of `packages/omp-sbtd/upstream/`. Every entry below exists in the repo today.
 
 ---
 
 ## Layout
 
 ```
-packages/sbtd-workflow-kit/
-├── package.json                # scripts: build/typecheck/lint/test/generate/check-generated/sync-upstream
-├── tsconfig.json               # extends ../../tsconfig.base.json; includes ONLY src/**/*.ts
+packages/omp-sbtd/upstream/
+├── package.json                # moved supply-chain metadata (name/version kept as migration-preserved metadata, NOT part of the SBOM digest)
+├── tsconfig.json               # extends ../../../tsconfig.base.json; includes ONLY src/**/*.ts (noEmit)
 ├── upstream.lock.json          # pinned upstream commit + tree sha256 + transformVersion (p0-v3)
 ├── agents-section-map.yaml     # schemaVersion 2; section→target classification (49 entries)
 ├── omp-distribution-map.yaml   # schemaVersion 1; 360 per-asset include/omit/replace-with-overlay decisions
@@ -17,8 +17,8 @@ packages/sbtd-workflow-kit/
 ├── omp-overlays/               # OMP projection overlays mirroring canonical asset paths
 ├── src/                        # 6 modules, flat — no subdirectories
 │   ├── index.ts                # schemas, section transform, generateKit/checkGenerated, KitError (~1176 lines)
-│   ├── generate.ts             # 33-line CLI driver for `pnpm generate`
-│   ├── check-generated.ts      # 33-line CLI driver for `pnpm check-generated`
+│   ├── generate.ts             # 33-line CLI driver behind `scripts/kit-generate.mjs`
+│   ├── check-generated.ts      # 33-line CLI driver behind `scripts/kit-check-generated.mjs`
 │   ├── omp-projection.ts       # OMP distribution projection (~1037 lines)
 │   ├── agent-plugin-projection.ts  # portable Skill audit + projection (~1066 lines)
 │   └── sync-upstream.ts        # plan/apply upstream promotion (~1132 lines)
@@ -42,22 +42,26 @@ vendored tree (`vendor/sbtd-workflow-kit-upstream/docs/assets/omp-sbtd-upstream-
 
 ## Rules
 
-1. **`src/` stays flat.** Six modules, no nesting. New capability extends an existing module
+1. **`upstream/src/` stays flat.** Six modules, no nesting. New capability extends an existing module
    (`index.ts` for canonical transform, `omp-projection.ts` for OMP view, `sync-upstream.ts` for
    promotion) rather than creating new directories.
 2. **CLI drivers are thin.** `generate.ts` and `check-generated.ts` are ~33-line wrappers that
    resolve the package root via `fileURLToPath(new URL("..", import.meta.url))` and delegate to
    library functions. Logic lives in the library modules so tests can call it directly.
 3. **`sync-upstream.ts` is import-safe.** Its `main()` is guarded by a realpath comparison against
-   `process.argv[1]` (`src/sync-upstream.ts:1109-1114`) so tests can import it without side effects.
+   `process.argv[1]` (`upstream/src/sync-upstream.ts:1109-1114`) so tests can import it without side effects.
    Keep that guard when editing the CLI path.
-4. **Only `index.ts` is a package export.** `package.json` exposes `"."` → `dist/index.js` plus five
-   JSON subpaths for the generated manifests. `omp-projection.ts` / `agent-plugin-projection.ts` /
-   `sync-upstream.ts` export symbols for tests but are NOT package subpath exports. Do not add
-   subpath exports without a consumer.
+4. **Nothing here is a package export anymore.** The tree is consumed in-repo: the plugin build
+   calls the thin wrappers `packages/omp-sbtd/scripts/kit-*.mjs`, and the embed scripts read the
+   committed `generated-omp/` / `generated-agent-plugin/` manifests directly.
+   `omp-projection.ts` / `agent-plugin-projection.ts` / `sync-upstream.ts` export symbols for tests
+   only. The retained `package.json` is supply-chain metadata kept as migration-preserved metadata;
+   its name/version are NOT part of the SBOM source-tree digest (per PRD R6 the digest input is
+   exactly `{ plugin: { name, version }, kit: { generatedSha256 }, files }`), and it is not a
+   publishable manifest.
 5. **Generated trees are committed artifacts.** `generated/`, `generated-omp/`,
    `generated-agent-plugin/`, and the package-root `LICENSE` / `THIRD_PARTY_NOTICES.md` (copied out
-   of `generated/` by `src/generate.ts`) are build outputs checked into git. They are covered by
+   of `generated/` by `upstream/src/generate.ts`) are build outputs checked into git. They are covered by
    `check-generated` drift detection — see [Codegen Workflow](./codegen-workflow.md).
 
 ---
@@ -65,7 +69,7 @@ vendored tree (`vendor/sbtd-workflow-kit-upstream/docs/assets/omp-sbtd-upstream-
 ## Import Conventions
 
 - ESM, `node:`-prefixed builtins everywhere (`node:fs/promises`, `node:crypto`, `node:path`, …).
-- **`src/` imports use `.js` specifiers** (NodeNext): `import { generateKit } from "./index.js"`.
+- **`upstream/src/` imports use `.js` specifiers** (NodeNext): `import { generateKit } from "./index.js"`.
 - **`test/` imports use `.ts` specifiers**: `import { checkGenerated, generateKit } from
   "../src/index.ts"` — tests run under vitest against TypeScript source, not `dist/`.
 - `verbatimModuleSyntax`: type-only imports use `import type { Stats } from "node:fs"` or inline
@@ -76,7 +80,8 @@ vendored tree (`vendor/sbtd-workflow-kit-upstream/docs/assets/omp-sbtd-upstream-
 
 ## Dependencies
 
-Runtime deps are exactly two: `yaml@2.8.2` and `zod@4.1.12` (devDependency `tsx@4.20.6`). Everything
-else is Node builtins. Syntax/AST auditing of vendored scripts shells out to system `python3`,
-`bash -n`, `node --check` (`src/agent-plugin-projection.ts`) instead of adding npm dependencies.
+Code deps are exactly two: `yaml@2.8.2` and `zod@4.1.12`, both declared by the enclosing
+`@kunolu/omp-sbtd` package (`yaml` as devDependency, build-time only; runner `tsx@4.20.6`).
+Everything else is Node builtins. Syntax/AST auditing of vendored scripts shells out to system `python3`,
+`bash -n`, `node --check` (`upstream/src/agent-plugin-projection.ts`) instead of adding npm dependencies.
 Do not add a dependency without confirming no system binary or builtin covers the need.

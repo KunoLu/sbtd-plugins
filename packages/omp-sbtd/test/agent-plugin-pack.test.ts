@@ -13,10 +13,9 @@ const runProcess = promisify(executeFile);
 const packageManager = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const pluginRoot = join(workspaceRoot, "packages/omp-sbtd");
-const generatedManifestUrl = import.meta.resolve(
-  "@kunolu/sbtd-workflow-kit/generated-agent-plugin/manifest.json",
+const generatedRoot = fileURLToPath(
+  new URL("../upstream/generated-agent-plugin", import.meta.url),
 );
-const generatedRoot = fileURLToPath(new URL(".", generatedManifestUrl));
 
 const temporaryRoots: string[] = [];
 
