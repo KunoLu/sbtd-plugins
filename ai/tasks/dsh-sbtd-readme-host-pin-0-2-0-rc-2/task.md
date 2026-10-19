@@ -4,11 +4,11 @@ id: dsh-sbtd-readme-host-pin-0-2-0-rc-2
 workflow_mode: strict
 mode_source: user
 mode_note: 用户明确指定 strict（Lord chore 指令）
-status: "checking"
+status: "done"
 branch: chore/dsh-sbtd-readme-host-pin-0.2.0-rc.2
 created_at: '2026-10-19T07:41:49+08:00'
-updated_at: '2026-10-19T07:46:19+08:00'
-completed_at: null
+updated_at: '2026-10-19T08:03:35+08:00'
+completed_at: '2026-10-19T08:03:35+08:00'
 ---
 
 # chore：README 宿主钉重定向 0.2.0-rc.2 + PRD 行 F 回填
@@ -56,3 +56,4 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-19T07:41:49+08:00 | planned | in-progress | 任务启动（PRD 行 F 回填 + README 宿主钉重定向） | 分支 chore/dsh-sbtd-readme-host-pin-0.2.0-rc.2 @ 1090378b9318635d868c8b26152d40ff5231779c |
 | 2026-10-19T07:46:19+08:00 | in-progress | checking | 行 F 回填 + 钉版重定向完成，335/335 绿 | 提交 a43634f（行 F + 任务注册）、2551f03（钉版）；测试输出 pass 335 / fail 0 |
+| 2026-10-19T08:03:35+08:00 | checking | done | 验收（push + 开 PR）达成 | PR #101 https://github.com/KunoLu/sbtd-plugins/pull/101；分支 tip 46ac16d0f5dde308cfb74346aaf81466734f6cd8 |
