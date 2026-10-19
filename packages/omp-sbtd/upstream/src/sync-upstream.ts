@@ -33,11 +33,9 @@ import {
 } from "./index.js";
 import { checkOmpProjection, generateOmpProjection } from "./omp-projection.js";
 
-const PLUGIN_TOOLING_ROOT = fileURLToPath(
-  new URL("../../../packages/omp-sbtd/", import.meta.url),
-);
+const PLUGIN_TOOLING_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const WORKSPACE_TOOLING_ROOT = fileURLToPath(
-  new URL("../../..", import.meta.url),
+  new URL("../../../..", import.meta.url),
 );
 
 const execFileAsync = promisify(execFile);
@@ -368,7 +366,7 @@ async function runPluginSbom(
         env: {
           ...process.env,
           KPI_SBOM_PLUGIN_ROOT: stagePlugin,
-          KPI_SBOM_KIT_ROOT: stageKit,
+          KPI_SBOM_UPSTREAM_ROOT: stageKit,
           KPI_SBOM_WORKSPACE_ROOT: WORKSPACE_TOOLING_ROOT,
           KPI_SBOM_RELEASE_ROOT: "staged-promotion",
         },
@@ -424,7 +422,7 @@ export async function promotionDirtyPreflight(
 ): Promise<DirtyPreflight> {
   const packageRoot = await realpath(resolve(options.packageRoot));
   const pluginRoot = await realpath(
-    resolve(options.pluginRoot ?? join(packageRoot, "../../packages/omp-sbtd")),
+    resolve(options.pluginRoot ?? join(packageRoot, "..")),
   );
   const repositoryRoot = await gitRepositoryRoot(packageRoot);
   const pluginRepositoryRoot = await gitRepositoryRoot(pluginRoot);

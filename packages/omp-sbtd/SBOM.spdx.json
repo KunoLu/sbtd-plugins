@@ -6173,28 +6173,6 @@
       "name": "@kunolu/omp-sbtd",
       "SPDXID": "SPDXRef-Package-kunolu-omp-sbtd",
       "versionInfo": "0.1.0-rc.14"
-    },
-    {
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "f8aa0d7225a26c5e00b81d2f1b05121108e63630",
-          "referenceType": "kpi-upstream-revision"
-        },
-        {
-          "referenceCategory": "OTHER",
-          "referenceLocator": "bba692f4f186c39a3deef9def9a2dd5eb0710cb9ad3f72256d43bd0eed36cb32",
-          "referenceType": "kpi-generated-sha256"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "Apache-2.0",
-      "licenseDeclared": "Apache-2.0",
-      "name": "@kunolu/sbtd-workflow-kit",
-      "SPDXID": "SPDXRef-Package-kunolu-sbtd-workflow-kit",
-      "versionInfo": "0.1.0"
     }
   ],
   "relationships": [
@@ -8245,11 +8223,6 @@
     },
     {
       "relatedSpdxElement": "SPDXRef-File-0410",
-      "relationshipType": "CONTAINS",
-      "spdxElementId": "SPDXRef-Package-kunolu-omp-sbtd"
-    },
-    {
-      "relatedSpdxElement": "SPDXRef-Package-kunolu-sbtd-workflow-kit",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-Package-kunolu-omp-sbtd"
     }

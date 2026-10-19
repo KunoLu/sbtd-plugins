@@ -26,10 +26,7 @@ import {
 
 const packageRoot = new URL("..", import.meta.url).pathname;
 const temporaryRoots: string[] = [];
-const pluginPackageRoot = new URL(
-  "../../../packages/omp-sbtd/",
-  import.meta.url,
-).pathname;
+const pluginPackageRoot = new URL("../../", import.meta.url).pathname;
 const execFileAsync = promisify(execFile);
 
 const STABLE_MANIFEST_SHA256 =

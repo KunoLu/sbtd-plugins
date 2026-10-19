@@ -1,4 +1,4 @@
-# sbtd-workflow-kit Frontend Guidelines
+# Kit Projection Frontend Guidelines
 
 > Reshaped layer: this package has **no UI**. "Frontend" here means the **authored text artifacts**
 > the generator produces and consumes: upstream AGENTS templates, Kit targets, overlays, and the
@@ -38,7 +38,7 @@ The package's "user interface" is Markdown and YAML read by developers and agent
 
 ## Quality Check
 
-- [ ] `pnpm --filter @kunolu/sbtd-workflow-kit generate` then `check-generated` pass.
+- [ ] `pnpm --filter @kunolu/omp-sbtd exec node scripts/kit-generate.mjs` then `scripts/kit-check-generated.mjs` pass.
 - [ ] Omitted/replaced sections do not leak into any rendered target (enforced by
   `assertExcludedSectionsAbsent` — if it throws, fix the map/overlay, not the check).
 - [ ] Authored text bound for `generated-omp/` contains no `codex` token (any case).

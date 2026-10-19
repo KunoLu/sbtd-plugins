@@ -12,10 +12,9 @@ import {
 const sha256 = (value: string | Uint8Array): string =>
   createHash("sha256").update(value).digest("hex");
 
-const generatedManifestUrl = import.meta.resolve(
-  "@kunolu/sbtd-workflow-kit/generated-omp/manifest.json",
+const generatedRoot = fileURLToPath(
+  new URL("../upstream/generated-omp", import.meta.url),
 );
-const generatedRoot = fileURLToPath(new URL(".", generatedManifestUrl));
 const STABLE_MANIFEST_KIT_PATH =
   "onboard/runtime/assets/external-skills/stable/MANIFEST.json";
 

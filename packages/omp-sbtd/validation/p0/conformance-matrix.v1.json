@@ -832,16 +832,16 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "packages/sbtd-workflow-kit/test/transform.test.ts",
+          "path": "packages/omp-sbtd/upstream/test/transform.test.ts",
           "title": "Scenario: 上游新增未映射 Section",
           "command": [
             "pnpm",
             "--filter",
-            "@kunolu/sbtd-workflow-kit",
+            "@kunolu/omp-sbtd",
             "exec",
             "vitest",
             "run",
-            "test/transform.test.ts"
+            "upstream/test/transform.test.ts"
           ],
           "mode": "unit"
         }
@@ -1409,16 +1409,16 @@
       "evidence": [
         {
           "kind": "test",
-          "path": "packages/sbtd-workflow-kit/test/transform.test.ts",
+          "path": "packages/omp-sbtd/upstream/test/transform.test.ts",
           "title": "Scenario: 从完整 Section Mapping 生成三目标 AGENTS",
           "command": [
             "pnpm",
             "--filter",
-            "@kunolu/sbtd-workflow-kit",
+            "@kunolu/omp-sbtd",
             "exec",
             "vitest",
             "run",
-            "test/transform.test.ts"
+            "upstream/test/transform.test.ts"
           ],
           "mode": "unit"
         }

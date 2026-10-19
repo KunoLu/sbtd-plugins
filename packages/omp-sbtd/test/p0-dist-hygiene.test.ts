@@ -21,7 +21,7 @@ import {
 
 const workspaceRoot = new URL("../../..", import.meta.url).pathname;
 const pluginRoot = join(workspaceRoot, "packages/omp-sbtd");
-const kitRoot = join(workspaceRoot, "packages/sbtd-workflow-kit");
+const upstreamRoot = join(workspaceRoot, "packages/omp-sbtd/upstream");
 const cleanDistPath = join(pluginRoot, "scripts/clean-dist.mjs");
 
 const runProcess = promisify(executeFile);
@@ -170,9 +170,9 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
     const root = await temporaryRoot();
     const copyWorkspace = join(root, "workspace");
     const copyPlugin = join(copyWorkspace, "packages/omp-sbtd");
-    const copyKit = join(copyWorkspace, "packages/sbtd-workflow-kit");
+    const copyUpstream = join(copyWorkspace, "packages/omp-sbtd/upstream");
     await mkdir(copyPlugin, { recursive: true });
-    await mkdir(copyKit, { recursive: true });
+    await mkdir(copyUpstream, { recursive: true });
 
     // Copy the real release inputs: identity, legal inventory, embedded Kit.
     await Promise.all([
@@ -197,8 +197,11 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
       cp(join(pluginRoot, "kit"), join(copyPlugin, "kit"), {
         recursive: true,
       }),
-      cp(join(kitRoot, "package.json"), join(copyKit, "package.json")),
-      cp(join(kitRoot, "LICENSE"), join(copyKit, "LICENSE")),
+      cp(
+        join(upstreamRoot, "package.json"),
+        join(copyUpstream, "package.json"),
+      ),
+      cp(join(upstreamRoot, "LICENSE"), join(copyUpstream, "LICENSE")),
       cp(join(pluginRoot, "src"), join(copyPlugin, "src"), {
         recursive: true,
       }),
@@ -232,13 +235,13 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
     await writePluginSpdxSbom({
       workspaceRoot: copyWorkspace,
       pluginRoot: copyPlugin,
-      kitRoot: copyKit,
+      upstreamRoot: copyUpstream,
     });
     await expect(
       verifyPluginReleaseArtifacts({
         workspaceRoot: copyWorkspace,
         pluginRoot: copyPlugin,
-        kitRoot: copyKit,
+        upstreamRoot: copyUpstream,
       }),
     ).resolves.toMatchObject({
       sourceTreeSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
@@ -264,7 +267,7 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
         verifyPluginReleaseArtifacts({
           workspaceRoot: copyWorkspace,
           pluginRoot: copyPlugin,
-          kitRoot: copyKit,
+          upstreamRoot: copyUpstream,
         }),
       stalePaths,
       marker,
@@ -274,7 +277,7 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
         writePluginSpdxSbom({
           workspaceRoot: copyWorkspace,
           pluginRoot: copyPlugin,
-          kitRoot: copyKit,
+          upstreamRoot: copyUpstream,
         }),
       stalePaths,
       marker,
@@ -317,14 +320,14 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
       writePluginSpdxSbom({
         workspaceRoot,
         pluginRoot: stagePlugin,
-        kitRoot,
+        upstreamRoot,
       }),
     ).rejects.toMatchObject({ code: "PACKAGE_CONTENT_INVALID" });
     await expect(
       writePluginSpdxSbom({
         workspaceRoot,
         pluginRoot: stagePlugin,
-        kitRoot,
+        upstreamRoot,
         releaseRoot: "staged-promotion",
       }),
     ).resolves.toMatchObject({

@@ -44,9 +44,9 @@
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "@kunolu/sbtd-workflow-kit": "workspace:*",
     "@oh-my-pi/pi-coding-agent": "17.3.5",
-    "tsx": "4.20.6"
+    "tsx": "4.20.6",
+    "yaml": "2.8.2"
   },
   "omp": {
     "extensions": [
@@ -59,7 +59,7 @@
     ]
   },
   "scripts": {
-    "build": "pnpm --filter @kunolu/sbtd-workflow-kit check-generated && node scripts/embed-kit.mjs && node scripts/embed-agent-skills.mjs && node scripts/clean-dist.mjs && tsc -p tsconfig.json && tsx scripts/p0/write-sbom.ts",
+    "build": "node scripts/kit-check-generated.mjs && node scripts/embed-kit.mjs && node scripts/embed-agent-skills.mjs && node scripts/clean-dist.mjs && tsc -p tsconfig.json && tsx scripts/p0/write-sbom.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src test scripts",
     "smoke": "node scripts/smoke-extension.mjs",

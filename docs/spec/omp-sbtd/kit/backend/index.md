@@ -1,8 +1,9 @@
-# sbtd-workflow-kit Backend Guidelines
+# Kit Projection Backend Guidelines
 
-> Conventions for `@kunolu/sbtd-workflow-kit` (`packages/sbtd-workflow-kit/`): the private build-time
-> package that pins the vendored upstream SBTD workflow source, transforms it, and emits the three
-> committed generated trees consumed by `@kunolu/omp-sbtd`.
+> Conventions for the kit projection code (`packages/omp-sbtd/upstream/`, moved out of the deleted
+> `@kunolu/sbtd-workflow-kit` package): the build-time supply-chain tree that pins the vendored
+> upstream SBTD workflow source, transforms it, and emits the three committed generated trees
+> consumed by `@kunolu/omp-sbtd`. Thin CLI wrappers live in `packages/omp-sbtd/scripts/kit-*.mjs`.
 
 ---
 
@@ -31,7 +32,7 @@ Before editing this package, confirm:
 
 - [ ] You know whether your change touches an **input** (`vendor/`, `upstream.lock.json`,
   `agents-section-map.yaml`, `omp-distribution-map.yaml`, `overlays/`, `omp-overlays/`,
-  `src/`) or an **output** (`generated/`, `generated-omp/`, `generated-agent-plugin/`, root
+  `upstream/src/`) or an **output** (`generated/`, `generated-omp/`, `generated-agent-plugin/`, root
   `LICENSE` / `THIRD_PARTY_NOTICES.md`). Outputs are never edited directly.
 - [ ] If you add an upstream AGENTS section, it is classified in `agents-section-map.yaml`
   (see [Codegen Workflow](./codegen-workflow.md#adding-inputs)).
@@ -39,7 +40,7 @@ Before editing this package, confirm:
   `omp-distribution-map.yaml` (plus an `omp-overlays/<same-path>` file for
   `replace-with-overlay`).
 - [ ] New error paths use `KitError` with an existing code, or extend the union in
-  `src/index.ts` (see [Error Handling](./error-handling.md)).
+  `upstream/src/index.ts` (see [Error Handling](./error-handling.md)).
 - [ ] New external input is parsed through a zod `.strict()` schema (see
   [Quality Guidelines](./quality-guidelines.md#zod-schema-discipline)).
 
@@ -47,12 +48,12 @@ Before editing this package, confirm:
 
 Before considering work done:
 
-- [ ] `pnpm --filter @kunolu/sbtd-workflow-kit lint` passes (`biome check src test`).
-- [ ] `pnpm --filter @kunolu/sbtd-workflow-kit typecheck` passes.
-- [ ] `pnpm --filter @kunolu/sbtd-workflow-kit test` passes (`vitest run`).
-- [ ] If inputs changed: `pnpm --filter @kunolu/sbtd-workflow-kit generate` was run and
-  `check-generated` passes. Remember `packages/omp-sbtd`'s build runs `check-generated`
-  first — stale generated output breaks the sibling build.
+- [ ] `pnpm --filter @kunolu/omp-sbtd exec biome check upstream/src upstream/test` passes.
+- [ ] `pnpm --filter @kunolu/omp-sbtd exec tsc -p upstream/tsconfig.json --noEmit` passes.
+- [ ] `pnpm --filter @kunolu/omp-sbtd exec vitest run upstream/test` passes.
+- [ ] If inputs changed: `pnpm --filter @kunolu/omp-sbtd exec node scripts/kit-generate.mjs` was run
+  and `check-generated` passes. Remember `packages/omp-sbtd`'s build runs `check-generated`
+  first — stale generated output breaks the build.
 - [ ] New behavior has a `Scenario:`-titled test mirroring `features/*.feature` (see
   [Testing](./testing.md)).
 - [ ] No `codex` token (any case) was introduced into any path or payload that reaches

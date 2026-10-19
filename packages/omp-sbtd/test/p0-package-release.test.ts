@@ -28,7 +28,7 @@ import {
 const workspaceRoot = new URL("../../..", import.meta.url).pathname;
 const pluginRoot = join(workspaceRoot, "packages/omp-sbtd");
 const persistentEvidenceRoot = join(pluginRoot, "validation/p0/evidence");
-const kitRoot = join(workspaceRoot, "packages/sbtd-workflow-kit");
+const upstreamRoot = join(workspaceRoot, "packages/omp-sbtd/upstream");
 const p0CliPath = join(pluginRoot, "scripts/p0/cli.ts");
 const tsxCliPath = join(pluginRoot, "node_modules/tsx/dist/cli.mjs");
 
@@ -151,17 +151,22 @@ describe("Feature: P0 发布一致性与证据", () => {
     const metadata = await inspectPackageMetadata({
       workspaceRoot,
       pluginRoot,
-      kitRoot,
+      upstreamRoot,
     });
     const rootLicense = await readFile(join(workspaceRoot, "LICENSE"), "utf8");
-    const [pluginLicense, kitLicense, pluginNotices, kitNotices, sbomText] =
-      await Promise.all([
-        readFile(join(pluginRoot, "LICENSE"), "utf8"),
-        readFile(join(kitRoot, "LICENSE"), "utf8"),
-        readFile(join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8"),
-        readFile(join(kitRoot, "THIRD_PARTY_NOTICES.md"), "utf8"),
-        readFile(join(pluginRoot, "SBOM.spdx.json"), "utf8"),
-      ]);
+    const [
+      pluginLicense,
+      upstreamLicense,
+      pluginNotices,
+      upstreamNotices,
+      sbomText,
+    ] = await Promise.all([
+      readFile(join(pluginRoot, "LICENSE"), "utf8"),
+      readFile(join(upstreamRoot, "LICENSE"), "utf8"),
+      readFile(join(pluginRoot, "THIRD_PARTY_NOTICES.md"), "utf8"),
+      readFile(join(upstreamRoot, "THIRD_PARTY_NOTICES.md"), "utf8"),
+      readFile(join(pluginRoot, "SBOM.spdx.json"), "utf8"),
+    ]);
     const sbom = JSON.parse(sbomText) as {
       spdxVersion: string;
       packages: Array<{ licenseDeclared: string }>;
@@ -169,9 +174,9 @@ describe("Feature: P0 发布一致性与证据", () => {
     };
 
     expect(metadata.plugin.license).toBe("Apache-2.0");
-    expect(metadata.kit.license).toBe("Apache-2.0");
+    expect(metadata.upstream.license).toBe("Apache-2.0");
     expect(metadata.plugin.name).toBe("@kunolu/omp-sbtd");
-    expect(metadata.kit.name).toBe("@kunolu/sbtd-workflow-kit");
+    expect(metadata.upstream.name).toBe("@kunolu/sbtd-workflow-kit");
     expect(metadata.plugin.files).toEqual(
       expect.arrayContaining([
         "plugin.json",
@@ -180,14 +185,18 @@ describe("Feature: P0 发布一致性与证据", () => {
       ]),
     );
     expect(pluginLicense).toBe(rootLicense);
-    expect(kitLicense).toBe(rootLicense);
+    expect(upstreamLicense).toBe(rootLicense);
     expect(pluginNotices).toContain("kit/onboard/runtime/LICENSE");
     expect(pluginNotices).toContain("kit/onboard/runtime/NOTICE");
     expect(pluginNotices).not.toContain("\n- Retained license: third-party/");
     expect(pluginNotices).not.toContain("\n- Retained notice: third-party/");
     expect(pluginNotices).not.toMatch(/codex/i);
-    expect(kitNotices).toContain("third-party/sbtd-workflow-onboard/LICENSE");
-    expect(kitNotices).toContain("third-party/sbtd-workflow-onboard/NOTICE");
+    expect(upstreamNotices).toContain(
+      "third-party/sbtd-workflow-onboard/LICENSE",
+    );
+    expect(upstreamNotices).toContain(
+      "third-party/sbtd-workflow-onboard/NOTICE",
+    );
     expect(sbom.spdxVersion).toBe("SPDX-2.3");
     expect(
       sbom.packages.every((item) => item.licenseDeclared === "Apache-2.0"),
@@ -278,21 +287,21 @@ describe("Feature: P0 发布一致性与证据", () => {
       await Promise.all([
         readFile(
           join(
-            kitRoot,
+            upstreamRoot,
             "vendor/sbtd-workflow-kit-upstream/sbtd-workflow-onboard/templates/project/.gitignore",
           ),
           "utf8",
         ),
         readFile(
           join(
-            kitRoot,
+            upstreamRoot,
             "omp-overlays/onboard/runtime/templates/project/gitignore.template",
           ),
           "utf8",
         ),
         readFile(
           join(
-            kitRoot,
+            upstreamRoot,
             "vendor/sbtd-workflow-kit-upstream/sbtd-workflow-onboard/templates/skills/web-ui-autotest-generator/.gitignore",
           ),
           "utf8",

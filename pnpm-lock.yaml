@@ -33,28 +33,15 @@ importers:
         specifier: 4.1.12
         version: 4.1.12
     devDependencies:
-      '@kunolu/sbtd-workflow-kit':
-        specifier: workspace:*
-        version: link:../sbtd-workflow-kit
       '@oh-my-pi/pi-coding-agent':
         specifier: 17.3.5
         version: 17.3.5
       tsx:
         specifier: 4.20.6
         version: 4.20.6
-
-  packages/sbtd-workflow-kit:
-    dependencies:
       yaml:
         specifier: 2.8.2
         version: 2.8.2
-      zod:
-        specifier: 4.1.12
-        version: 4.1.12
-    devDependencies:
-      tsx:
-        specifier: 4.20.6
-        version: 4.20.6
 
 packages:
 

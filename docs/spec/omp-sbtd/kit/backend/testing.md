@@ -1,4 +1,4 @@
-# sbtd-workflow-kit Testing
+# Kit Projection Testing
 
 > vitest 4.0.16, no config file, BDD-mirrored titles, real tmpdir fixtures, byte-level assertions.
 
@@ -6,12 +6,12 @@
 
 ## Runner and Layout
 
-- `pnpm --filter @kunolu/sbtd-workflow-kit test` = `vitest run`. There is **no vitest.config** —
+- `pnpm --filter @kunolu/omp-sbtd exec vitest run upstream/test` = `vitest run`. There is **no vitest.config** —
   all defaults.
 - Tests live in `test/*.test.ts`, one file per concern: `transform.test.ts` (Kit transform +
   agent-plugin + sync-upstream) and `omp-projection.test.ts` (OMP projection).
 - Tests import source with `.ts` specifiers (`../src/index.ts`) and run against TypeScript source,
-  not `dist/`. Note: `tsconfig.json` includes only `src/**`, so tests are linted but **not
+  not `dist/`. Note: `tsconfig.json` includes only `upstream/src/**`, so tests are linted but **not
   typechecked** — known as-is debt; be careful with types in test files.
 
 ## BDD-Mirrored Naming
@@ -60,7 +60,7 @@ There is no Gherkin runner; the binding is the naming convention. **New behavior
 ## Test Seams in Production Code
 
 Failure injection goes through explicit options, not monkey-patching:
-`SyncUpstreamOptions.backupPath` / `replacePath` (`src/sync-upstream.ts:56-59`) let tests induce
+`SyncUpstreamOptions.backupPath` / `replacePath` (`upstream/src/sync-upstream.ts:56-59`) let tests induce
 backup/replacement failures (`test/transform.test.ts:1247-1315`). When you need to force a failure
 path, add a narrow seam option like this rather than a mock framework.
 

@@ -13,10 +13,7 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 function defaultSource() {
-  const manifestUrl = import.meta.resolve(
-    "@kunolu/sbtd-workflow-kit/generated-omp/manifest.json",
-  );
-  return fileURLToPath(new URL(".", manifestUrl));
+  return fileURLToPath(new URL("../upstream/generated-omp", import.meta.url));
 }
 const defaultDestination = fileURLToPath(new URL("../kit", import.meta.url));
 const defaultLicense = fileURLToPath(new URL("../LICENSE", import.meta.url));

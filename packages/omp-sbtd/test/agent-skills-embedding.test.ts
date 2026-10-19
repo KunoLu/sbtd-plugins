@@ -17,10 +17,9 @@ import {
   validateEmbeddedAgentSkills,
 } from "../scripts/embed-agent-skills.mjs";
 
-const generatedManifestUrl = import.meta.resolve(
-  "@kunolu/sbtd-workflow-kit/generated-agent-plugin/manifest.json",
+const generatedRoot = fileURLToPath(
+  new URL("../upstream/generated-agent-plugin", import.meta.url),
 );
-const generatedRoot = fileURLToPath(new URL(".", generatedManifestUrl));
 const pluginRoot = fileURLToPath(new URL("..", import.meta.url));
 const pluginSkills = join(pluginRoot, "skills");
 

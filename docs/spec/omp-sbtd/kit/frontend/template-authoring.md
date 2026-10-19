@@ -1,7 +1,7 @@
-# sbtd-workflow-kit Template Authoring
+# Kit Projection Template Authoring
 
 > Rules for the authored text artifacts that drive generation: upstream AGENTS templates, the
-> section map, and overlays. Transform code: `packages/sbtd-workflow-kit/src/index.ts`
+> section map, and overlays. Transform code: `packages/omp-sbtd/upstream/src/index.ts`
 > (`AGENTS_SOURCES` at :19-22, `TARGETS` at :23-27, section transform in
 > `parseSections`/`assignmentsFor`/`render*`).
 
@@ -25,7 +25,7 @@ reassembled into three committed targets (`AGENTS.global.md`, `AGENTS.project-ro
   earlier pinned source, and fails closed once the revision is pinned. Use it when upstream adds a
   section you are not ready to classify for older baselines.
 - Cross-field shape is schema-enforced: include requires exactly one of `owner` or `splitTargets`
-  (`src/index.ts:118-126`).
+  (`upstream/src/index.ts:118-126`).
 
 ## Overlay Rules
 
@@ -33,11 +33,11 @@ reassembled into three committed targets (`AGENTS.global.md`, `AGENTS.project-ro
   `omp-overlays/<canonical-path>` (OMP projection). Missing overlay → `SECTION_OVERLAY_MISSING` /
   `PROJECTION_OVERLAY_MISSING`.
 - **No leakage**: after overlay append, omitted/replaced upstream sections must not appear
-  verbatim in any rendered target — `assertExcludedSectionsAbsent` (`src/index.ts:798-833`)
+  verbatim in any rendered target — `assertExcludedSectionsAbsent` (`upstream/src/index.ts:798-833`)
   enforces this. If it fails, the map or overlay text is wrong; do not weaken the check.
 - **Single writer per path**: derived outputs (e.g. `THIRD_PARTY_NOTICES.md`, embedded stable
   manifest/notices) must have their canonical counterparts `omit`-ted so exactly one writer owns
-  each path (`DERIVED_OUTPUTS` check, `src/omp-projection.ts:38-44, 495-503`).
+  each path (`DERIVED_OUTPUTS` check, `upstream/src/omp-projection.ts:38-44, 495-503`).
 
 ## Editing Upstream Templates
 

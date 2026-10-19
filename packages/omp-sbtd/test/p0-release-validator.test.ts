@@ -397,17 +397,8 @@ describe("Feature: P0 发布一致性与证据", () => {
           version: "0.1.0-rc.1",
           license: "Apache-2.0",
         },
-        kit: {
-          name: "@kunolu/sbtd-workflow-kit",
-          version: "0.1.0",
-          license: "Apache-2.0",
-        },
         sourceTreeSha256: "a".repeat(64),
         files: [],
-        kitManifest: {
-          canonical: { resolvedRevision: "d".repeat(40) },
-          projection: { generatedSha256: "b".repeat(64) },
-        },
       }),
     ) as {
       documentDescribes: string[];
@@ -421,23 +412,19 @@ describe("Feature: P0 发布一致性与证据", () => {
     expect(rendered.documentDescribes).toEqual([
       "SPDXRef-Package-kunolu-omp-sbtd",
     ]);
-    expect(rendered.packages).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          name: "@kunolu/omp-sbtd",
-          SPDXID: "SPDXRef-Package-kunolu-omp-sbtd",
-        }),
-        expect.objectContaining({
-          name: "@kunolu/sbtd-workflow-kit",
-          SPDXID: "SPDXRef-Package-kunolu-sbtd-workflow-kit",
-        }),
-      ]),
-    );
-    expect(rendered.relationships).toContainEqual({
-      spdxElementId: "SPDXRef-Package-kunolu-omp-sbtd",
-      relatedSpdxElement: "SPDXRef-Package-kunolu-sbtd-workflow-kit",
-      relationshipType: "CONTAINS",
-    });
+    expect(rendered.packages).toEqual([
+      expect.objectContaining({
+        name: "@kunolu/omp-sbtd",
+        SPDXID: "SPDXRef-Package-kunolu-omp-sbtd",
+      }),
+    ]);
+    expect(
+      rendered.relationships.some(
+        (relationship) =>
+          relationship.relatedSpdxElement ===
+          "SPDXRef-Package-kunolu-sbtd-workflow-kit",
+      ),
+    ).toBe(false);
   });
   it("Scenario: 39 个测试矩阵条目都具有稳定证据定位器", async () => {
     const catalog = await loadConformanceCatalog(
