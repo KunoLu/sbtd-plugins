@@ -284,206 +284,6 @@ decisions:
     owner: third-party
     policy: omit
     reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/concept-seed.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/context-signals.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/context.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/critique-storage.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detect-csp.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detect.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/browser/injected/index.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/cli/main.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/design-system.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/detect-antipatterns-browser.js
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/detect-antipatterns.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/browser/detect-url.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/regex/detect-text.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/static-html/css-cascade.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/static-html/detect-html.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/visual/screenshot-contrast.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/findings.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/node/file-system.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/profile/profiler.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/registry/antipatterns.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/rules/checks.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/color.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/constants.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/fonts.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/inline-ignores.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/page.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/doctor.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/embed-prompt.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/generate-image.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook-admin.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook-before-edit.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook-lib.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/artifact-schema.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/composition-catalog.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/concept-catalog.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/design-parser.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/impeccable-config.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/impeccable-paths.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/is-generated.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/provider.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/roll-selection.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/staleness-deep.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/staleness-notice.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/staleness.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/surface-briefs.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/target-args.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/target-slug.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/template-extensions.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-accept.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
   - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-browser-dom.js
     owner: third-party
     policy: omit
@@ -496,215 +296,7 @@ decisions:
     owner: third-party
     policy: omit
     reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-commit-manual-edits.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-complete.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-copy-edit-agent.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-discard-manual-edits.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-inject.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-insert.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-manual-edit-evidence.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-poll.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-resume.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-server.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-status.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-target.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-wrap.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/accept-css.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/accept-verify.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/browser-script-parts.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/completion.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/event-validation.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/astro.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/detect-utils.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/index.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/journal.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/nextjs.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/nuxt.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/script-src.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/static-html.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/sveltekit.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/tag-strategy.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/tanstack-start.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/vite-generic.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/generation-preflight.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/insert-ui.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/instructions.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/manual-apply.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/manual-edit-routes.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/manual-edits-buffer.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/poll-lanes.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/roots.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/session-store.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/source-lock.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/source-search.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/svelte-ast.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/svelte-component.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/sveltekit-adapter.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/tanstack-adapter.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/ui-surfaces.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/vocabulary.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
   - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/modern-screenshot.umd.js
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/palette.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/pin.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/serve-question.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/surface-brief.mjs
     owner: third-party
     policy: omit
     reason: Stable Skill tree is not retained in the OMP distribution
@@ -1183,28 +775,6 @@ decisions:
   - path: onboard/runtime/templates/skills/seo-geo/scripts/serp_analysis.py
     owner: kpi
     policy: include
-  - path: onboard/runtime/templates/skills/trellis-channel/LICENSE
-    owner: kpi
-    policy: include
-  - path: onboard/runtime/templates/skills/trellis-channel/NOTICE
-    owner: kpi
-    policy: include
-  - path: onboard/runtime/templates/skills/trellis-channel/SKILL.md
-    owner: kpi
-    policy: replace-with-overlay
-    overlay: onboard/runtime/templates/skills/trellis-channel/SKILL.md
-    reason: KPi-owned OMP overlay removes non-OMP Runtime instructions
-  - path: onboard/runtime/templates/skills/trellis-workflow/LICENSE
-    owner: kpi
-    policy: include
-  - path: onboard/runtime/templates/skills/trellis-workflow/NOTICE
-    owner: kpi
-    policy: include
-  - path: onboard/runtime/templates/skills/trellis-workflow/SKILL.md
-    owner: kpi
-    policy: replace-with-overlay
-    overlay: onboard/runtime/templates/skills/trellis-workflow/SKILL.md
-    reason: KPi-owned OMP overlay removes non-OMP Runtime instructions
   - path: onboard/runtime/templates/skills/web-ui-autotest-generator/LICENSE
     owner: kpi
     policy: include
@@ -1278,10 +848,6 @@ decisions:
   - path: onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE
     owner: third-party
     policy: include
-  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/open-system-browser.mjs
-    owner: third-party
-    policy: omit
-    reason: Stable Skill tree is not retained in the OMP distribution
   - path: onboard/runtime/assets/external-skills/stable/skills/ponytail-audit/SKILL.md
     owner: third-party
     policy: include
@@ -1370,5 +936,222 @@ decisions:
     owner: third-party
     policy: include
   - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_web_stack_freshness.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/scripts/graft_runtime.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/onboard_arguments.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/onboard_contracts.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_backup_retention.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_cleanup_legacy.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_cleanup_targets.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_cleanup_upgrade.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_codex_wiring.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_graft_deployment.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_graft_entry.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_handoff.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_identity.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_migration.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_migration_files.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_migration_legacy.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_migration_plan.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_migration_verify.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_omp_sources.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_omp_wiring.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_probe_links.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_project.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_reconciliation.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_recovery.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_task_document.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_task_routing.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_task_state.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_trellis_uninstall.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_upgrade.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_upgrade_cli.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_upgrade_hosts.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_upgrade_inventory.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/scripts/sbtd_upgrade_paths.py
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/requirements.txt
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/onboard-contracts.schema.json
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/upgrade.schema.json
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/graft-build-policy.json
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/graft-hook-entry.mjs
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/graft-instructions.txt
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/migration-legacy-ownership.json
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/migration-local-ignore.txt
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/migration-paused-agents.txt
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/routing-approval.pub
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/runtime-lineage.json
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/runtime-lineage.pub
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/LICENSE
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/NOTICE
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/SKILL.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/handoff.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/methods.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/presentation.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/state.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/strict.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/task-data.schema.json
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/sbtd-task/references/tooling.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/lessons-record/references/identity-migration.md
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/templates/skills/project-validation/references/run-summary.zh-CN.md.template
+    owner: kpi
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/SKILL.md
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/agents/gemini.toml
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/agents/openai.yaml
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/licenses/i-have-adhd-LICENSE
+    owner: third-party
+    policy: omit
+    reason: License for a non-retained stable repository
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/VERSION
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/data/font-index-failures.json
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/data/font-index.json
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/impeccable
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/impeccable.cmd
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-browser-ignores.js
+    owner: third-party
+    policy: omit
+    reason: Stable Skill tree is not retained in the OMP distribution
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_summary_line_endings.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_design_system_stack.py
+    owner: third-party
+    policy: include
+  - path: onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_skill_script_paths.py
     owner: third-party
     policy: include

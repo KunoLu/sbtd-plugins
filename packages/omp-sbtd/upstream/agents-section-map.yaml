@@ -1,131 +1,35 @@
 schemaVersion: 2
 sections:
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则"
     policy: include
     owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 优先级"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 所有任务的共同入口"
     policy: include
     owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 命令执行规则"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 工程与验证"
     policy: include
     owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 交互压缩工具"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 安全与权限"
     policy: include
     owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 交互压缩工具 > caveman"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 输出与交接"
     policy: include
     owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > Skill 不可用时"
     policy: include
     owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > Codex 插件 / Connector / 延迟工具发现"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > Trellis"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > Trellis 调度边界"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > GitNexus"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > Web / Mobile 验证工具"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Skills 调用规则"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Skills 调用规则 > grill-with-docs 使用状态透明度"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Skills 调用规则 > grill-with-docs 后置 DDD 边界审核"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Skills 调用规则 > book-derived 开发阶段强制门禁"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Skills 调用规则 > 自定义 Skills 使用边界"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Skills 调用规则 > Skill 不可用时"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 范围控制"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 代码可读性"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 代码可读性 > Ponytail 与代码可读性审查"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 验证最低要求"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 上下文控制"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 最终输出规则"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > Lessons 规则"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 最终目标"
-    policy: include
-    owner: global
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 加载与激活边界"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 所有模式的项目入口"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Project-only fallback"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 无全局 Skill 的最小 fallback"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 代码可读性"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 路径与工具边界"
     policy: include
     owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > UI/UX 项目上下文"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis"
-    policy: replace-with-overlay
-    owner: project-omp
-    overlay: AGENTS.project-omp.md
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis > Trellis 目录"
-    policy: replace-with-overlay
-    owner: project-omp
-    overlay: AGENTS.project-omp.md
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > 持久路径与语言"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > BDD / Gherkin > Source of truth"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > GitNexus"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Skill 编排边界"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis Channel"
-    policy: replace-with-overlay
-    owner: project-omp
-    overlay: AGENTS.project-omp.md
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Web / Mobile 验证与测试资产"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > SEO / GEO"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 验证命令"
-    policy: include
-    owner: project-root
-  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Lessons"
+  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 身份、输出和交付"
     policy: include
     owner: project-root
