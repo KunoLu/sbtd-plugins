@@ -130,7 +130,7 @@ DIST_TAG=<next_or_approved_stable_tag>
 #### 操作
 
 1. 在 `640-skills` 完成 `sbtd-workflow-onboard` 修改和仓库要求的验证；
-2. 评估并按仓库规则更新 README、README.html、版本化 automation prompt 和 CHANGELOG；
+2. 评估并按仓库规则更新 README.md、README.zh.md、版本化 automation prompt 和 CHANGELOG；
 3. 提交准备进入 KPi 的全部 tracked source；
 4. 记录完整 SHA；
 5. 确认工作树 clean。

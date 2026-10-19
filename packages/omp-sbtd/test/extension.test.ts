@@ -542,7 +542,7 @@ describe("Feature: SBTD 控制引导", () => {
         "Kit Source: sbtd-workflow-kit-upstream",
       );
       expect(notices.at(-1)).toContain(
-        "Kit Revision: f8aa0d7225a26c5e00b81d2f1b05121108e63630",
+        "Kit Revision: 1d82494d74f6df9bca7dccef2da409f87091883e",
       );
       expect(notices.at(-1)).toMatch(/Kit Manifest Digest: [0-9a-f]{64}/);
       expect(notices.at(-1)).toMatch(
@@ -1842,7 +1842,7 @@ describe("Feature: SBTD 控制引导", () => {
       expect(payload.pythonOnboard).toBeUndefined();
       expect(payload.sourceId).toBe("sbtd-workflow-kit-upstream");
       expect(payload.canonicalRevision).toBe(
-        "f8aa0d7225a26c5e00b81d2f1b05121108e63630",
+        "1d82494d74f6df9bca7dccef2da409f87091883e",
       );
       expect(payload.canonicalManifestSha256).toMatch(/^[0-9a-f]{64}$/);
       expect(payload.projectionSha256).toMatch(/^[0-9a-f]{64}$/);

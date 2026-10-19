@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KunoLu/640-skills/sbtd-workflow-onboard/upgrade.schema.json",
+  "title": "SBTD Onboard upgrade alignment documents",
+  "description": "Wire contract for the upgrade scope, sealed plan, apply receipt, verification, recovery plan, recovery receipt and precise probe link authorization documents produced by scripts/sbtd_upgrade.py and scripts/sbtd_probe_links.py. The engine validates programmatically; this schema documents the exchange shapes for the CLI and tests.",
+  "type": "object",
+  "anyOf": [
+    { "$ref": "#/$defs/planDocument" },
+    { "$ref": "#/$defs/receiptDocument" },
+    { "$ref": "#/$defs/verificationDocument" },
+    { "$ref": "#/$defs/recoveryPlanDocument" },
+    { "$ref": "#/$defs/recoveryReceiptDocument" },
+    { "$ref": "#/$defs/linkAuthorizationDocument" },
+    { "$ref": "#/$defs/failureDocument" },
+    { "$ref": "#/$defs/scope" }
+  ],
+  "$defs": {
+    "hex": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "state": {
+      "type": "object",
+      "required": ["type", "checksum"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["absent", "file", "directory"] },
+        "checksum": { "anyOf": [{ "$ref": "#/$defs/hex" }, { "type": "null" }] }
+      }
+    },
+    "presentState": {
+      "type": "object",
+      "required": ["type", "checksum"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["file", "directory"] },
+        "checksum": { "$ref": "#/$defs/hex" }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": ["path", "state"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "state": { "$ref": "#/$defs/presentState" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "state": { "anyOf": [{ "$ref": "#/$defs/presentState" }, { "type": "null" }] }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": ["id", "kind", "target", "source", "before", "desired", "classification", "decision", "details"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["skill", "agents", "mcp", "shell"] },
+        "target": { "type": "string" },
+        "source": { "$ref": "#/$defs/source" },
+        "before": { "$ref": "#/$defs/state" },
+        "desired": { "anyOf": [{ "$ref": "#/$defs/presentState" }, { "type": "null" }] },
+        "classification": { "enum": ["missing", "current", "known-old", "unknown-drift", "identity-conflict"] },
+        "decision": { "enum": ["install", "keep", "replace", "preserve", "blocked"] },
+        "details": { "type": "object" },
+        "host": { "type": "object" },
+        "profile": { "type": "object" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": ["schema_version"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "skills_roots": { "type": "array", "items": { "type": "string" } },
+        "agents_targets": { "type": "array", "items": { "type": "string" } },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "platform", "config_home", "config", "skills_roots", "runtime", "project_roots"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "platform": { "type": "string" },
+              "config_home": { "type": "string" },
+              "config": { "type": "string" },
+              "skills_roots": { "type": "array", "items": { "type": "string" } },
+              "runtime": {
+                "type": "object",
+                "required": ["python", "node", "cli"],
+                "additionalProperties": false,
+                "properties": {
+                  "python": { "type": ["string", "null"] },
+                  "node": { "type": ["string", "null"] },
+                  "cli": { "type": ["string", "null"] }
+                }
+              },
+              "project_roots": { "type": "array", "items": { "type": "string" } },
+              "executable": { "type": ["string", "null"] },
+              "onboard_root": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "shell_profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "shell", "bin"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "shell": { "enum": ["bash", "zsh", "powershell"] },
+              "bin": { "type": "string" }
+            }
+          }
+        },
+        "decisions": {
+          "type": "object",
+          "additionalProperties": { "enum": ["replace", "preserve"] }
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "required": ["baseline_id", "source"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "baseline_id": { "type": "string", "minLength": 1 },
+        "catalog": { "type": "object" },
+        "stable": { "type": "object" },
+        "runtime": { "type": "object" },
+        "source": {
+          "type": "object",
+          "required": ["path", "state"],
+          "additionalProperties": false,
+          "properties": {
+            "path": { "type": "string" },
+            "state": {
+              "type": "object",
+              "required": ["type", "checksum"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "const": "directory" },
+                "checksum": { "$ref": "#/$defs/hex" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resultRow": {
+      "type": "object",
+      "required": ["id", "kind", "target", "decision", "result", "before", "desired", "after", "mechanical_before", "mechanical_after", "mutated", "backup_ref", "created_parents", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "enum": ["skill", "agents", "mcp", "shell"] },
+        "target": { "type": "string" },
+        "decision": { "enum": ["install", "keep", "replace", "preserve", "blocked"] },
+        "result": { "enum": ["succeeded", "reconciled", "skipped-complete", "kept", "preserved", "failed", "pending"] },
+        "before": { "$ref": "#/$defs/state" },
+        "desired": { "anyOf": [{ "$ref": "#/$defs/presentState" }, { "type": "null" }] },
+        "after": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] },
+        "mechanical_before": { "$ref": "#/$defs/state" },
+        "mechanical_after": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] },
+        "backup_ref": { "anyOf": [{ "$ref": "#/$defs/reference" }, { "type": "null" }] },
+        "mutated": { "type": ["boolean", "null"] },
+        "created_parents": { "type": "array", "items": { "type": "string" } },
+        "reason": { "type": ["string", "null"] }
+      }
+    },
+    "planDocument": {
+      "type": "object",
+      "required": ["schema_version", "plan_id", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "plan_id": { "$ref": "#/$defs/hex" },
+        "payload": {
+          "type": "object",
+          "required": ["plan_schema", "status", "baseline", "scope", "backup_root", "resources", "domains", "blocked_resources"],
+          "properties": {
+            "plan_schema": { "const": "upgrade-plan" },
+            "status": { "enum": ["planned", "blocked"] },
+            "baseline": { "$ref": "#/$defs/baseline" },
+            "scope": { "$ref": "#/$defs/scope" },
+            "backup_root": { "type": "string" },
+            "resources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/resource" } },
+            "domains": { "type": "array" },
+            "blocked_resources": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "receiptDocument": {
+      "type": "object",
+      "required": ["schema_version", "status", "receipt_id", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "status": { "enum": ["complete", "partial", "failed"] },
+        "receipt_id": { "$ref": "#/$defs/hex" },
+        "receipt_path": { "type": "string" },
+        "payload": {
+          "type": "object",
+          "required": ["receipt_schema", "plan_id", "baseline_id", "backup_root", "previous_receipt_id", "sequence", "status", "executor", "resources", "failure"],
+          "properties": {
+            "receipt_schema": { "const": "upgrade-receipt" },
+            "plan_id": { "$ref": "#/$defs/hex" },
+            "baseline_id": { "type": "string" },
+            "backup_root": { "type": "string" },
+            "previous_receipt_id": { "anyOf": [{ "$ref": "#/$defs/hex" }, { "type": "null" }] },
+            "sequence": { "type": "integer", "minimum": 0 },
+            "status": { "enum": ["complete", "partial", "failed"] },
+            "executor": { "type": "object" },
+            "resources": { "type": "array", "items": { "$ref": "#/$defs/resultRow" } },
+            "failure": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": ["resource_id", "code"],
+                  "properties": {
+                    "resource_id": { "type": "string" },
+                    "code": { "type": "string" }
+                  }
+                },
+                { "type": "null" }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "verificationDocument": {
+      "type": "object",
+      "required": ["schema_version", "status", "verification_id", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "status": { "enum": ["aligned", "exceptions", "drift", "blocked", "failed"] },
+        "verification_id": { "$ref": "#/$defs/hex" },
+        "payload": {
+          "type": "object",
+          "required": ["verification_schema", "plan_id", "receipt_id", "baseline_id", "status", "probe", "resources", "exceptions", "domains", "hosts"],
+          "properties": {
+            "verification_schema": { "const": "upgrade-verification" },
+            "plan_id": { "$ref": "#/$defs/hex" },
+            "receipt_id": { "anyOf": [{ "$ref": "#/$defs/hex" }, { "type": "null" }] },
+            "baseline_id": { "type": "string" },
+            "status": { "enum": ["aligned", "exceptions", "drift", "blocked", "failed"] },
+            "probe": { "type": "boolean" },
+            "resources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "kind", "target", "classification", "decision", "desired", "measured", "result", "reason"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "kind": { "enum": ["skill", "agents", "mcp", "shell"] },
+                  "target": { "type": "string" },
+                  "classification": { "enum": ["missing", "current", "known-old", "unknown-drift", "identity-conflict"] },
+                  "decision": { "enum": ["install", "keep", "replace", "preserve", "blocked"] },
+                  "desired": { "anyOf": [{ "$ref": "#/$defs/presentState" }, { "type": "null" }] },
+                  "measured": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] },
+                  "result": { "enum": ["aligned", "preserved", "kept", "drift", "missing", "blocked", "host-managed"] },
+                  "reason": { "type": ["string", "null"] }
+                }
+              }
+            },
+            "exceptions": { "type": "array", "items": { "type": "string" } },
+            "domains": { "type": "array" },
+            "hosts": { "type": "object" }
+          }
+        }
+      }
+    },
+    "recoveryStep": {
+      "type": "object",
+      "required": ["step_id", "resource_id", "kind", "target", "action", "expected_current", "expected_mechanical", "restore_state", "backup_ref", "created_parents", "status", "reason"],
+      "properties": {
+        "step_id": { "$ref": "#/$defs/hex" },
+        "resource_id": { "type": "string" },
+        "kind": { "enum": ["skill", "agents", "mcp", "shell"] },
+        "target": { "type": "string" },
+        "action": { "enum": ["restore", "remove"] },
+        "expected_current": { "$ref": "#/$defs/state" },
+        "expected_mechanical": { "$ref": "#/$defs/state" },
+        "restore_state": { "anyOf": [{ "$ref": "#/$defs/presentState" }, { "type": "null" }] },
+        "backup_ref": { "anyOf": [{ "$ref": "#/$defs/reference" }, { "type": "null" }] },
+        "created_parents": { "type": "array", "items": { "type": "string" } },
+        "status": { "enum": ["actionable", "blocked"] },
+        "reason": { "type": ["string", "null"] }
+      }
+    },
+    "recoveryPlanDocument": {
+      "type": "object",
+      "required": ["schema_version", "recovery_id", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "recovery_id": { "$ref": "#/$defs/hex" },
+        "payload": {
+          "type": "object",
+          "required": ["recovery_schema", "plan_id", "receipt_id", "backup_root", "status", "steps", "upgrade_plan", "upgrade_receipt"],
+          "properties": {
+            "recovery_schema": { "const": "upgrade-recovery-plan" },
+            "plan_id": { "$ref": "#/$defs/hex" },
+            "receipt_id": { "$ref": "#/$defs/hex" },
+            "backup_root": { "type": "string" },
+            "status": { "enum": ["planned", "blocked"] },
+            "steps": { "type": "array", "items": { "$ref": "#/$defs/recoveryStep" } },
+            "upgrade_plan": { "$ref": "#/$defs/planDocument" },
+            "upgrade_receipt": { "$ref": "#/$defs/receiptDocument" }
+          }
+        }
+      }
+    },
+    "recoveryReceiptDocument": {
+      "type": "object",
+      "required": ["schema_version", "status", "recovery_receipt_id", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "status": { "enum": ["complete", "partial", "failed"] },
+        "recovery_receipt_id": { "$ref": "#/$defs/hex" },
+        "receipt_path": { "type": "string" },
+        "payload": {
+          "type": "object",
+          "required": ["receipt_schema", "recovery_id", "plan_id", "upgrade_receipt_id", "backup_root", "previous_receipt_id", "sequence", "status", "executor", "steps", "failure"],
+          "properties": {
+            "receipt_schema": { "const": "upgrade-recovery-receipt" },
+            "recovery_id": { "$ref": "#/$defs/hex" },
+            "plan_id": { "$ref": "#/$defs/hex" },
+            "upgrade_receipt_id": { "$ref": "#/$defs/hex" },
+            "backup_root": { "type": "string" },
+            "previous_receipt_id": { "anyOf": [{ "$ref": "#/$defs/hex" }, { "type": "null" }] },
+            "sequence": { "type": "integer", "minimum": 0 },
+            "status": { "enum": ["complete", "partial", "failed"] },
+            "executor": { "type": "object" },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["step_id", "resource_id", "action", "target", "result", "expected_current", "restore_state", "after", "mechanical_after", "reason"],
+                "properties": {
+                  "step_id": { "$ref": "#/$defs/hex" },
+                  "resource_id": { "type": "string" },
+                  "action": { "enum": ["restore", "remove"] },
+                  "target": { "type": "string" },
+                  "result": { "enum": ["succeeded", "reconciled", "skipped-complete", "failed", "pending"] },
+                  "expected_current": { "$ref": "#/$defs/state" },
+                  "restore_state": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] },
+                  "after": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] },
+                  "mechanical_after": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] },
+                  "reason": { "type": ["string", "null"] }
+                }
+              }
+            },
+            "failure": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "required": ["step_id", "code"],
+                  "properties": {
+                    "step_id": { "$ref": "#/$defs/hex" },
+                    "code": { "type": "string" }
+                  }
+                },
+                { "type": "null" }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "batchEvidence": {
+      "type": "object",
+      "required": ["phase", "backup_root", "checkpoint", "mutation"],
+      "additionalProperties": false,
+      "properties": {
+        "phase": { "enum": ["upgrade", "recovery"] },
+        "plan_id": { "$ref": "#/$defs/hex" },
+        "recovery_id": { "$ref": "#/$defs/hex" },
+        "backup_root": { "type": "string" },
+        "checkpoint": {
+          "anyOf": [
+            {
+              "type": "object",
+              "required": ["receipt_id", "path", "status"],
+              "additionalProperties": false,
+              "properties": {
+                "receipt_id": { "$ref": "#/$defs/hex" },
+                "path": { "type": "string" },
+                "status": { "enum": ["complete", "partial", "failed"] }
+              }
+            },
+            { "type": "null" }
+          ]
+        },
+        "mutation": {
+          "type": "object",
+          "required": ["state", "resources"],
+          "additionalProperties": false,
+          "properties": {
+            "state": { "enum": ["measured", "unknown"] },
+            "resources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "target", "after"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "type": "string" },
+                  "target": { "type": "string" },
+                  "after": { "anyOf": [{ "$ref": "#/$defs/state" }, { "type": "null" }] }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "linkAuthorizationDocument": {
+      "type": "object",
+      "required": ["schema_version", "authorization_id", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": { "const": 1 },
+        "authorization_id": { "$ref": "#/$defs/hex" },
+        "payload": {
+          "type": "object",
+          "required": ["authorization_schema", "plan_id", "host_id", "skill_name", "skill_path", "link", "target", "state"],
+          "additionalProperties": false,
+          "properties": {
+            "authorization_schema": { "const": "upgrade-probe-link-authorization" },
+            "plan_id": { "$ref": "#/$defs/hex" },
+            "host_id": { "type": "string", "minLength": 1 },
+            "skill_name": { "type": "string", "minLength": 1 },
+            "skill_path": { "type": "string", "minLength": 1 },
+            "link": {
+              "type": "object",
+              "required": ["text", "device", "inode", "ctime_ns"],
+              "additionalProperties": false,
+              "properties": {
+                "text": { "type": "string", "minLength": 1 },
+                "device": { "type": "integer" },
+                "inode": { "type": "integer", "minimum": 1 },
+                "ctime_ns": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "target": {
+              "type": "object",
+              "required": ["path", "device", "inode", "ctime_ns"],
+              "additionalProperties": false,
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "device": { "type": "integer" },
+                "inode": { "type": "integer", "minimum": 1 },
+                "ctime_ns": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "state": {
+              "type": "object",
+              "required": ["type", "checksum"],
+              "additionalProperties": false,
+              "properties": {
+                "type": { "const": "directory" },
+                "checksum": { "$ref": "#/$defs/hex" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "failureDocument": {
+      "type": "object",
+      "required": ["mode", "phase", "status", "reason", "nextStep"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["upgrade", "recovery"] },
+        "phase": { "enum": ["plan", "apply", "verify", "authorize-link"] },
+        "status": { "enum": ["blocked", "failed"] },
+        "reason": { "type": "string" },
+        "batch": { "$ref": "#/$defs/batchEvidence" },
+        "nextStep": { "type": "string" }
+      }
+    }
+  }
+}

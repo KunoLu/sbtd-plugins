@@ -9,16 +9,14 @@ PROJECTS_ONLY=0
 PROJECT_ROOTS=()
 ACTION=""
 SKIP_PROJECT_AGENTS=0
+GRAFT_RETIRE_LEGACY=0
+GRAFT_LEGACY_BINDINGS=""
 NO_MCP=0
 DRY_RUN=0
 YES=0
 NO_COLOR_REQUESTED=0
 GLOBAL_AGENTS_PATH=""
 GLOBAL_SKILLS_DIR=""
-TRELLIS_USER=""
-TRELLIS_PLATFORMS=()
-SKIP_TRELLIS_INIT=0
-SKIP_TRELLIS_BOOTSTRAP=0
 CHECK_JSON=""
 AGENT_CLI_JSON=""
 PROJECTS_JSON=""
@@ -29,6 +27,7 @@ SBTD workflow installer
 
 Usage:
   ./install.sh [options]
+  ./install.sh migration|recovery|cleanup-legacy|upgrade [options]
 
 Options:
   --platform <codex|claude|kimi|oh-my-pi|omp>
@@ -36,14 +35,14 @@ Options:
       This option does not change the Codex global AGENTS.md target; override
       that separately with --global-agents-path. If ~/.omp already exists,
       init/reset also overwrite ~/.omp/agent/AGENTS.md.
-      The installer verifies this CLI immediately, bootstraps npm when needed,
-      and installs the official npm package globally at @latest when missing.
+      The installer may verify this CLI read-only immediately. Missing-CLI
+      repair and npm bootstrap wait for complete selected-project preflight.
   --source-root <path>
       Path to the sbtd-workflow-onboard directory.
       Defaults to ./sbtd-workflow-onboard.
   --projects-root <abs-path[,abs-path...]>
       One or more absolute project root paths separated by English commas.
-      When omitted, the installer asks interactively for the project roots.
+      When omitted, ask interactively unless --yes selects global-only setup.
   --init-projects <abs-path[,abs-path...]>
       Run only per-project checks and initialization for the listed absolute
       project roots. Global tools, Skills, Agent CLI, and MCP are not checked,
@@ -56,24 +55,29 @@ Options:
       Override the global AGENTS.md target.
   --global-skills-dir <path>
       Override global skills directory.
-  --trellis-user <name>
-      Developer username for trellis init -u when the project has no .trellis/.
-  --trellis-platform <name[,name...]>
-      Trellis init platform flag without leading dashes. May be repeated.
-      Examples: codex, claude, kimi, cursor, omp, pi. Replaces the Agent
-      platform default. OMP and Pi are separate flags.
-  --skip-trellis-init
-      Skip post-install trellis init for project roots without .trellis/.
-  --skip-trellis-bootstrap
-      Skip post-install bootstrap task detection.
+  --graft-retire-legacy
+      Explicitly retire exact owned fixed-project Graft MCP entries for the
+      selected roots after preview, preserving originals; not TEMP cleanup.
+  --graft-legacy-bindings <path>
+      Private old-runtime contract for an explicitly authorized MCP cutover.
   --no-mcp
       Skip MCP configuration.
   --dry-run
       Print commands and MCP writes without making changes.
   --yes
-      Answer yes to every yes/no prompt.
+      Answer yes to yes/no prompts within the selected scope.
+      Normal init/reset without --projects-root is global-only; cwd is not
+      implicitly selected as a project.
   --no-color
       Disable ANSI color.
+  migration --phase <phase> [migration options]
+      Forward directly to scripts/onboard.py migration without onboarding.
+  recovery --phase <phase> [recovery options]
+      Forward directly to scripts/onboard.py recovery without onboarding.
+  cleanup-legacy --phase <plan|apply> [cleanup options]
+      Forward directly to scripts/onboard.py; no normal onboarding.
+  upgrade --phase <plan|apply|verify> [upgrade options]
+      Plan, apply, or verify only an explicitly selected upgrade scope.
   -h, --help
       Show this help.
 EOF
@@ -266,6 +270,7 @@ EOF
     "catalog.json"
     "catalog.schema.json"
     "scripts/onboard.py"
+    "scripts/sbtd_project.py"
     "templates/agents/AGENTS.global.md"
     "templates/agents/AGENTS.project.md"
     "templates/skills"
@@ -302,6 +307,33 @@ find_python() {
   else
     die "python3 or python is required to run $SOURCE_ROOT/scripts/onboard.py"
   fi
+}
+
+forward_workflow_mode() {
+  local mode="$1"
+  shift
+  local source="$SOURCE_ROOT"
+  local forwarded=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --source-root)
+        [[ $# -ge 2 ]] || die "--source-root requires a value"
+        source="$2"
+        shift 2
+        ;;
+      --source-root=*)
+        source="${1#*=}"
+        shift
+        ;;
+      *)
+        forwarded+=("$1")
+        shift
+        ;;
+    esac
+  done
+  validate_source_root "$source"
+  find_python
+  exec "$PYTHON_BIN" "$SOURCE_ROOT/scripts/onboard.py" "$mode" ${forwarded[@]+"${forwarded[@]}"}
 }
 
 command_string() {
@@ -346,18 +378,14 @@ onboard_common_args() {
   if [[ -n "$GLOBAL_SKILLS_DIR" ]]; then
     args+=(--global-skills-dir "$GLOBAL_SKILLS_DIR")
   fi
-  if [[ -n "$TRELLIS_USER" ]]; then
-    args+=(--trellis-user "$TRELLIS_USER")
+  if [[ "$GRAFT_RETIRE_LEGACY" -eq 1 ]]; then
+    args+=(--graft-retire-legacy)
   fi
-  local trellis_platform
-  for trellis_platform in ${TRELLIS_PLATFORMS[@]+"${TRELLIS_PLATFORMS[@]}"}; do
-    args+=(--trellis-platform "$trellis_platform")
-  done
-  if [[ "$SKIP_TRELLIS_INIT" -eq 1 ]]; then
-    args+=(--skip-trellis-init)
+  if [[ -n "$GRAFT_LEGACY_BINDINGS" ]]; then
+    args+=(--graft-legacy-bindings "$GRAFT_LEGACY_BINDINGS")
   fi
-  if [[ "$SKIP_TRELLIS_BOOTSTRAP" -eq 1 ]]; then
-    args+=(--skip-trellis-bootstrap)
+  if [[ "$NO_MCP" -eq 1 ]]; then
+    args+=(--no-mcp)
   fi
   if (( ${#args[@]} > 0 )); then
     printf '%s\0' "${args[@]}"
@@ -411,8 +439,17 @@ refresh_projects_json() {
     rm -f "$PROJECTS_JSON"
   fi
   PROJECTS_JSON="$(mktemp "${TMPDIR:-/tmp}/sbtd-onboard-projects.XXXXXX")"
+  local rc=0
+  local args=(--projects-root "$PROJECTS_ROOT" --json)
+  if [[ "$SKIP_PROJECT_AGENTS" -eq 1 ]]; then
+    args+=(--skip-project-agents)
+  fi
   "$PYTHON_BIN" "$SOURCE_ROOT/scripts/onboard.py" check-projects \
-    --projects-root "$PROJECTS_ROOT" --json > "$PROJECTS_JSON"
+    "${args[@]}" > "$PROJECTS_JSON" || rc=$?
+  if [[ "$rc" -ne 0 ]]; then
+    cat "$PROJECTS_JSON" >&2
+    return "$rc"
+  fi
 }
 
 project_check_lines() {
@@ -517,16 +554,6 @@ ensure_target_agent_cli() {
   printf '\n'
   if [[ "$installed" == "true" ]]; then
     printf '%s CLI passed verification: %s\n' "$label" "$command"
-    if [[ "$npm_installed" != "true" ]]; then
-      printf 'npm is required for the mandatory global Trellis and GitNexus CLIs; bootstrapping Node.js LTS + npm.\n'
-      run_onboard ensure-npm --yes
-      if [[ "$DRY_RUN" -eq 0 ]]; then
-        refresh_agent_cli_json
-        if [[ "$(agent_cli_json npm-installed)" != "true" ]]; then
-          die "npm bootstrap completed but npm is still unavailable; required global tools cannot be installed."
-        fi
-      fi
-    fi
     return 0
   fi
 
@@ -620,15 +647,6 @@ elif mode == "missing-external-skills":
     print(",".join(missing))
 elif mode == "ponytail-provider":
     print(data.get("ponytailProvider", {}).get("provider", "unknown"))
-elif mode == "mcp-command":
-    config = find_manual_check(args[0]).get("mcpServerConfig") or {}
-    print(config.get("command") or "")
-elif mode == "mcp-args-json":
-    config = find_manual_check(args[0]).get("mcpServerConfig") or {}
-    print(json.dumps(config.get("args") or [], ensure_ascii=False))
-elif mode == "mcp-env-json":
-    config = find_manual_check(args[0]).get("mcpServerConfig") or {}
-    print(json.dumps(config.get("env") or {}, ensure_ascii=False))
 elif mode == "maestro-env-json":
     config = find_manual_check("Maestro MCP").get("mcpServerConfig") or {}
     print(json.dumps(config.get("env") or {}, ensure_ascii=False))
@@ -745,30 +763,17 @@ parse_args() {
         GLOBAL_SKILLS_DIR="${1#*=}"
         shift
         ;;
-      --trellis-user)
-        [[ $# -ge 2 ]] || die "--trellis-user requires a value"
-        TRELLIS_USER="$2"
+      --graft-retire-legacy)
+        GRAFT_RETIRE_LEGACY=1
+        shift
+        ;;
+      --graft-legacy-bindings)
+        [[ $# -ge 2 ]] || die "--graft-legacy-bindings requires a value"
+        GRAFT_LEGACY_BINDINGS="$2"
         shift 2
         ;;
-      --trellis-user=*)
-        TRELLIS_USER="${1#*=}"
-        shift
-        ;;
-      --trellis-platform)
-        [[ $# -ge 2 ]] || die "--trellis-platform requires a value"
-        TRELLIS_PLATFORMS+=("$2")
-        shift 2
-        ;;
-      --trellis-platform=*)
-        TRELLIS_PLATFORMS+=("${1#*=}")
-        shift
-        ;;
-      --skip-trellis-init)
-        SKIP_TRELLIS_INIT=1
-        shift
-        ;;
-      --skip-trellis-bootstrap)
-        SKIP_TRELLIS_BOOTSTRAP=1
+      --graft-legacy-bindings=*)
+        GRAFT_LEGACY_BINDINGS="${1#*=}"
         shift
         ;;
       --no-mcp)
@@ -802,6 +807,12 @@ parse_args() {
   if [[ "$PROJECTS_ONLY" -eq 1 && -n "$ACTION" ]]; then
     die "--init-projects is a standalone mode and cannot be combined with --action."
   fi
+  if [[ "$PROJECTS_ONLY" -eq 1 && "$GRAFT_RETIRE_LEGACY" -eq 1 ]]; then
+    die "--init-projects cannot retire global Graft MCP entries."
+  fi
+  if [[ -n "$GRAFT_LEGACY_BINDINGS" && "$GRAFT_RETIRE_LEGACY" -ne 1 ]]; then
+    die "--graft-legacy-bindings requires --graft-retire-legacy."
+  fi
 }
 
 resolve_interactive_inputs() {
@@ -822,7 +833,7 @@ resolve_interactive_inputs() {
     ACTION="init-projects"
     PROJECTS_ROOT="$INIT_PROJECTS"
   else
-    ensure_target_agent_cli
+    refresh_agent_cli_json
     if [[ -n "$ACTION" ]]; then
       case "$ACTION" in
         init|reset) ;;
@@ -835,6 +846,8 @@ resolve_interactive_inputs() {
 
   if [[ -n "$PROJECTS_ROOT" ]]; then
     normalize_projects_root "$PROJECTS_ROOT"
+  elif [[ "$YES" -eq 1 ]]; then
+    SKIP_PROJECT_AGENTS=1
   else
     local cwd provided
     cwd="$(pwd -P)"
@@ -860,58 +873,95 @@ resolve_interactive_inputs() {
   fi
 }
 
-split_trellis_platforms() {
-  local raw="$1"
-  local item trimmed
-  local -a parts=()
-  raw="${raw// /}"
-  [[ -z "$raw" ]] && return 0
-  IFS=',' read -ra parts <<< "$raw"
-  for item in "${parts[@]}"; do
-    trimmed="${item#--}"
-    [[ -n "$trimmed" ]] && TRELLIS_PLATFORMS+=("$trimmed")
-  done
-}
-
-resolve_trellis_project_setup_inputs() {
-  [[ "$SKIP_TRELLIS_INIT" -eq 1 ]] && return 0
-  (( ${#PROJECT_ROOTS[@]} > 0 )) || return 0
-
-  local needs_init=0 project_root
-  for project_root in ${PROJECT_ROOTS[@]+"${PROJECT_ROOTS[@]}"}; do
-    [[ -e "$project_root/.trellis" ]] || needs_init=1
-  done
-  [[ "$needs_init" -eq 1 ]] || return 0
-
-  if ! command -v trellis >/dev/null 2>&1; then
-    warn "The required global Trellis CLI is unavailable; project initialization will be reported as blocked."
-    return 0
-  fi
-
-  while [[ -z "$TRELLIS_USER" ]]; do
-    TRELLIS_USER="$(prompt_text 'Trellis developer username for trellis init -u' '')"
-    if [[ -z "$TRELLIS_USER" ]]; then
-      if prompt_yes_no "Skip trellis init for all selected projects that do not have .trellis/?" "n"; then
-        SKIP_TRELLIS_INIT=1
-        return 0
-      fi
-    fi
-  done
-
-  if (( ${#TRELLIS_PLATFORMS[@]} == 0 )); then
-    local raw_platforms
-    local prompt='Trellis platform flags, comma-separated without --. Blank uses the Agent platform default for codex, claude, or kimi; Oh My Pi requires omp and/or pi'
-    raw_platforms="$(prompt_text "$prompt" '')"
-    split_trellis_platforms "$raw_platforms"
-  fi
-}
-
 assert_ponytail_provider_clear() {
   local provider
   provider="$(json_python ponytail-provider)"
   if [[ "$provider" == "conflict" ]]; then
     die "Ponytail provider conflict: the official Ponytail plugin is enabled. Disable or remove that plugin, then rerun the installer; Onboard installs and manages the vendored stable Ponytail Skills."
   fi
+}
+
+# Graft is optional: the read-only `install-graft --json` probe (no --yes,
+# zero writes) is the single source of the real plan — frozen package, actual
+# npm prefix, telemetry target/changes. Only needs-confirmation leads to a
+# prompt and the confirmed `install-graft --yes`; blocked/operational states
+# degrade to a warning and onboarding continues without Graft. A confirmed
+# install failure still aborts the installer with the handler's non-zero exit.
+ensure_graft_cli() {
+  printf '\n'
+  color '1;36' 'Graft CLI (optional)'
+  printf '\n'
+
+  local probe_file probe_rc=0 probe_out status installed reason prompt
+  probe_file="$(mktemp "${TMPDIR:-/tmp}/sbtd-onboard-graft-plan.XXXXXX")"
+  printf '+ %s\n' "$(command_string "$PYTHON_BIN" "$SOURCE_ROOT/scripts/onboard.py" install-graft --json)"
+  "$PYTHON_BIN" "$SOURCE_ROOT/scripts/onboard.py" install-graft --json >"$probe_file" || probe_rc=$?
+  probe_out="$("$PYTHON_BIN" - "$probe_file" <<'PY'
+import json
+import sys
+
+try:
+    data = json.load(open(sys.argv[1], encoding="utf-8"))
+except (OSError, ValueError):
+    print("unknown\tfalse\tprobe did not return valid JSON")
+    raise SystemExit(0)
+
+status = data.get("status") or "unknown"
+reason = str(data.get("reason") or "").replace("\t", " ").replace("\n", " ")
+installed = (data.get("before") or {}).get("installed") is True
+print(f"{status}\t{str(installed).lower()}\t{reason}")
+if status != "needs-confirmation":
+    raise SystemExit(0)
+plan = data.get("plan") or {}
+telemetry = plan.get("telemetry") or {}
+changes = telemetry.get("changes") or {}
+change_text = ", ".join(f"{key}={value}" for key, value in changes.items()) or "none"
+if installed:
+    print("  Existing CLI: verified; only persist telemetry opt-out (no package install)")
+else:
+    print(f"  Package: {plan.get('package') or '@nanonets/graft@0.22.0'} (frozen pin; never latest)")
+    print(f"  Target: npm global prefix {plan.get('prefix') or '<unresolved>'}")
+    print("  Requires: Node.js >= 20 and npm native lifecycle scripts for the pinned allow list")
+print(f"  Telemetry: set {change_text} in {telemetry.get('path') or '<unknown>'} (unknown keys preserved)")
+PY
+)"
+  rm -f "$probe_file"
+
+  IFS=$'\t' read -r status installed reason <<< "$probe_out"
+  case "$status" in
+    already-installed)
+      printf 'Graft CLI is already installed and usable; skipping.\n'
+      return 0
+      ;;
+    blocked)
+      warn "Graft CLI is blocked: ${reason:-unknown reason}. Skipping the optional Graft CLI; existing GitNexus/Graft configuration and data are left untouched."
+      return 0
+      ;;
+    needs-confirmation)
+      prompt="Install the optional Graft CLI now?"
+      if [[ "$installed" == "true" ]]; then
+        printf 'Graft telemetry opt-out plan:\n'
+        prompt="Persist telemetry opt-out for the existing Graft CLI now?"
+      else
+        printf 'Graft CLI install plan:\n'
+      fi
+      printf '%s\n' "$probe_out" | sed 1d
+      if ! prompt_yes_no "$prompt" "n"; then
+        printf 'Graft optional changes declined; continuing without changes.\n'
+        return 0
+      fi
+      if [[ "$installed" == "true" ]]; then
+        run_onboard install-graft --telemetry-only --yes
+      else
+        run_onboard install-graft --yes
+      fi
+      refresh_check_json
+      ;;
+    *)
+      warn "Graft CLI probe returned status '${status}' (exit $probe_rc): ${reason:-no reason given}. Skipping the optional Graft CLI."
+      return 0
+      ;;
+  esac
 }
 
 install_missing_runtime_and_skills() {
@@ -940,17 +990,7 @@ install_missing_runtime_and_skills() {
     refresh_check_json
   fi
 
-  if [[ "$(json_python tool-installed trellis)" != "true" ]] && [[ "$(json_python runtime-installed npm)" == "true" ]]; then
-    printf 'Trellis CLI is required globally; installing @mindfoldhq/trellis@latest.\n'
-    run_cmd npm install -g @mindfoldhq/trellis@latest
-    refresh_check_json
-  fi
-
-  if [[ "$(json_python tool-installed gitnexus)" != "true" ]] && [[ "$(json_python runtime-installed npm)" == "true" ]]; then
-    printf 'GitNexus CLI is required globally; installing gitnexus@latest.\n'
-    run_cmd npm install -g gitnexus@latest
-    refresh_check_json
-  fi
+  ensure_graft_cli
 
   if [[ "$(json_python skill-installed caveman)" != "true" ]]; then
     if prompt_yes_no "caveman skill is missing. Install it as a user-level global skill?" "n"; then
@@ -1179,13 +1219,12 @@ select_and_configure_mcp() {
   printf '  1) Chrome DevTools MCP\n'
   printf '  2) Playwright MCP\n'
   printf '  3) Maestro MCP\n'
-  printf '  4) GitNexus MCP (auto from gitnexus CLI)\n'
-  printf '  5) Custom stdio MCP server\n'
+  printf '  4) Custom stdio MCP server\n'
   local raw selections=()
   if ! read -r -p 'Select comma-separated options, or blank for none: ' raw <&9; then
     die "Interactive input closed while waiting for an MCP selection."
   fi
-  split_csv_numbers "$raw" 5 || die "Invalid MCP selection: $raw"
+  split_csv_numbers "$raw" 4 || die "Invalid MCP selection: $raw"
   selections=(${CSV_SELECTIONS[@]+"${CSV_SELECTIONS[@]}"})
   (( ${#selections[@]} == 0 )) && return 0
 
@@ -1206,25 +1245,6 @@ select_and_configure_mcp() {
         fi
         ;;
       4)
-        local command args_json env_json args_line env_pairs=()
-        command="$(json_python mcp-command 'GitNexus MCP')"
-        if [[ -n "$command" ]]; then
-          args_json="$(json_python mcp-args-json 'GitNexus MCP')"
-          env_json="$(json_python mcp-env-json 'GitNexus MCP')"
-          configure_stdio_mcp "gitnexus" "$command" "$args_json" "$env_json" || true
-        else
-          warn "GitNexus CLI path was not detected; falling back to manual MCP command input."
-          command="$(prompt_text 'GitNexus MCP command, or blank to skip' '')"
-          [[ -n "$command" ]] || { warn "Skipped GitNexus MCP: command is required."; continue; }
-          args_line="$(prompt_text 'GitNexus MCP args as a simple space-separated list' '')"
-          prompt_env_pairs
-          env_pairs=(${ENV_PAIRS_OUT[@]+"${ENV_PAIRS_OUT[@]}"})
-          # shellcheck disable=SC2206
-          local command_args=( $args_line )
-          configure_stdio_mcp "gitnexus" "$command" "$(args_array_to_json ${command_args[@]+"${command_args[@]}"})" "$(env_array_to_json ${env_pairs[@]+"${env_pairs[@]}"})" || true
-        fi
-        ;;
-      5)
         local name command args_line env_pairs=()
         name="$(prompt_text 'MCP server name' '')"
         command="$(prompt_text 'MCP command' '')"
@@ -1282,7 +1302,11 @@ final_checks() {
   color '1;36' 'Final check'
   printf '\n'
   if [[ "$PROJECTS_ONLY" -eq 1 ]]; then
-    run_onboard check-projects --projects-root "$PROJECTS_ROOT"
+    local project_args=(--projects-root "$PROJECTS_ROOT")
+    if [[ "$SKIP_PROJECT_AGENTS" -eq 1 ]]; then
+      project_args+=(--skip-project-agents)
+    fi
+    run_onboard check-projects "${project_args[@]}"
     return 0
   fi
   run_onboard check-agent-cli --platform "$PLATFORM"
@@ -1318,20 +1342,24 @@ cleanup() {
 
 main() {
   trap cleanup EXIT
+  if [[ $# -gt 0 && ( "$1" == "migration" || "$1" == "recovery" || "$1" == "cleanup-legacy" || "$1" == "upgrade" ) ]]; then
+    forward_workflow_mode "$@"
+  fi
   parse_args "$@"
   initialize_user_input
   validate_source_root "$SOURCE_ROOT"
   find_python
   print_logo
   resolve_interactive_inputs
+  refresh_projects_json
   if [[ "$PROJECTS_ONLY" -eq 0 ]]; then
+    ensure_target_agent_cli
     install_missing_runtime_and_skills
     select_and_configure_mcp
   else
     printf '\nProject-only mode: skipped all global tool, Skill, Agent CLI, and MCP checks/installations.\n'
   fi
   configure_project_optional_items
-  resolve_trellis_project_setup_inputs
   show_plan_and_execute
   final_checks
 }

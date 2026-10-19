@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "stableSet": "2026-08-27.1",
-  "promotedAt": "2026-08-27",
+  "stableSet": "2026-09-14.6",
+  "promotedAt": "2026-09-14",
   "repositories": {
     "mattpocock-skills": {
       "url": "https://github.com/mattpocock/skills.git",
-      "revision": "6654f6b60cd9d5be8b54c6fafe44346dabeb3b76",
+      "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
       "license": "MIT",
       "licenseFiles": [
         {
@@ -16,7 +16,7 @@
     },
     "ui-ux-pro-max-skill": {
       "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
-      "revision": "e4f45473691e4b389519ee4bc359a3d6df666c26",
+      "revision": "7f69fed6a2717900085f1bc3b263721f8ba025e2",
       "license": "MIT",
       "licenseFiles": [
         {
@@ -27,7 +27,7 @@
     },
     "ponytail": {
       "url": "https://github.com/DietrichGebert/ponytail.git",
-      "revision": "2ed6c52c9d7e5e56942508591085fd45dea277d3",
+      "revision": "356918eba965ee1eac64bd3a7f0dd02108350de5",
       "license": "MIT",
       "licenseFiles": [
         {
@@ -108,7 +108,7 @@
       "repository": "ui-ux-pro-max-skill",
       "sourceSubpath": ".claude/skills/ui-ux-pro-max",
       "stablePath": "skills/ui-ux-pro-max",
-      "treeSha256": "bea2ecac7e8d09ee77f77e9d8b9833164adb6fdada9957ecff54e1043d302b58"
+      "treeSha256": "93f67a282405730a1e225e8dc3c772950c25eef3e467e3d2fc2eb42da6165486"
     },
     "ponytail": {
       "repository": "ponytail",

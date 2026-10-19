@@ -1,17 +1,17 @@
 ---
 name: book-refactoring-pass
-description: Guides behavior-preserving refactoring with small, reversible steps. Mandatory before the first implementation edit to existing production code; otherwise use on demand when structural friction, duplication, long functions, tangled responsibilities, or unsafe cleanup could affect the change.
+description: Guides behavior-preserving refactoring with small, reversible steps. In strict tasks, mandatory before the first implementation edit to existing production code; in default/lite tasks, use on demand when structural friction, duplication, long functions, tangled responsibilities, unsafe cleanup, or explicit delivery requirements affect the change.
 ---
 
 # Book Refactoring Pass
 
 Use this Skill as a focused refactoring check before or during implementation.
 
-It is derived from the `mini` rule style of `agent-rules-books`. It is a mandatory development gate for existing-production-code edits and an on-demand engineering lens in other structural-risk scenarios; it does not replace project rules, tests, Trellis artifacts, GitNexus, or code review.
+It is derived from the `mini` rule style of `agent-rules-books`. It is a strict development gate for existing-production-code edits and an on-demand engineering lens in other structural-risk scenarios; it does not replace project rules, tests, task artifacts, source/LSP/contract impact analysis, or code review.
 
-## Mandatory Development Gate
+## Strict Development Gate
 
-Whenever a development task will modify existing production code, run this Skill before the first implementation edit to existing production code, even when the expected result is that no refactoring is needed.
+Whenever a strict task will modify existing production code, run this Skill before the first implementation edit to existing production code, even when the expected result is that no refactoring is needed.
 
 Emit a separate visible review:
 
@@ -35,7 +35,7 @@ If `book-legacy-change-safety` is also mandatory, its review normally reaches `c
 
 ## When To Use
 
-- Mandatory: every development task that modifies existing production code.
+- Strict: every development task that modifies existing production code. In default/lite, use this Skill when structural risk, project rules, or explicit delivery requirements apply.
 - Existing code structure is making a requested change risky or awkward.
 - A change mixes behavior changes with cleanup.
 - Duplication, long functions, feature envy, primitive obsession, or tangled responsibilities are blocking clarity.
@@ -55,7 +55,7 @@ When existing production code will not be modified, do not use this Skill for si
 
 ## Output
 
-Always emit the visible `Refactoring Review` for a mandatory gate. When used inside a Trellis task, also write only task-specific conclusions to `implement.md`, `design.md`, or the check summary:
+Always emit the visible `Refactoring Review` for a strict gate. When used in a task-level record, also write only task-specific conclusions to `implement.md`, `design.md`, or the check summary:
 
 - Current friction.
 - Behavior that must not change.
@@ -63,7 +63,7 @@ Always emit the visible `Refactoring Review` for a mandatory gate. When used ins
 - Safety net and validation command.
 - Deferred refactors, if any.
 
-Only long-term conventions belong in `.trellis/spec`.
+Only long-term conventions belong in `docs/spec`.
 
 ## Stop Conditions
 

@@ -1,5 +1,10 @@
 .DS_Store
-.gitnexus/
-.trellis/
+/.sbtd
+/docs/handoffs
+/ai/tasks/**/reports
+/graft
+/.graft
 __pycache__/
 AGENTS.md
+.chrome-devtools-mcp/
+.playwright-mcp/

@@ -46,39 +46,22 @@ venv/
 # ---------- OMP ----------
 .omp/plugins/
 
-# ---------- Trellis ----------
-# 无尾随斜杠：同时匹配目录与指向目录的 symlink，包含有意配置为 symlink 的 workspace
-#（有意不同于上游 Trellis 默认会 stage workspace 内容，见 README）
-.trellis/*
-# `.trellis/*` 已覆盖 .trellis 下所有直接子项（含 workspace），不要再逐项重复列出
-
-!.trellis/agents/
-!.trellis/agents/**
-
-!.trellis/spec/
-!.trellis/spec/**
-!.trellis/lessons/
-!.trellis/lessons/**
-!.trellis/workflow.md
-
-!.trellis/tasks/
-!.trellis/tasks/*/
-# 需要提交归档任务、journal 或 check/implement 记录，则先注释上一行的规则，再使用下面这行规则：
-# !.trellis/tasks/**
-
-# 不需要提交归档任务、journal 或 check/implement 记录，则直接使用：
-!.trellis/tasks/*/prd.md
-!.trellis/tasks/*/design.md
-!.trellis/tasks/*/implement.md
+# ---------- SBTD ----------
+# Shared task documents stay trackable; task reports stay local at every depth.
+/.sbtd
+/docs/handoffs
+/ai/tasks/**/reports
 
 # ---------- Impeccable ----------
 .impeccable/live/server.json
 .impeccable/live/sessions/
 .impeccable/live/annotations/
 .impeccable/critique/
+.impeccable/config.local.json
 
-# ---------- GitNexus ----------
-.gitnexus/
+# ---------- Graft ----------
+/graft
+/.graft
 
 # ---------- Testing -----------
 # MCP / browser controller local state
@@ -109,3 +92,5 @@ tests/e2e/**/*.trace.zip
 
 # ---------- AI Tools ----------
 .worktrees/
+# Onboard backup-then-overwrite: AGENTS.md.YYYY-MM-DD-N beside the live file
+/AGENTS.md.*

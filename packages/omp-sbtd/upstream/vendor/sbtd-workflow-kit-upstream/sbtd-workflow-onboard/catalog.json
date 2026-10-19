@@ -28,15 +28,9 @@
       "targetRole": "skill:sbtd-workflow-onboard"
     },
     {
-      "id": "skill:trellis-workflow",
+      "id": "skill:sbtd-task",
       "kind": "bundled-skill",
-      "source": "templates/skills/trellis-workflow",
-      "targetRole": "skill"
-    },
-    {
-      "id": "skill:trellis-channel",
-      "kind": "bundled-skill",
-      "source": "templates/skills/trellis-channel",
+      "source": "templates/skills/sbtd-task",
       "targetRole": "skill"
     },
     {
@@ -288,6 +282,16 @@
         "repo": "https://github.com/DietrichGebert/ponytail.git",
         "subpath": "skills/ponytail-debt",
         "aliases": ["ponytail-debt"]
+      },
+      "targetRole": "external-skill"
+    },
+    {
+      "id": "skill:i-have-adhd",
+      "kind": "external-skill",
+      "source": {
+        "repo": "https://github.com/ayghri/i-have-adhd.git",
+        "subpath": "skills/i-have-adhd",
+        "aliases": ["i-have-adhd"]
       },
       "targetRole": "external-skill"
     }

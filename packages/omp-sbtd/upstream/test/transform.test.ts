@@ -30,14 +30,14 @@ const pluginPackageRoot = new URL("../../", import.meta.url).pathname;
 const execFileAsync = promisify(execFile);
 
 const STABLE_MANIFEST_SHA256 =
-  "cf1c7f48b03a5c987a5ee00afcc9719b37667b10c0f7d6005c63d6283f765cdb";
-const STABLE_SET = "2026-08-27.1";
+  "0dd20aac6c69f3d65f2c748739bdf8ac234992eb610acc25ad1d87925568bf88";
+const STABLE_SET = "2026-09-14.6";
 const V106_REVISION = "1f019e070d1ca41f064572febe055643d8dbc1ce";
-const HEAD_REVISION = "f8aa0d7225a26c5e00b81d2f1b05121108e63630";
-const HEAD_STABLE_SET = "2026-08-27.1";
+const HEAD_REVISION = "1d82494d74f6df9bca7dccef2da409f87091883e";
+const HEAD_STABLE_SET = "2026-09-14.6";
 const HEAD_STABLE_MANIFEST_SHA256 =
-  "cf1c7f48b03a5c987a5ee00afcc9719b37667b10c0f7d6005c63d6283f765cdb";
-const HEAD_MATTPOCOCK_REVISION = "6654f6b60cd9d5be8b54c6fafe44346dabeb3b76";
+  "0dd20aac6c69f3d65f2c748739bdf8ac234992eb610acc25ad1d87925568bf88";
+const HEAD_MATTPOCOCK_REVISION = "3cca18b368ae95cdbdebbff572ccafa662551015";
 const STABLE_MANIFEST_PATH =
   "sbtd-workflow-onboard/assets/external-skills/stable/MANIFEST.json";
 
@@ -795,10 +795,10 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       details: {
         syncReport: {
           added: expect.arrayContaining([
-            "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 未映射变更",
+            "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 未映射变更",
           ]),
           unmapped: expect.arrayContaining([
-            "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > 未映射变更",
+            "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 未映射变更",
           ]),
         },
       },
@@ -833,7 +833,7 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     const root = await fixture();
     const mapping = join(root, "agents-section-map.yaml");
     const duplicateSection =
-      "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则";
+      "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则";
     await writeFile(
       mapping,
       `${await readFile(mapping, "utf8")}\n  - source: "${duplicateSection}"\n    policy: include\n    owner: project-omp\n`,
@@ -902,13 +902,13 @@ describe("Feature: 三目标 AGENTS 转换", () => {
   it("Scenario: Mapping 明确声明 omit 与 replace-with-overlay 策略", async () => {
     const root = await fixture();
     const mapping = join(root, "agents-section-map.yaml");
-    const finalGoal =
-      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 最终目标"\n    policy: include\n    owner: global';
+    const unavailableSection =
+      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > Skill 不可用时"\n    policy: include\n    owner: global';
     await writeFile(
       mapping,
       (await readFile(mapping, "utf8")).replace(
-        finalGoal,
-        '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 最终目标"\n    policy: omit\n    reason: "KPi target does not retain this upstream closing section"',
+        unavailableSection,
+        '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > Skill 不可用时"\n    policy: omit\n    reason: "KPi target does not retain this upstream section"',
       ),
       "utf8",
     );
@@ -919,11 +919,26 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     });
     await expect(
       readFile(join(root, "generated", "AGENTS.global.md"), "utf8"),
-    ).resolves.not.toContain("## 最终目标");
+    ).resolves.not.toContain("## Skill 不可用时");
+
+    const projectSectionEntry =
+      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 身份、输出和交付"\n    policy: include\n    owner: project-root';
+    const projectOverlayEntry =
+      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 身份、输出和交付"\n    policy: replace-with-overlay\n    owner: project-root\n    overlay: AGENTS.project-root.md';
 
     const missingOverlayRoot = await fixture();
     await writeFile(
-      join(missingOverlayRoot, "overlays", "AGENTS.project-omp.md"),
+      join(missingOverlayRoot, "agents-section-map.yaml"),
+      (
+        await readFile(
+          join(missingOverlayRoot, "agents-section-map.yaml"),
+          "utf8",
+        )
+      ).replace(projectSectionEntry, projectOverlayEntry),
+      "utf8",
+    );
+    await writeFile(
+      join(missingOverlayRoot, "overlays", "AGENTS.project-root.md"),
       "",
       "utf8",
     );
@@ -940,10 +955,9 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     );
     await writeFile(
       invalidOverlayMap,
-      (await readFile(invalidOverlayMap, "utf8")).replace(
-        "overlay: AGENTS.project-omp.md",
-        "overlay: ../outside.md",
-      ),
+      (await readFile(invalidOverlayMap, "utf8"))
+        .replace(projectSectionEntry, projectOverlayEntry)
+        .replace("overlay: AGENTS.project-root.md", "overlay: ../outside.md"),
       "utf8",
     );
     await expect(
@@ -953,16 +967,34 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       }),
     ).rejects.toMatchObject({ code: "KIT_INPUT_INVALID" });
 
+    // The v2.0.2 templates are flat (H1 + H2 only), so a nested section is
+    // injected synthetically: a level-3 policy differing from its level-2
+    // parent must conflict.
     const nestedPolicyRoot = await fixture();
+    const projectSource = join(
+      nestedPolicyRoot,
+      "vendor/sbtd-workflow-kit-upstream/sbtd-workflow-onboard/templates/agents/AGENTS.project.md",
+    );
+    await writeFile(
+      projectSource,
+      `${await readFile(projectSource, "utf8")}\n## 嵌套实验\n\n### 嵌套细节\n`,
+      "utf8",
+    );
+    const nestedLock = join(nestedPolicyRoot, "upstream.lock.json");
+    await writeFile(
+      nestedLock,
+      JSON.stringify({
+        ...(JSON.parse(await readFile(nestedLock, "utf8")) as object),
+        sourceTreeSha256: await sourceTreeSha256(
+          join(nestedPolicyRoot, "vendor/sbtd-workflow-kit-upstream"),
+        ),
+      }),
+      "utf8",
+    );
     const nestedMapping = join(nestedPolicyRoot, "agents-section-map.yaml");
-    const nestedSection =
-      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis > Trellis 目录"\n    policy: replace-with-overlay\n    owner: project-omp\n    overlay: AGENTS.project-omp.md';
     await writeFile(
       nestedMapping,
-      (await readFile(nestedMapping, "utf8")).replace(
-        nestedSection,
-        '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis > Trellis 目录"\n    policy: include\n    owner: project-omp',
-      ),
+      `${await readFile(nestedMapping, "utf8")}  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 嵌套实验"\n    policy: include\n    owner: project-root\n  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 嵌套实验 > 嵌套细节"\n    policy: replace-with-overlay\n    owner: project-root\n    overlay: AGENTS.project-root.md\n`,
       "utf8",
     );
     await expect(
@@ -1015,7 +1047,11 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       ),
     ).toBe(true);
     expect(plan.classifiedSections).toContainEqual(
-      expect.objectContaining({ policy: "replace-with-overlay" }),
+      expect.objectContaining({
+        source:
+          "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 路径与工具边界",
+        policy: "include",
+      }),
     );
     expect(
       await promotionState(promotion.kitRoot, promotion.pluginRoot),
@@ -1605,22 +1641,36 @@ describe("Feature: 三目标 AGENTS 转换", () => {
   }, 60_000);
 
   it("Scenario: Codex 运行时策略泄漏只检查三个 AGENTS 投影目标", async () => {
-    const projectSourceRelative =
-      "vendor/sbtd-workflow-kit-upstream/sbtd-workflow-onboard/templates/agents/AGENTS.project.md";
+    const globalSourceRelative =
+      "vendor/sbtd-workflow-kit-upstream/sbtd-workflow-onboard/templates/agents/AGENTS.global.md";
+    const includedEntry =
+      '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 输出与交接"\n    policy: include\n    owner: global';
 
     const leaking = await fixture();
     const markdown = await readFile(
-      join(leaking, projectSourceRelative),
+      join(leaking, globalSourceRelative),
       "utf8",
     );
-    const sliceStart = markdown.indexOf("## Trellis\n");
-    const sliceEnd = markdown.indexOf("\n## ", sliceStart + 1);
-    const excludedSlice = markdown.slice(sliceStart, sliceEnd).trimEnd();
+    const sliceStart = markdown.indexOf("## 输出与交接\n");
+    const sliceEndOffset = markdown.indexOf("\n## ", sliceStart + 1);
+    const excludedSlice = markdown
+      .slice(sliceStart, sliceEndOffset === -1 ? undefined : sliceEndOffset)
+      .trimEnd();
     expect(excludedSlice.length).toBeGreaterThan(0);
-    const overlayPath = join(leaking, "overlays", "AGENTS.project-omp.md");
+    // Mark the section omitted, then smuggle its verbatim body back through
+    // the target overlay: the leakage guard must reject the projection.
+    const leakingMap = join(leaking, "agents-section-map.yaml");
     await writeFile(
-      overlayPath,
-      `${await readFile(overlayPath, "utf8")}\n\n${excludedSlice}\n`,
+      leakingMap,
+      (await readFile(leakingMap, "utf8")).replace(
+        includedEntry,
+        '  - source: "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 输出与交接"\n    policy: omit\n    reason: "fixture exclusion"',
+      ),
+      "utf8",
+    );
+    await writeFile(
+      join(leaking, "overlays", "AGENTS.global.md"),
+      `${excludedSlice}\n`,
       "utf8",
     );
     await expect(
@@ -1631,8 +1681,8 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     ).rejects.toMatchObject({
       code: "SECTION_LEAKAGE",
       details: {
-        target: "AGENTS.project-omp.md",
-        policy: "replace-with-overlay",
+        target: "AGENTS.global.md",
+        policy: "omit",
       },
     });
 
@@ -1640,21 +1690,25 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     const output = join(legitimate, "generated");
     await generateKit({ packageRoot: legitimate, outputDirectory: output });
     const runtimeTemplate = await readFile(
-      join(output, "onboard/runtime/templates/agents/AGENTS.project.md"),
+      join(output, "onboard/runtime/templates/agents/AGENTS.global.md"),
       "utf8",
     );
-    expect(runtimeTemplate).toContain("## Trellis Channel");
-    expect(runtimeTemplate).not.toContain("### 主动 Preflight 场景");
+    expect(runtimeTemplate).toContain("## 输出与交接");
+    const globalTarget = await readFile(
+      join(output, "AGENTS.global.md"),
+      "utf8",
+    );
+    expect(globalTarget).toContain("## 输出与交接");
     const projectTarget = await readFile(
       join(output, "AGENTS.project-root.md"),
       "utf8",
     );
-    expect(projectTarget).not.toContain("## Trellis Channel");
+    expect(projectTarget).not.toContain("## 输出与交接");
     const ompTarget = await readFile(
       join(output, "AGENTS.project-omp.md"),
       "utf8",
     );
-    expect(ompTarget).toContain("### 主动 Preflight 场景");
+    expect(ompTarget).not.toContain("## 输出与交接");
   }, 60_000);
 
   it("Scenario: 默认 stable/auto 安装不访问 Git 或网络", async () => {
@@ -1709,16 +1763,15 @@ describe("Feature: 三目标 AGENTS 转换", () => {
     };
     expect(parsed.sections).toContainEqual({
       source:
-        "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > Trellis 调度边界",
+        "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 工程与验证",
       policy: "include",
       owner: "global",
     });
     expect(parsed.sections).toContainEqual({
       source:
-        "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis",
-      policy: "replace-with-overlay",
-      owner: "project-omp",
-      overlay: "AGENTS.project-omp.md",
+        "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 路径与工具边界",
+      policy: "include",
+      owner: "project-root",
     });
 
     // An entry gated to a revision that is not pinned is ignored entirely:
@@ -1828,12 +1881,12 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       });
       expect(plan.classifiedSections).toContainEqual({
         source:
-          "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::Codex 项目级规则 > Trellis",
-        policy: "replace-with-overlay",
+          "sbtd-workflow-onboard/templates/agents/AGENTS.project.md::SBTD 项目规则 > 路径与工具边界",
+        policy: "include",
       });
       expect(plan.classifiedSections).toContainEqual({
         source:
-          "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::Codex 全局规则 > 工具可用性判断 > Trellis 调度边界",
+          "sbtd-workflow-onboard/templates/agents/AGENTS.global.md::SBTD 全局规则 > 工程与验证",
         policy: "include",
       });
       expect(plan.stagedPluginValidated).toBe(true);

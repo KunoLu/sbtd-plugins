@@ -10,9 +10,9 @@
 packages/omp-sbtd/upstream/
 ├── package.json                # moved supply-chain metadata (name/version kept as migration-preserved metadata, NOT part of the SBOM digest)
 ├── tsconfig.json               # extends ../../../tsconfig.base.json; includes ONLY src/**/*.ts (noEmit)
-├── upstream.lock.json          # pinned upstream commit + tree sha256 + transformVersion (p0-v3)
-├── agents-section-map.yaml     # schemaVersion 2; section→target classification (49 entries)
-├── omp-distribution-map.yaml   # schemaVersion 1; 360 per-asset include/omit/replace-with-overlay decisions
+├── upstream.lock.json          # pinned upstream commit + tree sha256 + transformVersion (p0-v4)
+├── agents-section-map.yaml     # schemaVersion 2; section→target classification (11 entries)
+├── omp-distribution-map.yaml   # schemaVersion 1; 352 per-asset include/omit/replace-with-overlay decisions
 ├── overlays/                   # Kit-level target overlays (currently only AGENTS.project-omp.md)
 ├── omp-overlays/               # OMP projection overlays mirroring canonical asset paths
 ├── src/                        # 6 modules, flat — no subdirectories

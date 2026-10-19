@@ -1,134 +1,53 @@
-<!-- KPi template: project-root; sourceId=sbtd-workflow-kit-upstream; revision=f8aa0d7225a26c5e00b81d2f1b05121108e63630; transform=p0-v3 -->
+<!-- KPi template: project-root; sourceId=sbtd-workflow-kit-upstream; revision=1d82494d74f6df9bca7dccef2da409f87091883e; transform=p0-v4 -->
 # Root Project Facts
 
-## 加载与激活边界
+## 所有模式的项目入口
 
-- 当前项目的代码、配置、测试、README、CI、任务产物和工具输出优先于通用假设；更深层 `AGENTS.md` 优先于本文件。
-- 正常 `sbtd-workflow-onboard init` / `reset` 成功写入全局规则并安装 bundled / external Skills 后，才激活完整 Skill 路由和 book-derived 强制门禁。
-- public Skills CLI bootstrap 与 `init-projects` 只处理 Onboard 或项目本地资产，不安装全局 Skills，也不单独激活完整运行时门禁。
-- 全局规则与对应 Skill 可见时直接继承；本文件只补充项目路径和项目事实。Skill 不可见时使用下一节 fallback，不得声称已调用该 Skill。
+先核对根、任务、分支与只读范围。模式为当前明确选择 > 同任务有效记录 > 新任务default；旧模式缺失／多候选询问，不凭mtime、旧handoff或输出样式推断。推荐升／降模式须先解释并暂停，用户保持原模式就继续，无新实质风险不重复劝说；可持久化时把建议、用户拒绝及理由写入mode_note，续接先读取该决定，不能只保存最终模式。正常“继续”继承模式；跨分支写入另取明确决定。
 
-## Project-only fallback
+需求已清楚先读事实，不重复grill；说明未完整调用原因。完整grill-with-docs后，所有模式必须调用book-ddd-distilled-modeling，输出独立DDD Boundary Review并按其门禁通过；缺失、不可读或证据不足均blocked，不能用fallback确认需求或进入设计／实现。
 
-仅有本文件而全局规则 / Skills 不可见时，最低遵守：
+纯问答只在会话中路由，不创建任务记录，也不为此请求ignore修改。实际需要记录的任务，在有写权限、分支匹配且路径／ignore已保护时尽早保存确认模式；没有onboard不等于不能开展普通任务。只读三模式均不写task、active、handoff、developer、ignore或会写缓存的工具状态。明确产物、项目已有测试／BDD和必要安全不按模式省略。
 
-- 修改前读取项目已有规范、测试、README 和 CI；不引入第二套约定。
-- 修复既有行为 bug 时先复现并记录要保留的行为，再建立最小回归检查；未锁定行为不修改。
-- 修改既有代码时保持公共契约，避免混入任务外重构；运行聚焦验证后再运行项目规定的验证。
-- 新增或修改用户可见行为时遵守 `no new uncovered behavior`：先记录可观察场景，再实现和验证。
-- 缺少专用 Skill 时按本文件的项目级最低规则继续；若当前会话的全局规则已把某 reviewer 标为强制门禁，则缺 Skill 必须 `blocked`，不能用 fallback 冒充 reviewer 通过。
-- 即使全局路由表不可见，也按以下客观触发事实自评本轮任务；命中项必须在最终报告中给出结论，对应 bundled Skill 不存在时该项为 `blocked`，不得记为 `passed` 或静默跳过：
-  - 修改既有生产代码 -> 行为保持型重构检查（`book-refactoring-pass`）。
-  - 修复既有行为 bug，或弱测试、行为不清、隐藏依赖、高回归风险任一命中 -> 遗留代码安全修改检查（`book-legacy-change-safety`）。
-  - 需求涉及业务术语、领域规则、上下文边界或模型歧义 -> 领域边界审核（`book-ddd-distilled-modeling`）。
-  - 持久化 / 共享数据、schema / migration、shared / persistent / cross-request / cross-process cache、queue / event / stream / job、ETL / analytics、跨服务数据流、API 所有权、数据所有权、source of truth、事务边界、读写路径、backfill / replay / rollback / recovery 任一命中 -> 数据设计风险检查（`book-ddia-data-design`）。
-  - service / API / auth / billing / notification / background job / queue / scheduler / 外部集成 / data pipeline / deployment / rollout / migration / runtime 运维行为变更任一命中，或即将合并到 staging、发布 preview / release 且改动不只是文档 -> 发布就绪检查（`book-release-readiness`），在项目验证之后、完成前执行；必需验证缺失只能 `blocked`。
-- 变更命中 Web 页面 / 交互流程、API 集成、用户可见 bug 修复、发布前 smoke、Trellis E2E 验收，或 GitNexus 给出高影响结论时，必须显式评估是否需要 Web / Mobile E2E 证据，并给出 `required` / `not-needed` / `blocked` 结论与理由，不得默认省略。
-- 需要 Web 回归时先检查项目已有 Playwright 依赖、配置、scripts 和 E2E 目录，未安装时询问用户再装到项目 devDependency；需要 Mobile E2E 时按 Java 17+ -> Maestro CLI -> Maestro MCP 顺序检查，项目已有设备矩阵或 appId / bundleId 时以项目事实为准。
-- 工具或环境不可用时报告 `blocked` / `skipped` / `not-needed` 和替代检查，不声称对应能力已执行。
+## 无全局 Skill 的最小 fallback
 
-## 代码可读性
+default按需调查／实现／聚焦验证；lite用目标、步骤、验证、记录、交付短清单；strict保留完整适用before-dev/check/finish-work，必需Skill／证据缺失不得报通过。先锁定bug和保留行为，再改根因；避免无关重构，验证真实变化，报告不能执行的检查和风险。
 
-项目既有约定优先。正确性、安全、运行时特性和可读性高于源码行数、文件数或最小 diff。不要制造密集表达式、模糊命名、浅层包装（shallow wrappers）或移除真实 seam；最终验证前复核本轮修改的手写代码和测试。
+strict先列Book Gate Plan的触发事实、阶段和真实状态（planned/running/passed/blocked/not-required），按以下完整客观条件执行；对应Skill独占结果与修正回路，缺失或证据不足blocked，未命中才not-required：
 
-Ponytail Skills 可见时，编码前按全局规则使用 `ponytail`，非平凡 diff 在定点 smoke 后使用 `ponytail-review`；Skills 不可见时跳过路由，不视为已完成 review。
+- book-refactoring-pass：首次修改既有生产代码前；legacy要求安全seam时仅允许其批准的行为保持seam，随后返回安全网与正常门禁。
+- book-legacy-change-safety：既有行为bug、弱测试、行为不清、隐藏依赖或高回归风险任一命中，在首次行为修改前建立安全网。
+- book-ddd-distilled-modeling：完整grill后必需；否则涉及业务术语、领域规则、上下文边界或模型歧义，在需求／设计稳定前执行。
+- book-ddia-data-design：持久／共享数据、schema／migration、跨请求／跨进程／持久缓存、queue/event/stream/job、ETL/analytics、异步／跨服务流、API／数据所有权、source of truth、事务边界、读写路径、backfill/replay/rollback/recovery任一命中，在设计稳定前执行。
+- book-release-readiness：service/API/auth/billing/notification/background job/queue/scheduler、外部集成、data pipeline、deployment/rollout/migration或runtime运维行为变更，在所有适用测试门禁和project-validation后、完成／发布前执行。
 
-## UI/UX 项目上下文
+可安全处理时，普通default任务记录于`.sbtd/tasks/<id>/task.md`，lite/strict或明确共享任务于`ai/tasks/<id>/task.md`。模式与存储独立。最小frontmatter为schema_version整数1、稳定id、workflow_mode、mode_source（新隐式default用default，明确选择用user）、mode_note、status、branch、created_at、updated_at、completed_at；parent按需。新时间必须真实带时区；Git命名分支记录实际分支，detached记录`detached:<完整commit SHA>`，非Git branch为null；未完成completed_at为null。正文只保留真实目标、进度、证据、下一步及必要事件；不生成整套文件占位。
 
-- 产品 / 设计上下文默认位于 `docs/PRODUCT.md` 与 `docs/DESIGN.md`；项目已有路径时沿用，不维护多份同名文件。
-- 若 `docs/` 会公开发布，先确认设计上下文是否允许公开。
-- UI 初稿方向由 `ui-ux-pro-max` 承接；高保真塑形和 polish 由可用的 `impeccable` 承接；项目 design system、tokens 和品牌规范优先。
-- shadcn 路由仅在项目存在 `components.json`、已使用 / 准备初始化 shadcn/ui，或任务明确涉及 shadcn CLI、registry、preset、组件组合时启用。registry 未明确时先询问，覆盖式更新需用户确认。
-- React Bits 仅在 React + shadcn/ui 且任务明确需要其 components / blocks 时询问 tier。付费路径需要项目级 `.agents/skills/react-bits-pro/SKILL.md` 与对应 tier 的 registry endpoint；两者缺失时先与用户确认再按所选 tier 落地，不把未预置当作不可用直接阻塞。
-- 该 Skill 缺失且用户已选付费 tier 时，在项目根执行 `npx shadcn@latest add @reactbits-starter/skill --path .agents/skills/react-bits-pro --overwrite --yes`：项目级安装、直接覆盖既有同名 Skill、不保留备份。只有该 `SKILL.md` 就位且当前环境可读取 `REACTBITS_LICENSE_KEY` 后，才读取它并继续安装 components / blocks。
-- `reset` 检测到既有 Free / Starter / Pro / Ultimate registry 或 Skill 时必须保留并输出检测到的 tier；未经用户确认不得用免费版覆盖已存在 tier。
-- 写入 `components.json` 只增量合并 `registries`，不得覆盖既有 `$schema`、`style`、`tailwind`、`aliases` 等无关配置；`REACTBITS_LICENSE_KEY` 只从当前环境读取，不得输出、写入仓库或提交。
+task唯一拥有mode/status；`.sbtd/active-task.json`只存schema_version/task_id/安全相对task_path，index仅导航。安全解析完整记录并保留其他内容；未知schema、无效旧模式、引用逃逸／symlink、父子冲突或双副本不得猜测覆盖。无法可靠验证／原子更新时不写，明确未持久化，不捏造格式或恢复成功；default/lite可继续不依赖它的安全工作。
 
-## BDD / Gherkin
+状态正常沿planned→in-progress→checking→done；checking发现问题可回in-progress，done重开先回planned。只有验收证据成立才记done与真实completed_at。进入blocked必须写非空blocked_reason，解除时清空；不保存blocked_from字段。完成／阻塞／重开／归档或明确重绑定事件放在同一task.md的`## 状态事件`表（at/from/to/reason/evidence），与字段一次原子更新。重开先保留旧完成证据再清空当前completed_at；持续blocked只改原因，不重写恢复前态。恢复取最近未解除的真实入阻塞前态；未知／冲突则用户选择planned/in-progress/checking，记录真实解除事件和历史未知原因，不能直接done或伪造ingress。完整细节以可用sbtd-task/state reference为准；缺安全能力不强行写入。
 
-所有用户、管理员、API / CLI 客户端、外部系统或导出文件消费者可见的新增 / 修改行为默认需要持久场景。纯内部重构、依赖 / 工具配置、机械格式化、无语义 UI polish 或 typo 可跳过，但最终说明原因。
+`cancelled` 是取消终止而不是验收完成，completed_at保持null；不级联取消子任务，仍有未终止子任务时拒绝终止父任务。done／cancelled重开需明确操作并保留原事件；归档按可证明的终止时间或undated，取消不算bootstrap成功。迁移历史遵循Onboard契约：未知mode/time不补造，首条unknown→blocked只证明历史状态、不证明恢复阶段；恢复必须由用户选择。旧运行包／schema不支持新状态时先成套对齐，不改成done或私自降级。
 
-### 持久路径与语言
+首次写本地状态／身份／handoff前检查ignore和tracked；缺保护只请求窄授权，不自动init、改旧规则或清理数据。保存失败保留当前会话选择并说明恢复不可靠。归档、共享提升、清理和发布需要各自确认，Git tag不代替ignored数据/HOME备份。「sbtd cleanup」「清理工作流」或同向清理旧资产的意图只授权只读检测与候选展示，执行须在看到实际清单后单独确认。同一已确认流程内，重计划的目标/效果不变，或仅减少有绑定回执证明已完成的项且其余目标/效果不变时，展示剩余清单并沿用原同意；新增目标或改变效果才重新确认，未知消失、用户改动或失败证据先停止调和，执行仍用当前plan_id；全局MCP条目影响其他项目须单独披露；正常init/reset不清理旧资产。
 
-- 已有 `.feature` / runner 时沿用项目路径、语言和关键词。
-- 无约定时，单应用使用 `features/<capability>.feature`；monorepo 放到拥有该行为的 app / service 下。
-- 默认中文场景文本 + 英文 Gherkin 关键词，不默认添加 `# language: zh-CN`。
-- 场景描述可观察行为，不写 selector、mock、fixture、数据库字段或内部 helper。
+## 路径与工具边界
 
-### Source of truth
+- 任务：本地`.sbtd/tasks`或共享`ai/tasks`；长期规范`docs/spec`；lesson短入口默认`docs/spec/lessons.md`，已有明确入口则沿用，完整库为`docs/lessons/{index,topics,archive}`。
+- handoff：仅真实暂停／上下文切换／续接需要时写受保护的`docs/handoffs/{YYYY_mm_dd}-{task-key}.md`；task-key安全编码完整task ID，同任务当天更新同一文件，仅信息变化才写，不因跨天或3/5次计数触发。快照保留task路径／模式及拒绝决定、branch／完整HEAD或unknown、时间、目标、进度、文件、实际命令／结果、未决项、下一步、不要重复事项和脱敏／退出状态，不覆盖task。用户“本任务不要自动交接”或“本会话关闭自动交接”分别设置退出；“本任务恢复自动交接”或“本会话恢复自动交接”等明确请求只解除对应范围，会话退出优先，续接保留退出状态，手动请求不自动清除退出。只读仅对话。只主动提示7天内分支匹配的未完成交接，不扫描其他项目；更旧任务仍可手动选择，不承诺无host支持的自动恢复。
+- BDD：沿用项目路径／语言，默认中文场景+英文关键词；本配置源仓库的no-.feature例外不复制到业务项目。按模式/风险及明确交付使用方法，既有项目强制规范仍有效。
+- 测试与报告：沿用项目命令和project-validation；CLI是真实回归执行器，MCP诊断不冒充CI。正式命名报告和同stem中文汇总必须保留，runner current目录不是归档；mock/旧SHA/dirty local不冒充当前full-stack。具体路径与状态词表按实际适用Skill，不为无关工具输出整表。
+- Graft只作可降级结构证据；受管CLI/MCP/hook须持续`DO_NOT_TRACK=1`，禁`--deep`、`blast --name`、LLM/cloud和代码／查询上传；继承环境或配置可能启用provider/cloud时阻断接入，不静默断开用户其他用途。无法证明这些保护或只读副作用时用源码/LSP/contract，不冒险调用。不对共父目录联邦，不用空图/exit0证明无影响。原始graph/blast含源码、diff或作者信息，不上传PR／公网／知识库，报告优先`--no-owners`及最小脱敏摘要。相关时报告used/skipped/blocked/not-available及实际CLI/MCP、授权根、版本、覆盖限制；结论仍回到源码核对。
+- UI语境使用已有design system，ui-ux-pro-max初稿、可用impeccable塑形/polish、shadcn处理已用组件；上下文默认docs/PRODUCT.md与docs/DESIGN.md。React Bits仅明确需要时按已确认tier／registry／许可执行，不打印key、不把全局Skill复制进项目。
 
-确认后的 `.feature` 是用户可见行为 SOT；PRD 负责意图和范围，design / implement 负责技术方案。冲突时先对齐 PRD 与 `.feature`，再改测试和代码。
+## 身份、输出和交付
 
-新增行为先写场景；修改行为更新场景；用户可见 bug 先写正确行为场景和失败回归测试。无法自动化的场景标记 `@todo` 并记录人工验证与阻塞原因。
+只有需要写真正长期lesson才解析身份；纯读取不建身份。当前`.sbtd/developer`须为安全可读UTF-8正常文件，唯一name原样匹配`^[a-z0-9]+$`。异常／重复声明／非法本地文件停该解析，不能绕过；仅确实缺失且verified linked worktree才只读同仓主checkout的合法新身份，不复制、不按main分支名猜路径。主checkout候选现存但非法、不可读或路径不安全时也停该解析，不能转为本地新建；只有确实缺失才算缺来源。不从Git／OS／环境／历史workspace／marker推断或规范化名字。
 
-主动使用 `gherkin-bdd` 时：含 `sync` / `同步` 进入可写 BDD Sync；只有 explicit read-only intent，且不含 `add / change / update / delete` 或 `写入 / 新增 / 修改 / 更新 / 删除` 时，才进入只读 Knowledge Ingest。Knowledge Ingest 固定目标 ref 的精确 SHA，不切换活动工作树，不修改源仓，最终报告 `Mutation: none`。
+首次建立必须同时满足：（1）当前文件确实缺失且本地父路径安全；（2）已确认非linked（含已确认非Git）无需主来源，或已确认linked且主checkout文件确实缺失、其父路径安全。归属未知或工具不可用不能当作非linked。满足后才说明将建立当前项目`.sbtd/developer`并询问名字；用户同意后核对实际ignore/tracked和窄写权限，缺保护只请求根锚定`/.sbtd`，不隐藏业务内容或自动untrack。只安全非覆盖地建立必要目录与`name=<name>`文件、回读验证；意外已有内容或保存失败则保留原件并报告，不顺带onboard、工具安装或迁移。暂不提供身份时default/lite不写lesson但继续无关安全工作；strict的必需lesson仍未完成。reset不覆盖既有身份，改名／多项目复用须裁决；旧身份只作显式迁移输入。
 
-## GitNexus
+只写`<!-- lessons:<name>:start -->`／`<!-- lessons:<name>:end -->`自己的块，各作者index块有独立完整表；新ID为`LESSON-YYYYMMDD-<name>-<slug>`，先在完整库查ID及实际heading锚点碰撞。历史ID、引用与他人块保留，读取命中主题的所有作者块；topic/index部分写成要报告并按既有ID补齐，不重复追加。不要将PII、凭据或旧私密原件写入共享lesson。
 
-仅在 GitNexus MCP 可用且当前项目索引有效时使用；结果必须与源码、实际 diff、测试和 Trellis 产物交叉核对。
+没有全局输出协议时不猜测caveman自动状态机；手动样式按可用Skill和用户选择，不影响执行模式。normal mode只退出输出样式。最终交付完整列出结论、文件、验证、跳过及原因、风险／恢复限制；账号、密钥、PII、生产数据不进入任务／报告。
 
-- 修改前优先做影响分析，修改后优先做变更检测；stale 或解析语义升级后先按项目约定用 CLI 刷新。
-- MCP allowlist 未覆盖时，该仓库的 MCP 不可用；fail-closed 只读时不走 MCP 写入；两者都不阻止 CLI `gitnexus analyze`。
-- 跨服务 API / route / consumer 结论必须回到真实路由和调用复核。
-- 不静默新增 hook、不默认 `--self-commit`、不改 MCP transport。不可用时跳过且不阻塞任务。
-
-## Skill 编排边界
-
-- 全局 AGENTS 的 Skill 路由表是触发条件 SOT；每个 `SKILL.md` 独占执行步骤、reviewer 状态、输出 schema、修正回路和 stop condition。
-- `Book Gate Plan`、Gate state 生命周期和跨 reviewer 顺序只按全局规则执行；本文件不复制 reviewer 状态词表。
-- 每次完整 `grill-with-docs` 后仍须强制 post-grill DDD 二次审核；加载 `book-ddd-distilled-modeling` 并输出 `DDD Boundary Review` 后才能进入需求确认 / PRD。project-only 未激活完整门禁时，按 Project-only fallback 的客观触发自评并输出结论；`book-ddd-distilled-modeling` 不可用时记为 `blocked`，不冒充 Skill 审核。
-- `mattpocock/skills` 的 canonical 名称、依赖和安装来源以 catalog / stable manifest / 全局规则为准，本文件不缓存清单。
-- 交互压缩只引用全局状态机事实源；保护区只覆盖当前回复，不复制计数器或资格锁存。project-only 下无全局规则时不自动推断该状态机。
-
-## Web / Mobile 验证与测试资产
-
-继承全局分工：Chrome DevTools MCP 负责 Web 现场诊断，Playwright CLI 负责可重复 Web 回归，Playwright MCP 负责探索 / locator，Maestro CLI 负责 Mobile / Hybrid E2E，Maestro MCP 负责设备 / flow 辅助，`web-ui-autotest-generator` 负责可入库 Web UI 测试资产。
-
-项目级路径：
-
-- BDD 场景：项目 `features/` 约定。
-- Maestro flow：`maestro/flow/`，平台差异明显时拆 `ios/` / `android/`；smoke 用 `smoke.yml`。
-- Web UI manifest：`tests/e2e/manifest/{ui-test-manifest,ui-selector-audit,ui-test-coverage}.json`。
-- API 正式本地快照：`tests/api/reports/`。
-- Playwright 临时 HTML：`tests/e2e/reports/.playwright-html-current/`；正式本地快照：`tests/e2e/reports/html/`。
-- Maestro 本地报告：`.maestro/reports/`。
-
-报告命名、branch_slug、重跑顺序、状态枚举、evidence sidecar、URI 覆盖矩阵和 publication 语义由 `project-validation` 及专项 Skill 承接。本文件只固定以下硬边界：
-
-- runner 可能清空的目录不能作为正式本地快照；下一轮运行前先复制 / 提升需要保留的报告。
-- stdout-only / terminal-only / Playwright list reporter 只算诊断，不算最终正式验证。
-- mock 必须有 contract / schema / 真实样例 / 既有 fixture 或用户确认；mock-backed 不得冒充 full-stack。
-- 报告默认本地留存且由 `.gitignore` 排除；PR / 知识库 evidence publication 是独立流程，不等于把报告提交到 Git。
-- 真实账号、token、PII、生产数据不得进入测试、日志、截图、trace、video 或报告。
-
-缺稳定 selector、账号、环境、数据准备 / 清理、设备、app artifact 或 API contract 时，不生成脆弱测试资产，报告 `blocked`。
-
-## SEO / GEO
-
-变更影响公开网站、落地页、文档站、产品页、营销页或公开 README 时即触发 `seo-geo`；用户明确要求或验收包含 crawl / indexing / schema / meta 时同样触发。无公网 / preview URL 只能 `static-only` 或 `blocked`；内部后台、API、CLI、移动 App 和纯回归不触发。不得写入付费凭据、Search Console 数据或敏感 URL。
-
-## 验证命令
-
-优先级：项目 / 深层 `AGENTS.md` → README / scripts / Makefile / CI → `project-validation` → 聚焦检查。
-
-常见回退：
-
-```bash
-rtk npm run lint
-rtk npm run build
-rtk ruff check .
-rtk ruff format .
-rtk ty check .
-
-# 报告型测试按全局 rtk gate 判断，必要时使用原生命令
-npm run test
-pytest
-uv run pytest        # 仅 uv 项目
-go test ./...
-```
-
-`rtk` 不可用时回退原生命令；报告缺失、陈旧或不可证明时必须原生命令复验。
-
-## Lessons
-
-bug 修复、回滚、工具误判、工作流错误、验证失败、GitNexus 不匹配或 Channel 上下文丢失时，加载 `lessons-record`。Trellis 项目中 `.trellis/spec/lessons.md` 只作短入口，完整 lesson 进入 `.trellis/lessons/index.md` 与 topic；非 Trellis 项目沿用已有分层结构，否则使用 `docs/lessons.md`。
+一项职责一个writer，一个环境一个controller。原生独立review不等于启动持久协作runtime。旧目录／旧工具只作为显式迁移输入，不因其存在自动初始化或接回旧运行路由。

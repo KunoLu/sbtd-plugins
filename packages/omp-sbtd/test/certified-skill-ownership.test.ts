@@ -56,10 +56,7 @@ describe("Feature: Certified Skill 所有权切交（M3）", () => {
     const external = catalog.entries.filter(
       (entry) => entry.kind === "external-skill",
     );
-    expect(bundled).toEqual([
-      "skill:sbtd-workflow-onboard",
-      "skill:sbtd-task",
-    ]);
+    expect(bundled).toEqual(["skill:sbtd-workflow-onboard", "skill:sbtd-task"]);
     expect(external).toHaveLength(12);
     expect(bundled.join("\n")).not.toContain("skill:project-validation");
     expect(bundled.join("\n")).not.toContain("skill:gherkin-bdd");

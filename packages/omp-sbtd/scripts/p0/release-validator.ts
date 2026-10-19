@@ -5489,6 +5489,10 @@ const packedEmbeddedKitManifestPath = `package/${embeddedKitManifestRelativePath
 // path strings and scan the remainder.
 const embeddedKitProjectionReportRelativePath = "kit/projection-report.json";
 const packedKitProjectionReportPath = `package/${embeddedKitProjectionReportRelativePath}`;
+// The SPDX SBOM embeds kit asset paths as "./kit/..." fileName entries; the
+// same exempt-set masking applies (substring masking covers the prefix).
+const sbomRelativePath = "SBOM.spdx.json";
+const packedSbomPath = `package/${sbomRelativePath}`;
 // M2 portable capability layer: the root skills/** tree is the
 // digest-verified copy of the M1-certified Agent Plugin projection. Its
 // payloads are audit-certified rather than OMP-distribution-clean, so the
@@ -5713,12 +5717,17 @@ async function scanOmpDistributionEntry(
     const approvedRuntimeDigest =
       runtimeAssetPath === undefined
         ? undefined
-        : approvedCanonicalRuntimeDigest(approvedRuntimeAssets, runtimeAssetPath);
+        : approvedCanonicalRuntimeDigest(
+            approvedRuntimeAssets,
+            runtimeAssetPath,
+          );
     const exemptApprovedCanonicalRuntime =
-      approvedRuntimeDigest !== undefined && digest(payload) === approvedRuntimeDigest;
+      approvedRuntimeDigest !== undefined &&
+      digest(payload) === approvedRuntimeDigest;
     const isKitMetadata =
       entryRelative === embeddedKitManifestRelativePath ||
-      entryRelative === embeddedKitProjectionReportRelativePath;
+      entryRelative === embeddedKitProjectionReportRelativePath ||
+      entryRelative === sbomRelativePath;
     const scannedPayload = isKitMetadata
       ? maskExemptPathStrings(payload, approvedRuntimeAssets)
       : payload;
@@ -5729,7 +5738,11 @@ async function scanOmpDistributionEntry(
     const exemptPath =
       pathMatches > 0 && exemptApprovedCanonicalRuntime ? 0 : pathMatches;
     if (exemptPath > 0 || payloadMatches > 0)
-      leaks.push({ path: entryRelative, pathMatches: exemptPath, payloadMatches });
+      leaks.push({
+        path: entryRelative,
+        pathMatches: exemptPath,
+        payloadMatches,
+      });
   }
 }
 
@@ -5915,6 +5928,7 @@ export function inspectPackedPluginTarball(
   const seen = new Set<string>();
   let kitManifestPayload: Buffer | undefined;
   let kitProjectionReportPayload: Buffer | undefined;
+  let sbomPayload: Buffer | undefined;
   // Exempt-set members (D14 canonical onboard runtime package paths) whose
   // path or payload carries the forbidden token: binding to the
   // manifest-declared digest is resolved after every member is parsed,
@@ -5994,7 +6008,8 @@ export function inspectPackedPluginTarball(
       : canonicalOnboardRuntimeAssetPath(name);
     const isKitMetadataMember =
       name === packedEmbeddedKitManifestPath ||
-      name === packedKitProjectionReportPath;
+      name === packedKitProjectionReportPath ||
+      name === packedSbomPath;
     const countedPayloadMatches =
       isDirectory ||
       isKitMetadataMember ||
@@ -6029,6 +6044,7 @@ export function inspectPackedPluginTarball(
       if (name === packedEmbeddedKitManifestPath) kitManifestPayload = payload;
       else if (name === packedKitProjectionReportPath)
         kitProjectionReportPayload = payload;
+      else if (name === packedSbomPath) sbomPayload = payload;
     }
 
     const mode = parseTarOctal(header.subarray(100, 108), "mode");
@@ -6073,7 +6089,10 @@ export function inspectPackedPluginTarball(
       approvedRuntimeAssets,
       pending.assetPath,
     );
-    if (approvedDigest === undefined || pending.payloadDigest !== approvedDigest)
+    if (
+      approvedDigest === undefined ||
+      pending.payloadDigest !== approvedDigest
+    )
       leaks.push({
         path: memberName,
         pathMatches: pending.pathMatches,
@@ -6085,13 +6104,18 @@ export function inspectPackedPluginTarball(
   for (const [memberName, metadataPayload] of [
     [packedEmbeddedKitManifestPath, kitManifestPayload],
     [packedKitProjectionReportPath, kitProjectionReportPayload],
+    [packedSbomPath, sbomPayload],
   ] as const) {
     if (metadataPayload === undefined) continue;
     const metadataMatches = countCaseInsensitiveTokenOccurrences(
       maskExemptPathStrings(metadataPayload, approvedRuntimeAssets),
     );
     if (metadataMatches > 0)
-      leaks.push({ path: memberName, pathMatches: 0, payloadMatches: metadataMatches });
+      leaks.push({
+        path: memberName,
+        pathMatches: 0,
+        payloadMatches: metadataMatches,
+      });
   }
   return {
     members,

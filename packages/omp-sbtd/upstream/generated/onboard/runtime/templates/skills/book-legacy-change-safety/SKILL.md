@@ -1,17 +1,17 @@
 ---
 name: book-legacy-change-safety
-description: Guides safe changes to legacy or weakly tested code by characterizing behavior before editing. Mandatory before the first behavior-changing edit for existing-behavior bug fixes or existing code with unclear behavior, low coverage, hidden dependencies, or high regression risk; otherwise use on demand.
+description: Guides safe changes to legacy or weakly tested code by characterizing behavior before editing. In strict tasks, mandatory before the first behavior-changing edit for existing-behavior bug fixes or existing code with unclear behavior, low coverage, hidden dependencies, or high regression risk; in default/lite tasks, use on demand when those risks or explicit delivery requirements are present.
 ---
 
 # Book Legacy Change Safety
 
 Use this Skill when the main risk is not the requested change itself, but the uncertainty around existing behavior.
 
-It is derived from the `mini` rule style of `agent-rules-books` and is intended to complement `diagnosing-bugs`, `tdd`, GitNexus impact analysis, and project validation.
+It is derived from the `mini` rule style of `agent-rules-books` and is intended to complement `diagnosing-bugs`, `tdd`, source/LSP/contract impact analysis, and project validation.
 
-## Mandatory Development Gate
+## Strict Development Gate
 
-Run this Skill before the first behavior-changing edit when either condition is true:
+In a strict task, run this Skill before the first behavior-changing edit when either condition is true:
 
 - The task fixes a bug in existing observable behavior.
 - Existing target code has weak / missing tests, unclear or undocumented behavior, hidden dependencies, or high regression risk.
@@ -39,7 +39,7 @@ When `book-refactoring-pass` is also mandatory, this gate normally reaches `char
 
 ## When To Use
 
-- Mandatory: every existing-behavior bug fix and every existing-code change matching a listed uncertainty or regression-risk signal.
+- Strict: every existing-behavior bug fix and every existing-code change matching a listed uncertainty or regression-risk signal. In default/lite, use this Skill when those signals, project rules, or explicit delivery requirements apply.
 - The target code has weak or missing tests.
 - The current behavior is unclear, accidental, or undocumented.
 - Dependencies are hidden behind globals, singletons, network calls, files, time, randomness, or external services.
@@ -59,7 +59,7 @@ When neither mandatory condition matches, do not use this Skill for cleanly test
 
 ## Output
 
-Always emit the visible `Legacy Change Safety Review` for a mandatory gate. When used inside a Trellis task, also record:
+Always emit the visible `Legacy Change Safety Review` for a strict gate. When used in a task-level record, also record:
 
 - Current observed behavior.
 - Preserved behavior.

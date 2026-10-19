@@ -279,8 +279,35 @@ describe("OMP Distribution Projection", () => {
     });
 
     const scan = await scanForForbiddenToken(outputDirectory);
-    expect(scan.pathMatches).toEqual([]);
-    expect(scan.payloadMatches).toEqual(["onboard/runtime/scripts/onboard.py"]);
+    // p0-v4 (PRD D14): the digest-bound canonical onboard runtime package set
+    // is the only content allowed to carry the legacy token; the two
+    // generated metadata files may embed exempt-set path strings. Any drift
+    // of this footprint must be reviewed consciously.
+    expect([...scan.pathMatches].sort()).toEqual([
+      "onboard/runtime/scripts/sbtd_codex_wiring.py",
+    ]);
+    expect([...scan.payloadMatches].sort()).toEqual([
+      "manifest.json",
+      "onboard/runtime/assets/graft-instructions.txt",
+      "onboard/runtime/assets/migration-legacy-ownership.json",
+      "onboard/runtime/onboard-contracts.schema.json",
+      "onboard/runtime/scripts/onboard.py",
+      "onboard/runtime/scripts/onboard_arguments.py",
+      "onboard/runtime/scripts/onboard_contracts.py",
+      "onboard/runtime/scripts/sbtd_cleanup_targets.py",
+      "onboard/runtime/scripts/sbtd_codex_wiring.py",
+      "onboard/runtime/scripts/sbtd_graft_deployment.py",
+      "onboard/runtime/scripts/sbtd_graft_entry.py",
+      "onboard/runtime/scripts/sbtd_migration.py",
+      "onboard/runtime/scripts/sbtd_migration_plan.py",
+      "onboard/runtime/scripts/sbtd_migration_verify.py",
+      "onboard/runtime/scripts/sbtd_omp_sources.py",
+      "onboard/runtime/scripts/sbtd_omp_wiring.py",
+      "onboard/runtime/scripts/sbtd_upgrade.py",
+      "onboard/runtime/scripts/sbtd_upgrade_hosts.py",
+      "onboard/runtime/scripts/sbtd_upgrade_inventory.py",
+      "projection-report.json",
+    ]);
     expect(report.forbiddenTokenScan).toMatchObject({
       matches: 0,
       canonicalRuntimeMatches: expect.any(Number),
@@ -687,7 +714,9 @@ describe("OMP Distribution Projection", () => {
     // An overlay whose bytes drift from the canonical binding loses the
     // exemption on an exempt-set path — both path and payload are reported.
     const drifted = await syntheticFixture({
-      extraAssets: { "onboard/runtime/scripts/sbtd_codex_wiring.py": wiringBytes },
+      extraAssets: {
+        "onboard/runtime/scripts/sbtd_codex_wiring.py": wiringBytes,
+      },
       extraDecisions: [
         {
           path: "onboard/runtime/scripts/sbtd_codex_wiring.py",
@@ -977,7 +1006,11 @@ describe("OMP Distribution Projection", () => {
     expect(ids).not.toContain("agent:project");
     expect(ids).not.toContain("skill:impeccable");
     expect(ids).not.toContain("skill:shadcn");
-    expect(ids).toContain("skill:trellis-workflow");
+    // p0-v4 (PRD D14): upstream v2.0.2 deleted both trellis entities; the
+    // overlay catalog carries skill:sbtd-task instead.
+    expect(ids).not.toContain("skill:trellis-workflow");
+    expect(ids).not.toContain("skill:trellis-channel");
+    expect(ids).toContain("skill:sbtd-task");
     expect(ids).toContain("skill:ui-ux-pro-max");
 
     const schema = JSON.parse(

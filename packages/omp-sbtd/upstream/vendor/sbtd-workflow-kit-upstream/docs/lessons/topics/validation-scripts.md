@@ -78,7 +78,7 @@
 - 来源：迁移自 `docs/lessons.md`
 - 原始标题：Markdown 反引号搜索必须安全引用
 - 问题：验证模板是否残留旧文案时，`rg` 搜索模式包含 Markdown inline code 反引号，命令用双引号包裹后被 zsh 当成命令替换，出现 `command not found`，导致验证命令自身失败。
-- 根因：双引号不会阻止 shell 对反引号执行命令替换；包含 `` `code` ``、`$` 等 shell 元字符的 Markdown 搜索模式不能直接放在双引号里。
+- 根因：双引号不会阻止 shell 对反引号执行命令替换；包含 ``code``、`$` 等 shell 元字符的 Markdown 搜索模式不能直接放在双引号里。
 - 修复：改用单引号包裹 `rg` 搜索模式，并用结构化 Node 断言补充验证，区分“命令引用失败”和“模板内容失败”。
 - 预防：后续验证 Markdown 文档中含反引号、`$`、`!` 等 shell 元字符的文本时，优先使用单引号、转义字符或 Node 结构化检查；最终报告中说明失败来自命令写法还是内容事实。
 
@@ -378,3 +378,367 @@
 - 根因：在未取得完整、未省略 source 的情况下执行 whole-file / fuzzy replacement，且没有把返回后的行数、footer 搜索和语法解析作为即时 gate。
 - 修复：从 Git 恢复未预期改动；后续大文件仅使用行锚定小补丁，或使用带唯一 anchor / match-count 断言的一次性脚本，并在执行后立即删除脚本。
 - 预防：任何读取含分页 / elision 标记的文件都不得作为整文件写回来源。每次大文件编辑后立即运行 `wc -l`、语法解析、`git diff --stat` 和 footer 搜索；行数异常先恢复，再运行所属完整测试文件而非只跑定点测试。
+<!-- lessons:640:start -->
+- 状态更新（2026-09-07）：同类截断在 475 行文件上复现，且插入的新内容完全正确、只有文件尾部 174 行被静默删除，因此“替换看起来成功”不构成完整性证据。判定必须看 `git diff --numstat` 的删除列：纯插入型编辑的删除数应与实际替换行数一致，出现意料外的大额删除立即 `git checkout --` 恢复。
+- 状态更新（2026-09-07）：同一会话中，字符串匹配类编辑 / 搜索工具在含 967 字符长行的 UTF-8 文件上无法命中已确认存在的 CJK 文本。对确认存在的内容反复匹配失败时不要继续重试或放宽匹配，改用行锚定的一次性脚本（读取后断言目标行前缀 / 后缀再插入），并在执行后核对 numstat 与文件尾部。
+<!-- lessons:640:end -->
+
+<!-- lessons:640:start -->
+
+## LESSON-20260914-640-piped-backgrounded-test-exit-code: Piped and Backgrounded Runs Hide the Real Exit Code
+
+- 日期：2026-09-14
+- 标签：rtk, validation, shell, exit-code, background
+- 适用场景：测试 / 验证命令经管道（如 `| tail`）或后台 job 执行，并据其输出或退出码判定通过
+- 严重级别：high
+- 来源：i-have-adhd opt-in 集成任务的全量 unittest 验证
+- 问题：`rtk python3 -m unittest discover -s tests 2>&1 | tail -6` 没有 `pipefail`，shell 只返回 `tail` 的 0；命令被后台化后也只能看到进行中的局部输出。两种形态下“测试通过”都没有真实 exit code 支撑。
+- 根因：把管道末端命令的退出码和后台交付的过程输出当成了 runner 的最终判定；`rtk` 层还可能叠加缓存 / 回放风险（见 LESSON-20260704-rtk-report-producing-test-gate）。
+- 修复：权威验证优先使用无管道原生命令并取得真实 exit code。确需管道时，在独立脚本或子 shell 内运行完整管道，紧接着保存 runner 状态，中间不得插入其他命令：Bash 用 `rc=${PIPESTATUS[0]}`，zsh 用 `rc=${pipestatus[1]}`；随后可打印该值，但必须以 `exit "$rc"` 返回它（函数中用 `return "$rc"`）。只执行 `echo` 会把整个命令的退出状态重新变为 0。后台 job 必须等待最终 summary，不得把中途快照当结论。
+- 预防：作为通过证据的命令必须保持完整退出码链路：优先无管道；需要管道时明确使用 `pipefail`，或按当前 shell 保存并返回 runner 状态。Bash 的 `PIPESTATUS[0]` 与 zsh 的 `pipestatus[1]` 不可互换；报告文件仍需核验本轮写入，后台化只用于等待。
+
+## LESSON-20260914-640-assertion-survives-line-wrapping: Text Assertions Must Survive Source Line Wrapping
+
+- 日期：2026-09-14
+- 标签：validation, tests, assertions, text-contract
+- 适用场景：对源码注释、文档或模板写 `assertIn` 类文本包含断言
+- 严重级别：medium
+- 来源：i-have-adhd opt-in 集成任务的契约测试首跑失败
+- 问题：断言 `"update BOTH the pinned commit and this hash"` 失败——该短语在源码注释里被换行打断为两行，文本包含永远不可能命中。
+- 根因：按“读起来通顺的整句”写断言，没有核对目标字符串在源文件中是单行存在；断行位置是作者可自由重排的非契约细节。
+- 修复：把断言改为同一物理行内的短串（`"pinned commit and this hash; changing only one"`）；结构化事实（常量形态、正则、解析结果）优先于自然语言整句。
+- 预防：写文本断言前先 grep 目标文件确认候选串单行存在；长句拆成各自单行独立的多个短断言；行宽重排不应能让契约测试变红。
+
+## LESSON-20260914-640-str-replace-tail-truncation-recovery: String-Replace Edits Can Truncate Long-Line Templates; Recover From Pre-Edit Byte Snapshot
+
+- 日期：2026-09-14
+- 标签：editing, truncation, templates, utf-8, git, recovery
+- 适用场景：用字符串替换类编辑工具修改含超长 CJK 行的大 Markdown 模板（如 `AGENTS.global.md`）
+- 严重级别：high
+- 来源：i-have-adhd 集成 review 修复：两次 `StrReplace` 命中正确，但文件从 569 行静默截断到 301 行，`## Skills 调用规则` 之后全部丢失；reviewer 复查才发现
+- 问题：`LESSON-20260831-paginated-edit-source-truncation` 描述的尾部截断第三次复现；替换命中且内容正确不构成完整性证据，定点测试也不覆盖模板尾部
+- 根因：编辑工具在含近千字符 UTF-8 长行的文件上写回不完整；未在每次编辑后立即核对 `wc -l` / `git diff --numstat`
+- 修复：优先从编辑前保存的逐字节文件快照恢复工作树文件，保留文件模式且不修改 Git 索引，再用锚定编辑重放本轮目标修改。只有已保存完整基线差异时才使用备用方案：在隔离目录重建记录的 base commit 文件，再应用相对该 commit 保存的完整 staged + unstaged patch；不得把仅有 `git diff -- <path>` 的补丁套到 HEAD 上。未追踪文件必须从文件快照恢复；缺少完整快照时停止，不猜测或丢弃原有工作。
+- 预防：编辑前用 `mktemp -d` 或 `tempfile.mkdtemp` 创建私有备份目录，保存文件当前全部字节及模式，确认成功后再编辑；符号链接应保存链接身份而非追读目标。备份覆盖编辑、校验和恢复全过程，仅在验证成功且不再需要恢复后清理，失败时保留并报告路径。可另外保存 `git diff --binary HEAD -- <path>` 及对应 base commit SHA，但该补丁不包含未追踪文件，不能替代原始快照。禁止覆盖固定 `/tmp/<name>.patch`。编辑后立即核对行数、删除范围与文件尾部，异常时只恢复工作树，保持用户原有暂存区不变。
+
+## LESSON-20260915-640-install-family-and-reporting: Bulk Install Identity And Recovery Reports
+
+- 日期：2026-09-15
+- 标签：onboard, caveman, identity, rollback, json, reporting
+- 适用场景：按一个核心文件识别并批量替换多个目录，或在外层 CLI 中组合安装结果
+- 严重级别：high
+- 来源：本仓库安装器审查与回归修复
+- 问题：核心文件属于已知旧版时，自定义 sibling 仍可能被批量覆盖；外层为保持单份 JSON 而丢弃子安装器 stdout，会同时丢弃失败恢复路径。
+- 根因：身份验证的范围小于实际替换范围；事务结果只存在于展示副作用中，组合调用方拿不到结构化恢复信息。
+- 修复：校验所有受管目录及 payload 指纹，未知或自定义 family 停止覆盖，staged source 与替换前目标都要检查；安装结果直接返回结构化数据，由独立展示函数渲染，外层成功和失败响应都保留 transaction 与恢复路径。
+- 预防：回归使用已知核心与自定义 sibling 的混合状态，以及外层 init/reset 的真实回滚失败路径；检查文件保留和可读取的备份，不用只回显 mock 消息的测试证明恢复契约。
+
+## LESSON-20260916-640-full-suite-timeout-window: Full-Suite Validation Windows Must Cover Duration Variance
+
+- 日期：2026-09-16
+- 标签：validation, pytest, timeout, full-suite
+- 适用场景：本仓全量 pytest（267 tests + 450 subtests）作为修改后验证证据，或出现验证超时
+- 严重级别：medium
+- 来源：impeccable stable 修复后全量复跑，首次在 300s 窗口超时（停在 47% 中段，非失败测试），充足窗口下 343s 全绿
+- 问题：按基线时长设定固定验证窗口会偶发超时；若据超时直接判定验证失败，属证据误用
+- 根因：本仓全量 suite 时长波动大（125s → 343s），波动原因未证实（疑环境争抢，无 tight loop 可复现），按单次基线时长设定窗口必然偶发不足
+- 修复：验证窗口按 ≥600s 设定或按文件拆分跑；任何 timeout 一律以充足窗口重跑取证后再下结论
+- 预防：全量验证先估算当前实际时长再上窗口上限；timeout 必须记录最后进度点与真实 runner 输出，不得作为 pass/fail 证据；时长波动原因未证实前不得归因为“环境问题”
+
+## LESSON-20260918-640-powershell-runtime-binding: PowerShell Parameter Contracts Need Runtime Proof
+
+- 日期：2026-09-18
+- 标签：powershell, cli, parameter-binding, validation, positive-control
+- 适用场景：删除 PowerShell 参数、区分公开选项与内部执行模式，或以源码断言验证安装器
+- 严重级别：high
+- 来源：P1-02 的真实 macOS PowerShell 入口验证
+- 问题：删除参数声明后，普通 `param` 仍接受未知参数；源码中不存在旧名字并不证明入口拒绝它。实际 project-only 执行还暴露了把内部 `init-projects` 赋给只允许 `init/reset` 的 `Action` 参数所触发的校验错误。
+- 根因：把声明文本当作参数绑定行为，以及复用公开参数承载更宽的内部状态。
+- 修复：使用高级参数绑定拒绝未知参数，公开 `Action` 与内部执行模式分离；保留实际 PowerShell 帮助正向控制、未知参数负例和 project-only 安装回归。
+- 预防：测试真实解释器和入口，不用源码字符串／调用顺序断言代替行为。负例非零必须伴随有效输入成功，否则语法错误也会造成假阳性；macOS PowerShell 证据不能冒充 Windows 验收。
+
+## LESSON-20260918-640-editing-boundary-and-bom: Editing Tools Can Preserve Hidden Structure
+
+- 日期：2026-09-18
+- 标签：editing, ast, bom, recovery, validation
+- 适用场景：用块编辑修改类内方法，或修改已有 UTF-8 BOM 的 PowerShell 文件首行
+- 严重级别：high
+- 来源：P1-02 的测试区块恢复与 PowerShell 正向控制失败
+- 问题：单方法块替换实际吞掉同类后续方法；首行替换中手工携带 BOM 又被工具保留一次，导致双 BOM 和解析失败。仅看新增正文正确或负例退出非零都未能发现问题。
+- 根因：未把工具返回的实际替换范围、隐藏编码和可执行正向控制作为独立证据。
+- 修复：从原始写入内容恢复相邻三个测试方法，之后使用已读取的精确范围；首行正文不重复加入工具维护的 BOM，验证实际字节仅一个 BOM，再重跑正常帮助与失败参数。
+- 预防：沿用既有完整快照及 resolved-range 规则；编辑类内单方法优先精确结束行。编码类修改验证实际 bytes 和原生解释器；出现 read/edit hash 不一致时重新读取并保留错误证据，不放宽匹配或猜测丢失内容。
+
+## LESSON-20260918-640-parallel-validation-ownership: Parallel Workers Do Not Own Final Validation
+
+- 日期：2026-09-18
+- 标签：agents, parallel, validation, evidence, ownership
+- 适用场景：多个 worker 修改互相依赖的生产代码、调用者或测试
+- 严重级别：medium
+- 来源：P1-02 两个 worker 在明确禁止在途验证的批次中仍自行报告定点运行
+- 问题：worker 自报通过容易被误当作完整集成或最终版本证据，且在途运行可能读到其他写入者尚未完成的文件。
+- 根因：作者局部检查与主线程拥有的统一验证职责没有在结果验收时严格区分。
+- 修复：不采纳这些自报结果作为 gate；等写入切面完成后由主线程生成原生定点、影响范围、全量和实际 CLI 报告。
+- 预防：任务明确全部验证归属、稳定接口和文件所有权；收回结果时检查是否越界执行。违反分工的输出只保留为过程事实，不能替代固定 revision、完整范围和可回读报告。
+
+## LESSON-20260918-640-preflight-before-side-effects: Preflight Must Precede Every Caller Side Effect
+
+- 日期：2026-09-18
+- 标签：installer, preflight, side-effects, cli, validation
+- 适用场景：共享写入器有安全前置检查，但外围安装器还会执行可选安装、全局工具或配置写入
+- 严重级别：high
+- 来源：P1-02 独立审查 P1 与真实 Bash 复现
+- 问题：Python 最终写入器拒绝不安全 `.gitignore`，但 root installer 已调用可选 React Bits 安装；最终退出 2 不能证明此前零写入。
+- 根因：外围 `check-projects` 只检查部分状态，完整 scaffold guard 太晚，且没有覆盖所有写入调用者。
+- 修复：共享完整只读项目前置判定；两安装器在全局安装、MCP 与可选项目安装之前执行，Python 写入前再次复验，并一致传递 `--skip-project-agents` 的已选目标范围。
+- 预防：覆盖每个 caller 的 normal/project-only 分支，使用受控副作用 tracer 与文件保全断言证明冲突时没有 mutation；保留合法正向控制，不能只断言最终非零或只检查核心 writer。
+
+## LESSON-20260918-640-executable-identity-binding: Bind CLI Identity to the Executed Target
+
+- tags：cli, security, identity, shim, validation, installer
+- 适用：第三方 CLI 检测或安装后校验需要先证明命令属于指定包，且检测不能执行未知命令。
+- 现象：仅凭 wrapper 内出现包名以及邻近 package.json，会把写有包名注释的任意脚本当作官方 CLI；仅限制目标落在包目录内也会接受其他文件。
+- 根因：文本包含和目录相邻不是执行目标绑定；安装后校验若只检查元数据，再直接运行 PATH/prefix 命令，会绕过检测层的身份保护。
+- 修复：解析后命令必须绑定受支持包的实际 CLI 路径，检测与安装后校验复用同一判定；未证明的 shim 不执行。平台适配与平台通过证据独立，不为便利放宽身份判断。
+- 验证：两个真实临时可执行文件红测均错误返回 available；修复后包含 post-install 路径的三个 marker 非执行回归通过。RTK/global check 同轮另证完整隔离 HOME 零持久写入；不把第三方查询子命令名称当成只读证明。
+- 预防：正向控制覆盖真实包 CLI，反例覆盖包名注释 wrapper、包内错误目标和安装后旧 binary；报告只允许受管安装入口，不向用户展示绕过安全门的原始包管理命令。
+
+## LESSON-20260919-640-state-event-integrity: Parse and Preserve the Complete Event History
+
+- tags：markdown, state, history, yaml, recovery, validation
+- 适用：Markdown正文承担权威状态事件，且原文允许代码/HTML示例或历史补录。
+- 现象：手写围栏/标题扫描把示例当历史、漏掉无外侧pipe的数据行，或将新事件放入未闭合围栏；只读第一张表还会漏掉同一状态节的后续表。旧完成补录追加在归档事件后，则会形成倒序/断链。
+- 根因：把文本命中、前缀可解析和单行schema通过当作完整文档与事件顺序证明。
+- 修复：使用声明依赖的CommonMark token与显式table规则识别顶层完整区段；拒绝多表歧义；候选必须回读全部旧事件和本次事件。有据旧完成在已有metadata事件前补录，写前再验证完整状态/时间链。
+- 验证：真实文件红/绿覆盖未闭合围栏、缩进/伪closer/HTML示例、可选pipe、多表以及known/null旧完成的archive→reopen→继续工作；原文与历史均保留。不能只断言保存命令退出0。
+- 预防：parser依赖实际安装、缺依赖零写入与完整安装副本同轮证明；解析器不渲染或联网，失败不得退回不安全手写扫描。
+
+## LESSON-20260919-640-private-tree-protection: Prove Privacy for the Whole Transfer Tree
+
+- tags：gitignore, privacy, filesystem, transfer, originals, validation
+- 适用：把整个任务目录复制到私有候选区、本地归档区或原件保留区。
+- 现象：源task.md及目标task.md均被忽略，附带二进制等文件却可能Git可见；只查源文件也不能证明新archive路径受保护。
+- 根因：把单个文件的保护结论扩张为整棵目录的保护；忽略权限必须对实际写入范围成立。
+- 修复：共同保护门核对整个私有父目录的Git排除语义、全部tracked状态和具体路径；不能证明全部后代仍私有时，copy/rename前拒绝并请求窄保护授权。
+- 验证：metadata-only ignore与源目录受保护但archive目标未保护的真实Git反例均零发布；不能用命名为“private”的目录或一个探针返回码代替逐范围证明。
+- 预防：授权scope也按实际逻辑任务闭集核对，路径嵌套不代表另一个task.md的所有权；保留原件不等于授权发布或删除。
+
+## LESSON-20260919-640-handoff-verified-snapshot: Bind Overwrites to the Verified Snapshot
+
+- tags：handoff, ownership, atomic-write, snapshot, validation
+- 适用：先解析持久快照确认身份，再按预期旧内容原子覆盖的写入路径。
+- 现象：身份校验读取一次、稍后又读取一次作为expected bytes时，用户在两次读取之间的新内容会被当成已授权旧版本，随后被覆盖。
+- 根因：权限/身份判断与乐观并发比较绑定到不同版本，而不是同一次读取的原始字节。
+- 修复：一次读取同时返回已验证结构和原始bytes，写入沿用这些bytes；变化时拒绝，不能重新读取后默许新内容。
+- 验证：真实文件故障注入在身份读取后替换内容，修前覆盖、修后保留用户版本并拒绝；不以mock回声代替文件保全断言。
+- 同轮相关边界：有意义内容比较排除生成时间时，不能在生成正文重复该时间；提醒窗口要排除未来时间，并同时核对快照与当前有效任务的root/branch/path，不让旧快照变成当前模式/状态来源。
+- 限制：该修复关闭可检测的版本混用，不将单writer原子替换描述为对不合作进程的完整CAS或跨文件事务。
+
+## LESSON-20260919-640-identity-absence-and-phase-results: Prove Absence and Retain Phase Results
+
+- tags：identity, git, worktree, preflight, authorization, partial-results
+- 适用：仅在身份真正缺失时首次建立，或把只读计划、脚手架与逐项目写入组合成一次初始化。
+- 现象：损坏的.git仍会产生“not a git repository”；固定拒绝全部保护会让已确认nonGit初始化在脚手架写后失败；身份异常若只保留计划，机器调用者看不到已发生写入，目录中途消失还可能直接traceback。
+- 根因：把无法识别当作已证明不存在；未区分原计划授权与后来新增需求；异常边界只包方法正文而遗漏对象构造，结果没有逐阶段累积。
+- 修复：Git失败后核对本级/祖先marker，未知保持blocked；只有原计划needsProtection严格为true才转发已确认窄保护；先保存实际operationResults，逐项目覆盖构造/执行错误，失败报告写后状态及此前完成项。
+- 验证：损坏.git与真实nonGit CLI红绿；真实文件原子link失败后保留脚手架并回读单份JSON；预检时移走root及批次首项成功、次项root缺失均结构化报告。影响范围129项通过；这不是跨项目事务或完整Windows证明。
+- 预防：正向控制验证非Git首次建立仍可完成，负例验证未知不是缺失；结果与权限均绑定实际阶段，不从最终非零推断零副作用。既有ignore判定和保护helper部分步骤遗漏的P2保留独立findings，不借本修复扩修。
+
+## LESSON-20260919-640-migration-native-closure: Prove the Complete Native Migration Closure
+
+- 日期：2026-09-19
+- 标签：migration, cli, fixtures, ownership, receipts, evidence
+- 适用场景：把冻结交换契约接入真实迁移阶段，或迁移多host旧目录。
+- 严重级别：high
+- 来源：P1-12真实安装副本、旧固定源码和独立审查红绿。
+- 问题：精简fixture遗漏正常旧生成目录与OMP全局路由；局部report/codec通过仍未发现完整verify的未初始化变量，以及“成功退役后不存在”被误判成“漏报保留资产”。私有步骤失败前未执行的共享操作又会使部分回执无法保存。
+- 根因：用各层能解析代替真实阶段闭环，把声明操作、已观察结果和仍存在资产视为同一集合。
+- 修复：从固定上游源码构造旧布局，真实执行公开phase参数的plan/apply/verify；完整盘点共享host资源；收据只引用观察到的结果，完成仍要求全部依赖；仅以末次成功后态证明的非publication缺席排除保留资产。
+- 预防：保留“正常路径真正成功”的原生正向控制与实际部分失败／重试；用修改前源码快照回放新回归，并区分消费者夹具、真实部署和Windows证据。不得为适配夹具静默放宽既定原生schema。
+
+## LESSON-20260919-640-staging-before-publication: Verify Staging Before Publication and Guard Cleanup
+
+- 日期：2026-09-19
+- 标签：filesystem, migration, staging, checksum, race, ownership
+- 适用场景：文件／目录复制、备份、原子发布与失败后清理本次创建内容。
+- 严重级别：high
+- 来源：P1-12文件发布与目录回滚的真实故障注入。
+- 问题：在目标发布后才检查来源会短暂或永久发布未批准内容；失败清理若只看路径／类型，会删掉同路径已被用户改写的文件。
+- 根因：校验与可见性顺序颠倒，创建所有权未绑定实际写入字节；单文件证明被错误扩张到整棵目录。
+- 修复：文件先核验实际暂存摘要，目录先构建并核验完整私有stage再发布；记录本次创建条目的实际类型与摘要，清理前捕获并比较，变化时保留并报告。
+- 预防：保留源／stage中途变化、目录中后续文件变化、失败清理前同名内容变化的真实文件回归；目录摘要采用完整规范平面条目且包含空目录。不可证明的残留不能凭名字删除，也不能把局部原子性说成多资源事务。
+
+## LESSON-20260919-640-native-effective-pointer: Validate the Effective Native Pointer
+
+- 日期：2026-09-19
+- 标签：native, cache, path, coercion, hooks, validation
+- 适用场景：通过窄守卫调用第三方原生工具，读取其图／缓存／Markdown指针或配置。
+- 严重级别：high
+- 来源：P1-04固定Graft路径守卫独立复核及真实文件红绿验证；分隔名640为用户本会话明确提供。
+- 问题：验证JSON字段原值仍可被下游字符串强制转换、数组拼接、行号解析、文件名fallback绕过；只校验主要图文件也无法保护其他生成文件的链接写入。
+- 根因：守卫校验的路径不是原生消费者最终使用的路径；版本／stamp证明被扩大成数据和文件系统安全证明。
+- 修复：按固定版本实际sink证明完整有效指针，拒绝未支持的可强制转换值，核对拼接后路径与fallback；完整生成树拒绝链接／硬链接／特殊文件，workspace索引不授权扫描其他仓。
+- 预防：负例覆盖转换链而非仅`../`原串；使用真实native图验证启动拒绝、原件不变，再单独证明正常查询与hook执行。安装返回成功不等于host信任，原生payload调用不等于真实host事件；不声称OS沙箱或并发隔离。
+
+## LESSON-20260921-640-deferred-repair-proof: Revalidate Deferred Findings Against Current Consumers
+
+- 日期：2026-09-21
+- 标签：findings, concurrency, dependencies, powershell, validation
+- 适用场景：修复历史延期项，尤其涉及第三方共享文件、依赖删除及安装器参数转发。
+- 严重级别：high
+- 来源：延期项修复；分隔名沿用主 PRD 记录的用户明确授权 640。
+- 问题：历史“未使用”依赖后来已有生产消费者；read/compare/replace 无法保护不遵守本地锁的外部 writer；PowerShell 函数内的 `$PSBoundParameters` 不包含脚本入口的绑定。
+- 修复：按当前调用方保留 tomlkit、仅删真正不可达迁移分支；经用户确认，对已有可变遥测配置拒绝覆盖，缺失文件采用 no-clobber 创建；从实际 switch 值转发确认，真实解释器验证 true／false。
+- 预防：历史 finding 是调查线索，不是删除授权证明。运行报告使用显式隔离解释器及声明依赖；新增测试先证明失败原因来自目标行为，不能把错误入口、遗漏 import、缺依赖或残留空目录造成的失败当作红测。
+- Windows 原生补测：关闭 ACL 继承并替换当前用户规则，并不保证已清除新目录中的显式非受信规则。安全诊断只输出 owner 是否匹配、继承开关与规则类别计数，不输出账号／SID；仅对本次创建的目录构造干净 DACL，已有目录只校验不修写。macOS 上跳过的 Windows ACL 用例必须在 Windows runner 实际执行。
+
+  <!-- lessons:640:end -->
+
+<!-- lessons:kuno:start -->
+## LESSON-20260930-kuno-umask-sensitive-test-evidence: Umask Sensitive Tests Need Normal Evidence Runs
+
+- 日期：2026-09-30
+- 标签：validation, pytest, umask, privacy, filesystem
+- 适用场景：取证命令修改 `umask`，或全量测试含目录权限/私有目录拒绝断言
+- 严重级别：high
+- 来源：graft pin 0.21.1 九行根 ignore 验收前的失败分类
+- 问题：取证命令先设 `umask 077`，测试里 `mkdir(mode=0o755)` 实际生成 `0o700`，三项隐私/私有目录测试没有触发预期 `ContractError`，全量出现 4 failed；其中只有根 `.gitignore` 契约是真实工作树失败。
+- 根因：测试环境改变了被测文件模式语义，又把环境造成的拒绝缺失与产品行为失败并列统计。
+- 修复：在 `umask 022` 下重跑失败项确认三项隐私测试通过，再用相同正常 umask 跑完整 `tests/`，得到 1240 passed、8 skipped；原生 JUnit、stdout/stderr/exit 与同 stem 中文摘要都保留。
+- 预防：涉及权限的验证必须先声明并复核 `umask`；不正常的取证环境只能作为失败线索，不能替代正常环境下的小范围复跑与最终全量重跑。
+
+## LESSON-20260930-kuno-contract-rerun-not-full-suite: Contract Rerun Is Not a Full Suite Pass
+
+- 日期：2026-09-30
+- 标签：validation, pytest, contracts, evidence, gitignore
+- 适用场景：只修改契约测试或根 `.gitignore`，并用单条失败测试重跑作为通过证据
+- 严重级别：medium
+- 来源：graft pin 0.21.1 根 `.gitignore` 七行/九行验收
+- 问题：只修复并复跑 `test_repository_gitignore_keeps_canonical_generated_paths` 可以证明该契约已匹配，但不能把此前 4 failed 的全量结果改记为通过；后来全量又因取证 umask 混入三项环境失败，若只看单条测试会掩盖剩余风险。
+- 根因：把 targeted rerun 的结果扩张到整个测试套件，没有区分“失败项已修复”和“最终全量已验证”。
+- 修复：先分类旧失败，再在正常环境下运行完整 `tests/`；九行契约调整后得到 1240 passed、8 skipped，并将报告与旧失败记录并列保留。
+- 预防：最终交付必须分别报告 targeted rerun 与 final full rerun；只有同一修正环境下的最终全量通过，才能关闭 suite-level 验证缺口。
+
+## LESSON-20261003-kuno-windows-direntry-link-count: Validate Native Link Counts Without Weakening Ownership
+
+- 日期：2026-10-03
+- 标签：windows, filesystem, hardlink, stat, validation, subprocess
+- 适用场景：用目录项元数据拒绝硬链接，或把 POSIX 子进程测试扩展到原生 Windows。
+- 严重级别：high
+- 来源：全局会话 Graft MCP 的 Windows CI 原生日志与 Python 标准库契约。
+- 问题：测试先因 `select.select` 读取匿名管道而报 `WinError 10038`；修正读取并保全 stderr 后，才显露普通图文件被硬链接守卫误拒绝。
+- 根因：Windows 的 `DirEntry.stat()` 将 `st_nlink` 返回为 0，不能用于证明单链接文件；Windows `select()` 也只支持 socket，不能直接迁用 POSIX 管道测试。
+- 修复：使用 `os.stat(entry.path, follow_symlinks=False)` 获取真实链接数，继续要求 `st_nlink == 1`、拒绝 symlink/reparse/special；测试采用有超时的后台 `readline`，早退保全退出码与 stderr。
+- 预防：先让原生失败报告指出实际守卫，再修正元数据来源；不能把 0 放行为安全值或跳过原生平台测试。正向用普通真实文件，反向用实际硬链接并断言外部原件不变。依据：[Python DirEntry.stat](https://docs.python.org/3.12/library/os.html#os.DirEntry.stat)。
+
+## LESSON-20261003-kuno-git-path-decoding: Decode Paths At The Producing Process Boundary
+
+- 日期：2026-10-03
+- 标签：windows, git, unicode, subprocess, encoding, validation
+- 适用场景：通过子进程输出的路径证明项目边界，且生产者编码与父进程默认代码页可能不同。
+- 严重级别：medium
+- 来源：PR #108 原生 Windows 回归；UTF-8 模式关闭、默认 cp1252 时，真实 Git 的 Unicode 仓库被 launcher 以边界不匹配拒绝。
+- 问题：`text=True` 没有声明生产者输出编码；ASCII 路径的 Windows CI 通过不能证明中文或重音字符路径可用。
+- 根因：Git for Windows 输出 UTF-8，但父 Python 使用默认代码页解码；传给子进程的 `LC_ALL` 不改变父进程解码器。fail-closed 避免串仓，却不能消除合法仓库不可用的缺陷。
+- 修复：仅对 Windows Git 探针明确 UTF-8，保留 POSIX 原解码约定；解码错误转换为受控拒绝，路径相等和信任边界检查不变。
+- 预防：在真实 Windows 核对默认编码与 UTF-8 模式后测试 Unicode 路径；记录同一场景的原生 red/green，不把其他平台成功或 skip 当作该条件的证明。畸形输出负例检查退出码、无 traceback、无下游启动和无项目副作用，而非锁定错误文案。
+
+## LESSON-20261004-kuno-owned-temp-canonicalization: Canonicalize Owned Temporary Roots Before Nofollow Operations
+
+- 日期：2026-10-04
+- 标签：macos, tempfile, nofollow, symlink, isolation, validation
+- 适用场景：工具主动创建临时 HOME／宿主夹具，再调用拒绝链接祖先的文件备份或复制原语。
+- 严重级别：high
+- 来源：Onboard 升级宿主探测的真实失败与修正后回归。
+- 问题：安全复制尚未接触 Skill 内容，就因系统临时路径的 `/var` 链接祖先返回 `unsafe-path`，使 Codex／OMP 探测无法获得宿主证据。
+- 根因：将本次操作创建的临时目录的逻辑拼写直接传入 nofollow 原语，没有区分系统临时别名与用户提交的源／目标路径。
+- 修复：仅在 `mkdtemp` 成功后立即解析本次拥有的临时根，再向下创建和访问夹具。用户提供的 Skills 根、源、目标继续逐级拒绝 symlink／junction，不用 resolve 绕过所有权检查。
+- 预防：回归同时覆盖“自有临时父目录通过系统别名访问仍可探测”和“用户提供的链接／越界 sibling 仍拒绝”。真实宿主探测与脚本化协议测试分别报告；不得通过放宽所有路径链接守卫来修正夹具。
+
+## LESSON-20261004-kuno-review-red-is-not-a-contract-defect: Review Red Is Not A Contract Defect
+
+- 日期：2026-10-04
+- 标签：review, validation, contracts, fixtures, scope, recovery
+- 适用场景：把审查 finding 转成回归测试，尤其涉及安装策略、分阶段执行和中断恢复窗口。
+- 严重级别：high
+- 来源：Onboard 升级审查复核与冻结原版公开 CLI／已安装副本的真实续作。
+- 问题：新写的 red 将缺失 host 的 preserve、源目标包含关系等拟议策略当成既有缺陷；只看已改变的旧 bootstrap 返回 source-stale，又错误扩大为安装后不能重试或恢复。
+- 根因：先把审查建议写成预期，未先证明预期属于既有契约，也未沿真正的已安装消费者走完整生命周期。断言失败只能证明实现不同于断言，不能自动证明产品违约。
+- 修正：冻结原版执行 plan／apply，再从同基线已安装规范副本完成 retry／recovery；向用户说明策略差异并取得明确选择，撤回未经需要的行为变更，保留原始 red 和更正结论。
+- 预防：每条 red 先证明有效输入、前置条件与目标 seam，排除 schema、依赖、夹具顺序或更早门禁造成的失败；正向控制必须实际成功。探测只报告已证明的层级，不顺便增加更广的验证或预置环境，让测试替被测行为完成工作。
+
+## LESSON-20261004-kuno-path-spelling-is-not-identity: Path Spelling Is Not Filesystem Identity
+
+- 日期：2026-10-04
+- 标签：filesystem, windows, macos, aliases, cache, preflight, validation
+- 适用场景：按路径去重、载荷缓存、选定目标包含判断或批次依赖预检。
+- 严重级别：high
+- 来源：PR #110 第二轮公开 CLI 与大小写敏感 APFS 隔离回归。
+- 问题：大小写不敏感卷的两个拼写绕过重叠保护，replace 可以改写 preserve 所指原件；反向用 normcase 归并，又会丢弃大小写敏感目录中的不同目标并复用错误摘要。继承输入别名漏检会在 provider 写入后才令 consumer 失败。
+- 根因：把路径字符串比较、操作系统默认大小写习惯与实际文件系统身份混为一个判定；缓存、授权和祖先关系拥有不同需求。
+- 修复：缓存与已绑定选择采用精确拼写，别名归并／祖先包含使用实际非零 device/inode 证据；完整写集与继承输入在目标写入前复核。继续逐组件拒绝链接，不用 resolve 放宽用户路径。
+- 预防：同时运行“不同拼写同一对象”和“仅大小写不同的两个对象”正反例；测试应走真实库存与公开消费者，验证原件和写集不变。平台字符串折叠模拟只证明算法边界，必须与原生平台证据分开报告。
+
+## LESSON-20261005-kuno-no-write-evidence-precedence: No-Write Evidence Outranks Matching Bytes
+
+- 日期：2026-10-05
+- 标签：recovery, ownership, intent, receipts, concurrency, validation
+- 适用场景：由 intent、现场内容和历史回执共同判断中断写入／重试／恢复归属。
+- 严重级别：high
+- 来源：PR #110 第三轮真实库存、文件写入检查和恢复消费链 red／green。
+- 问题：用户在 intent 后创建与 desired 相同的内容，写入检查已记录未写入；重试或旧 pending checkpoint 却仅凭相同字节重新认领，进而生成删除用户文件的恢复步骤。未知 pending 现场也可能被直接跳过后冒报恢复完成。
+- 根因：把内容相等当作操作归属，未给明确的未写入证据优先级，也未保留不能归属的现场。
+- 修复：最新可信未写入结果不能被旧 checkpoint 或匹配内容覆盖；无明确归属但现场不同于 before 时保持 blocked，保留用户内容与原件。
+- 预防：用真实消费者分别覆盖 intent 前后竞态、明确未写入后相同内容、旧 checkpoint、成功写后回执中断与新增缓存；不能只测理想 desired 状态或把 partial／unknown 当作零写入。
+
+## LESSON-20261005-kuno-freeze-sealed-inputs: Freeze All Sealed Inputs During Validation
+
+- 日期：2026-10-05
+- 标签：validation, migration, source-snapshot, compileall, concurrency
+- 适用场景：测试把当前仓库的完整安装包封存为来源，或全量验证与编辑／编译检查并行。
+- 严重级别：high
+- 来源：第四轮升级修复的真实followup来源封存检查与隔离目录快照实验。
+- 问题：前两次全量期间分别发生源码编辑和compileall，followup夹具出现来源漂移拒绝；仅冻结手写源码不能阻止字节码写入。原错误未保留具体来源路径，不能把推断表述为逐路径已证明的根因。
+- 机制：真实followup计划确实把catalog中source为`.`的当前Onboard包作为directory来源封存；目录snapshot不排除缓存。隔离实验直接证明compileall创建字节码会改变同一目录的snapshot，即使Python本身以`-B`启动。
+- 修正：编辑、compileall、格式化等写入步骤先完成，再冻结所有封存输入运行完整suite；只读观察器和随后原生全量均通过，保留最初失败与归因边界，不放宽`_original_reference`。
+- 预防：验证调度按实际文件写集而非“检查命令”名称分类；唯一controller也不能在自己的全量运行期间改写输入。来源漂移先抓具体路径与前后态；重跑通过不是原错误根因证明。
+
+## LESSON-20261009-kuno-isolate-host-overrides: Isolate Effective Host Paths Before Fixture Writes
+
+- 日期：2026-10-09
+- 标签：validation, fixtures, environment, omp, paths, isolation
+- 适用场景：隔离 HOME 后运行真实配置写入，或验证默认 Skills／provider 路径选择。
+- 严重级别：high
+- 来源：现态调和测试的 OMP 路径解析与完整套件环境修正。
+- 问题：只替换 HOME 仍会继承绝对 agent/provider 覆盖；反过来，控制器统一设置 AGENT_SKILLS_DIR 会改变测试要覆盖的默认根，实际完整测试因此出现目标目录断言失败。另一次夹具把 PI_CONFIG_DIR 设为绝对路径，被实际解析器正确拒绝。
+- 根因：隔离位置与保持被测配置分支是两个约束；环境变量的相对目录名／绝对路径语义不能凭名称猜测。
+- 修复：外层去掉无关配置重定向并使用私有 HOME；OMP 夹具按实际解析契约设置 PI_CONFIG_DIR=.omp、临时绝对 agent/provider 路径及默认 profile，在任何部署前断言解析目标属于夹具。取消外层 Skills 根覆盖后，原失败测试通过，未改产品默认值或测试断言。
+- 预防：先读取实际优先级与值类型；隔离器不要替所有测试强制选择显式配置分支。可写夹具在调用生产写入器前检查完整实际写集，不能把“环境看起来私有”当作越界不会发生的证明。定点修正之后仍需同环境全量验证。
+
+## LESSON-20261011-kuno-validation-worktrees-outside-task-tree: Keep Validation Checkouts Outside Task Trees
+
+- 日期：2026-10-11
+- 标签：validation, worktree, task-state, identity, isolation
+- 适用场景：在同一仓库保存冻结源码、覆盖对比 checkout 或完整项目夹具，同时使用 TaskStore 更新任务状态。
+- 严重级别：high
+- 来源：源码覆盖基线的实际 TaskStore 写入拒绝与任务发现代码核对。
+- 问题：把完整 checkout 放在 `.sbtd/tasks/<任务>/` 内后，其复制的共享 `task.md` 被再次发现，状态更新返回 `multiple task records have the same logical ID`；初始模式记录仍在，但新的状态未保存。
+- 根因：任务树是逻辑任务发现边界，不是任意临时文件容器。TaskStore 递归读取 `.sbtd/tasks` 与 `ai/tasks` 下的任务正文；Git ignore、独立 worktree 的 `.git` 或目录名带 baseline 都不会将其中的记录排除。
+- 修正原则：完整验证 checkout 放在任务树外的受保护位置，例如 `.sbtd/validation/` 或独立私有临时目录。若运行已绑定错误位置，先保全原任务和运行证据，不在执行中移动输入；完成后只移除本次自建 checkout，再用状态 helper 复验。不得改任务 ID、覆盖真实任务或放宽目录发现规则绕过冲突。
+- 验证：完成的 checkout 非破坏性移出任务树后，同一 TaskStore 成功保存 checking；源码与失败证据保留，原任务 ID 和发现规则均未改写。
+- 预防：创建副本前检查是否携带任务记录及其发现边界；ignore 只证明 Git 保护，不证明任务语义隔离。明确区分会话内阶段与实际保存的状态，保存失败不得声称恢复可靠。
+
+## LESSON-20261012-kuno-native-skip-events: Count Unittest Skip Events Not Only Parent Cases
+
+- 日期：2026-10-12
+- 标签：validation, unittest, subtest, skip, reports, ci
+- 适用场景：聚合分片报告、比较优化前后执行范围，或由逐例状态生成测试摘要。
+- 严重级别：medium
+- 来源：Linux CI 取证对原生跳过明细与 `RecordedResult` 的核对。
+- 问题：仅统计 `cases[].status == skipped` 得到 Linux 46、Windows 30，但原生报告分别为 48、32；这不是环境新增跳过，而是摘要低报。
+- 根因：一个父测试方法的三个 zsh 配置子场景分别调用 skip；`unittest` 保存三个跳过事件，逐例记录却只有一个父例状态。父例数与跳过事件数不是同一口径。
+- 修正：只更正派生摘要，原生报告不改；使用 runner 的 `skipped` 和完整 `skip_details`，同时保留父例状态。优化对照逐项比较父例身份／状态与跳过子场景身份／理由，不仅比较一个总数。
+- 预防：先确认 runner 对父例、subTest、跳过和失败的记录粒度；不能从 `testsRun` 或父例状态推导原生事件总数。摘要纠正不得改写原件或被表述为补跑通过。
+
+<!-- lessons:kuno:end -->
+

@@ -15,3 +15,4 @@ refreshes the manifest digests and third-party notices.
 | `nextlevelbuilder/ui-ux-pro-max-skill` | MIT | `licenses/ui-ux-pro-max-skill-LICENSE` |
 | `shadcn-ui/ui` | MIT | `licenses/shadcn-ui-LICENSE.md` |
 | `DietrichGebert/ponytail` | MIT | `licenses/ponytail-LICENSE` |
+| `ayghri/i-have-adhd` | MIT | `licenses/i-have-adhd-LICENSE` |

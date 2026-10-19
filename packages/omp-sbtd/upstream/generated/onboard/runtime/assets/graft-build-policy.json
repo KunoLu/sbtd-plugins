@@ -1,0 +1,1 @@
+{"schema_version":1,"package":"@nanonets/graft","version":"0.22.0","graph_directory":"graft","build_args":["build",".","--no-gitignore","--no-ignore"],"wiring_opts":{"global":false,"mcp":false,"hooks":false,"statusline":false},"llm":false,"cloud":false}

@@ -1,4 +1,5 @@
-﻿param(
+﻿[CmdletBinding()]
+param(
   [string]$Platform = "",
   [string]$SourceRoot = "./sbtd-workflow-onboard",
   [string]$ProjectsRoot = "",
@@ -8,15 +9,17 @@
   [switch]$SkipProjectAgents,
   [string]$GlobalAgentsPath = "",
   [string]$GlobalSkillsDir = "",
-  [string]$TrellisUser = "",
-  [string[]]$TrellisPlatform = @(),
-  [switch]$SkipTrellisInit,
-  [switch]$SkipTrellisBootstrap,
+  [switch]$GraftRetireLegacy,
+  [string]$GraftLegacyBindings = "",
   [switch]$NoMcp,
   [switch]$DryRun,
   [switch]$Yes,
   [switch]$NoColor,
-  [switch]$Help
+  [switch]$Help,
+  [ValidateSet("", "migration", "recovery", "cleanup-legacy", "upgrade")]
+  [string]$WorkflowMode = "",
+  [Parameter(ValueFromRemainingArguments=$true)]
+  [string[]]$WorkflowArgs = @()
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,6 +31,12 @@ if ($ProjectsRoot -and $InitProjects) {
 }
 if ($script:ProjectsOnly -and $Action) {
   throw "-InitProjects is a standalone mode and cannot be combined with -Action."
+}
+if ($script:ProjectsOnly -and $GraftRetireLegacy) {
+  throw "-InitProjects cannot retire global Graft MCP entries."
+}
+if ($GraftLegacyBindings -and -not $GraftRetireLegacy) {
+  throw "-GraftLegacyBindings requires -GraftRetireLegacy."
 }
 
 function Show-Usage {
@@ -43,14 +52,14 @@ Options:
       This option does not change the Codex global AGENTS.md target; override
       that separately with -GlobalAgentsPath. If ~/.omp already exists,
       init/reset also overwrite ~/.omp/agent/AGENTS.md.
-      The installer verifies this CLI immediately, bootstraps npm when needed,
-      and installs the official npm package globally at @latest when missing.
+      The installer may verify this CLI read-only immediately. Missing-CLI
+      repair and npm bootstrap wait for complete selected-project preflight.
   -SourceRoot <path>
       Path to the sbtd-workflow-onboard directory.
       Defaults to ./sbtd-workflow-onboard.
   -ProjectsRoot <abs-path[,abs-path...]>
       One or more absolute project root paths separated by English commas.
-      When omitted, the installer asks interactively for the project roots.
+      When omitted, ask interactively unless -Yes selects global-only setup.
   -InitProjects <abs-path[,abs-path...]>
       Run only per-project checks and initialization. Global tools, Skills,
       Agent CLI, and MCP are not checked, installed, or configured.
@@ -62,26 +71,28 @@ Options:
       Override the global AGENTS.md target.
   -GlobalSkillsDir <path>
       Override global skills directory.
-  -TrellisUser <name>
-      Developer username for trellis init -u when the project has no .trellis/.
-  -TrellisPlatform <name[,name...]>
-      Trellis init platform flag without leading dashes. May be repeated.
-      Examples: codex, claude, kimi, cursor, omp, pi. Replaces the Agent
-      platform default. OMP and Pi are separate flags.
-  -SkipTrellisInit
-      Skip post-install trellis init for project roots without .trellis/.
-  -SkipTrellisBootstrap
-      Skip post-install bootstrap task detection.
+  -GraftRetireLegacy
+      Explicitly retire exact owned fixed-project Graft MCP entries for the
+      selected roots after preview, preserving originals; not TEMP cleanup.
+  -GraftLegacyBindings <path>
+      Private old-runtime contract for an explicitly authorized MCP cutover.
   -NoMcp
       Skip MCP configuration.
   -DryRun
       Print commands and MCP writes without making changes.
   -Yes
-      Answer yes to every yes/no prompt.
+      Answer yes to yes/no prompts within the selected scope.
+      Normal init/reset without -ProjectsRoot is global-only; cwd is not
+      implicitly selected as a project.
   -NoColor
       Disable ANSI color.
   -Help
       Show this help.
+  -WorkflowMode <migration|recovery|cleanup-legacy|upgrade>
+      Forward directly to scripts/onboard.py without onboarding. Remaining
+      arguments are passed through unchanged, except --source-root.
+      PowerShell-bound --yes and --help are forwarded explicitly; the `--`
+      end-of-options marker is not supported on this forwarding path.
 "@
 }
 
@@ -231,6 +242,7 @@ sbtd-workflow-onboard directory.
     "catalog.json",
     "catalog.schema.json",
     "scripts/onboard.py",
+    "scripts/sbtd_project.py",
     "templates/agents/AGENTS.global.md",
     "templates/agents/AGENTS.project.md",
     "templates/skills",
@@ -275,6 +287,59 @@ function Find-Python {
   Stop-WithMessage "python or py is required to run $SourceRoot\scripts\onboard.py"
 }
 
+function Invoke-WorkflowMode {
+  $source = $SourceRoot
+  $forwarded = @()
+  $explicitYes = $Yes.IsPresent
+  for ($index = 0; $index -lt $WorkflowArgs.Count; $index++) {
+    $arg = $WorkflowArgs[$index]
+    if ($arg -eq "--source-root") {
+      if (($index + 1) -ge $WorkflowArgs.Count) {
+        Stop-WithMessage "--source-root requires a value"
+      }
+      $source = $WorkflowArgs[$index + 1]
+      $index++
+      continue
+    }
+    if ($arg -like "--source-root=*") {
+      $source = $arg.Substring("--source-root=".Length)
+      $next = if (($index + 1) -lt $WorkflowArgs.Count) { $WorkflowArgs[$index + 1] } else { $null }
+      if ($null -ne $next -and $next.StartsWith('\') -and $source -match '^[A-Za-z]:?$') {
+        if ($source.Length -eq 1) { $source += ':' }
+        $source += $next
+        $index++
+      }
+      continue
+    }
+    if ($arg -ieq '--yes:$true') {
+      $explicitYes = $true
+      continue
+    }
+    if ($arg -ieq '--yes:$false') {
+      $explicitYes = $false
+      continue
+    }
+    $forwarded += $arg
+  }
+  if ($WorkflowMode -eq "cleanup-legacy" -and $GlobalSkillsDir) {
+    $forwarded += @("--global-skills-dir", $GlobalSkillsDir)
+  }
+  if ($explicitYes) {
+    $forwarded += "--yes"
+  }
+  if ($Help) {
+    $forwarded += "--help"
+  }
+  if ($WorkflowMode -cne $WorkflowMode.ToLowerInvariant()) {
+    Stop-WithMessage "WorkflowMode must be lowercase: migration, recovery, cleanup-legacy or upgrade"
+  }
+  Validate-SourceRoot $source
+  Find-Python
+  $arguments = $PythonPrefix + @((Get-OnboardPy), $WorkflowMode) + $forwarded
+  & $PythonExe @arguments
+  exit $LASTEXITCODE
+}
+
 function Invoke-External {
   param(
     [string]$FilePath,
@@ -300,12 +365,9 @@ function Get-CommonArgs {
   if ($SkipProjectAgents) { $args += "--skip-project-agents" }
   if ($GlobalAgentsPath) { $args += @("--global-agents-path", $GlobalAgentsPath) }
   if ($GlobalSkillsDir) { $args += @("--global-skills-dir", $GlobalSkillsDir) }
-  if ($TrellisUser) { $args += @("--trellis-user", $TrellisUser) }
-  foreach ($platformName in $TrellisPlatform) {
-    if ($platformName) { $args += @("--trellis-platform", $platformName) }
-  }
-  if ($SkipTrellisInit) { $args += "--skip-trellis-init" }
-  if ($SkipTrellisBootstrap) { $args += "--skip-trellis-bootstrap" }
+  if ($GraftRetireLegacy) { $args += "--graft-retire-legacy" }
+  if ($GraftLegacyBindings) { $args += @("--graft-legacy-bindings", $GraftLegacyBindings) }
+  if ($NoMcp) { $args += "--no-mcp" }
   return $args
 }
 
@@ -369,16 +431,6 @@ function Ensure-TargetAgentCli {
   Write-Colored "Target Agent CLI check" Cyan
   if ($script:AgentCliCheck.installed) {
     Write-Host "$label CLI passed verification: $command"
-    if (-not $npmInstalled) {
-      Write-Host "npm is required for the mandatory global Trellis and GitNexus CLIs; bootstrapping Node.js LTS + npm."
-      Invoke-Onboard "ensure-npm" @("--yes")
-      if (-not $DryRun) {
-        Update-AgentCliCheck
-        if (-not $script:AgentCliCheck.runtime.npm.installed) {
-          Stop-WithMessage "npm bootstrap completed but npm is still unavailable; required global tools cannot be installed."
-        }
-      }
-    }
     return
   }
 
@@ -485,11 +537,10 @@ function Resolve-InteractiveInputs {
   }
 
   if ($script:ProjectsOnly) {
-    $script:Action = "init-projects"
     $script:ProjectsRoot = $InitProjects
   }
   else {
-    Ensure-TargetAgentCli
+    Update-AgentCliCheck
     if (-not $Action) {
       $script:Action = Select-One "Onboard action:" @("init", "reset")
     }
@@ -497,6 +548,9 @@ function Resolve-InteractiveInputs {
 
   if ($ProjectsRoot) {
     Resolve-ProjectsRoot $ProjectsRoot
+  }
+  elseif ($Yes) {
+    $script:SkipProjectAgents = $true
   }
   else {
     $cwd = (Get-Location).Path
@@ -534,6 +588,100 @@ function Assert-PonytailProviderClear {
   }
 }
 
+# Graft is optional: the read-only `install-graft --json` probe (no --yes,
+# zero writes) is the single source of the real plan — frozen package, actual
+# npm prefix, telemetry target/changes. Only needs-confirmation leads to a
+# prompt and the confirmed `install-graft --yes`; blocked/operational states
+# degrade to a warning and onboarding continues without Graft. A confirmed
+# install failure still aborts the installer via Invoke-External.
+function Ensure-GraftCli {
+  Write-Host ""
+  Write-Colored "Graft CLI (optional)" Cyan
+
+  $probeArguments = $PythonPrefix + @((Get-OnboardPy), "install-graft", "--json")
+  Write-Host ("+ " + (@($PythonExe) + $probeArguments -join " "))
+  $probeOutput = & $PythonExe @probeArguments
+  $probeExit = $LASTEXITCODE
+  $probe = $null
+  try {
+    $probe = ($probeOutput -join "`n") | ConvertFrom-Json
+  }
+  catch {
+    $probe = $null
+  }
+  if ($null -eq $probe) {
+    Write-Warn "Graft CLI probe did not return a readable plan (exit $probeExit); skipping the optional Graft CLI."
+    return
+  }
+
+  $status = [string]$probe.status
+  $reason = [string]$probe.reason
+  if ($status -eq "already-installed") {
+    Write-Host "Graft CLI is already installed and usable; skipping."
+    return
+  }
+  if ($status -eq "blocked") {
+    if (-not $reason) { $reason = "unknown reason" }
+    Write-Warn "Graft CLI is blocked: $reason. Skipping the optional Graft CLI; existing GitNexus/Graft configuration and data are left untouched."
+    return
+  }
+  if ($status -ne "needs-confirmation") {
+    if (-not $reason) { $reason = "no reason given" }
+    Write-Warn "Graft CLI probe returned status '$status' (exit $probeExit): $reason. Skipping the optional Graft CLI."
+    return
+  }
+
+  $plan = $probe.plan
+  $package = "@nanonets/graft@0.22.0"
+  if ($plan -and $plan.PSObject.Properties["package"] -and $plan.package) {
+    $package = [string]$plan.package
+  }
+  $prefix = "<unresolved>"
+  if ($plan -and $plan.PSObject.Properties["prefix"] -and $plan.prefix) {
+    $prefix = [string]$plan.prefix
+  }
+  $telemetryPath = "<unknown>"
+  $changeText = "none"
+  if ($plan -and $plan.PSObject.Properties["telemetry"] -and $plan.telemetry) {
+    if ($plan.telemetry.PSObject.Properties["path"] -and $plan.telemetry.path) {
+      $telemetryPath = [string]$plan.telemetry.path
+    }
+    if ($plan.telemetry.PSObject.Properties["changes"] -and $plan.telemetry.changes) {
+      $pairs = @()
+      foreach ($property in $plan.telemetry.changes.PSObject.Properties) {
+        $pairs += ("{0}={1}" -f $property.Name, $property.Value)
+      }
+      if ($pairs.Count -gt 0) { $changeText = $pairs -join ", " }
+    }
+  }
+  $telemetryOnly = $probe.PSObject.Properties["before"] -and $probe.before -and $probe.before.PSObject.Properties["installed"] -and $probe.before.installed
+  $prompt = "Install the optional Graft CLI now?"
+  if ($telemetryOnly) {
+    Write-Host "Graft telemetry opt-out plan:"
+    Write-Host "  Existing CLI: verified; only persist telemetry opt-out (no package install)"
+    $prompt = "Persist telemetry opt-out for the existing Graft CLI now?"
+  }
+  else {
+    Write-Host "Graft CLI install plan:"
+    Write-Host "  Package: $package (frozen pin; never latest)"
+    Write-Host "  Target: npm global prefix $prefix"
+    Write-Host "  Requires: Node.js >= 20 and npm native lifecycle scripts for the pinned allow list"
+  }
+  Write-Host "  Telemetry: set $changeText in $telemetryPath (unknown keys preserved)"
+  if (-not (Prompt-YesNo $prompt "n")) {
+    Write-Host "Graft optional changes declined; continuing without changes."
+    return
+  }
+  if ($telemetryOnly) {
+    Invoke-Onboard "install-graft" @("--telemetry-only", "--yes")
+  }
+  else {
+    Invoke-Onboard "install-graft" @("--yes")
+  }
+  Update-Check
+}
+
+
 function Install-MissingRuntimeAndSkills {
   Write-Host ""
   Write-Colored "Preflight check" Cyan
@@ -559,17 +707,7 @@ function Install-MissingRuntimeAndSkills {
     Update-Check
   }
 
-  if (-not (Tool-Installed "trellis") -and (Runtime-Installed "npm")) {
-    Write-Host "Trellis CLI is required globally; installing @mindfoldhq/trellis@latest."
-    Invoke-External "npm" @("install", "-g", "@mindfoldhq/trellis@latest")
-    Update-Check
-  }
-
-  if (-not (Tool-Installed "gitnexus") -and (Runtime-Installed "npm")) {
-    Write-Host "GitNexus CLI is required globally; installing gitnexus@latest."
-    Invoke-External "npm" @("install", "-g", "gitnexus@latest")
-    Update-Check
-  }
+  Ensure-GraftCli
 
   if (-not (Skill-Installed "caveman")) {
     if (Prompt-YesNo "caveman skill is missing. Install it as a user-level global skill?" "n") {
@@ -591,41 +729,6 @@ function Install-MissingRuntimeAndSkills {
   }
 }
 
-function Split-TrellisPlatforms {
-  param([string]$Value)
-  if ([string]::IsNullOrWhiteSpace($Value)) { return @() }
-  return @($Value -replace "\s", "" -split "," | Where-Object { $_ } | ForEach-Object { $_.TrimStart("-") })
-}
-
-function Resolve-TrellisProjectSetupInputs {
-  if ($SkipTrellisInit) { return }
-  if ($script:ProjectRoots.Count -eq 0) { return }
-  $needsInit = @($script:ProjectRoots | Where-Object {
-    -not (Test-Path -LiteralPath (Join-Path $_ ".trellis"))
-  })
-  if ($needsInit.Count -eq 0) { return }
-
-  if (-not (Get-Command trellis -ErrorAction SilentlyContinue)) {
-    Write-Warn "The required global Trellis CLI is unavailable; project initialization will be reported as blocked."
-    return
-  }
-
-  while ([string]::IsNullOrWhiteSpace($script:TrellisUser)) {
-    $script:TrellisUser = Prompt-Text "Trellis developer username for trellis init -u"
-    if ([string]::IsNullOrWhiteSpace($script:TrellisUser)) {
-      if (Prompt-YesNo "Skip trellis init for all selected projects that do not have .trellis/?" "n") {
-        $script:SkipTrellisInit = $true
-        return
-      }
-    }
-  }
-
-  if ($script:TrellisPlatform.Count -eq 0) {
-    $rawPlatforms = Prompt-Text "Trellis platform flags, comma-separated without --. Blank uses the Agent platform default for codex, claude, or kimi; Oh My Pi requires omp and/or pi"
-    $script:TrellisPlatform = @(Split-TrellisPlatforms $rawPlatforms)
-  }
-}
-
 function Update-ProjectsCheck {
   if (-not $ProjectsRoot) {
     $script:ProjectsCheck = [pscustomobject]@{ mode = "check-projects"; projects = @() }
@@ -638,9 +741,13 @@ function Update-ProjectsCheck {
     $ProjectsRoot,
     "--json"
   )
+  if ($SkipProjectAgents) { $arguments += "--skip-project-agents" }
   $json = & $PythonExe @arguments
-  if ($LASTEXITCODE -ne 0) {
-    throw "Project checks failed with exit code $LASTEXITCODE."
+  $checkExit = $LASTEXITCODE
+  if ($checkExit -ne 0) {
+    Write-Host ($json -join "`n")
+    Write-Host "Project checks failed with exit code $checkExit."
+    exit $checkExit
   }
   $script:ProjectsCheck = $json | ConvertFrom-Json
 }
@@ -887,8 +994,7 @@ function Select-AndConfigureMcp {
   Write-Host "  1) Chrome DevTools MCP"
   Write-Host "  2) Playwright MCP"
   Write-Host "  3) Maestro MCP"
-  Write-Host "  4) GitNexus MCP (auto from gitnexus CLI)"
-  Write-Host "  5) Custom stdio MCP server"
+  Write-Host "  4) Custom stdio MCP server"
   $raw = Read-Host "Select comma-separated options, or blank for none"
   if (-not $raw) { return }
   $items = $raw -replace "\s", "" -split ","
@@ -908,31 +1014,6 @@ function Select-AndConfigureMcp {
         }
       }
       "4" {
-        $config = Get-ManualMcpConfig "GitNexus MCP"
-        if ($config -and $config.command) {
-          $serverArgs = @()
-          if ($config.args) {
-            foreach ($arg in $config.args) {
-              $serverArgs += [string]$arg
-            }
-          }
-          $envHash = Convert-EnvObjectToHash $config.env
-          Configure-StdioMcp "gitnexus" ([string]$config.command) $serverArgs $envHash
-        }
-        else {
-          Write-Warn "GitNexus CLI path was not detected; falling back to manual MCP command input."
-          $command = Prompt-Text "GitNexus MCP command, or blank to skip"
-          if (-not $command) {
-            Write-Warn "Skipped GitNexus MCP: command is required."
-            continue
-          }
-          $argsLine = Prompt-Text "GitNexus MCP args as a simple space-separated list"
-          $serverArgs = if ($argsLine) { $argsLine -split "\s+" } else { @() }
-          $envHash = Prompt-EnvPairs
-          Configure-StdioMcp "gitnexus" $command $serverArgs $envHash
-        }
-      }
-      "5" {
         $name = Prompt-Text "MCP server name"
         $command = Prompt-Text "MCP command"
         if (-not $name -or -not $command) {
@@ -953,6 +1034,7 @@ function Select-AndConfigureMcp {
 
 function Show-PlanAndExecute {
   $common = Get-CommonArgs
+  $onboardMode = if ($script:ProjectsOnly) { "init-projects" } else { $Action }
   Write-Host ""
   Write-Colored "Final plan" Cyan
   if (-not $script:ProjectsOnly) {
@@ -965,7 +1047,7 @@ function Show-PlanAndExecute {
   Write-Host ""
   Write-Host ("Target platform: " + (Platform-Label $Platform))
   Write-Host "Source root: $SourceRoot"
-  Write-Host "Action: $Action"
+  Write-Host "Action: $onboardMode"
   Write-Host ("Project roots: " + ($(if ($ProjectsRoot) { $ProjectsRoot } else { "<none>" })))
   Write-Host ("Project AGENTS: " + ($(if ($SkipProjectAgents) { "skip" } else { "install" })))
   Write-Host ("Bundled and external Skills: " + ($(if ($script:ProjectsOnly) { "not touched" } else { "required global" })))
@@ -973,17 +1055,17 @@ function Show-PlanAndExecute {
   Write-Host ("MCP: " + ($(if ($script:ProjectsOnly -or $NoMcp) { "skip" } else { "configure interactively" })))
 
   if (-not $Yes) {
-    if (-not (Prompt-YesNo "Proceed with onboard $Action?" "n")) {
+    if (-not (Prompt-YesNo "Proceed with onboard $onboardMode?" "n")) {
       Stop-WithMessage "Installation cancelled."
     }
   }
 
   if ($DryRun) {
     Write-Host ""
-    Write-Host "Dry run: skipped onboard $Action writes."
+    Write-Host "Dry run: skipped onboard $onboardMode writes."
   }
   else {
-    Invoke-Onboard $Action ($common + @("--yes"))
+    Invoke-Onboard $onboardMode ($common + @("--yes"))
   }
 }
 
@@ -991,7 +1073,9 @@ function Final-Checks {
   Write-Host ""
   Write-Colored "Final check" Cyan
   if ($script:ProjectsOnly) {
-    Invoke-Onboard "check-projects" @("--projects-root", $ProjectsRoot)
+    $projectArguments = @("--projects-root", $ProjectsRoot)
+    if ($SkipProjectAgents) { $projectArguments += "--skip-project-agents" }
+    Invoke-Onboard "check-projects" $projectArguments
     return
   }
   Invoke-Onboard "check-agent-cli" @("--platform", $Platform)
@@ -1022,6 +1106,12 @@ function Final-Checks {
   }
 }
 
+if ($WorkflowMode) {
+  Invoke-WorkflowMode
+}
+if ($WorkflowArgs.Count -gt 0) {
+  Stop-WithMessage "Unknown option: $($WorkflowArgs[0])"
+}
 if ($Help) {
   Show-Usage
   exit 0
@@ -1031,7 +1121,9 @@ Validate-SourceRoot $SourceRoot
 Find-Python
 Show-Logo
 Resolve-InteractiveInputs
+Update-ProjectsCheck
 if (-not $script:ProjectsOnly) {
+  Ensure-TargetAgentCli
   Install-MissingRuntimeAndSkills
   Select-AndConfigureMcp
 }
@@ -1040,6 +1132,5 @@ else {
   Write-Host "Project-only mode: skipped all global tool, Skill, Agent CLI, and MCP checks/installations."
 }
 Configure-ProjectOptionalItems
-Resolve-TrellisProjectSetupInputs
 Show-PlanAndExecute
 Final-Checks

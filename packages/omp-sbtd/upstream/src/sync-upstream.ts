@@ -541,6 +541,10 @@ export async function proveStableInstallPolicy(
         "import json",
         "import sys",
         "from pathlib import Path",
+        // v2.0.2 onboard.py imports sibling runtime modules (for example
+        // graft_runtime); the probe must resolve them from the scripts
+        // directory.
+        `sys.path.insert(0, ${JSON.stringify(dirname(onboardScript))})`,
         `spec = importlib.util.spec_from_file_location("sbtd_onboard", ${JSON.stringify(onboardScript)})`,
         "module = importlib.util.module_from_spec(spec)",
         'sys.modules["sbtd_onboard"] = module',

@@ -1,0 +1,92 @@
+# 测试运行汇总：{{scopeName}}
+
+## 执行结论
+
+- 结论：{{conclusion}}
+- 本轮定位：{{roundRole}}（中间轮／定点复跑／影响子集／最终计划范围；不把局部通过写成全项目通过）
+
+| 指标 | 原生结果 |
+| --- | --- |
+| 通过 | {{passed}} |
+| 失败 | {{failed}} |
+| 跳过 | {{skipped}} |
+| 不稳定 / 重试后通过 | {{flaky}} |
+| 未执行 | {{notRun}} |
+| 耗时 | {{duration}} |
+
+## 运行信息
+
+| 字段 | 值 |
+| --- | --- |
+| 执行时间（含时区） | {{runTime}} |
+| 仓库 / worktree | {{repository}} |
+| 原始分支 / branch_slug | {{branch}} / {{branchSlug}} |
+| Source Ref / 完整 Commit SHA | {{sourceRef}} / {{commitSha}} |
+| 工作树状态 | {{worktreeState}} |
+| Runner / 浏览器或设备 / 版本 | {{runnerEnvironment}} |
+| 被测环境 / 部署版本 | {{targetEnvironment}} |
+| E2E Mode / Mock Strategy | {{e2eMode}} / {{mockStrategy}} |
+| Evidence Source / Source Revision | {{evidenceSource}} / {{sourceRevision}} |
+| Environment Alignment / Evidence Publication | {{environmentAlignment}} / {{evidencePublication}} |
+| Trigger / rtk | {{trigger}} / {{rtk}} |
+
+## 运行命令
+
+工作目录：`{{workingDirectory}}`
+
+```sh
+{{runCommand}}
+```
+
+退出码：{{exitCode}}。仅保留复现所需的非敏感参数；凭据变量只写变量名，不写值。
+
+## 关联 BDD 与本轮范围
+
+| 范围 / 场景 | .feature / 契约 | spec / case / flow | 本轮是否执行 |
+| --- | --- | --- | --- |
+{{scopeRows}}
+
+{{scopeBoundary}}
+
+## 用例结果
+
+| Case / Scenario | Spec / Flow / 位置 | 平台 | 结果 | 耗时 / 证据定位 |
+| --- | --- | --- | --- | --- |
+{{resultRows}}
+
+## 失败、修复与复跑
+
+| 轮次 / 类型 | 命令 / 原始证据 | 失败项与原因分类 | 修复及修改文件 | 结果 / 后续动作 |
+| --- | --- | --- | --- | --- |
+{{roundRows}}
+
+{{failureExplanation}}
+
+## 覆盖范围 → API URI
+
+{{apiApplicability}}
+
+| 覆盖范围 | Method | URI path | Case / 契约 | 期望状态 | 实际验证的副作用 / 响应字段 |
+| --- | --- | --- | --- | --- | --- |
+{{apiRows}}
+
+## 产物与状态
+
+| 产物 | 路径 / 说明 |
+| --- | --- |
+| 正式 native / raw 报告 | {{nativeReport}} |
+| 同 stem 中文汇总 | {{summaryReport}} |
+| 辅助 JSON / JUnit / trace / 截图 | {{attachments}} |
+| Evidence sidecar / envelope | {{evidenceEnvelope}} |
+
+| 状态项 | 值 / 依据 |
+| --- | --- |
+| Final Test Report | {{finalTestReportStatus}} |
+| Run Summary MD | {{runSummaryStatus}} |
+| Targeted Rerun | {{targetedRerun}} |
+| Affected Subset Rerun | {{affectedSubsetRerun}} |
+| Final Full Rerun | {{finalFullRerun}} |
+
+## 未执行项、风险与发布边界
+
+{{limitations}}

@@ -1,56 +1,48 @@
 # Lessons
 
-本文件是当前配置摘录仓库的 lessons 必读短入口，不再保存完整历史库。每次执行本仓库操作前仍必须先读取本文件，再按当前任务主题、错误信息、工具名或 tags 读取命中的详情。
+本文件是本仓库唯一的 lessons 必读短入口，只保留阅读协议、topic 路由和少量高频提醒。每次操作前先读本文件；主题明确时按路由读取命中的 topic，需要按错误信息、工具名、tags 或 lesson ID 定位时查[完整索引](lessons/index.md)，不默认通读整个库。
 
-完整 lessons 结构：
+完整 lesson 只保存在 `docs/lessons/topics/<topic>.md`；归档后只保存在索引指向的 `docs/lessons/archive/YYYY-QN.md`，不保留两份正文。索引负责检索，入口摘要不替代详情。
 
-- `docs/lessons/index.md`：按 `id`、tags、适用场景和详情路径维护索引。
-- `docs/lessons/topics/<topic>.md`：保存分主题完整 lesson 详情。
-- `docs/lessons/archive/YYYY-QN.md`：低频历史归档；默认不读，只有 index 明确指向或用户要求追溯时再读。
+历史 lesson（含下方作者摘要）的旧路径、版本、测试数量和配置状态按记录当时理解，不授权恢复已退役流程。现行仓库定位与根 `.gitignore` 契约见 [README「Repository」](../README.md#repository)；版本检查与自动化权限见[版本化 automation prompt](../prompts/automations/sbtd-workflow-tools-version-check.md)。发生差异时按当前规则执行，保留历史详情。
 
 写入新 lesson 时：
 
 1. 先判断是否属于长期 lesson；普通任务总结和临时调研不要写入。
-2. 将完整记录写入对应 `docs/lessons/topics/<topic>.md`。
-3. 同步更新 `docs/lessons/index.md`。
-4. 只有跨任务高频、缺失会反复导致错误的规则，才把一句话摘要补到本短入口。
-5. 不要把完整 lesson 历史重新堆回本文件。
+2. 按 `lessons-record` 核验身份，在对应 topic 的本人块保存完整记录，并更新索引；保留历史 ID、锚点与其他作者块。
+3. 只有跨任务高频、缺失会反复导致错误的预防措施才补一句话摘要，并链接到具体详情；普通路径、版本和库存信息查当前配置，不在入口另存一份。
 
 ## 高频摘要
 
-- 当前仓库是 Codex 配置文件与 Skill 的摘录 / 同步源，不是真实业务项目；修改时先区分“配置源文件”和“真实项目模板”。
-- 每日版本检查自动化只能读取 `ENTRYPOINT.md` 当前版本作为比对基线，不能自动写回版本号；只有用户手动输入 `更新` / `update` 才执行写回和归档。
-- 普通修改只维护仓库文件并评估 README 两份文件和版本化 automation prompt；只有用户主动输入 `同步` / `sync` 才同步本地配置并按差异同步 Orca live prompt，`更新` / `update` 只处理版本写回和归档。
-- 执行显式 `sync` 时必须重新读取当前工作树 `AGENTS.md` 的同步表并据此生成目标清单；不得用会话注入、历史摘要或缓存列表替代当前 tracked source。
-- Orca automation 新标签空白时先按 run 的 `terminalPtyId` 关联 `terminal list/show`；同一 tab / leaf 下 renderer 绑定空闲 shell、实际 Agent PTY detached 时，任务仍可能正常执行，不能因空白 pane 盲目重跑或终止。
-- 自动化专用规则只能写入本仓库根 `AGENTS.md` 或相关自动化说明，不要污染可复用的全局 / 项目 AGENTS 模板。
-- 展示型或文档型任务中的参考配置，默认先视为展示内容；只有用户明确要求修改当前仓库配置时才落地到仓库根。
-- 使用 `rtk` 后遇到明显包装器参数解析异常时，必须用原生命令复验同一事实。
-- unit / API / Playwright / Maestro 报告型测试在使用 `rtk` 前必须评估缓存 / 回放和文件写入风险；报告缺失、陈旧或不可证明时用原生命令复验。
-- 修改 macOS 可直接执行的 Bash installer 时，必须用 Bash 3.2 + `set -u` 验证空数组路径；空数组展开要使用 Bash 3.2 兼容写法，避免 `unbound variable`。
-- 交互式 Bash installer 在重定向循环、pipeline 或 process substitution 内提示用户时，必须从脚本启动时保留的专用 stdin fd 读取并处理 EOF；不能让项目数据流劫持 prompt 后无限输出 `Invalid choice.`。
-- 第三方 CLI 生成项目文件时必须显式指定并复验最终路径、覆盖和备份语义；模板增量合并按配置原子条目求差集，并用连续执行两次的测试证明幂等。
-- Shell 脚本同时支持 `NO_COLOR` 等标准环境约定和对应 CLI flag 时，外部环境输入与内部解析状态必须使用不同变量名，并用真实 TTY/PTY 覆盖默认和禁用分支。
-- 根 `.gitignore` 的当前 canonical 内容严格为 `.DS_Store`、`.gitnexus/`、`.trellis/`、`__pycache__/`、`AGENTS.md` 五行。authoritative `ENTRYPOINT.md` 必须由 Git 追踪。根 `AGENTS.md` 是本机可选文件，不进入远程 `main`，不得作为全操作前置条件；契约测试不得读取被忽略的本地副本去证明 fresh-clone 可恢复。
-- 通过 Skills CLI 生成的 `.claude/skills`、`.agents/skills` 等项目级 alias 只有在 target 存在且属于当前 canonical 仓库设计时才能追踪；用户级全局安装产生的项目内 alias 或 broken symlink 必须删除。
-- External Skill installer 的 manifest、source subpath 和 license 路径必须受声明根目录约束；canonical 必须完整校验；事务恢复不完整时不得删除唯一 rollback 备份，必须保留并报告路径。
-- 编写一次性验证脚本前，先对照本入口和命中的 topic，避免重复使用已记录的问题写法；Markdown 解析优先按标题层级和表头语义，不要按裸 `---` 或脆弱正则切割。
-- 校验脚本必须按目标文件职责断言，先确认实际 schema；不要用同一 expected 列表无差别扫描所有文件。
-- 读取结果含分页、elision 或 `Showing lines` footer 时不得做整文件 / fuzzy 写回；大文件编辑后立即检查行数、语法、diff stat 和 footer。
-- 第三方 CLI 的 `list` / `--help` / provider probe 也可能创建配置或 cache；check / preflight 必须先证明无副作用，或在既有配置根 / 隔离 HOME 中运行并验证未新增路径。
-- Web UI 测试资产和 Playwright 报告路径必须有参数和验证门；Playwright 正式报告以命名 HTML 为主轴，`results.json` / `junit.xml` / 默认 `index.html` 不能决定最终 Markdown stem。
-- Playwright HTML reporter 的 `outputFolder` 必须和正式命名报告快照目录分离；默认 runner 临时目录用 `tests/e2e/reports/.playwright-html-current/`，正式快照进入 `tests/e2e/reports/html/`。
-- API / Web E2E / Mobile E2E / Hybrid E2E 正式验证不能只停在 stdout-only、terminal-only 或诊断 reporter；Playwright `--reporter=list`、API 自定义脚本终端输出、Maestro stdout-only 都必须补正式 reporter、捕获 raw report 或标记 blocked。
-- 新增或修改用户可见 BDD `.feature` 场景时，首个 `.feature` 默认中文场景文案 + 英文 Gherkin 关键词，并在写入前和验证阶段确认语言规则。
-- OMP / Claude 的 GitNexus `Transport closed` 要先跑真实 MCP handshake：缺 `lbugjs.node` 时跑该安装目录的 LadybugDB `install.js`；`~/.claude.json` 还要把 command 钉成 nvm 绝对 `node`，避免干净 PATH 下 `#!/usr/bin/env node` 直接退出。
-- Onboard `init` 不得把空平台列表交给 `trellis init --yes`（Trellis 会默认装 Claude+Cursor）；`--platform codex|claude|kimi` 在未给 `--trellis-platform` 时作为默认 Trellis flag，`oh-my-pi` 必须显式 `omp`/`pi`。
+- 区分配置摘录源与真实项目模板：[仓库边界](lessons/topics/repository-workflow.md#lesson-20260701-config-excerpt-repo-boundary-config-excerpt-repo-boundary)。
+- 区分普通修改、显式 `sync` 与 `update`：[维护与同步边界](lessons/topics/repository-workflow.md#lesson-20260718-automation-sync-trigger-separation-separate-prompt-maintenance-from-live-sync)。
+- 编写一次性验证前查命中的经验，按目标文件职责与实际 schema 校验：[验证职责](lessons/topics/validation-scripts.md#lesson-20260701-structured-validation-by-file-role-structured-validation-by-file-role)。
+- 报告产物存在不等于测试通过：[报告与结论分离](lessons/topics/bdd-e2e-reports.md#lesson-20260701-e2e-report-artifact-status-separation-e2e-report-artifact-status-separation)。
 
 ## Topic 路由
 
 | topic | read_when | detail |
 |---|---|---|
-| repository-workflow | 版本检查、同步、配置摘录仓库定位、AGENTS / ENTRYPOINT / README 规则、GitHub release 依据、合并远程分支或展示型任务、OMP / Claude GitNexus MCP、`Transport closed`、Onboard Trellis init 平台 | `docs/lessons/topics/repository-workflow.md` |
-| validation-scripts | 一次性校验脚本、Markdown 解析、shell quoting、Node / Python 脚本、动态导入、结构化断言、schema 检查 | `docs/lessons/topics/validation-scripts.md` |
-| bdd-e2e-reports | BDD 语言、Web UI 测试资产、Playwright / Maestro 报告、E2E 报告与测试状态解耦 | `docs/lessons/topics/bdd-e2e-reports.md` |
+| repository-workflow | 仓库定位、版本检查、同步、AGENTS / ENTRYPOINT / README、安装与迁移、清理授权、历史 Trellis / GitNexus 问题 | [repository-workflow](lessons/topics/repository-workflow.md) |
+| validation-scripts | 一次性脚本、Markdown / schema 解析、Shell / Python / Node、测试取证、编辑恢复、路径与事务验证 | [validation-scripts](lessons/topics/validation-scripts.md) |
+| bdd-e2e-reports | BDD 语言、Web UI 资产、Playwright / Maestro 报告、E2E 状态与 revision 证据 | [bdd-e2e-reports](lessons/topics/bdd-e2e-reports.md) |
 
-完整索引见 `docs/lessons/index.md`。
+## 作者高频摘要
+
+以下作者块保持原文；相关完整记录由[索引](lessons/index.md)按作者 ID 与关键词定位，历史数量和状态不作为当前验收基线。
+
+<!-- lessons:640:start -->
+- 作为通过证据的测试 / 验证命令优先无管道；若使用管道，按当前 shell 立即保存并返回 runner 状态（Bash `PIPESTATUS[0]` / zsh `pipestatus[1]`），仅打印退出码不够；后台 job 须等最终 summary。
+- 编辑长行模板前先在私有临时目录保存完整文件快照；备用 Git patch 必须相对记录的 base commit 包含 staged + unstaged 差异，并另存未追踪内容。截断恢复只改工作树，不动用户暂存区；不得用仅含 unstaged 的 patch 从 HEAD 重建。
+- 批量安装的身份校验必须覆盖整个替换集合，不能仅凭核心文件授权覆盖 sibling；外层组合安装结果时直接保留结构化 transaction 与恢复路径，不通过丢弃 stdout 维持 JSON 整洁。
+- 全量验证（267 tests + 450 subtests）时长波动大：窗口 ≥600s 或按文件拆分；timeout 一律充足窗口重跑取证并记录最后进度点，不得直接当 pass/fail 证据，原因未证实前不归因为“环境问题”。
+- CLI 参数或入口改动必须用真实解释器验证合法输入与拒绝输入；源码中删掉名字不等于运行时拒绝，负例非零也可能只是语法／编码错误。平台实测范围分别报告，不以 macOS PowerShell 代替 Windows。
+<!-- lessons:640:end -->
+
+<!-- lessons:kuno:start -->
+- 取证命令不得在非正常 `umask` 下代表最终测试；权限相关失败须按正常 `umask` 分类复跑，关闭环境变量后仍要完整 suite。
+- targeted rerun 只证明该失败项修复；最终交付必须单独证明同一修正环境下的 full suite。
+- 审查建议先核对既有契约并走真实消费链；失败断言不自动证明产品违约或授权策略变更，夹具不能替被测行为完成工作。
+- 明确未写入回执优先于同字节现场和更旧 checkpoint；intent 对应的未知现场须阻断恢复。
+- 全量若封存当前安装包，先完成源码编辑、compileall及其他缓存写入再冻结运行；“检查命令”不等于只读，不能在验证期间改写封存输入。
+<!-- lessons:kuno:end -->

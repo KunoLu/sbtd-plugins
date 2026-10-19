@@ -1,0 +1,5 @@
+# SBTD migration maintenance window
+
+Normal project work is paused for the explicitly selected migration batch. Continue only the user's authorized migration deployment, evidence verification, or recovery procedure using the recorded manifest and outcomes.
+
+Preserve legacy data and private originals. Do not initialize or invoke the retired Trellis runtime, infer successful deployment, or run cleanup without its separate current confirmation. Resume normal work only after the batch's deployment and acceptance have actually completed.

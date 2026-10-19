@@ -168,6 +168,17 @@ The Markdown summary must record:
 - Unexecuted items, reasons for skipping, remaining risks, and contract / mock / environment / account / device details.
 - Do not include real accounts, secrets, PII, production data, full tokens, sensitive request headers, or production screenshots.
 
+### Fixed Chinese execution-summary layout
+
+Before writing an agent-authored formal execution summary, load [the canonical run-summary template](references/run-summary.zh-CN.md.template). Keep its nine level-two sections in the given order. Fill tables from the current native/raw evidence; do not replace the result table with an inline JSON object, collapse the report into long paragraphs, or move essential commands, results and limitations exclusively into another private `final.md`. This layout is shared by API, unit, Web, mobile and hybrid execution summaries; it changes neither existing report names nor evidence schemas.
+
+- Replace every `{{...}}` field. Unsupported counts are `未提供（原因）`, not invented zeros; skipped, flaky and unrun cases remain distinct under the runner's actual semantics. Preserve native status labels when normalization would lose meaning.
+- Retain each section even when not applicable, using `不适用：原因` instead of empty tables or placeholder rows. In particular, do not invent BDD traceability or API URI coverage for unit/UI-only runs. Only API/integration scope requires the URI matrix.
+- Keep the command, source/environment distinction, planned scope, failed rounds and final-scope status readable in this summary. For large suites, list failures/skips here and link the complete native case list with its exact scope/count; do not claim an abbreviated table is exhaustive.
+- Optional tool-specific details (coverage scores, selector audit, device matrix) go after these sections as appendices. The Web UI generator's coverage-assessment template is such an appendix, not a competing execution-summary format.
+- Before reporting `Run Summary MD: generated`, verify the section order, absence of unfilled fields, native/report stem pairing, case/count/exit-code agreement, failed-round retention, source and environment identity, and privacy redaction. A formatted document alone proves neither a test pass nor exact revision alignment.
+- Do not rewrite historical evidence. A reformatted preview from retained results must be a separate local artifact explicitly marked `历史证据排版预览，未重新执行测试`; it does not refresh timestamps, SHA, deployment status or final-run evidence. Preserve project-native/generated summaries as source artifacts; when they do not follow this layout, the agent-authored companion uses it without modifying the runner.
+
 Additionally report in the final output:
 
 - `Final Test Report`: `generated` / `blocked` / `not-supported` / `not-needed`.

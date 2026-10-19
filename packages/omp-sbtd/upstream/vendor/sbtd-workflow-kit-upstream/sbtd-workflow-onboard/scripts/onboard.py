@@ -11,6 +11,7 @@ import platform
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -20,11 +21,36 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
+if __name__ == "__main__":
+    # Installed source directories can themselves be sealed deployment inputs.
+    # CLI imports must not mutate those inputs by adding bytecode caches.
+    sys.dont_write_bytecode = True
+
+if TYPE_CHECKING:
+    from sbtd_identity import IdentityResult
+from graft_runtime import check_graft, install_graft
+from onboard_arguments import (
+    SingleValueAction,
+    WorkflowArgumentParser,
+    _add_migration_context,
+    _check_migration_context,
+    add_cleanup_legacy_parser,
+    add_migration_parser,
+    add_recovery_parser,
+    add_upgrade_parser,
+    validate_cleanup_legacy_args,
+    validate_developer_name,
+    validate_migration_args,
+    validate_recovery_args,
+    validate_upgrade_args,
+)
+from sbtd_project import StateInspection, TaskDataError, inspect_project_state
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SKILL_ENTRY_DIR = Path(__file__).absolute().parents[1]
+ONBOARD_SCRIPT_PATH = Path(__file__).absolute()
 CATALOG_PATH = SKILL_DIR / "catalog.json"
 EXTERNAL_STABLE_ROOT = SKILL_DIR / "assets" / "external-skills" / "stable"
 EXTERNAL_STABLE_MANIFEST = EXTERNAL_STABLE_ROOT / "MANIFEST.json"
@@ -32,11 +58,17 @@ EXTERNAL_STABLE_MANIFEST = EXTERNAL_STABLE_ROOT / "MANIFEST.json"
 
 def read_skill_frontmatter_name(skill_md: Path) -> str | None:
     try:
-        lines = skill_md.read_text(encoding="utf-8").splitlines()
-    except UnicodeDecodeError:
-        lines = skill_md.read_text(errors="ignore").splitlines()
+        content = skill_md.read_bytes()
     except OSError:
         return None
+    return skill_frontmatter_name_from_bytes(content)
+
+
+def skill_frontmatter_name_from_bytes(content: bytes) -> str | None:
+    try:
+        lines = content.decode("utf-8").splitlines()
+    except UnicodeDecodeError:
+        lines = content.decode("utf-8", errors="ignore").splitlines()
 
     if not lines or lines[0].strip() != "---":
         return None
@@ -247,13 +279,57 @@ TEMURIN_RELEASES_API_TEMPLATE = (
     "https://api.github.com/repos/adoptium/temurin{major}-binaries/releases/latest"
 )
 MAESTRO_INSTALL_URL = "https://get.maestro.mobile.dev"
-CAVEMAN_INSTALL_SPEC = "JuliusBrussee/caveman"
-CAVEMAN_INSTALL_SH_URL = (
-    "https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh"
+CAVEMAN_SOURCE_REPO = "https://github.com/JuliusBrussee/caveman.git"
+CAVEMAN_PINNED_REF = "v2.6.0"
+CAVEMAN_PINNED_REVISION = "b82c0ad42c2bedc1f2cd78e414dadfaffbaaeec3"
+CAVEMAN_CORE_SKILL_SHA256 = "c4d7354b4b063d54601fcdd5097a5b1713d1a1a2e386ac39efa438aa1ffef8ce"
+CAVEMAN_KNOWN_CORE_SKILL_SHA256 = {
+    "v2.6.0": CAVEMAN_CORE_SKILL_SHA256,
+    "v2.5.0": "fec5718a391dd9d8c89746d39e0cc0fa7aa5b50447669a15e44c3244167828c0",
+}
+CAVEMAN_KNOWN_FAMILY_SHA256 = {
+    # Reviewed at f9a039a93d249f3fcdb47a9e02544cd1ce37ba4a.
+    "v2.5.0": {
+        "cavecrew": "673643f8c42f06f0904eb975a56923583c2cd47ce4bf5a5ac1e5e49b8e4b2c66",
+        "caveman": "cfe5ad82c6b43421624d20dd30dc83100bb9516f889b0b2a8bb2cdd0dbd2a6be",
+        "caveman-commit": "68fce6cc3c50050e8ede6df99d4f478582d9b5952782c441acf2477b16d706db",
+        "caveman-compress": "3d618a06313658b3f108bf82c2f97591643e7fee83cb5990c30e5a044e9a0587",
+        "caveman-discover": "0a52f133aef4d3b81e9554cc43132bcf1accedb1154f6ac8e75df24f5f58f537",
+        "caveman-evidence-review": "fc5959727ef2f822d756c7e837abea51be91c32e0ca87758c1b77f68c98d5552",
+        "caveman-explore": "81c49c489e8d94ffb4cf47e05632235a88d125c4a05e6d2cf64bc0535aa87895",
+        "caveman-help": "63b42410962891586b7a5317391e39b8b0a90370144be4d7281e43c68b140947",
+        "caveman-learn": "9c1442a0b61945e1bc37240d9a494be4658768e56e61b76943fb0cbc18d805cd",
+        "caveman-manage": "e6ad788986936cbe49bdf12cf122fa966dd9e20c0ea7716397e0049d9f833d5a",
+        "caveman-optimize": "35dd36fa4b6fe800e9c1db8818b5e79ee18448372f33bd48ee593516d131a947",
+        "caveman-review": "d50a54e5b5a5bae7fcac1a4472cfd34ce47c9a8183d1357928eac4c2bd8322db",
+        "caveman-setup": "546eb697be5b87cec06117c4eb6d3e9eac55331cb860d2743c2d7b6f45c261b4",
+        "caveman-stats": "652eaffb8f6c635431ed238fa7ae2126e138ad7b1d26fae7390f8edc1af17bb0",
+    },
+    # Reviewed at CAVEMAN_PINNED_REVISION.
+    "v2.6.0": {
+        "cavecrew": "673643f8c42f06f0904eb975a56923583c2cd47ce4bf5a5ac1e5e49b8e4b2c66",
+        "caveman": "26b5e133a79a0251dad5e57acaa22ef601731fe59fb4637f9f150d7dfc250bad",
+        "caveman-commit": "68fce6cc3c50050e8ede6df99d4f478582d9b5952782c441acf2477b16d706db",
+        "caveman-compress": "3d618a06313658b3f108bf82c2f97591643e7fee83cb5990c30e5a044e9a0587",
+        "caveman-discover": "0a52f133aef4d3b81e9554cc43132bcf1accedb1154f6ac8e75df24f5f58f537",
+        "caveman-evidence-review": "fc5959727ef2f822d756c7e837abea51be91c32e0ca87758c1b77f68c98d5552",
+        "caveman-explore": "81c49c489e8d94ffb4cf47e05632235a88d125c4a05e6d2cf64bc0535aa87895",
+        "caveman-help": "63b42410962891586b7a5317391e39b8b0a90370144be4d7281e43c68b140947",
+        "caveman-learn": "9c1442a0b61945e1bc37240d9a494be4658768e56e61b76943fb0cbc18d805cd",
+        "caveman-manage": "e6ad788986936cbe49bdf12cf122fa966dd9e20c0ea7716397e0049d9f833d5a",
+        "caveman-optimize": "35dd36fa4b6fe800e9c1db8818b5e79ee18448372f33bd48ee593516d131a947",
+        "caveman-review": "d50a54e5b5a5bae7fcac1a4472cfd34ce47c9a8183d1357928eac4c2bd8322db",
+        "caveman-setup": "546eb697be5b87cec06117c4eb6d3e9eac55331cb860d2743c2d7b6f45c261b4",
+        "caveman-stats": "652eaffb8f6c635431ed238fa7ae2126e138ad7b1d26fae7390f8edc1af17bb0",
+    },
+}
+CAVEMAN_DRIFT_ADVICE = (
+    "Local caveman family payload is newer or customized; "
+    "review it before replacing the pinned baseline."
 )
-CAVEMAN_INSTALL_PS1_URL = (
-    "https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1"
-)
+# Monitoring the v* installer/skill tag line only reports drift. A baseline
+# bump requires a human review of SKILL.md and installer behavior, then updates
+# ref, revision, hashes, and tests together in one change.
 JAVA_MIN_MAJOR = 17
 BUNDLED_SKILL_LEGACY_NAMES = {
     "sbtd-workflow-onboard": ("kuno-workflow-onboard-skills",),
@@ -265,20 +341,6 @@ CLI_TOOLS = (
         "globalInstall": "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh",
         "projectInstall": None,
         "advice": "Install RTK from rtk-ai/rtk and verify with `rtk gain`; do not treat the unrelated Rust Type Kit package as valid.",
-    },
-    {
-        "name": "trellis",
-        "versionArgs": ("--version",),
-        "globalInstall": "npm install -g @mindfoldhq/trellis@latest",
-        "projectInstall": None,
-        "advice": "Install Trellis globally so one verified CLI can initialize every selected project root.",
-    },
-    {
-        "name": "gitnexus",
-        "versionArgs": ("--version",),
-        "globalInstall": "npm install -g gitnexus@latest",
-        "projectInstall": None,
-        "advice": "Install GitNexus globally; each project keeps its own index while sharing the verified CLI and MCP command.",
     },
 )
 AGENT_CLI_SPECS = {
@@ -323,45 +385,6 @@ AGENT_PLATFORM_ALIASES = {
     "ohmypi": "oh-my-pi",
     "omp": "oh-my-pi",
 }
-TRELLIS_INIT_CAPABILITY_SET = "0.6.15"
-TRELLIS_INIT_PLATFORMS = (
-    "cursor",
-    "claude",
-    "opencode",
-    "codex",
-    "kilo",
-    "kiro",
-    "gemini",
-    "antigravity",
-    "devin",
-    "windsurf",
-    "qoder",
-    "codebuddy",
-    "copilot",
-    "droid",
-    "dsh",
-    "pi",
-    "reasonix",
-    "zcode",
-    "omp",
-    "trae",
-    "grok",
-    "kimi",
-    "snow",
-)
-TRELLIS_DEFAULT_FROM_AGENT_PLATFORM = {
-    "codex": "codex",
-    "claude": "claude",
-    "kimi": "kimi",
-}
-if any(
-    flag not in TRELLIS_INIT_PLATFORMS
-    for flag in TRELLIS_DEFAULT_FROM_AGENT_PLATFORM.values()
-):
-    raise RuntimeError(
-        "SBTD Onboard Agent-to-Trellis defaults must be Trellis init flags"
-    )
-TRELLIS_BOOTSTRAP_TASK_CANDIDATES = (".trellis/tasks/00-bootstrap-guidelines",)
 BUNDLED_SKILLS = tuple(SKILL_SOURCES.keys())
 MATTPOCOCK_CANONICAL_SKILLS = (
     "diagnosing-bugs",
@@ -384,7 +407,7 @@ MATTPOCOCK_LEGACY_RENAMES = {
     "to-issues": "to-tickets",
 }
 MATTPOCOCK_REMOVED_SKILLS = {
-    "zoom-out": "Removed upstream; use repo exploration, GitNexus exploring, codebase-design, or book-refactoring-pass instead.",
+    "zoom-out": "Removed upstream; use repo exploration, codebase-design, or book-refactoring-pass instead.",
 }
 MATTPOCOCK_REQUIRED_DEPENDENCIES = {
     "tdd": ("codebase-design",),
@@ -403,6 +426,7 @@ REFERENCED_SKILLS = (
     "impeccable",
     "shadcn",
     *PONYTAIL_REQUIRED_SKILLS,
+    "i-have-adhd",
 )
 INTERACTION_SKILLS = ("caveman",)
 if set(EXTERNAL_SKILL_SOURCES) != set(REFERENCED_SKILLS):
@@ -592,7 +616,10 @@ def resolve_project_roots(
 
 
 def run_command(
-    command: tuple[str, ...], timeout: int = 30, env: dict[str, str] | None = None
+    command: tuple[str, ...],
+    timeout: int = 30,
+    env: dict[str, str] | None = None,
+    cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str] | None:
     try:
         return subprocess.run(
@@ -602,6 +629,7 @@ def run_command(
             text=True,
             timeout=timeout,
             env=env,
+            cwd=str(cwd) if cwd else None,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -715,8 +743,7 @@ def check_npm_runtime() -> dict[str, object]:
             "version": node_version,
         },
         "nvm": nvm,
-        "requiredBeforeCliChecks": True,
-        "advice": "CLI tool checks run only after npm is usable. If npm is missing, run `python scripts/onboard.py ensure-npm --yes` after user confirmation.",
+        "advice": "Local tool detection does not require npm. Installing a selected npm-backed tool requires npm and explicit confirmation.",
     }
 
 
@@ -736,7 +763,31 @@ def check_cli_tool(spec: dict[str, str | tuple[str, ...]]) -> dict[str, object]:
         "advice": spec["advice"],
     }
     if name == "rtk" and path:
-        code, output = command_output(("rtk", "gain"), timeout=10)
+        with tempfile.TemporaryDirectory(prefix="sbtd-rtk-probe-") as probe_home:
+            probe_env = {
+                key: value
+                for key, value in os.environ.items()
+                if not key.upper().startswith("RTK_")
+            }
+            probe_env.update(
+                HOME=probe_home,
+                USERPROFILE=probe_home,
+                XDG_CONFIG_HOME=str(Path(probe_home) / "config"),
+                XDG_CACHE_HOME=str(Path(probe_home) / "cache"),
+                XDG_DATA_HOME=str(Path(probe_home) / "data"),
+                XDG_STATE_HOME=str(Path(probe_home) / "state"),
+            )
+            completed = run_command(
+                (str(Path(path).resolve()), "gain"),
+                timeout=10,
+                env=probe_env,
+                cwd=Path(probe_home),
+            )
+            code = completed.returncode if completed else None
+            output = (
+                (completed.stdout or completed.stderr).strip() if completed else ""
+            )
+        result["verificationScope"] = "isolated-probe"
         correct = code == 0
         version_looks_correct = bool(version and version.lower().startswith("rtk "))
         result["installed"] = correct
@@ -751,7 +802,7 @@ def check_cli_tool(spec: dict[str, str | tuple[str, ...]]) -> dict[str, object]:
             )
         elif result["verificationFailed"]:
             result["advice"] = (
-                "The rtk binary looks like rtk-ai/rtk, but `rtk gain` failed. Troubleshoot RTK data directory permissions or reinstall after user confirmation."
+                "The rtk binary looks like rtk-ai/rtk, but its isolated gain probe failed. Inspect the binary and probe error before choosing repair; the user's history directory was not tested."
             )
     elif name == "rtk":
         result["rtkGainVerified"] = False
@@ -989,82 +1040,6 @@ def toml_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def gitnexus_mcp_server_config(
-    gitnexus_check: dict[str, object],
-) -> dict[str, object] | None:
-    command = gitnexus_check.get("path")
-    if not gitnexus_check.get("installed") or not command:
-        return None
-    return {
-        "command": str(command),
-        "args": ["mcp"],
-        "env": {},
-    }
-
-
-def gitnexus_mcp_toml_example(gitnexus_check: dict[str, object]) -> str | None:
-    config = gitnexus_mcp_server_config(gitnexus_check)
-    if not config:
-        return None
-    return "\n".join(
-        [
-            "[mcp_servers.gitnexus]",
-            f'command = "{toml_string(str(config["command"]))}"',
-            'args = ["mcp"]',
-        ]
-    )
-
-
-def gitnexus_mcp_json_example(gitnexus_check: dict[str, object]) -> str | None:
-    config = gitnexus_mcp_server_config(gitnexus_check)
-    if not config:
-        return None
-    return json.dumps(
-        {"mcpServers": {"gitnexus": config}},
-        indent=2,
-        ensure_ascii=False,
-    )
-
-
-def gitnexus_mcp_config_examples(gitnexus_check: dict[str, object]) -> dict[str, str]:
-    generic_json = gitnexus_mcp_json_example(gitnexus_check)
-    toml = gitnexus_mcp_toml_example(gitnexus_check)
-    if not generic_json or not toml:
-        return {}
-    return {
-        "genericJson": generic_json,
-        "toml": toml,
-    }
-
-
-def build_gitnexus_mcp_manual_check(
-    gitnexus_check: dict[str, object],
-) -> dict[str, object]:
-    server_config = gitnexus_mcp_server_config(gitnexus_check)
-    config_examples = gitnexus_mcp_config_examples(gitnexus_check)
-    readiness = (
-        "Use the generated MCP server config with the detected local GitNexus CLI path and `args = [mcp]`; for Codex this maps to `codex mcp add gitnexus -- <detected-gitnexus-path> mcp`."
-        if server_config
-        else "Install or repair the GitNexus CLI first, then rerun `check` so the workflow can detect the local executable path before configuring GitNexus MCP."
-    )
-    item: dict[str, object] = {
-        "name": "GitNexus MCP",
-        "category": "mcp",
-        "advice": "After GitNexus CLI is installed, use the detected local GitNexus executable path for stdio MCP config, then confirm the current Agent environment exposes GitNexus MCP tools and that the target project has an index before relying on GitNexus analysis.",
-        "steps": (
-            "Confirm the GitNexus CLI works, for example with `gitnexus --version` and `gitnexus status` in the target project.",
-            readiness,
-            "Configure or enable the GitNexus MCP server in the active Agent or IDE MCP settings using stdio command + args from the generated config. Use other transports only when the user explicitly selected a transport-specific setup.",
-            "Restart or reload the Agent environment so the MCP server is discovered.",
-            "Confirm GitNexus MCP tools or resources are visible to the Agent, then check the target project index.",
-            "If the project is not indexed yet, run GitNexus analysis from the project root and re-check MCP visibility.",
-        ),
-    }
-    if server_config:
-        item["mcpServerConfig"] = server_config
-        item["configExample"] = config_examples["genericJson"]
-        item["configExamples"] = config_examples
-    return item
 
 
 def maestro_mcp_environment(
@@ -1244,10 +1219,9 @@ def build_manual_checks(
     java_check: dict[str, object],
     maestro_check: dict[str, object],
     project_root: Path | None,
-    gitnexus_check: dict[str, object],
 ) -> tuple[dict[str, object], ...]:
-    checks = [build_gitnexus_mcp_manual_check(gitnexus_check), *BASE_MANUAL_CHECKS]
-    checks.insert(3, build_maestro_mcp_manual_check(java_check, maestro_check))
+    checks = list(cast(tuple[dict[str, object], ...], BASE_MANUAL_CHECKS))
+    checks.insert(2, build_maestro_mcp_manual_check(java_check, maestro_check))
     if project_root and should_check_react_bits_tier(project_root):
         checks.append(build_react_bits_tier_manual_check(project_root))
     return tuple(checks)
@@ -1444,19 +1418,14 @@ def check_react_bits_project(project_root: Path) -> dict[str, object]:
     return result
 
 
-def build_project_check(project_root: Path) -> dict[str, object]:
-    bootstrap_task, relative_path = find_trellis_bootstrap_task(project_root)
+def build_project_check(
+    project_root: Path, skip_agents: bool = False
+) -> dict[str, object]:
     return {
         "projectRoot": str(project_root),
         "playwright": check_playwright_project(project_root),
         "reactBits": check_react_bits_project(project_root),
-        "trellis": {
-            "initialized": (project_root / ".trellis").is_dir(),
-            "path": str(project_root / ".trellis"),
-            "bootstrapRequired": bootstrap_task is not None,
-            "bootstrapTask": str(bootstrap_task) if bootstrap_task else None,
-            "bootstrapRelativePath": relative_path,
-        },
+        "sbtd": inspect_project_setup(project_root, skip_agents),
     }
 
 
@@ -1465,7 +1434,10 @@ def build_projects_check_results(args: argparse.Namespace) -> dict[str, object]:
     return {
         "mode": "check-projects",
         "projects": [
-            build_project_check(project_root) for project_root in project_roots
+            build_project_check(
+                project_root, bool(getattr(args, "skip_project_agents", False))
+            )
+            for project_root in project_roots
         ],
     }
 
@@ -1493,15 +1465,11 @@ def print_projects_check_results(results: dict[str, object], as_json: bool) -> N
             "  React Bits tier selection: "
             + ("required" if react_bits["applicable"] else "not-needed")
         )
-        trellis = item["trellis"]
-        print(
-            "  Trellis: "
-            + ("initialized" if trellis["initialized"] else "not-initialized")
-        )
-        print(
-            "  Bootstrap guidelines: "
-            + ("required" if trellis["bootstrapRequired"] else "not-found")
-        )
+        sbtd = item["sbtd"]
+        print(f"  SBTD state: {sbtd['status']}")
+        print(f"  Reason: {sbtd['reason']}")
+        if sbtd["nextStep"]:
+            print(f"  Next step: {sbtd['nextStep']}")
 
 
 def check_skill(
@@ -1614,14 +1582,73 @@ def skill_failure_reason(item: dict[str, object]) -> str:
     )
 
 
+def _powershell_quote(part: str) -> str:
+    """Quote one token for PowerShell, only when it actually needs quoting.
+
+    A conservative whitelist of characters passes through unquoted (same idea
+    as `shlex.join` on POSIX); anything else is wrapped in a single-quoted
+    literal, where `'` is the only character requiring escape (doubling) and
+    `$`, `%VAR%`, `!VAR!` stay literal. cmd.exe is not a supported target.
+    """
+    if re.fullmatch(r"[A-Za-z0-9_./:\\=-]+", part):
+        return part
+    return "'" + part.replace("'", "''") + "'"
+
+
+def shell_quote_path(path: Path) -> str:
+    """Quote one path for the shell that `onboard_command()` targets.
+
+    POSIX hosts get `shlex.quote`, so whitespace, `$`, backticks and glob
+    characters stay literal in sh / bash / zsh. Windows hosts get PowerShell
+    quoting via `_powershell_quote()`.
+    """
+    text = str(path)
+    if os.name == "nt":
+        return _powershell_quote(text)
+    return shlex.quote(text)
+
+
+def render_shell_command(argv: list[str]) -> str:
+    """Render argv as one runnable command for the host shell.
+
+    POSIX: `shlex.join`. Windows: tokens that need it get PowerShell single
+    quoting; the call operator `&` is only prefixed when the program name had
+    to be quoted, because a leading quoted string is otherwise evaluated as an
+    expression instead of being executed.
+    """
+    if os.name == "nt":
+        quoted = [_powershell_quote(part) for part in argv]
+        command = " ".join(quoted)
+        return ("& " + command) if quoted[0].startswith("'") else command
+    return shlex.join(argv)
+
+
+def onboard_command(*args: str) -> str:
+    """Build a cwd-independent `python <onboard.py> ...` command string.
+
+    Repair hints are read from arbitrary project directories, so the script
+    path must be the installed absolute path rather than `scripts/onboard.py`.
+    On Windows the rendered command is PowerShell-only; see `shell_prefix()`.
+    """
+    return render_shell_command(["python", str(ONBOARD_SCRIPT_PATH), *args])
+
+
+def shell_prefix() -> str:
+    """Human-readable lead-in naming the shell a hint is rendered for."""
+    return "Run in PowerShell: " if os.name == "nt" else ""
+
+
 def skill_next_step(item: dict[str, object]) -> str:
     name = str(item["name"])
     if name == "caveman":
-        return "After user confirmation, install the Codex skill with `python scripts/onboard.py install-caveman --yes`, then rerun `check`."
+        return (
+            f"{shell_prefix()}After user confirmation, install the Codex skill with "
+            f"`{onboard_command('install-caveman', '--yes')}`, then rerun `check`."
+        )
     if item.get("sourceRepo"):
         return (
-            "Install the required global Skill from the configured repository with "
-            f"`python scripts/onboard.py install-external-skills --skills {name} --scope global --source auto --yes`."
+            f"{shell_prefix()}Install the required global Skill from the configured repository with "
+            f"`{onboard_command('install-external-skills', '--skills', name, '--scope', 'global', '--source', 'auto', '--yes')}`."
         )
     return "Run `init` or `reset` to install the required global bundled Skills, then rerun `check`."
 
@@ -1656,6 +1683,7 @@ def build_installation_report(results: dict[str, object]) -> dict[str, object]:
         "skills": [],
     }
     not_checked: dict[str, list[dict[str, object]]] = {"tools": []}
+    conditional_runtime: list[dict[str, object]] = []
 
     for name in ("npm", "node"):
         item = runtime[name]
@@ -1675,13 +1703,14 @@ def build_installation_report(results: dict[str, object]) -> dict[str, object]:
                 )
             )
         else:
+            entry["status"] = "conditional"
             entry["reason"] = f"`{name}` is not available in PATH."
             entry["nextStep"] = (
-                runtime["advice"]
+                "Only if a selected npm-backed install or upgrade needs npm: " + str(runtime["advice"])
                 if name == "npm"
-                else "Install Node.js through nvm or the platform package manager, then rerun `check`."
+                else "Prepare Node.js only for a selected Node-backed operation."
             )
-            failed_or_missing["runtime"].append(entry)
+            conditional_runtime.append(entry)
 
     nvm = runtime["nvm"]
     nvm_entry = report_entry(
@@ -1700,21 +1729,14 @@ def build_installation_report(results: dict[str, object]) -> dict[str, object]:
             )
         )
     elif not runtime["npm"]["installed"]:
-        nvm_entry["reason"] = "npm is missing and nvm is not available for bootstrap."
-        nvm_entry["nextStep"] = nvm["advice"]
-        failed_or_missing["runtime"].append(nvm_entry)
+        nvm_entry["status"] = "conditional"
+        nvm_entry["reason"] = "npm and nvm are missing; bootstrap is conditional on a selected npm-backed operation."
+        nvm_entry["nextStep"] = "Only prepare nvm if that operation requires it. " + str(nvm["advice"])
+        conditional_runtime.append(nvm_entry)
 
-    if results["cliChecksSkipped"]:
-        for spec in CLI_TOOLS:
-            not_checked["tools"].append(
-                report_entry(
-                    str(spec["name"]),
-                    "not-checked",
-                    reason="npm is not usable yet, so CLI verification was skipped.",
-                    next_step="Run `python scripts/onboard.py ensure-npm --yes` after user confirmation, then rerun `check`.",
-                )
-            )
     for item in results["tools"]:
+        if item.get("optional"):
+            continue
         if item.get("notChecked"):
             not_checked["tools"].append(
                 report_entry(
@@ -1808,12 +1830,14 @@ def build_installation_report(results: dict[str, object]) -> dict[str, object]:
             "skippedAlreadyInstalled": skipped_count,
             "failedOrMissing": failed_count,
             "notChecked": not_checked_count,
+            "conditionalRuntime": len(conditional_runtime),
             "manualConfiguration": len(manual_configuration),
         },
         "installed": installed,
         "skippedAlreadyInstalled": skipped_already_installed,
         "failedOrMissing": failed_or_missing,
         "notChecked": not_checked,
+        "conditionalRuntime": conditional_runtime,
         "manualConfiguration": manual_configuration,
     }
 
@@ -2003,6 +2027,41 @@ def detect_ponytail_provider(global_skills_dir: Path) -> dict[str, object]:
     }
 
 
+def check_content_alignment(global_skills_dir: Path) -> dict[str, object]:
+    """Report selected Skills content, never global rules or host readiness."""
+    from onboard_contracts import ContractError
+
+    try:
+        from sbtd_upgrade_inventory import build_inventory
+
+        inventory = build_inventory(
+            {"schema_version": 1, "skills_roots": [str(global_skills_dir)]},
+            package_root=SKILL_DIR,
+        )
+        resources = inventory["resources"]
+        return {
+            "scope": "skills-only",
+            "checkedRoots": [str(global_skills_dir)],
+            "status": "aligned" if all(
+                row["classification"] == "current" for row in resources
+            ) else "needs-alignment",
+            "baseline": inventory["baseline"]["baseline_id"],
+            "resources": [
+                {key: row[key] for key in ("target", "classification", "decision", "details")}
+                for row in resources
+            ],
+            "nextStep": "Use upgrade --phase plan with an explicit scope before replacing retained content.",
+        }
+    except (ContractError, OSError, ValueError, RuntimeError, ImportError) as error:
+        return {
+            "scope": "skills-only",
+            "checkedRoots": [str(global_skills_dir)],
+            "status": "unverified",
+            "reason": getattr(error, "code", "inventory-unavailable"),
+            "nextStep": "Run explicit upgrade planning with the complete installed package and declared dependencies.",
+        }
+
+
 def build_check_results(args: argparse.Namespace) -> dict[str, object]:
     project_roots = resolve_project_roots(args)
     global_skills_dir, global_skills_dir_source = resolve_global_skills_dir(
@@ -2020,27 +2079,38 @@ def build_check_results(args: argparse.Namespace) -> dict[str, object]:
         check_skill(name, "interaction", global_skills_dir, None)
         for name in INTERACTION_SKILLS
     )
+    for item in skills:
+        if item["name"] == "caveman":
+            maintenance = caveman_maintenance_plan(global_skills_dir)
+            item["maintenanceState"] = maintenance["state"]
+            item["pinnedRef"] = maintenance["pinnedRef"]
+            item["maintenanceScope"] = maintenance["scope"]
+            item["maintenancePlannedAction"] = maintenance["plannedAction"]
+            if maintenance.get("blockedReason"):
+                item["maintenanceBlockedReason"] = maintenance["blockedReason"]
 
-    cli_checks_skipped = not runtime["npm"]["installed"]
-    tools = [] if cli_checks_skipped else [check_cli_tool(spec) for spec in CLI_TOOLS]
-    gitnexus_check = next(
-        (item for item in tools if item.get("name") == "gitnexus"),
-        {},
-    )
+    tools = [check_cli_tool(spec) for spec in CLI_TOOLS]
+    graft_check = check_graft()
+    tools.append(graft_check)
     java_check = check_java_for_maestro()
     maestro_check = check_maestro_cli(java_check)
     tools.append(java_check)
     tools.append(maestro_check)
-    manual_checks = build_manual_checks(java_check, maestro_check, None, gitnexus_check)
+    manual_checks = build_manual_checks(java_check, maestro_check, None)
     project_checks = [
-        build_project_check(project_root) for project_root in project_roots
+        build_project_check(
+            project_root, bool(getattr(args, "skip_project_agents", False))
+        )
+        for project_root in project_roots
     ]
     missing = {
-        "runtime": [] if runtime["npm"]["installed"] else ["npm"],
+        "runtime": [],
         "tools": [
             item["name"]
             for item in tools
-            if not item["installed"] and not item.get("notChecked")
+            if not item["installed"]
+            and not item.get("notChecked")
+            and not item.get("optional")
         ],
         "skills": [item["name"] for item in skills if not item["installed"]],
     }
@@ -2058,15 +2128,15 @@ def build_check_results(args: argparse.Namespace) -> dict[str, object]:
                 str(omp_global_agents_path(omp_root)) if omp_root else None
             ),
         },
-
         "runtime": runtime,
-        "cliChecksSkipped": cli_checks_skipped,
+        "graft": graft_check,
         "tools": tools,
         "skills": skills,
         "manualChecks": manual_checks,
         "projectChecks": project_checks,
         "missing": missing,
         "ponytailProvider": detect_ponytail_provider(global_skills_dir),
+        "contentAlignment": check_content_alignment(global_skills_dir),
     }
     results["installationReport"] = build_installation_report(results)
     return results
@@ -2151,6 +2221,8 @@ def print_installation_report(
 
     print("\nNot checked:")
     print_report_entries(report["notChecked"]["tools"])
+    print("\nConditional runtime prerequisites (no install selected):")
+    print_report_entries(cast(list[dict[str, object]], report["conditionalRuntime"]))
 
     print("\nManual configuration required:")
     manual_items = report["manualConfiguration"]
@@ -2175,6 +2247,10 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
     print(f"Platform: {results['platform']}")
     paths = results["paths"]
     print(f"Global skills: {paths['globalSkillsDir']}")
+    alignment = results.get("contentAlignment", {})
+    print(f"Skills-only content alignment: {alignment.get('status', 'unverified')}")
+    if alignment.get("status") != "aligned":
+        print("  Installation validity does not prove content alignment; use explicit upgrade planning.")
     for project_root in paths["projectRoots"]:
         print(f"Project root: {project_root}")
 
@@ -2199,15 +2275,13 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
     )
     if not npm["installed"]:
         print(
-            "  action: ask the user to install npm via nvm, then run `python scripts/onboard.py ensure-npm --yes`."
+            f"  action: npm is needed only for a selected npm-backed install or upgrade; if that action is confirmed, {shell_prefix()}run `{onboard_command('ensure-npm', '--yes')}`."
         )
 
     print("\nCLI tools:")
-    if results["cliChecksSkipped"]:
-        print(
-            "- npm-backed tools skipped: npm is not usable yet, so rtk / trellis / gitnexus checks have not run."
-        )
     for item in results["tools"]:
+        if item.get("optional"):
+            continue
         status = "installed" if item["installed"] else "missing"
         if item.get("notChecked"):
             status = "not-checked"
@@ -2221,8 +2295,10 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
         path = f" at {item['path']}" if item.get("path") else ""
         print(f"- {item['name']}: {status}{path}{detail}")
         if item.get("verifyCommand"):
-            verified = "passed" if item.get("rtkGainVerified") else "not passed"
+            verified = "passed" if item.get("installed") else "not passed"
             print(f"  verify: {item['verifyCommand']} ({verified})")
+            if item.get("verificationScope"):
+                print(f"  verification scope: {item['verificationScope']}")
         if item.get("reason"):
             print(f"  reason: {item['reason']}")
         if not item["installed"]:
@@ -2230,6 +2306,22 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
             if item.get("projectInstall"):
                 print(f"  project: {item['projectInstall']}")
             print(f"  advice: {item['advice']}")
+
+    graft = results["graft"]
+    assert isinstance(graft, dict)
+    print("\nOptional Graft CLI:")
+    print(f"- graft: {graft['status']}")
+    if graft.get("reason"):
+        print(f"  reason: {graft['reason']}")
+    if graft.get("nextStep"):
+        print(f"  next: {graft['nextStep']}")
+    wiring = results.get("graftWiring")
+    if isinstance(wiring, dict):
+        print(f"\nGraft wiring: {wiring.get('status')}")
+        if wiring.get("reason"):
+            print(f"  reason: {wiring['reason']}")
+        if wiring.get("nextStep"):
+            print(f"  next: {wiring['nextStep']}")
 
     print("\nSkills:")
     for item in results["skills"]:
@@ -2243,6 +2335,15 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
                 print(f"  project target: {item['projectTarget']}")
             if item.get("sourceRepo"):
                 print(f"  source repo: {item['sourceRepo']}")
+        if item.get("maintenanceState"):
+            print(
+                f"  maintenance: {item['maintenanceState']}"
+                f" (pinned {item.get('pinnedRef')}, {item.get('maintenanceScope')})"
+            )
+            if item.get("maintenancePlannedAction"):
+                print(f"  planned action: {item['maintenancePlannedAction']}")
+            if item.get("maintenanceBlockedReason"):
+                print(f"  blocked: {item['maintenanceBlockedReason']}")
 
     print("\nManual checks:")
     for item in results["manualChecks"]:
@@ -2273,7 +2374,7 @@ def print_check_results(results: dict[str, object], as_json: bool) -> None:
         if missing["skills"]:
             print("- skills: " + ", ".join(missing["skills"]))
         print(
-            "Install required global items before init/reset; project-only items remain conditional per project root."
+            "Resolve prerequisites for the selected operation only; missing npm and optional Graft do not block unrelated safe work."
         )
     else:
         print("\nMissing summary: none")
@@ -2429,25 +2530,68 @@ def copy_operation(operation: Operation) -> str:
 
 
 GITIGNORE_MUST_TRACK_PROBES = (
-    ".trellis/workflow.md",
-    ".trellis/spec/spec.md",
-    ".trellis/agents/agent.md",
-    ".trellis/lessons/lessons.md",
-    ".trellis/tasks/sample/prd.md",
-    ".trellis/tasks/sample/design.md",
-    ".trellis/tasks/sample/implement.md",
+    ".gitignore",
+    ".gitattributes",
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".agents/skills/example/SKILL.md",
+    ".agents/skills/react-bits-pro/SKILL.md",
+    "ai/tasks/index.md",
+    "ai/tasks/example/task.md",
+    "ai/tasks/example/legacy-task.json",
+    "ai/tasks/example/prd.md",
+    "ai/tasks/example/design.md",
+    "ai/tasks/example/implement.md",
+    "ai/tasks/example/reports.md",
+    "ai/tasks/00-bootstrap-guidelines/task.md",
+    "ai/tasks/parent/child/task.md",
+    "ai/tasks/archive/2026-Q1/example/task.md",
+    "ai/tasks/archive/undated/example/task.md",
+    "docs/spec/lessons.md",
+    "docs/lessons.md",
+    "docs/lessons/index.md",
+    "docs/lessons/topics/example.md",
+    "docs/lessons/archive/2026-Q1.md",
+    "docs/CONTEXT.md",
+    "docs/adr/example.md",
+    "docs/contexts/example/CONTEXT.md",
+    "docs/contexts/example/adr/example.md",
+    "docs/PRODUCT.md",
+    "docs/DESIGN.md",
+    "features/example.feature",
+    "maestro/flow/smoke.yml",
+    "maestro/flow/ios/smoke.yml",
+    "maestro/flow/android/smoke.yml",
+    "tests/unit/test_example.py",
+    "tests/api/test_example.py",
+    "tests/e2e/example.spec.ts",
+    "tests/e2e/manifest/ui-test-manifest.json",
+    "tests/e2e/manifest/ui-selector-audit.json",
+    "tests/e2e/manifest/ui-test-coverage.json",
 )
 
 GITIGNORE_MUST_IGNORE_PROBES = (
-    ".trellis/workspace/index.md",
-    ".trellis/worktrees/feature/notes.md",
-    ".trellis/channels/main/message.json",
-    ".trellis/.runtime/state.json",
-    ".trellis/.cache/index.json",
-    ".trellis/.backup/spec.md",
-    ".trellis/.template-hashes.json",
+    ".sbtd",
+    ".sbtd/developer",
+    ".sbtd/active-task.json",
+    ".sbtd/tasks/example/task.md",
+    "docs/handoffs",
+    "docs/handoffs/session.md",
+    "ai/tasks/example/reports",
+    "ai/tasks/example/reports/raw.json",
+    "ai/tasks/parent/child/reports",
+    "ai/tasks/parent/child/reports/raw.json",
+    "ai/tasks/archive/2026-Q1/example/reports",
+    "ai/tasks/archive/2026-Q1/example/reports/raw.json",
+    "ai/tasks/archive/undated/example/reports",
+    "ai/tasks/archive/undated/example/reports/raw.json",
+    "graft",
+    "graft/index.json",
+    ".graft",
+    ".graft/state.json",
     ".env",
     ".env.local",
+    ".impeccable/config.local.json",
 )
 
 GITIGNORE_PROBE_UNAVAILABLE = "unavailable"
@@ -2470,7 +2614,10 @@ class GitignoreVerdict:
 
 
 def gitignore_verdicts(
-    project_root: Path, probes: tuple[str, ...]
+    project_root: Path,
+    probes: tuple[str, ...],
+    *,
+    env: dict[str, str] | None = None,
 ) -> dict[str, GitignoreVerdict] | str:
     """Resolve every probe in one `git check-ignore` pass.
 
@@ -2501,6 +2648,7 @@ def gitignore_verdicts(
         project_root,
         timeout=60,
         stdin_text="".join(f"{probe}\0" for probe in probes),
+        env=env,
     )
     if result is None or result.returncode == 128:
         return GITIGNORE_PROBE_UNAVAILABLE
@@ -2526,7 +2674,7 @@ def gitignore_verdicts(
 
 
 def gitignore_effectiveness_failures(target: Path) -> list[str]:
-    """Verify required Trellis paths using git's actual ignore semantics."""
+    """Verify shared SBTD paths and local-state protection using Git semantics."""
     project_root = target.parent
     verdicts = gitignore_verdicts(
         project_root, GITIGNORE_MUST_TRACK_PROBES + GITIGNORE_MUST_IGNORE_PROBES
@@ -2560,8 +2708,8 @@ def gitignore_effectiveness_failures(target: Path) -> list[str]:
         extra = f" (+{len(paths) - 3} more)" if len(paths) > 3 else ""
         failures.append(
             f"{origin} ignores paths that must stay trackable: {shown}{extra}"
-            " -- delete or narrow that pattern; a broad directory exclusion"
-            " defeats every !.trellis/... re-inclusion regardless of order"
+            " -- confirm the intended shared paths before narrowing that pattern;"
+            " do not remove unrelated project exclusions automatically"
         )
 
     for probe in GITIGNORE_MUST_IGNORE_PROBES:
@@ -2868,9 +3016,12 @@ def external_tree_digest_excluded(relative: Path) -> bool:
 
 def external_tree_sha256(root: Path) -> str:
     digest = hashlib.sha256()
-    for path in sorted(
-        candidate for candidate in root.rglob("*") if candidate.is_file()
-    ):
+    files = [candidate for candidate in root.rglob("*") if candidate.is_file()]
+    # Plain relative POSIX order, stable across operating systems: sorting
+    # Path objects applies normcase folding on Windows, which reorders
+    # case-differing names and would make pinned digests platform-dependent.
+    files.sort(key=lambda candidate: candidate.relative_to(root).as_posix())
+    for path in files:
         if external_tree_digest_excluded(path.relative_to(root)):
             continue
         if path.is_symlink():
@@ -3747,31 +3898,16 @@ def migrate_external_skills(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
-def install_external_skills(args: argparse.Namespace) -> int:
-    selected = parse_skill_names(args)
-    target_dir = resolve_install_skills_dir(args)
-    plan = external_install_plan(args, selected, target_dir)
-
-    if not args.yes:
-        print_external_install_plan(plan, args.json)
-        print(
-            "Refusing to install external skills without --yes. Confirm with the user, then rerun with --yes.",
-            file=sys.stderr,
-        )
-        return 2
-    if not args.json:
-        print_external_install_plan(plan, False)
-
-    results: list[dict[str, object]] = []
-    transaction: dict[str, object] = {
-        "status": "not-started",
-        "rolledBack": False,
-        "rollbackErrors": [],
-        "rollbackPath": None,
-    }
+def perform_external_skill_install(
+    args: argparse.Namespace,
+    selected: list[str],
+    target_dir: Path,
+    plan: dict[str, object],
+) -> dict[str, object]:
+    """Install one transaction and return its report without printing."""
     results, transaction = execute_external_skill_install(args, selected, target_dir)
-
-    payload = {
+    post_check = build_check_results(args)
+    return {
         "mode": "install-external-skills",
         "scope": args.scope,
         "requestedSource": args.source,
@@ -3782,36 +3918,59 @@ def install_external_skills(args: argparse.Namespace) -> int:
         "plan": plan,
         "results": results,
         "transaction": transaction,
+        "postCheck": post_check,
+        "installationReport": post_check["installationReport"],
     }
-    post_check = build_check_results(args)
-    payload["postCheck"] = post_check
-    payload["installationReport"] = post_check["installationReport"]
-    if args.json:
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-    else:
-        print("\nExternal skill install results")
-        for item in results:
-            print(f"- {item['name']}: {item['status']}")
-            if item.get("target"):
-                print(f"  target: {item['target']}")
-            if item.get("sourceUsed"):
-                print(f"  source: {item['sourceUsed']} ({item.get('sourceRevision')})")
-            if item.get("fallbackReason"):
-                print(f"  fallback: {item['fallbackReason']}")
-            if item.get("error"):
-                print(f"  note: {item['error']}")
-        print(f"Transaction: {transaction['status']}")
-        if transaction.get("rollbackPath"):
-            print(f"Rollback backup retained at: {transaction['rollbackPath']}")
-        rollback_errors = transaction.get("rollbackErrors")
-        if isinstance(rollback_errors, list):
-            for rollback_error in rollback_errors:
-                print(f"  rollback error: {rollback_error}")
-        print_installation_report(
-            cast(dict[str, object], payload["installationReport"]),
-            "Final installation report",
-        )
 
+
+def print_external_skill_install_result(
+    payload: dict[str, object], as_json: bool
+) -> None:
+    if as_json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    results = cast(list[dict[str, object]], payload["results"])
+    transaction = cast(dict[str, object], payload["transaction"])
+    print("\nExternal skill install results")
+    for item in results:
+        print(f"- {item['name']}: {item['status']}")
+        if item.get("target"):
+            print(f"  target: {item['target']}")
+        if item.get("sourceUsed"):
+            print(f"  source: {item['sourceUsed']} ({item.get('sourceRevision')})")
+        if item.get("fallbackReason"):
+            print(f"  fallback: {item['fallbackReason']}")
+        if item.get("error"):
+            print(f"  note: {item['error']}")
+    print(f"Transaction: {transaction['status']}")
+    if transaction.get("rollbackPath"):
+        print(f"Rollback backup retained at: {transaction['rollbackPath']}")
+    rollback_errors = transaction.get("rollbackErrors")
+    if isinstance(rollback_errors, list):
+        for rollback_error in rollback_errors:
+            print(f"  rollback error: {rollback_error}")
+    print_installation_report(
+        cast(dict[str, object], payload["installationReport"]),
+        "Final installation report",
+    )
+
+
+def install_external_skills(args: argparse.Namespace) -> int:
+    selected = parse_skill_names(args)
+    target_dir = resolve_install_skills_dir(args)
+    plan = external_install_plan(args, selected, target_dir)
+    if not args.yes:
+        print_external_install_plan(plan, args.json)
+        print(
+            "Refusing to install external skills without --yes. Confirm with the user, then rerun with --yes.",
+            file=sys.stderr,
+        )
+        return 2
+    if not args.json:
+        print_external_install_plan(plan, False)
+    payload = perform_external_skill_install(args, selected, target_dir, plan)
+    print_external_skill_install_result(payload, args.json)
+    transaction = cast(dict[str, object], payload["transaction"])
     return 1 if transaction["status"] != "committed" else 0
 
 
@@ -4148,21 +4307,23 @@ def missing_required_external_skills(args: argparse.Namespace) -> list[str]:
 
 def install_required_external_skills(
     args: argparse.Namespace, *, overwrite: bool = False
-) -> int:
+) -> dict[str, object] | None:
     if overwrite:
         selected = list(EXTERNAL_SKILL_SOURCES)
-        print(
-            "Reset will overwrite all required global external Skills: "
-            + ", ".join(selected)
-        )
+        if not args.json:
+            print(
+                "Reset will overwrite all required global external Skills: "
+                + ", ".join(selected)
+            )
     else:
         selected = missing_required_external_skills(args)
         if not selected:
-            return 0
-        print(
-            "Required global external Skills are missing and will be installed: "
-            + ", ".join(selected)
-        )
+            return None
+        if not args.json:
+            print(
+                "Required global external Skills are missing and will be installed: "
+                + ", ".join(selected)
+            )
     install_args = argparse.Namespace(
         all=overwrite,
         skills=None if overwrite else ",".join(selected),
@@ -4171,12 +4332,18 @@ def install_required_external_skills(
         global_skills_dir=getattr(args, "global_skills_dir", None),
         replace=False,
         yes=True,
-        json=False,
+        json=args.json,
         expand_dependencies=overwrite,
     )
-
-    return install_external_skills(install_args)
-
+    selected = parse_skill_names(install_args)
+    target_dir = resolve_install_skills_dir(install_args)
+    plan = external_install_plan(install_args, selected, target_dir)
+    if not args.json:
+        print_external_install_plan(plan, False)
+    payload = perform_external_skill_install(install_args, selected, target_dir, plan)
+    if not args.json:
+        print_external_skill_install_result(payload, False)
+    return payload
 
 
 def default_shell_profile() -> Path:
@@ -4356,7 +4523,7 @@ def install_agent_cli(args: argparse.Namespace) -> int:
     if not runtime["npm"]["installed"]:
         payload["status"] = "npm-required"
         payload["advice"] = (
-            "Install npm first with `python scripts/onboard.py ensure-npm --yes` after user confirmation, "
+            f"{shell_prefix()}Install npm first with `{onboard_command('ensure-npm', '--yes')}` after user confirmation, "
             "then rerun install-agent-cli."
         )
         if args.json:
@@ -4549,131 +4716,444 @@ def install_rtk(args: argparse.Namespace) -> int:
     return 0 if after["installed"] else 1
 
 
-def caveman_platform_install_command() -> tuple[
-    str, tuple[str, ...] | None, str | None
-]:
-    system = platform.system() or sys.platform
-    if system == "Windows":
-        display = f"irm {CAVEMAN_INSTALL_PS1_URL} | iex"
-        powershell = shutil.which("pwsh") or shutil.which("powershell")
-        if not powershell:
-            return (
-                display,
-                None,
-                "PowerShell is required to run the caveman Windows installer.",
-            )
-        return (
-            display,
-            (
-                powershell,
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-Command",
-                display,
-            ),
-            None,
-        )
-
-    if system in {"Darwin", "Linux"}:
-        display = f"curl -fsSL {CAVEMAN_INSTALL_SH_URL} | bash"
-        if not shutil.which("curl"):
-            return (
-                display,
-                None,
-                "curl is required to download the caveman macOS/Linux installer.",
-            )
-        bash = shutil.which("bash")
-        if not bash:
-            return (
-                display,
-                None,
-                "bash is required to run the caveman macOS/Linux installer.",
-            )
-        return display, (bash, "-lc", display), None
-
+def is_caveman_family_name(name: str) -> bool:
+    """Narrow matcher: entries Onboard may back up or replace."""
     return (
-        f"curl -fsSL {CAVEMAN_INSTALL_SH_URL} | bash",
-        None,
-        f"Automatic caveman installation is not configured for platform: {system}.",
+        name == "caveman"
+        or name.startswith("caveman-")
+        or name == "cavecrew"
+        or name.startswith("cavecrew-")
     )
+
+
+def is_caveman_family_prefix_name(name: str) -> bool:
+    """Broad, detection-only matcher for the fail-closed symlink guard.
+
+    Anything named `caveman*` / `cavecrew*` (for example `caveman.local`)
+    blocks maintenance when symlinked, but is never selected for mutation.
+    """
+    return name.startswith("caveman") or name.startswith("cavecrew")
+
+
+def caveman_family_dirs(skills_dir: Path) -> list[Path]:
+    if not skills_dir.is_dir():
+        return []
+    return sorted(
+        (
+            entry
+            for entry in skills_dir.iterdir()
+            if (entry.is_dir() or entry.is_symlink() or entry.is_file())
+            and is_caveman_family_name(entry.name)
+        ),
+        key=lambda entry: entry.name,
+    )
+
+
+def caveman_family_fingerprints(skills_dir: Path) -> dict[str, str | None]:
+    fingerprints: dict[str, str | None] = {}
+    for entry in caveman_family_dirs(skills_dir):
+        try:
+            validate_external_skill_source(entry.name, entry)
+        except RuntimeError:
+            fingerprints[entry.name] = None
+        else:
+            fingerprints[entry.name] = external_tree_sha256(entry)
+    return fingerprints
+
+
+def copy_caveman_entry(source: Path, destination: Path) -> None:
+    if source.is_symlink():
+        destination.symlink_to(source.readlink())
+    elif source.is_dir():
+        shutil.copytree(source, destination, symlinks=True)
+    else:
+        shutil.copy2(source, destination)
+
+
+def remove_caveman_entry(target: Path) -> None:
+    if target.is_symlink() or not target.is_dir():
+        target.unlink()
+    else:
+        shutil.rmtree(target)
+
+
+def caveman_payload_symlink_error(global_skills_dir: Path) -> str | None:
+    """Return a fail-closed reason when any caveman family payload is a symlink.
+
+    Covers the top-level `caveman` directory, its core `caveman/SKILL.md`
+    (including dangling links), and every sibling `caveman*` / `cavecrew*`
+    entry. Symlinked payloads are reported and never replaced.
+    """
+    skill_dir = global_skills_dir / "caveman"
+    if skill_dir.is_symlink():
+        return "Refusing to replace a symlinked caveman skill directory"
+    if (skill_dir / "SKILL.md").is_symlink():
+        return "Refusing to replace a symlinked caveman/SKILL.md core payload"
+    if caveman_family_has_sibling_symlink(global_skills_dir):
+        return "Refusing to touch a caveman family that contains a symlinked sibling entry"
+    return None
+
+
+def classify_caveman_state(global_skills_dir: Path) -> str:
+    skill_dir = global_skills_dir / "caveman"
+    skill_md = skill_dir / "SKILL.md"
+    if caveman_payload_symlink_error(global_skills_dir) is not None:
+        return "abnormal"
+    try:
+        fingerprints = caveman_family_fingerprints(global_skills_dir)
+    except (OSError, RuntimeError):
+        return "unknown-drift"
+    companions = {
+        name: digest for name, digest in fingerprints.items() if name != "caveman"
+    }
+    if companions and not any(
+        companions
+        == {name: digest for name, digest in family.items() if name != "caveman"}
+        for family in CAVEMAN_KNOWN_FAMILY_SHA256.values()
+    ):
+        return "unknown-drift"
+    if not skill_dir.exists():
+        # Partial family (surviving companions without the core) is drift:
+        # only a fully absent family is an ordinary missing install.
+        return "missing" if not fingerprints else "unknown-drift"
+    if not skill_md.is_file():
+        return "abnormal"
+    try:
+        core_bytes = skill_md.read_bytes()
+    except OSError:
+        return "abnormal"
+    if skill_frontmatter_name_from_bytes(core_bytes) != "caveman":
+        return "abnormal"
+    digest = hashlib.sha256(core_bytes).hexdigest()
+    for ref, core_digest in CAVEMAN_KNOWN_CORE_SKILL_SHA256.items():
+        if digest == core_digest and fingerprints == CAVEMAN_KNOWN_FAMILY_SHA256.get(
+            ref
+        ):
+            return "current" if ref == CAVEMAN_PINNED_REF else "outdated"
+    return "unknown-drift"
+
+
+def caveman_maintenance_plan(global_skills_dir: Path) -> dict[str, object]:
+    state = classify_caveman_state(global_skills_dir)
+    symlink_error = caveman_payload_symlink_error(global_skills_dir)
+    blocked_reason = symlink_error or caveman_family_nested_symlink_reason(
+        global_skills_dir
+    )
+    if state == "abnormal" and blocked_reason is not None:
+        action = "blocked"
+    else:
+        action = {
+            "outdated": "upgrade",
+            "abnormal": "repair",
+        }.get(state, "none")
+    plan: dict[str, object] = {
+        "state": state,
+        "plannedAction": action,
+        "pinnedRef": CAVEMAN_PINNED_REF,
+        "pinnedRevision": CAVEMAN_PINNED_REVISION,
+        "scope": "workflow-skill-payload-only",
+    }
+    if blocked_reason is not None and action == "blocked":
+        plan["blockedReason"] = blocked_reason
+    return plan
+
+
+def restore_caveman_family(global_skills_dir: Path, backup_dir: Path | None) -> str | None:
+    try:
+        for target in caveman_family_dirs(global_skills_dir):
+            remove_caveman_entry(target)
+        if backup_dir:
+            for source in backup_dir.iterdir():
+                copy_caveman_entry(source, global_skills_dir / source.name)
+    except (OSError, shutil.Error) as exc:
+        return str(exc)
+    return None
+
+def caveman_family_has_sibling_symlink(global_skills_dir: Path) -> bool:
+    if not global_skills_dir.is_dir():
+        return False
+    try:
+        return any(
+            entry.is_symlink()
+            for entry in global_skills_dir.iterdir()
+            if entry.name != "caveman" and is_caveman_family_prefix_name(entry.name)
+        )
+    except OSError:
+        # Cannot prove there is no symlink -> fail closed.
+        return True
+
+def caveman_family_nested_symlink_reason(global_skills_dir: Path) -> str | None:
+    """Return a fail-closed reason when a family payload nests a symlink.
+
+    Recursively covers every path inside the broad ``caveman*`` / ``cavecrew*``
+    prefix entries; a valid core with a nested link already lands in
+    ``unknown-drift`` through the fingerprint scan, so this guard exists to
+    stop an *abnormal* core containing a nested link from being repaired.
+    Top-level links themselves are reported by
+    ``caveman_payload_symlink_error`` and skipped here.
+    """
+    if not global_skills_dir.is_dir():
+        return None
+    try:
+        entries = sorted(global_skills_dir.iterdir())
+    except OSError:
+        # Cannot prove there is no nested symlink -> fail closed.
+        return "Refusing to repair a caveman payload whose entries cannot be read"
+    for entry in entries:
+        if not is_caveman_family_prefix_name(entry.name):
+            continue
+        if entry.is_symlink() or not entry.is_dir():
+            continue
+        walk_errors: list[OSError] = []
+        try:
+            has_nested = any(
+                os.path.islink(os.path.join(dirpath, name))
+                for dirpath, dirnames, filenames in os.walk(
+                    entry, followlinks=False, onerror=walk_errors.append
+                )
+                for name in (*dirnames, *filenames)
+            )
+        except OSError:
+            has_nested = True  # Cannot prove clean -> fail closed.
+        if walk_errors:
+            # Unreadable descendants can hide a symlink -> fail closed.
+            has_nested = True
+        if has_nested:
+            return (
+                "Refusing to repair a caveman payload that contains a nested "
+                f"symlink under {entry.name}"
+            )
+    return None
+
+
+
+def install_caveman_payload(global_skills_dir: Path) -> dict[str, object]:
+    result = caveman_maintenance_plan(global_skills_dir)
+    result["status"] = "pending"
+    result["sourceRepo"] = CAVEMAN_SOURCE_REPO
+    result["familyScope"] = "caveman, caveman-*, cavecrew, cavecrew-* only"
+
+    symlink_error = caveman_payload_symlink_error(global_skills_dir)
+    if symlink_error is not None:
+        result["status"] = "failed"
+        result["error"] = symlink_error
+        return result
+    if result["state"] == "unknown-drift":
+        result["status"] = "attention-required"
+        result["advice"] = CAVEMAN_DRIFT_ADVICE
+        return result
+    if result["plannedAction"] == "blocked":
+        result["status"] = "failed"
+        result["error"] = str(
+            result.get(
+                "blockedReason",
+                "Refusing to replace a caveman payload containing a symlink",
+            )
+        )
+        return result
+
+
+    try:
+        return _install_caveman_payload_staged(global_skills_dir, result)
+    except (OSError, shutil.Error) as exc:
+        # Staging-directory creation/cleanup, staged reads and the source scan
+        # sit outside the transactional backup/replace block; keep the
+        # structured JSON contract instead of surfacing a traceback.
+        result["status"] = "failed"
+        result["error"] = f"Caveman staging failed: {exc}"
+        return result
+
+
+def _install_caveman_payload_staged(
+    global_skills_dir: Path, result: dict[str, object]
+) -> dict[str, object]:
+    with tempfile.TemporaryDirectory(prefix="sbtd-caveman-stage-") as temp_dir:
+        stage_root = Path(temp_dir)
+        repository = stage_root / "repository"
+        cloned, clone_error = clone_repo_at_revision(
+            CAVEMAN_SOURCE_REPO, CAVEMAN_PINNED_REVISION, repository
+        )
+        if not cloned:
+            result["status"] = "blocked"
+            result["error"] = clone_error
+            return result
+
+        source_skills_dir = repository / "skills"
+        source_core = source_skills_dir / "caveman" / "SKILL.md"
+        if (
+            not source_core.is_file()
+            or read_skill_frontmatter_name(source_core) != "caveman"
+        ):
+            result["status"] = "blocked"
+            result["error"] = "Pinned caveman source has no valid caveman/SKILL.md"
+            return result
+        if (
+            hashlib.sha256(source_core.read_bytes()).hexdigest()
+            != CAVEMAN_CORE_SKILL_SHA256
+        ):
+            result["status"] = "blocked"
+            result["error"] = (
+                "Pinned caveman source does not match the reviewed core hash"
+            )
+            return result
+        source_family = caveman_family_dirs(source_skills_dir)
+        if (
+            caveman_family_fingerprints(source_skills_dir)
+            != CAVEMAN_KNOWN_FAMILY_SHA256[CAVEMAN_PINNED_REF]
+        ):
+            result["status"] = "blocked"
+            result["error"] = (
+                "Pinned caveman family does not match the reviewed payload"
+            )
+            return result
+
+        try:
+            global_skills_dir.parent.mkdir(parents=True, exist_ok=True)
+            global_skills_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            result["status"] = "failed"
+            result["error"] = f"Unable to create global skills directory: {exc}"
+            return result
+
+        target_family = caveman_family_dirs(global_skills_dir)
+        symlink_error = caveman_payload_symlink_error(global_skills_dir)
+        if symlink_error is not None or any(
+            target.is_symlink() for target in target_family
+        ):
+            result["status"] = "failed"
+            result["error"] = (
+                symlink_error
+                or "Refusing to replace a symlinked caveman skill directory"
+            )
+            return result
+        latest_plan = caveman_maintenance_plan(global_skills_dir)
+        if latest_plan["state"] == "unknown-drift":
+            result.update(latest_plan)
+            result["status"] = "attention-required"
+            result["advice"] = CAVEMAN_DRIFT_ADVICE
+            return result
+        if latest_plan["plannedAction"] == "blocked":
+            result.update(latest_plan)
+            result["status"] = "failed"
+            result["error"] = str(
+                latest_plan.get(
+                    "blockedReason",
+                    "Refusing to replace a caveman payload containing a symlink",
+                )
+            )
+            return result
+
+        # Back up whenever a family payload exists at mutation time. Anything
+        # computed before the clone cannot see a family that appeared during
+        # staging, so the recomputed `target_family` is the only safe
+        # decision point.
+        backup_dir: Path | None = None
+        if target_family:
+            try:
+                timestamp = dt.datetime.now().strftime("%Y%m%d%H%M%S")
+                backup_dir = Path(
+                    tempfile.mkdtemp(
+                        prefix=f"{global_skills_dir.name}.caveman.bak-{timestamp}-",
+                        dir=global_skills_dir.parent,
+                    )
+                )
+                for target in target_family:
+                    copy_caveman_entry(target, backup_dir / target.name)
+            except (OSError, shutil.Error) as exc:
+                result["status"] = "failed"
+                result["error"] = (
+                    f"Unable to back up caveman workflow skill payload: {exc}"
+                )
+                if backup_dir:
+                    result["backup"] = str(backup_dir)
+                return result
+
+        mutation_started = False
+        try:
+            mutation_started = True
+            for target in target_family:
+                remove_caveman_entry(target)
+            for source in source_family:
+                copy_caveman_entry(source, global_skills_dir / source.name)
+        except (OSError, shutil.Error) as exc:
+            restore_error = (
+                restore_caveman_family(global_skills_dir, backup_dir)
+                if mutation_started
+                else None
+            )
+            result["status"] = "failed"
+            result["error"] = f"Unable to sync caveman workflow skill payload: {exc}"
+            if restore_error:
+                result["restoreError"] = restore_error
+            if backup_dir:
+                result["backup"] = str(backup_dir)
+            return result
+
+        after_state = classify_caveman_state(global_skills_dir)
+        if after_state != "current":
+            restore_error = (
+                restore_caveman_family(global_skills_dir, backup_dir)
+                if mutation_started
+                else None
+            )
+            result["status"] = "failed"
+            result["error"] = "Caveman workflow skill payload did not verify after sync"
+            result["afterState"] = after_state
+            if restore_error:
+                result["restoreError"] = restore_error
+            if backup_dir:
+                result["backup"] = str(backup_dir)
+            return result
+
+        result["status"] = "success"
+        result["afterState"] = after_state
+        result["familySkills"] = [source.name for source in source_family]
+        if backup_dir:
+            result["backup"] = str(backup_dir)
+        return result
+
+
+def maintain_caveman_payload(global_skills_dir: Path) -> dict[str, object]:
+    plan = caveman_maintenance_plan(global_skills_dir)
+    if plan["state"] == "unknown-drift":
+        return {
+            **plan,
+            "status": "attention-required",
+            "advice": CAVEMAN_DRIFT_ADVICE,
+        }
+    if plan["plannedAction"] == "blocked":
+        return {
+            **plan,
+            "status": "failed",
+            "error": plan.get(
+                "blockedReason", "Refusing to replace a symlinked caveman payload"
+            ),
+        }
+    if plan["plannedAction"] == "none":
+        return {**plan, "status": "skipped"}
+    return install_caveman_payload(global_skills_dir)
+
+
+def print_caveman_maintenance_details(maintenance: dict[str, object]) -> None:
+    for label, value in (
+        ("reason", maintenance.get("error") or maintenance.get("blockedReason")),
+        ("backup", maintenance.get("backup")),
+        ("restore error", maintenance.get("restoreError")),
+        ("advice", maintenance.get("advice")),
+    ):
+        if value:
+            print(f"- {label}: {value}")
 
 
 def install_caveman(args: argparse.Namespace) -> int:
-    global_skills_dir = resolve_global_skills_dir(args.global_skills_dir)[0]
-    before = check_skill("caveman", "interaction", global_skills_dir, None)
-    display_command, install_command, unavailable_reason = (
-        caveman_platform_install_command()
-    )
-    payload: dict[str, object] = {
-        "mode": "install-caveman",
-        "agent": args.agent,
-        "platform": platform.system() or sys.platform,
-        "before": before,
-        "installSpec": CAVEMAN_INSTALL_SPEC,
-        "installCommand": display_command,
-        "installCommands": {
-            "macosLinux": f"curl -fsSL {CAVEMAN_INSTALL_SH_URL} | bash",
-            "windows": f"irm {CAVEMAN_INSTALL_PS1_URL} | iex",
-        },
-        "globalSkillsDir": str(global_skills_dir),
-    }
-
-    if before["installed"]:
-        payload["status"] = "already-installed"
-        if args.json:
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
-        else:
-            print("caveman is already installed as a global interaction skill.")
-            for location in before["locations"]:
-                print(f"{location['scope']}: {location['path']}")
-        return 0
-
-    if unavailable_reason or install_command is None:
-        payload["status"] = "manual-required"
-        payload["advice"] = (
-            unavailable_reason
-            or "Run the platform-specific caveman installer manually, then rerun check."
-        )
-        if args.json:
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
-        else:
-            print(
-                "caveman is missing, but automatic installation is not available on this platform."
-            )
-            print(payload["advice"])
-            print(f"Suggested command: {display_command}")
-        return 1
-
-    if not args.yes:
-        payload["status"] = "needs-confirmation"
-        payload["actions"] = [
-            "install the caveman Codex skill into the user-level Agent/Codex skill environment",
-            f"run `{display_command}`",
-            "rerun `python scripts/onboard.py check` and confirm `caveman/SKILL.md` is visible",
-        ]
-        if args.json:
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
-        else:
-            print("caveman is missing.")
-            print(
-                "caveman compresses Agent replies for lower token use; it does not change code, tests, validation, or workflow decisions."
-            )
-            for action in payload["actions"]:
-                print(f"- {action}")
-            print("Rerun with --yes after user confirmation.")
-        return 2
-
-    install_env = os.environ.copy()
-    install_env["AGENT_SKILLS_DIR"] = str(global_skills_dir)
-    install_result = run_command(install_command, timeout=600, env=install_env)
-    payload["installOutput"] = command_excerpt(install_result)
-    if not install_result or install_result.returncode != 0:
-        payload["status"] = "failed"
-        payload["error"] = (
-            command_excerpt(install_result)
-            or "Unable to run the caveman skill installer."
-        )
+    try:
+        global_skills_dir = resolve_global_skills_dir(args.global_skills_dir)[0]
+    except (OSError, RuntimeError) as exc:
+        payload = {
+            "mode": "install-caveman",
+            "status": "failed",
+            "error": f"Unable to resolve the global skills directory: {exc}",
+        }
         print(
             json.dumps(payload, indent=2, ensure_ascii=False)
             if args.json
@@ -4681,27 +5161,74 @@ def install_caveman(args: argparse.Namespace) -> int:
         )
         return 1
 
+    before = check_skill("caveman", "interaction", global_skills_dir, None)
+    maintenance = caveman_maintenance_plan(global_skills_dir)
+    payload: dict[str, object] = {
+        "mode": "install-caveman",
+        "agent": args.agent,
+        "platform": platform.system() or sys.platform,
+        "before": before,
+        "maintenance": maintenance,
+        "globalSkillsDir": str(global_skills_dir),
+        "scope": "workflow-skill-payload-only",
+    }
+    if maintenance["state"] == "current":
+        payload["status"] = "already-installed"
+        print(
+            json.dumps(payload, indent=2, ensure_ascii=False)
+            if args.json
+            else "caveman workflow skill payload is already current."
+        )
+        return 0
+    if not args.yes:
+        payload["status"] = "needs-confirmation"
+        payload["actions"] = [
+            f"stage pinned caveman {CAVEMAN_PINNED_REF} skill payload",
+            f"sync caveman, caveman-*, cavecrew, cavecrew-* into {global_skills_dir}",
+            "preserve plugins, hooks, statusline, and extensions unchanged",
+        ]
+        print(
+            json.dumps(payload, indent=2, ensure_ascii=False)
+            if args.json
+            else "caveman workflow skill payload needs confirmation; rerun with --yes."
+        )
+        if not args.json:
+            print_caveman_maintenance_details(maintenance)
+        return 2
+
+    if maintenance["state"] == "unknown-drift":
+        payload["status"] = "attention-required"
+        payload["advice"] = CAVEMAN_DRIFT_ADVICE
+        print(
+            json.dumps(payload, indent=2, ensure_ascii=False)
+            if args.json
+            else payload["advice"]
+        )
+        return 2
+    try:
+        result = install_caveman_payload(global_skills_dir)
+    except Exception as exc:  # noqa: BLE001 - preserve the install JSON/text failure contract.
+        result = {
+            **maintenance,
+            "status": "failed",
+            "error": str(exc),
+        }
+    payload["maintenance"] = result
     after = check_skill("caveman", "interaction", global_skills_dir, None)
     payload["after"] = after
-    payload["status"] = "installed" if after["installed"] else "failed"
-    if args.json:
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-    else:
-        print(f"install-caveman status: {payload['status']}")
-        if after["installed"]:
-            for location in after["locations"]:
-                print(f"{location['scope']}: {location['path']}")
-            print(
-                "Verification passed: caveman/SKILL.md is visible in the checked global skills directory."
-            )
-        else:
-            print(
-                "The caveman installer completed, but `caveman/SKILL.md` was not found in the checked global skills directory."
-            )
-            print(
-                "If you use a custom skills root, set AGENT_SKILLS_DIR or rerun check with --global-skills-dir."
-            )
-    return 0 if after["installed"] else 1
+    payload["status"] = (
+        "installed"
+        if result["status"] == "success" and after["installed"]
+        else result["status"]
+    )
+    print(
+        json.dumps(payload, indent=2, ensure_ascii=False)
+        if args.json
+        else f"install-caveman status: {payload['status']}"
+    )
+    if not args.json:
+        print_caveman_maintenance_details(result)
+    return 0 if payload["status"] == "installed" else 1
 
 
 def command_excerpt(
@@ -4975,7 +5502,7 @@ def install_maestro(args: argparse.Namespace) -> int:
         payload["status"] = "java-required"
         payload["advice"] = (
             f"Install Java {JAVA_MIN_MAJOR}+ first. Default command: "
-            "`python scripts/onboard.py install-java --major 21 --yes` after user confirmation."
+            f"{shell_prefix()}`{onboard_command('install-java', '--major', '21', '--yes')}` after user confirmation."
         )
         if args.json:
             print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -5089,6 +5616,7 @@ def run_project_command(
     cwd: Path,
     timeout: int = 900,
     stdin_text: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str] | None:
     try:
         return subprocess.run(
@@ -5099,354 +5627,287 @@ def run_project_command(
             text=True,
             timeout=timeout,
             input=stdin_text,
+            env=env,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
 
-
-def parse_trellis_platforms(args: argparse.Namespace) -> list[str]:
-    raw_values = getattr(args, "trellis_platform", None) or []
-    platforms: list[str] = []
-    invalid: list[str] = []
-    for raw_value in raw_values:
-        for part in re.split(r"[\s,]+", raw_value):
-            platform_name = part.strip().lower().removeprefix("--")
-            if not platform_name:
-                continue
-            if platform_name not in TRELLIS_INIT_PLATFORMS:
-                invalid.append(platform_name)
-                continue
-            if platform_name not in platforms:
-                platforms.append(platform_name)
-    if invalid:
-        allowed = ", ".join(TRELLIS_INIT_PLATFORMS)
-        raise SystemExit(
-            f"Unsupported Trellis platform(s): {', '.join(invalid)}. Allowed values: {allowed}"
-        )
-    return platforms
-
-
-def resolve_trellis_init_platforms(args: argparse.Namespace) -> dict[str, object]:
-    explicit = parse_trellis_platforms(args)
-    if explicit:
-        return {
-            "platforms": explicit,
-            "source": "explicit",
-            "status": "resolved",
-        }
-    agent = None
-    raw_platform = getattr(args, "platform", None)
-    if raw_platform and str(raw_platform).strip():
-        agent = normalize_agent_platform(str(raw_platform))
-        default_flag = TRELLIS_DEFAULT_FROM_AGENT_PLATFORM.get(agent)
-        if default_flag:
-            return {
-                "platforms": [default_flag],
-                "source": "agent-platform",
-                "status": "resolved",
-            }
-    if agent == "oh-my-pi":
-        reason = (
-            "Agent platform oh-my-pi does not select a Trellis init flag. "
-            "Pass --trellis-platform omp and/or pi; omp and pi stay independent."
-        )
-    else:
-        reason = (
-            "trellis init --yes without platform flags installs Claude and Cursor. "
-            "Pass --trellis-platform, or pass --platform codex, claude, or kimi."
-        )
-    return {
-        "platforms": [],
-        "source": "missing",
-        "status": "needs-user",
-        "reason": reason,
-    }
-
-
-def trellis_init_command(username: str, platforms: list[str]) -> tuple[str, ...]:
-    if not platforms:
-        raise ValueError(
-            "trellis init requires at least one platform flag; "
-            "empty flags plus --yes would install Claude and Cursor."
-        )
-    platform_flags = tuple(f"--{platform_name}" for platform_name in platforms)
-    return (
-        "trellis",
-        "init",
-        "-u",
-        username,
-        *platform_flags,
-        "--yes",
-        "--skip-existing",
-    )
 
 
 def command_display(command: tuple[str, ...]) -> str:
     return shlex.join(command)
 
 
-def find_trellis_bootstrap_task(project_root: Path) -> tuple[Path | None, str | None]:
-    for relative_path in TRELLIS_BOOTSTRAP_TASK_CANDIDATES:
-        candidate = project_root / relative_path
-        if candidate.exists():
-            return candidate, relative_path
-    return None, None
-
-
-def run_trellis_project_setup_for_root(
-    mode: str,
-    args: argparse.Namespace,
-    project_root: Path,
-    trellis_check: dict[str, object],
-) -> dict[str, object]:
-    report: dict[str, object] = {
-        "mode": mode,
-        "status": "skipped",
-        "projectRoot": str(project_root),
-    }
-    if mode not in {"init", "reset", "init-projects"}:
-        report["reason"] = (
-            "Trellis project setup only runs after init/reset/init-projects."
-        )
-        return report
-    if getattr(args, "skip_trellis_init", False):
-        report["status"] = "skipped"
-        report["reason"] = "--skip-trellis-init was provided."
-        return report
-
-    report["cli"] = {
-        "installed": trellis_check.get("installed"),
-        "path": trellis_check.get("path"),
-        "version": trellis_check.get("version"),
-    }
-    if not trellis_check.get("installed"):
-        report["status"] = "blocked"
-        report["init"] = {
-            "status": "blocked-missing-cli",
-            "reason": "trellis CLI must be installed and pass version verification before project initialization.",
-            "nextStep": "Install or repair the required global Trellis CLI, then rerun the project initialization command.",
-        }
-        return report
-
-    trellis_dir = project_root / ".trellis"
-    resolution = resolve_trellis_init_platforms(args)
-    platforms = [str(item) for item in resolution["platforms"]]
-    report["platforms"] = platforms
-    report["platformSource"] = resolution["source"]
-    username = (getattr(args, "trellis_user", None) or "").strip()
-    if trellis_dir.exists():
-        report["init"] = {
-            "status": "skipped-existing",
-            "path": str(trellis_dir),
-            "reason": "Target project already has .trellis/.",
-        }
-    elif not username:
-        report["status"] = "needs-user"
-        report["init"] = {
-            "status": "needs-user",
-            "reason": "Target project does not have .trellis/ and --trellis-user was not provided.",
-            "nextStep": "Ask for the Trellis developer username, then rerun with --projects-root, --trellis-user, --platform, and optional --trellis-platform.",
-        }
-        if platforms:
-            report["init"]["exampleCommand"] = command_display(
-                trellis_init_command("your-name", platforms)
-            )
-        return report
-    elif str(resolution["status"]) == "needs-user":
-        report["status"] = "needs-user"
-        report["init"] = {
-            "status": "needs-user",
-            "reason": resolution["reason"],
-            "nextStep": (
-                "Pass --trellis-platform, or --platform codex, claude, or kimi. "
-                "oh-my-pi requires --trellis-platform omp and/or pi."
-            ),
-        }
-        return report
-    else:
-        command = trellis_init_command(username, platforms)
-        init_result = run_project_command(command, project_root, timeout=300)
-        init_succeeded = bool(
-            init_result and init_result.returncode == 0 and trellis_dir.exists()
-        )
-        report["init"] = {
-            "status": "success" if init_succeeded else "failed",
-            "command": command_display(command),
-            "stdout": command_excerpt(init_result, limit=12),
-        }
-        if not init_succeeded:
-            report["status"] = "failed"
-            report["init"]["stderr"] = command_excerpt(init_result, limit=12)
-            report["init"]["reason"] = (
-                "trellis init did not complete successfully or did not create .trellis/."
-            )
-            return report
-
-    if getattr(args, "skip_trellis_bootstrap", False):
-        report["status"] = "success"
-        report["bootstrapTask"] = {
-            "status": "skipped",
-            "reason": "--skip-trellis-bootstrap was provided.",
-        }
-        return report
-
-    bootstrap_task, relative_path = find_trellis_bootstrap_task(project_root)
-    if not bootstrap_task:
-        report["status"] = "success"
-        report["bootstrapTask"] = {
-            "status": "not-found",
-            "reason": "No bootstrap task was found at the canonical path.",
-            "checkedPaths": list(TRELLIS_BOOTSTRAP_TASK_CANDIDATES),
-        }
-        return report
-
-    report["status"] = "bootstrap-required"
-    report["bootstrapTask"] = {
-        "status": "found",
-        "path": str(bootstrap_task),
-        "relativePath": relative_path,
-        "requiredAction": (
-            "Use the trellis-workflow Skill to execute this task: read .trellis/workflow.md and task artifacts, "
-            "run $trellis-before-dev, complete the bootstrap guideline work, run $trellis-check, and only then run $trellis-finish-work."
-        ),
-    }
-    return report
-
-
-def aggregate_trellis_status(projects: list[dict[str, object]]) -> str:
+def aggregate_project_status(projects: list[dict[str, object]]) -> str:
     statuses = {str(item.get("status")) for item in projects}
     for status in ("failed", "blocked", "needs-user", "bootstrap-required"):
         if status in statuses:
             return status
-    if "success" in statuses:
-        return "success"
-    return "skipped"
+    return "success" if projects else "skipped"
 
 
-def run_trellis_project_setup(mode: str, args: argparse.Namespace) -> dict[str, object]:
-    project_roots = resolve_project_roots(args)
-    if mode not in {"init", "reset", "init-projects"}:
-        return {
-            "mode": mode,
-            "status": "skipped",
-            "projects": [],
-            "reason": "Trellis project setup only runs after init/reset/init-projects.",
-        }
-    if not project_roots:
-        return {
-            "mode": mode,
-            "status": "skipped",
-            "projects": [],
-            "reason": "--projects-root was not provided.",
-        }
+def project_status_exit_code(status: object) -> int:
+    if status in {"blocked", "needs-user"}:
+        return 2
+    if status == "failed":
+        return 5
+    if status == "bootstrap-required":
+        return 6
+    return 0
 
-    trellis_check = check_cli_tool(CLI_TOOLS[1])
-    projects = [
-        run_trellis_project_setup_for_root(mode, args, project_root, trellis_check)
-        for project_root in project_roots
-    ]
+
+def project_scaffold_conflict(project_root: Path, skip_agents: bool) -> str | None:
+    """Reject unsafe destinations and newly hiding existing reserved data."""
+    names = (".gitignore",) if skip_agents else (".gitignore", "AGENTS.md")
+    try:
+        for name in names:
+            target = project_root / name
+            try:
+                metadata = target.lstat()
+            except FileNotFoundError:
+                continue
+            if not stat.S_ISREG(metadata.st_mode):
+                return f"{name} is not a regular installation target."
+            if name == ".gitignore" and metadata.st_nlink > 1:
+                return ".gitignore has multiple hard links; appending would modify another file."
+
+        target = project_root / ".gitignore"
+        current = target.read_text(encoding="utf-8") if target.exists() else ""
+        missing = set(
+            missing_file_lines(
+                PROJECT_GITIGNORE_TEMPLATE.read_text(encoding="utf-8"), current
+            )
+        )
+        existing: list[str] = []
+        for relative in (".sbtd", "docs/handoffs", "graft", ".graft"):
+            if f"/{relative}" not in missing:
+                continue
+            if "/" in relative:
+                parent = project_root / "docs"
+                if parent.is_symlink():
+                    return "docs is a symlink; reserved handoff ownership is not established."
+            path = project_root / relative
+            try:
+                path.lstat()
+            except FileNotFoundError:
+                continue
+            existing.append(relative)
+        if not existing:
+            return None
+        verdicts = gitignore_verdicts(project_root, tuple(existing))
+        if isinstance(verdicts, str) or any(
+            not verdicts[path].ignored for path in existing
+        ):
+            return "Adding ignore rules would newly hide existing reserved data or its protection is unverified."
+        tracked = run_project_command(
+            ("git", "ls-files", "-z", "--", *existing), project_root, timeout=60
+        )
+        if tracked is None or tracked.returncode != 0 or tracked.stdout:
+            return "Existing reserved data is tracked or its tracked state could not be verified."
+    except (OSError, UnicodeError):
+        return "Project installation targets could not be safely inspected."
+    return None
+
+
+def inspect_project_setup(project_root: Path, skip_agents: bool) -> StateInspection:
+    inspection = inspect_project_state(project_root)
+    if inspection["status"] == "success":
+        conflict = project_scaffold_conflict(project_root, skip_agents)
+        if conflict:
+            inspection.update(
+                status="needs-user",
+                reason=conflict,
+                nextStep="Inspect the existing data and resolve the target or authorize its narrow protection before retrying; Onboard will not hide or replace it.",
+            )
+    return inspection
+
+
+def build_sbtd_project_setup(
+    mode: str, args: argparse.Namespace, *, project_roots: list[Path] | None = None
+) -> dict[str, object]:
+    projects: list[dict[str, object]] = []
+    roots = resolve_project_roots(args) if project_roots is None else project_roots
+    for root in roots:
+        projects.append(
+            {
+                "projectRoot": str(root),
+                **inspect_project_setup(
+                    root, bool(getattr(args, "skip_project_agents", False))
+                ),
+            }
+        )
+    status = aggregate_project_status(projects)
     return {
         "mode": mode,
-        "status": aggregate_trellis_status(projects),
+        "status": status,
+        "projects": projects,
+        "reason": (
+            "Only selected project state is inspected; optional artifacts are not created."
+            if projects
+            else "--projects-root was not provided."
+        ),
+        "nextStep": (
+            "Resolve each reported project condition before installation."
+            if project_status_exit_code(status)
+            else ""
+        ),
+    }
+
+
+def print_sbtd_project_setup_report(report: dict[str, object]) -> None:
+    print("\nSBTD project setup:")
+    print(f"- status: {report.get('status')}")
+    if report.get("reason"):
+        print(f"  reason: {report['reason']}")
+    for project in cast(list[dict[str, object]], report.get("projects", [])):
+        print(f"- project root: {project['projectRoot']}")
+        print(f"  status: {project['status']}")
+        print(f"  reason: {project['reason']}")
+        if project["nextStep"]:
+            print(f"  next step: {project['nextStep']}")
+
+# Explicit --developer identity integration. The library is imported lazily
+# inside each function because sbtd_identity -> sbtd_task_state -> onboard is
+# an intentional one-way dependency; a module-level import would be circular.
+_DEVELOPER_BLOCKING_STATUSES = (
+    "failed",
+    "conflict",
+    "blocked",
+    "needs-confirmation",
+    "needs-protection",
+)
+
+
+def _developer_result(
+    root: Path, requested: str, *, create: bool = False, protect: bool = False
+) -> IdentityResult:
+    from sbtd_identity import DeveloperStore, IdentityResult
+
+    try:
+        store = DeveloperStore(root, read_only=not create)
+        if create:
+            return store.ensure(requested, confirmed=True, protect=protect)
+        return store.plan(requested)
+    except (TaskDataError, OSError, RuntimeError) as error:
+        return IdentityResult(
+            "failed" if create else "blocked",
+            path=str(root / ".sbtd/developer"),
+            topology="unknown",
+            reason="developer identity could not be safely inspected or initialized for this project",
+            completed_steps=tuple(getattr(error, "completed_steps", ())),
+        )
+
+
+def _developer_plan_entry(
+    root: Path, requested: str, result: IdentityResult
+) -> dict[str, object]:
+    return {
+        "projectRoot": str(root),
+        "requestedName": requested,
+        "status": result.status,
+        "name": result.name,
+        "source": result.source,
+        "target": result.path,
+        "topology": result.topology,
+        "needsProtection": result.needs_protection,
+        "reason": result.reason,
+        "completedSteps": list(result.completed_steps),
+    }
+
+
+def aggregate_developer_status(projects: list[dict[str, object]]) -> str:
+    statuses = [str(project["status"]) for project in projects]
+    if not statuses:
+        return "blocked"
+    for blocking in _DEVELOPER_BLOCKING_STATUSES:
+        if blocking in statuses:
+            return blocking
+    if "created" in statuses:
+        return "created"
+    if "planned" in statuses:
+        return "planned"
+    return "unchanged"
+
+
+def _developer_plan_payload(
+    requested: str, projects: list[dict[str, object]]
+) -> dict[str, object]:
+    return {
+        "requestedName": requested,
+        "status": aggregate_developer_status(projects),
+        "reason": (
+            None
+            if projects
+            else "--developer requires at least one explicit --projects-root; "
+            "the name is never derived from or written to the cwd or HOME."
+        ),
         "projects": projects,
     }
 
 
-def build_trellis_init_plan(
-    mode: str, args: argparse.Namespace
-) -> dict[str, object]:
-    if mode not in {"plan", "init", "reset", "init-projects"}:
-        return {
-            "status": "skipped",
-            "reason": "Trellis init is not part of this mode.",
-        }
-    if getattr(args, "skip_trellis_init", False):
-        return {
-            "status": "skipped",
-            "reason": "--skip-trellis-init was provided.",
-        }
-    project_roots = resolve_project_roots(args)
-    needing = [
-        str(path) for path in project_roots if not (path / ".trellis").exists()
-    ]
-    agent = None
-    raw_platform = getattr(args, "platform", None)
-    if raw_platform and str(raw_platform).strip():
-        agent = normalize_agent_platform(str(raw_platform))
-    resolution = resolve_trellis_init_platforms(args)
-    username = (getattr(args, "trellis_user", None) or "").strip()
-    command = None
-    if str(resolution["status"]) == "resolved" and username:
-        command = command_display(
-            trellis_init_command(
-                username, [str(item) for item in resolution["platforms"]]
-            )
+def developer_plan_exit_code(developer_plan: dict[str, object]) -> int:
+    status = str(developer_plan["status"])
+    if status == "failed":
+        return 5
+    if status in _DEVELOPER_BLOCKING_STATUSES:
+        return 2
+    return 0
+
+
+def build_developer_plan(args: argparse.Namespace) -> dict[str, object] | None:
+    """Read-only per-project identity plan for an explicit --developer name.
+
+    Only the roots listed via --projects-root are inspected; without them the
+    plan is blocked rather than falling back to the cwd or HOME.
+    """
+    requested = getattr(args, "developer", None)
+    if requested is None:
+        return None
+    projects = [
+        _developer_plan_entry(
+            root, requested, _developer_result(root, requested)
         )
-    if not project_roots:
-        status = "skipped"
-        reason: str | None = "--projects-root was not provided."
-    elif not needing:
-        status = "skipped-existing"
-        reason = "Every selected project already has .trellis/."
-    elif not username or str(resolution["status"]) == "needs-user":
-        status = "needs-user"
-        if str(resolution["status"]) == "needs-user":
-            reason = str(resolution.get("reason") or "")
-        else:
-            reason = (
-                "Target project does not have .trellis/ and --trellis-user was not provided."
-            )
-    else:
-        status = "planned"
-        reason = None
-    return {
-        "status": status,
-        "agentPlatform": agent,
-        "platforms": [str(item) for item in resolution["platforms"]],
-        "platformSource": resolution["source"],
-        "command": command,
-        "projectsNeedingInit": needing,
-        "reason": reason,
-    }
+        for root in resolve_project_roots(args)
+    ]
+    return _developer_plan_payload(requested, projects)
 
 
-def print_trellis_project_setup_report(report: dict[str, object]) -> None:
-    print("\nTrellis project setup:")
-    print(f"- status: {report.get('status')}")
-    if report.get("reason"):
-        print(f"  reason: {report['reason']}")
-    for project in report.get("projects", []):
+def ensure_developer_identities(
+    developer_plan: dict[str, object],
+) -> dict[str, object]:
+    """Post-scaffold verified identity creation for the preflighted projects.
+
+    Runs after scaffold writes. Only protection explicitly included in the
+    confirmed identity plan may be completed by the shared narrow helper.
+    """
+    requested = str(developer_plan["requestedName"])
+    projects: list[dict[str, object]] = []
+    for entry in cast(list[dict[str, object]], developer_plan["projects"]):
+        root = Path(str(entry["projectRoot"]))
+        result = _developer_result(
+            root, requested, create=True, protect=entry.get("needsProtection") is True
+        )
+        projects.append(_developer_plan_entry(root, requested, result))
+    return _developer_plan_payload(requested, projects)
+
+
+def print_developer_plan(developer_plan: dict[str, object]) -> None:
+    print("\nDeveloper identity:")
+    print(f"- requested name: {developer_plan['requestedName']}")
+    print(f"- status: {developer_plan['status']}")
+    if developer_plan.get("reason"):
+        print(f"  reason: {developer_plan['reason']}")
+    for project in cast(list[dict[str, object]], developer_plan["projects"]):
         print(f"- project root: {project['projectRoot']}")
-        print(f"  status: {project.get('status')}")
-        cli = project.get("cli")
-        if isinstance(cli, dict):
-            print(f"  cli: {'installed' if cli.get('installed') else 'missing'}")
-            if cli.get("path"):
-                print(f"  cli path: {cli['path']}")
-            if cli.get("version"):
-                print(f"  cli version: {cli['version']}")
-        init = project.get("init")
-        if isinstance(init, dict):
-            print(f"  init: {init.get('status')}")
-            if init.get("path"):
-                print(f"  init path: {init['path']}")
-            if init.get("command"):
-                print(f"  init command: {init['command']}")
-            if init.get("reason"):
-                print(f"  init reason: {init['reason']}")
-            if init.get("nextStep"):
-                print(f"  init next step: {init['nextStep']}")
-            if init.get("exampleCommand"):
-                print(f"  example: {init['exampleCommand']}")
-        bootstrap = project.get("bootstrapTask")
-        if isinstance(bootstrap, dict):
-            print(f"  bootstrap task: {bootstrap.get('status')}")
-            if bootstrap.get("path"):
-                print(f"  bootstrap path: {bootstrap['path']}")
-            if bootstrap.get("reason"):
-                print(f"  bootstrap reason: {bootstrap['reason']}")
-            if bootstrap.get("requiredAction"):
-                print(f"  required action: {bootstrap['requiredAction']}")
+        print(f"  status: {project['status']}")
+        if project.get("name"):
+            print(f"  name: {project['name']} (source: {project.get('source')})")
+        if project.get("target"):
+            print(f"  target: {project['target']}")
+        if project.get("needsProtection"):
+            print("  needs protection: yes")
+        if project.get("reason"):
+            print(f"  reason: {project['reason']}")
 
 
 def install_playwright_cli(args: argparse.Namespace) -> int:
@@ -5474,7 +5935,7 @@ def install_playwright_cli(args: argparse.Namespace) -> int:
     if not runtime["npm"]["installed"]:
         payload["status"] = "npm-required"
         payload["advice"] = (
-            "Install npm first, for example with `python scripts/onboard.py ensure-npm --yes` after user confirmation."
+            f"{shell_prefix()}Install npm first, for example with `{onboard_command('ensure-npm', '--yes')}` after user confirmation."
         )
         if args.json:
             print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -5811,7 +6272,7 @@ def build_plan_payload(
     external_migration_plan: dict[str, object] | None = None,
     global_skills_dir: Path | None = None,
     global_skills_dir_source: str | None = None,
-    trellis_init_plan: dict[str, object] | None = None,
+    sbtd_init_plan: dict[str, object] | None = None,
 ) -> dict[str, object]:
     payload: dict[str, object] = {
         "mode": mode,
@@ -5830,14 +6291,42 @@ def build_plan_payload(
         payload["bundledMigration"] = bundled_migration_plan
     if external_migration_plan:
         payload["externalMigration"] = external_migration_plan
-    if trellis_init_plan:
-        payload["trellisInit"] = trellis_init_plan
+    if sbtd_init_plan:
+        payload["sbtdInit"] = sbtd_init_plan
+    if global_skills_dir and mode in {"plan", "init", "reset"}:
+        payload["cavemanMaintenance"] = caveman_maintenance_plan(global_skills_dir)
+        payload["contentAlignment"] = check_content_alignment(global_skills_dir)
+    if mode != "init-projects":
+        payload["graft"] = check_graft()
     return payload
 
 
 def print_plan(payload: dict[str, object]) -> None:
     print(f"Mode: {payload['mode']}")
     print(f"Platform: {payload['platform']}")
+    if "contentAlignment" in payload:
+        print(f"Skills-only content alignment: {payload['contentAlignment']['status']}")
+        if payload["contentAlignment"]["status"] != "aligned":
+            print("  Existing valid Skills may be retained; use upgrade for confirmed content alignment.")
+    for label, key in (("Optional Graft CLI", "graft"), ("Graft wiring", "graftWiring")):
+        details = payload.get(key)
+        if isinstance(details, dict):
+            print(f"{label}: {details.get('status')}")
+            if details.get("reason"):
+                print(f"  reason: {details['reason']}")
+            if details.get("nextStep"):
+                print(f"  next: {details['nextStep']}")
+            if key == "graftWiring" and details.get("status") == "planned":
+                for operation in details.get("sharedOperations", []):
+                    print(f"  host resource: {operation['target']}")
+                if details.get("retireLegacy"):
+                    print("  retire only exact owned fixed-root MCP entries for:")
+                    for root in details.get("roots", []):
+                        print(f"    {root}")
+                    for binding in details.get("bindings", []):
+                        if "legacy" in binding:
+                            print(f"  approved old runtime: {json.dumps(binding['legacy'], sort_keys=True)}")
+                    print("  preserve originals; no runtime-directory or backup deletion")
     for item in payload["operations"]:
         if item["sameLocation"]:
             exists = "same source and target"
@@ -5849,6 +6338,15 @@ def print_plan(payload: dict[str, object]) -> None:
                 f", reset={item['plannedActionOnReset']}"
             )
         print(f"- {item['label']}: {item['target']} ({exists})")
+    caveman_maintenance = payload.get("cavemanMaintenance")
+    if caveman_maintenance:
+        print("\nCaveman maintenance:")
+        print(
+            f"- state: {caveman_maintenance['state']}, "
+            f"action: {caveman_maintenance['plannedAction']}, "
+            f"pinned: {caveman_maintenance['pinnedRef']}"
+        )
+        print_caveman_maintenance_details(cast(dict[str, object], caveman_maintenance))
 
     bundled_migration_plan = payload.get("bundledMigration")
     if bundled_migration_plan:
@@ -5906,21 +6404,9 @@ def print_plan(payload: dict[str, object]) -> None:
                     str(name) for name in external_migration_plan["removeLegacy"]
                 )
             )
-    trellis_init_plan = payload.get("trellisInit")
-    if trellis_init_plan:
-        print("\nTrellis init:")
-        print(f"- status: {trellis_init_plan.get('status')}")
-        if trellis_init_plan.get("agentPlatform"):
-            print(f"- agent platform: {trellis_init_plan['agentPlatform']}")
-        platforms = trellis_init_plan.get("platforms") or []
-        if platforms:
-            print("- platforms: " + ", ".join(str(item) for item in platforms))
-        if trellis_init_plan.get("platformSource"):
-            print(f"- platform source: {trellis_init_plan['platformSource']}")
-        if trellis_init_plan.get("command"):
-            print(f"- command: {trellis_init_plan['command']}")
-        if trellis_init_plan.get("reason"):
-            print(f"- reason: {trellis_init_plan['reason']}")
+    sbtd_init_plan = payload.get("sbtdInit")
+    if sbtd_init_plan:
+        print_sbtd_project_setup_report(cast(dict[str, object], sbtd_init_plan))
 
 
 def operation_allows_existing_target(operation: Operation) -> bool:
@@ -5999,9 +6485,88 @@ def run(mode: str, args: argparse.Namespace) -> int:
     # One process may run several modes; a note left by an earlier run would
     # make a later one report checks it never skipped.
     UNVERIFIED_CHECKS.clear()
+    if mode == "upgrade":
+        from sbtd_upgrade_cli import run_upgrade
+
+        return run_upgrade(args)
+    if mode == "recovery" and (
+        getattr(args, "upgrade_plan", None) is not None
+        or getattr(args, "upgrade_recovery_plan", None) is not None
+    ):
+        from sbtd_upgrade_cli import run_upgrade_recovery
+
+        return run_upgrade_recovery(args)
+    if mode == "migration":
+        try:
+            from sbtd_migration import run_migration
+        except ImportError:
+            reason = "the installed migration runtime or its declared dependencies are unavailable"
+            response = {
+                "mode": "migration",
+                "phase": args.phase,
+                "status": "blocked",
+                "manifest_id": None,
+                "verification_id": None,
+                "projects": [],
+                "reason": reason,
+                "nextStep": "Restore the complete installed Skill and its declared dependencies before retrying.",
+                "migration": {},
+            }
+            if args.json:
+                print(json.dumps(response, ensure_ascii=False, allow_nan=False))
+            else:
+                print(f"Migration {args.phase}: blocked")
+                print(reason)
+                print(response["nextStep"])
+            return 2
+
+        return run_migration(args)
+    if mode == "recovery":
+        from sbtd_recovery import run_recovery
+
+        return run_recovery(args)
+    if mode == "cleanup-legacy":
+        from sbtd_cleanup_legacy import run_cleanup_legacy
+
+        return run_cleanup_legacy(args)
+    if mode in {"init", "init-projects"} and getattr(args, "migration_manifest", None):
+        from sbtd_graft_deployment import run_migration_init
+
+        return run_migration_init(mode, args)
     if mode == "check":
         results = build_check_results(args)
+        if (
+            getattr(args, "platform", None) in {"codex", "omp", "oh-my-pi"}
+            or getattr(args, "graft_hooks", False)
+            or getattr(args, "graft_retire_legacy", False)
+            or getattr(args, "graft_legacy_bindings", None)
+        ):
+            from sbtd_graft_deployment import plan_normal_wiring
+
+            results["graftWiring"] = plan_normal_wiring(
+                mode, args,
+                installation_targets=[
+                    op.target for op in build_operations(mode, args) if not op.same_location
+                ],
+            )
+        developer_plan = build_developer_plan(args)
+        if developer_plan is not None:
+            results["developerPlan"] = developer_plan
         print_check_results(results, args.json)
+        if cast(dict[str, object], results.get("graftWiring", {})).get("status") == "blocked":
+            return 2
+        if developer_plan is not None:
+            if not args.json:
+                print_developer_plan(developer_plan)
+            developer_exit = developer_plan_exit_code(developer_plan)
+            if developer_exit:
+                print(
+                    "Developer identity preflight failed: resolve each "
+                    "conflicting or blocked project, or pass an explicit "
+                    "--projects-root.",
+                    file=sys.stderr,
+                )
+                return developer_exit
         provider = cast(dict[str, object], results["ponytailProvider"])
         if provider["provider"] == "conflict":
             print(
@@ -6010,10 +6575,21 @@ def run(mode: str, args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
             return 4
-        return 0
+        projects = cast(list[dict[str, object]], results["projectChecks"])
+        return project_status_exit_code(
+            aggregate_project_status(
+                [cast(dict[str, object], item["sbtd"]) for item in projects]
+            )
+        )
     if mode == "check-projects":
-        print_projects_check_results(build_projects_check_results(args), args.json)
-        return 0
+        results = build_projects_check_results(args)
+        print_projects_check_results(results, args.json)
+        projects = cast(list[dict[str, object]], results["projects"])
+        return project_status_exit_code(
+            aggregate_project_status(
+                [cast(dict[str, object], item["sbtd"]) for item in projects]
+            )
+        )
     if mode == "check-agent-cli":
         print_agent_cli_check(check_agent_cli(args.platform), args.json)
         return 0
@@ -6023,6 +6599,17 @@ def run(mode: str, args: argparse.Namespace) -> int:
         return install_agent_cli(args)
     if mode == "install-rtk":
         return install_rtk(args)
+    if mode == "install-graft":
+        payload, code = install_graft(
+            confirmed=bool(args.yes),
+            telemetry_only=bool(args.telemetry_only),
+        )
+        if args.json:
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            print("Graft installation:")
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return code
     if mode == "install-caveman":
         return install_caveman(args)
     if mode == "install-java":
@@ -6063,8 +6650,21 @@ def run(mode: str, args: argparse.Namespace) -> int:
         external_migration_plan,
         global_skills_dir,
         global_skills_dir_source,
-        build_trellis_init_plan(mode, args),
+        build_sbtd_project_setup(mode, args),
     )
+    from sbtd_graft_deployment import plan_normal_wiring
+
+    wiring_plan = plan_normal_wiring(
+        mode, args,
+        installation_targets=[op.target for op in operations if not op.same_location],
+    )
+    if wiring_plan["status"] != "skipped":
+        plan_payload["graftWiring"] = wiring_plan
+    developer_plan = build_developer_plan(args)
+    if developer_plan is not None:
+        plan_payload["developerPlan"] = developer_plan
+    if mode in {"init", "reset"}:
+        plan_payload["requiredExternalInstall"] = None
     plan_json_emitted = False
 
     def emit_plan_json() -> None:
@@ -6081,11 +6681,41 @@ def run(mode: str, args: argparse.Namespace) -> int:
 
     if not args.json:
         print_plan(plan_payload)
+        if developer_plan is not None:
+            print_developer_plan(developer_plan)
     if mode == "plan":
         emit_plan_json()
+        if wiring_plan["status"] == "blocked":
+            return 2
+        if developer_plan is not None:
+            return developer_plan_exit_code(developer_plan)
         return 0
 
     ensure_confirmed(args, mode)
+    if wiring_plan["status"] == "blocked":
+        emit_plan_json()
+        return 2
+    if developer_plan is not None:
+        # Whole-batch identity preflight before any global or project
+        # mutation: a conflict or unknown checkout anywhere stops the run
+        # before the first project is written.
+        developer_exit = developer_plan_exit_code(developer_plan)
+        if developer_exit:
+            print(
+                "Developer identity preflight failed; no files were changed.",
+                file=sys.stderr,
+            )
+            plan_payload["backups"] = []
+            emit_plan_json()
+            return developer_exit
+
+    sbtd_preflight = cast(dict[str, object], plan_payload["sbtdInit"])
+    preflight_exit = project_status_exit_code(sbtd_preflight["status"])
+    if preflight_exit:
+        plan_payload["sbtdProjectSetup"] = sbtd_preflight
+        plan_payload["backups"] = []
+        emit_plan_json()
+        return preflight_exit
     if bundled_migration_plan.get("status") == "blocked":
         print(
             "Bundled Skill rename migration blocked: legacy Skill identity "
@@ -6123,11 +6753,28 @@ def run(mode: str, args: argparse.Namespace) -> int:
             )
             emit_plan_json()
             return 4
-        external_install_status = install_required_external_skills(
+        from sbtd_graft_deployment import legacy_bindings_unchanged
+
+        if not legacy_bindings_unchanged(wiring_plan):
+            plan_payload["graftWiring"] = {
+                **wiring_plan,
+                "status": "blocked",
+                "reason": "the approved legacy bindings changed before installation",
+            }
+            plan_payload["backups"] = []
+            emit_plan_json()
+            print("Legacy binding approval changed; no installation writes were performed.", file=sys.stderr)
+            return 2
+        external_install = install_required_external_skills(
             args, overwrite=mode == "reset"
         )
+        plan_payload["requiredExternalInstall"] = external_install
 
-        if external_install_status != 0:
+        if (
+            external_install is not None
+            and cast(dict[str, object], external_install["transaction"])["status"]
+            != "committed"
+        ):
             print(
                 "Required global external Skill installation failed.", file=sys.stderr
             )
@@ -6157,7 +6804,6 @@ def run(mode: str, args: argparse.Namespace) -> int:
         backup_by_target[op.target] = backup
         backup_by_target[target] = backup
         backed_up.add(target)
-
 
     operation_results: list[dict[str, object]] = []
     for op in active_operations:
@@ -6220,6 +6866,36 @@ def run(mode: str, args: argparse.Namespace) -> int:
         emit_plan_json()
         return 3
 
+    if developer_plan is not None:
+        # Capture completed writes before identity work: its failure must not
+        # leave automation with a plan that hides already-applied changes.
+        plan_payload["operationResults"] = operation_results
+        identity_roots = [
+            Path(str(entry["projectRoot"]))
+            for entry in cast(list[dict[str, object]], developer_plan["projects"])
+        ]
+        developer_plan = ensure_developer_identities(developer_plan)
+        plan_payload["developerPlan"] = developer_plan
+        if not args.json:
+            print_developer_plan(developer_plan)
+        developer_exit = developer_plan_exit_code(developer_plan)
+        if developer_exit:
+            plan_payload["sbtdProjectSetup"] = build_sbtd_project_setup(
+                mode, args, project_roots=identity_roots
+            )
+            plan_payload["unverifiedChecks"] = list(UNVERIFIED_CHECKS)
+            print(
+                "Developer identity initialization failed; completed project "
+                "writes are kept and reported.",
+                file=sys.stderr,
+            )
+            plan_payload["backups"] = [
+                {"target": str(target), "backup": str(backup)}
+                for target, backup in backups
+            ]
+            emit_plan_json()
+            return developer_exit
+
     bundled_migration_results = run_bundled_skill_migration(bundled_migration_plan)
     failed_bundled_migrations = [
         item for item in bundled_migration_results if item["status"] == "failed"
@@ -6250,7 +6926,46 @@ def run(mode: str, args: argparse.Namespace) -> int:
         emit_plan_json()
         return 4
 
-    trellis_report = run_trellis_project_setup(mode, args)
+    caveman_maintenance: dict[str, object] = {
+        "status": "skipped",
+        "scope": "workflow-skill-payload-only",
+    }
+    if mode in {"init", "reset"}:
+        try:
+            caveman_maintenance = maintain_caveman_payload(global_skills_dir)
+        except Exception as exc:  # noqa: BLE001 - optional payload maintenance must not abort init/reset.
+            caveman_maintenance = {
+                "state": "abnormal",
+                "plannedAction": "repair",
+                "pinnedRef": CAVEMAN_PINNED_REF,
+                "pinnedRevision": CAVEMAN_PINNED_REVISION,
+                "scope": "workflow-skill-payload-only",
+                "status": "failed",
+                "error": str(exc),
+            }
+        if not args.json:
+            print("\nCaveman maintenance:")
+            print(
+                f"- state: {caveman_maintenance['state']}, "
+                f"action: {caveman_maintenance['plannedAction']}, "
+                f"status: {caveman_maintenance['status']}"
+            )
+            print_caveman_maintenance_details(caveman_maintenance)
+
+    sbtd_report = build_sbtd_project_setup(mode, args)
+    from sbtd_graft_deployment import execute_normal_wiring
+
+    wiring_result, wiring_exit = execute_normal_wiring(
+        wiring_plan, template_written=not bool(getattr(args, "skip_project_agents", False)),
+    )
+    if wiring_plan["status"] != "skipped":
+        plan_payload["graftWiring"] = wiring_result
+        plan_payload["operationResults"] = operation_results
+        if wiring_exit:
+            wiring_status = "blocked" if wiring_exit == 2 else "failed"
+            for project in cast(list[dict[str, object]], sbtd_report["projects"]):
+                project.update(status=wiring_status, reason="host wiring did not complete", nextStep="Inspect the preserved wiring results and originals.")
+            sbtd_report["status"] = wiring_status
     if args.json:
         # One run, one root object. The plan was held back above so it can be
         # merged here; flushing it earlier made stdout two concatenated
@@ -6269,7 +6984,8 @@ def run(mode: str, args: argparse.Namespace) -> int:
                         {"target": str(target), "backup": str(backup)}
                         for target, backup in backups
                     ],
-                    "trellisProjectSetup": trellis_report,
+                    "sbtdProjectSetup": sbtd_report,
+                    "cavemanMaintenance": caveman_maintenance,
                     "unverifiedChecks": list(UNVERIFIED_CHECKS),
                 },
                 indent=2,
@@ -6277,23 +6993,24 @@ def run(mode: str, args: argparse.Namespace) -> int:
             )
         )
     else:
-        print_trellis_project_setup_report(trellis_report)
-    if trellis_report.get("status") in {"blocked", "needs-user"}:
-        return 2
-    if trellis_report.get("status") == "failed":
-        return 5
-    if trellis_report.get("status") == "bootstrap-required":
-        return 6
+        print_sbtd_project_setup_report(sbtd_report)
+        if wiring_plan["status"] != "skipped":
+            print("Host wiring: " + str(wiring_result["status"]))
+            if wiring_result.get("hooks") == "configured-needs-host-trust":
+                print("Hooks configured only: enable supported Codex hooks and trust their exact hashes in the host before use.")
+            print("Host-event acceptance is separate from file and graph verification.")
+    if wiring_exit:
+        return wiring_exit
+    setup_exit = project_status_exit_code(sbtd_report["status"])
+    if setup_exit:
+        return setup_exit
 
     if not args.json:
         # `--json` promises one machine-readable document on stdout. Each note
         # already went to stderr when it was recorded, and the JSON document
         # carries `unverifiedChecks`, so nothing is lost by staying quiet here.
         if UNVERIFIED_CHECKS:
-            print(
-                "Verification passed, except for checks that could not be"
-                " evaluated:"
-            )
+            print("Verification passed, except for checks that could not be evaluated:")
             for item in UNVERIFIED_CHECKS:
                 print(f"- {item}")
         else:
@@ -6308,23 +7025,53 @@ def run(mode: str, args: argparse.Namespace) -> int:
     return 0
 
 
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = WorkflowArgumentParser(
         description="Install or reset SBTD workflow AGENTS and skills."
     )
     subparsers = parser.add_subparsers(dest="mode", required=True)
+    add_migration_parser(subparsers)
+    add_recovery_parser(subparsers)
+    add_cleanup_legacy_parser(subparsers)
+    add_upgrade_parser(subparsers)
 
     for mode in ("check", "plan", "init", "reset", "init-projects"):
         sub = subparsers.add_parser(mode)
+        if mode in {"init", "init-projects"}:
+            _add_migration_context(sub)
+        sub.add_argument("--graft-hooks", action="store_true", help="Separately authorize the displayed Codex hooks; does not grant host trust.")
+        sub.add_argument(
+            "--no-mcp", action="store_true",
+            help="Skip user-level Graft MCP wiring; selected project graph setup remains local.",
+        )
+        sub.add_argument(
+            "--graft-retire-legacy",
+            action="store_true",
+            help="Explicitly replace exact owned fixed-project MCP entries for the selected roots; retain originals. Does not authorize environment or backup deletion.",
+        )
+        sub.add_argument(
+            "--graft-legacy-bindings",
+            action=SingleValueAction,
+            help="Private version-1 JSON contract naming observed old runtime paths for --graft-retire-legacy across runtime changes.",
+        )
         sub.add_argument(
             "--projects-root",
             required=mode == "init-projects",
             help="Comma-separated absolute project root paths.",
         )
         sub.add_argument(
+            "--developer",
+            action=SingleValueAction,
+            type=validate_developer_name,
+            help="Developer identity name (lowercase letters and digits) "
+            "applied only to the explicitly listed --projects-root projects.",
+        )
+        sub.add_argument(
             "--skip-project-agents",
             action="store_true",
-            help="Do not install project AGENTS.md.",
+            help="Skip the project AGENTS template; explicitly selected Graft wiring still maintains its managed fence.",
         )
         sub.add_argument(
             "--global-agents-path", help="Override Codex global AGENTS.md path."
@@ -6342,29 +7089,6 @@ def build_parser() -> argparse.ArgumentParser:
             "--platform",
             help="Target Agent platform: codex, claude, kimi, oh-my-pi, or omp.",
         )
-        sub.add_argument(
-            "--trellis-user",
-            help="Developer username for `trellis init -u` when the target project has no .trellis/.",
-        )
-        sub.add_argument(
-            "--trellis-platform",
-            action="append",
-            default=[],
-            help=(
-                "Trellis init platform flag without leading dashes, repeatable or comma-separated "
-                f"(supported: {', '.join(TRELLIS_INIT_PLATFORMS)})."
-            ),
-        )
-        sub.add_argument(
-            "--skip-trellis-init",
-            action="store_true",
-            help="Do not run the post-install Trellis init check for init/reset.",
-        )
-        sub.add_argument(
-            "--skip-trellis-bootstrap",
-            action="store_true",
-            help="Do not report the post-install Trellis bootstrap task handoff for init/reset.",
-        )
 
     project_check = subparsers.add_parser("check-projects")
     project_check.add_argument(
@@ -6375,6 +7099,24 @@ def build_parser() -> argparse.ArgumentParser:
     project_check.add_argument(
         "--json", action="store_true", help="Print machine-readable project checks."
     )
+    project_check.add_argument(
+        "--skip-project-agents",
+        action="store_true",
+        help="Exclude project AGENTS.md from installation-target checks.",
+    )
+    graft_install = subparsers.add_parser("install-graft")
+    graft_install.add_argument(
+        "--yes", action="store_true",
+        help="Confirm the pinned global package/native-script and telemetry-disable plan.",
+    )
+    graft_install.add_argument(
+        "--telemetry-only", action="store_true",
+        help="Persist only telemetry opt-out; refuse package installation if the verified CLI is no longer present.",
+    )
+    graft_install.add_argument(
+        "--json", action="store_true", help="Print one machine-readable installation result."
+    )
+
 
     install = subparsers.add_parser("install-external-skills")
     install.add_argument(
@@ -6637,6 +7379,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    if args.mode == "migration":
+        validate_migration_args(args, parser=parser)
+    elif args.mode == "recovery":
+        validate_recovery_args(args, parser=parser)
+    elif args.mode == "cleanup-legacy":
+        validate_cleanup_legacy_args(args, parser=parser)
+    elif args.mode == "upgrade":
+        validate_upgrade_args(args, parser=parser)
+    elif args.mode in {"init", "init-projects"}:
+        _check_migration_context(parser, args)
     return run(args.mode, args)
 
 

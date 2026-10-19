@@ -1,0 +1,3571 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sbtd:onboard-contracts:schema:1",
+  "title": "SBTD Onboard private exchange and response contracts v1",
+  "$comment": "Contract structure only. Use the Python contract module for strict JSON types, custom formats, canonical IDs and cross-field checks. Schema/hash validity is not filesystem safety, authorization, execution, or smoke proof. Runtime producers own those checks.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/publication_decisions"
+    },
+    {
+      "$ref": "#/$defs/manifest"
+    },
+    {
+      "$ref": "#/$defs/apply_receipt"
+    },
+    {
+      "$ref": "#/$defs/verification"
+    },
+    {
+      "$ref": "#/$defs/cleanup_receipt"
+    },
+    {
+      "$ref": "#/$defs/deployment_evidence"
+    },
+    {
+      "$ref": "#/$defs/recovery_plan"
+    },
+    {
+      "$ref": "#/$defs/recovery_receipt"
+    },
+    {
+      "$ref": "#/$defs/migration_envelope"
+    },
+    {
+      "$ref": "#/$defs/recovery_envelope"
+    }
+  ],
+  "$defs": {
+    "text": {
+      "type": "string"
+    },
+    "nonblank": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "runtime_fingerprint": {
+      "type": "string",
+      "pattern": "^runtime-sha256:[0-9a-f]{64}$"
+    },
+    "oid": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "format": "normalized-absolute-path"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "phase": {
+      "enum": [
+        "apply",
+        "deploy",
+        "cleanup"
+      ]
+    },
+    "owner_kind": {
+      "enum": [
+        "file",
+        "directory",
+        "markdown",
+        "gitignore",
+        "json",
+        "toml"
+      ]
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "checksum"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "absent",
+            "file",
+            "directory"
+          ]
+        },
+        "checksum": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "absent"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "checksum": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "checksum": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "present_state": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/state"
+        },
+        {
+          "properties": {
+            "type": {
+              "enum": [
+                "file",
+                "directory"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "object_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "state"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "state": {
+          "$ref": "#/$defs/present_state"
+        }
+      }
+    },
+    "file_ref": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/object_ref"
+        },
+        {
+          "properties": {
+            "state": {
+              "properties": {
+                "type": {
+                  "const": "file"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "directory_ref": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/object_ref"
+        },
+        {
+          "properties": {
+            "state": {
+              "properties": {
+                "type": {
+                  "const": "directory"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "state"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        }
+      }
+    },
+    "approval_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "target_path",
+        "decision",
+        "candidate_ref"
+      ],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 1
+        },
+        "target_path": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/absolute_path"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision": {
+          "enum": [
+            "share",
+            "redact",
+            "private-only"
+          ]
+        },
+        "candidate_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/object_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "publication_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id",
+        "sources",
+        "target_path",
+        "required",
+        "decision",
+        "candidate_ref",
+        "approval"
+      ],
+      "properties": {
+        "item_id": {
+          "$ref": "#/$defs/nonblank"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 1
+        },
+        "target_path": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/absolute_path"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "decision": {
+          "enum": [
+            "share",
+            "redact",
+            "private-only"
+          ]
+        },
+        "candidate_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/object_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "basis",
+            "scope"
+          ],
+          "properties": {
+            "basis": {
+              "$ref": "#/$defs/nonblank"
+            },
+            "scope": {
+              "$ref": "#/$defs/approval_scope"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision": {
+                "const": "private-only"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target_path": {
+                "type": "null"
+              },
+              "candidate_ref": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "target_path": {
+                "$ref": "#/$defs/absolute_path"
+              },
+              "candidate_ref": {
+                "$ref": "#/$defs/object_ref"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "publication_decisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "items"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/publication_item"
+          },
+          "minItems": 0
+        }
+      }
+    },
+    "change": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "source_ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "copy-file"
+            },
+            "source_ref": {
+              "$ref": "#/$defs/file_ref"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "source_ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "copy-directory"
+            },
+            "source_ref": {
+              "$ref": "#/$defs/directory_ref"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "source_ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "ensure-file-block"
+            },
+            "source_ref": {
+              "$ref": "#/$defs/file_ref"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source_ref", "name"],
+          "properties": {
+            "kind": {"const": "migrate-developer"},
+            "source_ref": {"$ref": "#/$defs/file_ref"},
+            "name": {"type": "string", "pattern": "^[a-z0-9]+(?![\\s\\S])"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source_ref"],
+          "properties": {
+            "kind": {"enum": ["build-graft", "configure-graft"]},
+            "source_ref": {"$ref": "#/$defs/file_ref"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "remove"
+            }
+          }
+        }
+      ]
+    },
+    "ownership": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reference"
+          ],
+          "properties": {
+            "kind": {
+              "const": "template-source"
+            },
+            "reference": {
+              "$ref": "#/$defs/object_ref"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reference",
+            "marker"
+          ],
+          "properties": {
+            "kind": {
+              "const": "managed-marker"
+            },
+            "reference": {
+              "$ref": "#/$defs/file_ref"
+            },
+            "marker": {
+              "$ref": "#/$defs/nonblank"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reference",
+            "name"
+          ],
+          "properties": {
+            "kind": {
+              "const": "skill-identity"
+            },
+            "reference": {
+              "$ref": "#/$defs/directory_ref"
+            },
+            "name": {
+              "$ref": "#/$defs/nonblank"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reference",
+            "key_path"
+          ],
+          "properties": {
+            "kind": {
+              "const": "config-entry"
+            },
+            "reference": {
+              "$ref": "#/$defs/file_ref"
+            },
+            "key_path": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/nonblank"
+              },
+              "minItems": 1
+            }
+          }
+        }
+        ,
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "reference", "approval_ref", "role"],
+          "properties": {
+            "kind": {"const": "approved-candidate"},
+            "reference": {"$ref": "#/$defs/file_ref"},
+            "approval_ref": {"$ref": "#/$defs/file_ref"},
+            "role": {
+              "enum": ["codex-global", "omp-global", "demo-project"]
+            }
+          }
+        }
+      ]
+    },
+    "before_requirement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "state"
+          ],
+          "properties": {
+            "kind": {
+              "const": "state"
+            },
+            "state": {
+              "$ref": "#/$defs/state"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "phase",
+            "resource_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "phase-after"
+            },
+            "phase": {
+              "$ref": "#/$defs/phase"
+            },
+            "resource_id": {
+              "$ref": "#/$defs/digest"
+            }
+          }
+        }
+      ]
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_id",
+        "phase",
+        "resource_id",
+        "owner_kind",
+        "target",
+        "selector",
+        "change",
+        "ownership",
+        "before_requirement",
+        "dependent_projects"
+      ],
+      "properties": {
+        "operation_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "phase": {
+          "$ref": "#/$defs/phase"
+        },
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "owner_kind": {
+          "$ref": "#/$defs/owner_kind"
+        },
+        "target": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "selector": {
+          "$ref": "#/$defs/nonblank"
+        },
+        "change": {
+          "$ref": "#/$defs/change"
+        },
+        "ownership": {
+          "$ref": "#/$defs/ownership"
+        },
+        "before_requirement": {
+          "$ref": "#/$defs/before_requirement"
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "project_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "manifest_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head",
+        "platforms",
+        "sources",
+        "private_operations",
+        "shared_operation_ids"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "codex",
+              "claude",
+              "kimi",
+              "oh-my-pi"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 0
+        },
+        "private_operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operation"
+          },
+          "minItems": 0
+        },
+        "shared_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "agents_no_touch": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "target",
+            "template"
+          ],
+          "properties": {
+            "target": {
+              "$ref": "#/$defs/object_ref"
+            },
+            "template": {
+              "$ref": "#/$defs/object_ref"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "shared_root": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "dependent_projects"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "home",
+            "skills",
+            "codex-home",
+            "omp-home"
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "skills_root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "deployment_declaration": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "platform",
+            "inputs"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "init",
+                "init-projects"
+              ]
+            },
+            "platform": {
+              "enum": [
+                "codex",
+                "omp"
+              ]
+            },
+            "inputs": {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/snapshot"
+                  },
+                  {
+                    "properties": {
+                      "state": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "absent",
+                              "file"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "minItems": 0
+            }
+          }
+        }
+      ]
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normal_observation_days",
+        "normal_disposal_gates",
+        "termination_disposal_gates",
+        "disposal_authorization"
+      ],
+      "properties": {
+        "normal_observation_days": {
+          "type": "integer",
+          "minimum": 14
+        },
+        "normal_disposal_gates": {
+          "const": [
+            "observation-complete",
+            "final-acceptance",
+            "stable-release",
+            "recovery-window-closed"
+          ]
+        },
+        "termination_disposal_gates": {
+          "const": [
+            "explicit-termination",
+            "recovery-or-no-recovery-confirmed",
+            "custodian-review"
+          ]
+        },
+        "disposal_authorization": {
+          "const": "separate-manual-confirmation"
+        }
+      }
+    },
+    "manifest_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projects",
+        "shared_roots",
+        "shared_operations",
+        "publication_decisions",
+        "routing_approvals",
+        "custodian",
+        "backup_root",
+        "created_at",
+        "retention",
+        "tool_versions",
+        "deployment"
+      ],
+      "properties": {
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/manifest_project"
+          },
+          "minItems": 1
+        },
+        "shared_roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/shared_root"
+          },
+          "minItems": 0
+        },
+        "shared_operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operation"
+          },
+          "minItems": 0
+        },
+        "publication_decisions": {
+          "$ref": "#/$defs/publication_decisions"
+        },
+        "routing_approvals": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/file_ref"
+            }
+          ]
+        },
+        "custodian": {
+          "$ref": "#/$defs/nonblank"
+        },
+        "backup_root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "retention": {
+          "$ref": "#/$defs/retention"
+        },
+        "tool_versions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "onboard",
+            "graft"
+          ],
+          "properties": {
+            "onboard": {
+              "$ref": "#/$defs/nonblank"
+            },
+            "graft": {
+              "$ref": "#/$defs/nonblank"
+            }
+          }
+        },
+        "deployment": {
+          "$ref": "#/$defs/deployment_declaration"
+        },
+        "successor": {
+          "$ref": "#/$defs/successor_binding"
+        },
+        "followup": {
+          "$ref": "#/$defs/followup_binding"
+        }
+      },
+      "allOf": [
+        {
+          "not": {
+            "required": [
+              "successor",
+              "followup"
+            ]
+          }
+        }
+      ]
+    },
+    "resource_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase",
+        "resource_id",
+        "operation_ids",
+        "dependent_projects",
+        "status",
+        "backup_ref",
+        "before",
+        "after",
+        "error"
+      ],
+      "properties": {
+        "phase": {
+          "$ref": "#/$defs/phase"
+        },
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "blocked"
+          ]
+        },
+        "backup_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/object_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/state"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/state"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "before": {
+                "$ref": "#/$defs/state"
+              },
+              "after": {
+                "$ref": "#/$defs/state"
+              },
+              "error": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/nonblank"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "successor_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "apply_id",
+        "manifest_ref",
+        "apply_receipt_ref",
+        "apply_results"
+      ],
+      "properties": {
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "apply_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "manifest_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "apply_receipt_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "apply_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "followup_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "apply_id",
+        "deployment_id",
+        "verification_id",
+        "cleanup_id",
+        "manifest_ref",
+        "apply_receipt_ref",
+        "deployment_evidence_ref",
+        "verification_ref",
+        "cleanup_receipt_ref"
+      ],
+      "properties": {
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "apply_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "deployment_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "verification_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "cleanup_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "manifest_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "apply_receipt_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "deployment_evidence_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "verification_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "cleanup_receipt_ref": {
+          "$ref": "#/$defs/object_ref"
+        }
+      }
+    },
+    "apply_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head",
+        "status",
+        "reason",
+        "nextStep",
+        "private_results",
+        "shared_operation_ids"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        },
+        "private_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 0
+        },
+        "shared_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "cleanup_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head",
+        "status",
+        "reason",
+        "nextStep",
+        "private_results",
+        "shared_operation_ids",
+        "retained_assets"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "cleaned",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        },
+        "private_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 0
+        },
+        "shared_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "retained_assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "deployment_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head",
+        "status",
+        "reason",
+        "nextStep",
+        "private_results",
+        "shared_operation_ids",
+        "report_refs"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "not-verified",
+            "blocked",
+            "failed"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        },
+        "private_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 0
+        },
+        "shared_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "report_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/file_ref"
+          },
+          "minItems": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "report_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "apply_receipt_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "previous_receipt_id",
+        "status",
+        "projects",
+        "shared_results",
+        "started_at",
+        "finished_at"
+      ],
+      "properties": {
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous_receipt_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/apply_project"
+          },
+          "minItems": 1
+        },
+        "shared_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 0
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "deployment_evidence_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "apply_id",
+        "previous_deployment_id",
+        "status",
+        "projects",
+        "shared_results",
+        "started_at",
+        "finished_at"
+      ],
+      "properties": {
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "apply_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous_deployment_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "not-verified",
+            "blocked",
+            "failed"
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deployment_project"
+          },
+          "minItems": 1
+        },
+        "shared_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 0
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "reconciliation": {
+          "$ref": "#/$defs/reconciliation_metadata"
+        }
+      }
+    },
+    "runtime_lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "purpose",
+        "predecessor",
+        "successor",
+        "signature"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "purpose": {
+          "const": "runtime-lineage"
+        },
+        "predecessor": {
+          "$ref": "#/$defs/runtime_fingerprint"
+        },
+        "successor": {
+          "$ref": "#/$defs/runtime_fingerprint"
+        },
+        "signature": {
+          "$ref": "#/$defs/nonblank"
+        }
+      }
+    },
+    "reconciliation_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "historical_execution",
+        "manifest_ref",
+        "apply_receipt_ref",
+        "missing_deployment_evidence",
+        "runtime_versions"
+      ],
+      "properties": {
+        "kind": {
+          "const": "current-state"
+        },
+        "historical_execution": {
+          "const": "unknown"
+        },
+        "manifest_ref": {
+          "$ref": "#/$defs/file_ref"
+        },
+        "apply_receipt_ref": {
+          "$ref": "#/$defs/file_ref"
+        },
+        "missing_deployment_evidence": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/snapshot"
+            },
+            {
+              "properties": {
+                "state": {
+                  "properties": {
+                    "type": {
+                      "const": "absent"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "observer_lineage": {
+          "$ref": "#/$defs/runtime_lineage"
+        },
+        "runtime_versions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "onboard",
+            "graft"
+          ],
+          "properties": {
+            "onboard": {
+              "$ref": "#/$defs/runtime_fingerprint"
+            },
+            "graft": {
+              "$ref": "#/$defs/nonblank"
+            }
+          }
+        }
+      }
+    },
+    "cleanup_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "operation_ids",
+        "target",
+        "state",
+        "dependent_projects"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "target": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "verification_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head",
+        "status",
+        "reason",
+        "nextStep",
+        "retained_assets",
+        "cleanup_candidates"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "verified",
+            "blocked",
+            "failed"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        },
+        "retained_assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 0
+        },
+        "cleanup_candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cleanup_candidate"
+          },
+          "minItems": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "verification_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "apply_id",
+        "deployment_evidence_hash",
+        "status",
+        "projects",
+        "shared_cleanup_candidates",
+        "verified_at"
+      ],
+      "properties": {
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "apply_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "deployment_evidence_hash": {
+          "$ref": "#/$defs/digest"
+        },
+        "status": {
+          "enum": [
+            "verified",
+            "blocked",
+            "failed"
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/verification_project"
+          },
+          "minItems": 1
+        },
+        "shared_cleanup_candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cleanup_candidate"
+          },
+          "minItems": 0
+        },
+        "verified_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "acceptance_basis": {
+          "const": "current-state"
+        }
+      }
+    },
+    "cleanup_upgrade_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema", "schema_version", "plan_id", "receipt_id", "baseline_id",
+        "resource_id", "backup_root", "plan_ref", "receipt_ref",
+        "current_package", "previous_package", "previous_payload_state"
+      ],
+      "properties": {
+        "schema": {"const": "cleanup-upgrade-provenance"},
+        "schema_version": {"const": 1},
+        "plan_id": {"$ref": "#/$defs/digest"},
+        "receipt_id": {"$ref": "#/$defs/digest"},
+        "baseline_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "resource_id": {"type": "string", "pattern": "^skill:sbtd-workflow-onboard@"},
+        "backup_root": {"$ref": "#/$defs/absolute_path"},
+        "plan_ref": {"$ref": "#/$defs/file_ref"},
+        "receipt_ref": {"$ref": "#/$defs/file_ref"},
+        "current_package": {"$ref": "#/$defs/directory_ref"},
+        "previous_package": {"$ref": "#/$defs/directory_ref"},
+        "previous_payload_state": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "checksum"],
+          "properties": {
+            "type": {"const": "directory"},
+            "checksum": {"$ref": "#/$defs/digest"}
+          }
+        }
+      }
+    },
+    "cleanup_receipt_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "verification_id",
+        "apply_id",
+        "deployment_evidence_hash",
+        "previous_receipt_id",
+        "status",
+        "projects",
+        "shared_results",
+        "retained_assets",
+        "started_at",
+        "finished_at"
+      ],
+      "properties": {
+        "deployment_only_inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sealed_state", "live_state"],
+            "properties": {
+              "path": {"$ref": "#/$defs/absolute_path"},
+              "sealed_state": {"$ref": "#/$defs/state"},
+              "live_state": {"$ref": "#/$defs/state"}
+            }
+          }
+        },
+        "upgrade_context": {
+          "$ref": "#/$defs/cleanup_upgrade_context"
+        },
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "verification_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "apply_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "deployment_evidence_hash": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous_receipt_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "cleaned",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cleanup_project"
+          },
+          "minItems": 1
+        },
+        "shared_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource_result"
+          },
+          "minItems": 0
+        },
+        "retained_assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 0
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "input_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest",
+        "apply_receipt",
+        "deployment_evidence",
+        "cleanup_receipt"
+      ],
+      "properties": {
+        "manifest": {
+          "$ref": "#/$defs/file_ref"
+        },
+        "apply_receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/file_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deployment_evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/file_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cleanup_receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/file_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "recovery_resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "owner_kind",
+        "target",
+        "operation_ids",
+        "dependent_projects",
+        "state"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "owner_kind": {
+          "$ref": "#/$defs/owner_kind"
+        },
+        "target": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        }
+      }
+    },
+    "recovery_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "phase",
+        "resource_id",
+        "operation_ids",
+        "dependent_projects",
+        "depends_on",
+        "backup_ref",
+        "expected_current",
+        "restore_to"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "phase": {
+          "$ref": "#/$defs/phase"
+        },
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "backup_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/object_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_current": {
+          "$ref": "#/$defs/state"
+        },
+        "restore_to": {
+          "$ref": "#/$defs/state"
+        }
+      }
+    },
+    "recovery_plan_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "status",
+        "projects",
+        "shared_operation_ids",
+        "input_evidence",
+        "resources",
+        "steps",
+        "conflicts",
+        "risks",
+        "target",
+        "created_at"
+      ],
+      "properties": {
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "blocked"
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/project_snapshot"
+          },
+          "minItems": 1
+        },
+        "shared_operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "input_evidence": {
+          "$ref": "#/$defs/input_evidence"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recovery_resource"
+          },
+          "minItems": 0
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recovery_step"
+          },
+          "minItems": 0
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonblank"
+          },
+          "minItems": 0
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonblank"
+          },
+          "minItems": 0
+        },
+        "target": {
+          "const": "pre-apply"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "recovery_step_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "resource_id",
+        "phase",
+        "operation_ids",
+        "dependent_projects",
+        "status",
+        "protection_ref",
+        "before",
+        "after",
+        "error"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "phase": {
+          "$ref": "#/$defs/phase"
+        },
+        "operation_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "blocked"
+          ]
+        },
+        "protection_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/object_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/state"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/state"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "before": {
+                "$ref": "#/$defs/state"
+              },
+              "after": {
+                "$ref": "#/$defs/state"
+              },
+              "error": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/nonblank"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "recovery_shared_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "dependent_projects",
+        "step_ids"
+      ],
+      "properties": {
+        "resource_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "dependent_projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/absolute_path"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "step_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "recovery_project_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "source_ref",
+        "head",
+        "status",
+        "reason",
+        "nextStep"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonblank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/oid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "restored",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "head": {
+                "$ref": "#/$defs/oid"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "recovery_receipt_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "manifest_id",
+        "previous_receipt_id",
+        "input_evidence",
+        "status",
+        "projects",
+        "results",
+        "shared_results",
+        "completed_step_ids",
+        "pending_step_ids",
+        "reason",
+        "started_at",
+        "finished_at",
+        "runtime_readiness",
+        "report_refs"
+      ],
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous_receipt_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "input_evidence": {
+          "$ref": "#/$defs/input_evidence"
+        },
+        "status": {
+          "enum": [
+            "restored",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recovery_project_result"
+          },
+          "minItems": 1
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recovery_step_result"
+          },
+          "minItems": 0
+        },
+        "shared_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recovery_shared_result"
+          },
+          "minItems": 0
+        },
+        "completed_step_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "pending_step_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "runtime_readiness": {
+          "enum": [
+            "not-verified",
+            "verified",
+            "blocked"
+          ]
+        },
+        "report_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/file_ref"
+          },
+          "minItems": 0
+        }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "manifest_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/manifest_payload"
+        },
+        "manifest_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "apply_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "apply_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/apply_receipt_payload"
+        },
+        "apply_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "verification_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/verification_payload"
+        },
+        "verification_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "cleanup_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "cleanup_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/cleanup_receipt_payload"
+        },
+        "cleanup_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "deployment_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "deployment_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/deployment_evidence_payload"
+        },
+        "deployment_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "recovery_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "plan_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/recovery_plan_payload"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "recovery_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "payload",
+        "receipt_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/recovery_receipt_payload"
+        },
+        "receipt_id": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "deployment_result": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "evidence"
+          ],
+          "properties": {
+            "path": {
+              "$ref": "#/$defs/absolute_path"
+            },
+            "evidence": {
+              "$ref": "#/$defs/deployment_evidence"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "envelope_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "status",
+        "reason",
+        "nextStep"
+      ],
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/absolute_path"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "applied",
+            "verified",
+            "cleaned",
+            "restored",
+            "reconciled",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "migration_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "phase",
+        "status",
+        "manifest_id",
+        "verification_id",
+        "projects",
+        "reason",
+        "nextStep",
+        "migration"
+      ],
+      "properties": {
+        "mode": {
+          "const": "migration"
+        },
+        "phase": {
+          "enum": [
+            "plan",
+            "apply",
+            "reconcile",
+            "verify",
+            "cleanup"
+          ]
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "applied",
+            "reconciled",
+            "verified",
+            "cleaned",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "manifest_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verification_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/envelope_project"
+          },
+          "minItems": 0
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        },
+        "migration": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "plan"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "planned",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "migration": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "manifest"
+                    ],
+                    "properties": {
+                      "manifest": {
+                        "$ref": "#/$defs/manifest"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "plan"
+              },
+              "status": {
+                "enum": [
+                  "planned"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "migration": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "manifest"
+                ],
+                "properties": {
+                  "manifest": {
+                    "$ref": "#/$defs/manifest"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "apply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "applied",
+                  "already-complete",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "migration": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "apply_receipt"
+                    ],
+                    "properties": {
+                      "apply_receipt": {
+                        "$ref": "#/$defs/apply_receipt"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "apply"
+              },
+              "status": {
+                "enum": [
+                  "applied",
+                  "already-complete"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "migration": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "apply_receipt"
+                ],
+                "properties": {
+                  "apply_receipt": {
+                    "$ref": "#/$defs/apply_receipt"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "verify"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "verified",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "migration": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "verification"
+                    ],
+                    "properties": {
+                      "verification": {
+                        "$ref": "#/$defs/verification"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "verify"
+              },
+              "status": {
+                "enum": [
+                  "verified"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "migration": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "verification"
+                ],
+                "properties": {
+                  "verification": {
+                    "$ref": "#/$defs/verification"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "cleanup"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "cleaned",
+                  "already-complete",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "migration": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "cleanup_receipt"
+                    ],
+                    "properties": {
+                      "cleanup_receipt": {
+                        "$ref": "#/$defs/cleanup_receipt"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "cleanup"
+              },
+              "status": {
+                "enum": [
+                  "cleaned",
+                  "already-complete"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "migration": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "cleanup_receipt"
+                ],
+                "properties": {
+                  "cleanup_receipt": {
+                    "$ref": "#/$defs/cleanup_receipt"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "reconcile"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "reconciled",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "migration": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "deployment_evidence",
+                      "deployment_evidence_path"
+                    ],
+                    "properties": {
+                      "deployment_evidence": {
+                        "$ref": "#/$defs/deployment_evidence"
+                      },
+                      "deployment_evidence_path": {
+                        "$ref": "#/$defs/absolute_path"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "reconcile"
+              },
+              "status": {
+                "enum": [
+                  "reconciled"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "migration": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "deployment_evidence",
+                  "deployment_evidence_path"
+                ],
+                "properties": {
+                  "deployment_evidence": {
+                    "$ref": "#/$defs/deployment_evidence"
+                  },
+                  "deployment_evidence_path": {
+                    "$ref": "#/$defs/absolute_path"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "enum": [
+                  "plan",
+                  "apply",
+                  "reconcile"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "verification_id": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "recovery_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "phase",
+        "status",
+        "manifest_id",
+        "plan_id",
+        "receipt_id",
+        "projects",
+        "reason",
+        "nextStep",
+        "recovery"
+      ],
+      "properties": {
+        "mode": {
+          "const": "recovery"
+        },
+        "phase": {
+          "enum": [
+            "plan",
+            "apply"
+          ]
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "restored",
+            "already-complete",
+            "blocked",
+            "failed"
+          ]
+        },
+        "manifest_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plan_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receipt_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/envelope_project"
+          },
+          "minItems": 0
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "nextStep": {
+          "$ref": "#/$defs/text"
+        },
+        "recovery": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "plan"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "planned",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "recovery": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "plan"
+                    ],
+                    "properties": {
+                      "plan": {
+                        "$ref": "#/$defs/recovery_plan"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "plan"
+              },
+              "status": {
+                "enum": [
+                  "planned"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "plan_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "recovery": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "plan"
+                ],
+                "properties": {
+                  "plan": {
+                    "$ref": "#/$defs/recovery_plan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "apply"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "restored",
+                  "already-complete",
+                  "blocked",
+                  "failed"
+                ]
+              },
+              "recovery": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [],
+                    "properties": {}
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "receipt"
+                    ],
+                    "properties": {
+                      "receipt": {
+                        "$ref": "#/$defs/recovery_receipt"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "apply"
+              },
+              "status": {
+                "enum": [
+                  "restored",
+                  "already-complete"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "plan_id": {
+                "$ref": "#/$defs/digest"
+              },
+              "recovery": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "receipt"
+                ],
+                "properties": {
+                  "receipt": {
+                    "$ref": "#/$defs/recovery_receipt"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "plan"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "receipt_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "apply"
+              },
+              "status": {
+                "enum": [
+                  "restored",
+                  "already-complete"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "receipt_id": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

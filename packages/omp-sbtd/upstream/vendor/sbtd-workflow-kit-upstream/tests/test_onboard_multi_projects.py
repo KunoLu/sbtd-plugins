@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
@@ -13,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ONBOARD = ROOT / "sbtd-workflow-onboard" / "scripts" / "onboard.py"
+sys.path.insert(0, str(ONBOARD.parent))
 
 
 class MultiProjectOnboardCommandTests(unittest.TestCase):
@@ -33,7 +33,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.env["USERPROFILE"] = str(self.home)
         self.env["CODEX_HOME"] = str(self.codex_home)
 
-
     def write_executable(self, name: str, body: str) -> Path:
         bin_dir = self.root / "bin"
         bin_dir.mkdir(exist_ok=True)
@@ -45,7 +44,9 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         )
         return target
 
-    def run_onboard(self, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
+    def run_onboard(
+        self, *args: str, timeout: int = 120
+    ) -> subprocess.CompletedProcess[str]:
 
         return subprocess.run(
             (sys.executable, str(ONBOARD), *args),
@@ -55,7 +56,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             env=self.env,
             timeout=timeout,
         )
-
 
     def copy_onboard(self, name: str = "onboard-copy") -> Path:
         target = self.root / name
@@ -150,7 +150,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         script = self.copy_onboard()
         self.rewrite_catalog_entry(
             script,
-            "skill:trellis-workflow",
+            "skill:sbtd-task",
             "source",
             "templates/project/.gitignore",
         )
@@ -164,9 +164,9 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         script = self.copy_onboard()
         self.rewrite_catalog_entry(
             script,
-            "skill:trellis-workflow",
+            "skill:sbtd-task",
             "source",
-            "templates/skills/trellis-channel",
+            "templates/skills/gherkin-bdd",
         )
 
         completed = self.run_onboard_script(script, "plan", "--json")
@@ -177,11 +177,11 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
     def test_plan_rejects_absolute_local_catalog_source(self) -> None:
         script = self.copy_onboard()
         absolute_source = (
-            script.parents[1] / "templates" / "skills" / "trellis-workflow"
+            script.parents[1] / "templates" / "skills" / "sbtd-task"
         ).resolve()
         self.rewrite_catalog_entry(
             script,
-            "skill:trellis-workflow",
+            "skill:sbtd-task",
             "source",
             str(absolute_source),
         )
@@ -207,7 +207,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
 
     def test_plan_rejects_kind_identity_and_target_role_mismatches(self) -> None:
         cases = (
-            ("kind-id-mismatch", "id", "agent:trellis-workflow", "does not match kind"),
+            ("kind-id-mismatch", "id", "agent:sbtd-task", "does not match kind"),
             ("role-mismatch", "targetRole", "project-agents", "target role"),
         )
 
@@ -216,7 +216,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
                 script = self.copy_onboard(name)
                 self.rewrite_catalog_entry(
                     script,
-                    "skill:trellis-workflow",
+                    "skill:sbtd-task",
                     field,
                     value,
                 )
@@ -291,15 +291,15 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertIn(str(self.project_one.resolve() / ".gitignore"), targets)
         self.assertIn(str(self.project_two.resolve() / ".gitignore"), targets)
         self.assertIn(
-            str(self.codex_home.resolve() / "skills" / "trellis-workflow"),
+            str(self.codex_home.resolve() / "skills" / "sbtd-task"),
             targets,
         )
         self.assertNotIn(
-            str(self.project_one.resolve() / ".agent" / "skills" / "trellis-workflow"),
+            str(self.project_one.resolve() / ".agent" / "skills" / "sbtd-task"),
             targets,
         )
         self.assertNotIn(
-            str(self.project_two.resolve() / ".agent" / "skills" / "trellis-workflow"),
+            str(self.project_two.resolve() / ".agent" / "skills" / "sbtd-task"),
             targets,
         )
         self.assertEqual(payload["bundledMigration"]["status"], "not-needed")
@@ -379,7 +379,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "init-projects",
             "--projects-root",
             self.projects_csv,
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -394,7 +393,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
     def test_init_projects_appends_only_missing_gitignore_lines(self) -> None:
         gitignore = self.project_one / ".gitignore"
         gitignore.write_text(
-            "# project-specific\nnode_modules/\n.trellis/*\n",
+            "# project-specific\nnode_modules/\n.trellis/*\n.gitnexus/\ncustom-private/\n",
             encoding="utf-8",
         )
         args = (
@@ -402,7 +401,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "--projects-root",
             str(self.project_one),
             "--skip-project-agents",
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -417,14 +415,13 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertEqual(first_content.count("node_modules/\n"), 1)
         self.assertEqual(first_content.count(".trellis/*\n"), 1)
         self.assertEqual(first_content.count(".gitnexus/\n"), 1)
+        self.assertEqual(first_content.count("custom-private/\n"), 1)
+        for local_rule in ("/.sbtd", "/docs/handoffs", "/graft", "/.graft"):
+            self.assertEqual(first_content.splitlines().count(local_rule), 1)
         template_lines = {
             line
             for line in (
-                ROOT
-                / "sbtd-workflow-onboard"
-                / "templates"
-                / "project"
-                / ".gitignore"
+                ROOT / "sbtd-workflow-onboard" / "templates" / "project" / ".gitignore"
             )
             .read_text(encoding="utf-8")
             .splitlines()
@@ -439,7 +436,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "--projects-root",
             str(self.project_one),
             "--skip-project-agents",
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -452,27 +448,59 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             text=True,
         )
 
-    def test_init_projects_rejects_gitignore_reinclusion_conflict(self) -> None:
-        """A pre-existing broad `.trellis/` exclusion defeats every
-        `!.trellis/...` re-inclusion regardless of order, and append-only
-        merging cannot see that. Onboarding must fail loudly instead of leaving
-        the spec/tasks files silently untracked."""
+    def test_init_projects_reports_broad_shared_path_conflicts(self) -> None:
         self.git_init_project_one()
         gitignore = self.project_one / ".gitignore"
-        gitignore.write_text("# local\n.trellis/\n", encoding="utf-8")
+        for pattern in ("ai/", "docs/", "tests/"):
+            with self.subTest(pattern=pattern):
+                gitignore.write_text("# local\n" + pattern + "\n", encoding="utf-8")
+                result = self.init_project_one_gitignore()
+                output = result.stdout + result.stderr
+                self.assertNotEqual(result.returncode, 0, output)
+                self.assertIn(
+                    f".gitignore:2:{pattern} ignores paths that must stay trackable:",
+                    output,
+                )
+                self.assertIn(
+                    pattern, gitignore.read_text(encoding="utf-8").splitlines()
+                )
 
-        result = self.init_project_one_gitignore()
-        output = result.stdout + result.stderr
-
-        self.assertNotEqual(result.returncode, 0, output)
-        # The operator has to know which line to edit, so the failure must name
-        # the deciding record -- file, line number, pattern. A bare `.trellis/`
-        # substring check also passes on the re-inclusion lines the template
-        # itself appends, so it would survive a message that lost the origin.
-        self.assertIn(
-            ".gitignore:2:.trellis/ ignores paths that must stay trackable:",
-            output,
-        )
+    def test_init_projects_reports_supported_shared_branch_conflicts(self) -> None:
+        self.git_init_project_one()
+        gitignore = self.project_one / ".gitignore"
+        for pattern, hidden in (
+            ("/docs/lessons.md", "docs/lessons.md"),
+            ("docs/contexts/*/adr/", "docs/contexts/example/adr/example.md"),
+            ("ai/tasks/archive/undated/", "ai/tasks/archive/undated/example/task.md"),
+            ("maestro/flow/ios/", "maestro/flow/ios/smoke.yml"),
+            ("maestro/flow/android/", "maestro/flow/android/smoke.yml"),
+            (".agents/skills/react-bits-pro/", ".agents/skills/react-bits-pro/SKILL.md"),
+            ("/.gitignore", ".gitignore"),
+            ("/.gitattributes", ".gitattributes"),
+            ("ai/tasks/*/legacy-task.json", "ai/tasks/example/legacy-task.json"),
+            ("ai/tasks/*/prd.md", "ai/tasks/example/prd.md"),
+            ("ai/tasks/*/design.md", "ai/tasks/example/design.md"),
+            ("ai/tasks/*/implement.md", "ai/tasks/example/implement.md"),
+            ("ai/tasks/00-bootstrap-guidelines/", "ai/tasks/00-bootstrap-guidelines/task.md"),
+            ("/docs/PRODUCT.md", "docs/PRODUCT.md"),
+            ("/docs/DESIGN.md", "docs/DESIGN.md"),
+            ("tests/unit/", "tests/unit/test_example.py"),
+            ("tests/api/", "tests/api/test_example.py"),
+            ("tests/e2e/*.spec.ts", "tests/e2e/example.spec.ts"),
+        ):
+            with self.subTest(pattern=pattern):
+                gitignore.write_text("# local\n" + pattern + "\n", encoding="utf-8")
+                result = self.init_project_one_gitignore()
+                output = result.stdout + result.stderr
+                self.assertNotEqual(result.returncode, 0, output)
+                self.assertIn(
+                    f".gitignore:2:{pattern} ignores paths that must stay trackable:",
+                    output,
+                )
+                self.assertIn(hidden, output)
+                self.assertIn(
+                    pattern, gitignore.read_text(encoding="utf-8").splitlines()
+                )
 
     def test_init_projects_accepts_gitignore_in_clean_git_repo(self) -> None:
         self.git_init_project_one()
@@ -483,6 +511,60 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, output)
         self.assertNotIn("must stay trackable", output)
 
+    def test_init_projects_protects_sbtd_local_state_and_shared_artifacts(self) -> None:
+        self.git_init_project_one()
+        installed = self.init_project_one_gitignore()
+        self.assertEqual(installed.returncode, 0, installed.stdout + installed.stderr)
+
+        ignored = (
+            ".sbtd/developer",
+            ".sbtd/active-task.json",
+            ".sbtd/tasks/local/task.md",
+            "docs/handoffs/session.md",
+            "graft/index.json",
+            ".graft/state.json",
+            "ai/tasks/example/reports/raw.json",
+            "ai/tasks/parent/child/reports/raw.txt",
+            "ai/tasks/archive/2026-Q1/example/reports/raw.json",
+            "ai/tasks/archive/undated/example/reports/summary.md",
+        )
+        trackable = (
+            "AGENTS.md",
+            "ai/tasks/shared/task.md",
+            "ai/tasks/parent/child/task.md",
+            "ai/tasks/archive/2026-Q1/shared/task.md",
+            "ai/tasks/archive/undated/shared/task.md",
+            "ai/tasks/shared/reports.md",
+            "src/reports/template.ts",
+            "docs/spec/lessons.md",
+            "docs/lessons/index.md",
+            "docs/CONTEXT.md",
+            "docs/adr/decision.md",
+            "features/example.feature",
+            "maestro/flow/smoke.yml",
+            "tests/e2e/manifest/ui-test-manifest.json",
+            "tests/e2e/manifest/ui-selector-audit.json",
+            "tests/e2e/manifest/ui-test-coverage.json",
+            "packages/graft/index.ts",
+            "packages/.graft/model.json",
+            "packages/.sbtd/model.md",
+            "packages/docs/handoffs/guide.md",
+        )
+        for paths, expected in ((ignored, 0), (trackable, 1)):
+            for path in paths:
+                with self.subTest(path=path):
+                    verdict = subprocess.run(
+                        ["git", "check-ignore", "--no-index", "--quiet", path],
+                        cwd=self.project_one,
+                        env=self.env,
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(
+                        verdict.returncode, expected, path + verdict.stderr
+                    )
+
     def test_init_projects_skips_gitignore_probe_without_git_repo(self) -> None:
         """Outside a work tree the git-backed probe must degrade to a no-op
         rather than block onboarding."""
@@ -492,6 +574,32 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, output)
         self.assertFalse((self.project_one / ".git").exists())
         self.assertIn("verification skipped", output)
+
+    def test_init_projects_rejects_task_report_reinclusion(self) -> None:
+        self.git_init_project_one()
+        first = self.init_project_one_gitignore()
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        gitignore = self.project_one / ".gitignore"
+        protected = gitignore.read_text(encoding="utf-8")
+        for report_dir in (
+            "ai/tasks/example/reports",
+            "ai/tasks/parent/child/reports",
+            "ai/tasks/archive/2026-Q1/example/reports",
+            "ai/tasks/archive/undated/example/reports",
+        ):
+            with self.subTest(report_dir=report_dir):
+                report = self.project_one / report_dir / "raw.json"
+                report.parent.mkdir(parents=True, exist_ok=True)
+                report.write_bytes(b'{"private": "fixture"}\n')
+                pattern = f"!/{report_dir}"
+                gitignore.write_text(protected + pattern + "\n", encoding="utf-8")
+                result = self.init_project_one_gitignore()
+                output = result.stdout + result.stderr
+                self.assertNotEqual(result.returncode, 0, output)
+                self.assertIn("must stay ignored", output)
+                self.assertIn(pattern, output)
+                self.assertIn(report_dir, output)
+                self.assertEqual(report.read_bytes(), b'{"private": "fixture"}\n')
 
     def test_init_projects_rejects_reinclusion_that_exposes_env_secrets(self) -> None:
         """A pre-existing `!.env*` outlives the appended `.env` rule because the
@@ -549,7 +657,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         document -- and the success path is where that promise was broken.
 
         A write mode used to print the plan document and then a second document
-        for the trellis report, so `json.loads` raised `Extra data` on every
+        for the project report, so `json.loads` raised `Extra data` on every
         successful run. Only `plan` and `check` were parsed by tests, so the
         break stayed invisible. Parsing stdout here also pins the prose out of
         the payload, and pins `mode` at the root so a consumer reads it the same
@@ -561,7 +669,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "--projects-root",
             str(self.project_one),
             "--skip-project-agents",
-            "--skip-trellis-init",
             "--yes",
             "--json",
         )
@@ -571,36 +678,29 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertEqual(payload["mode"], "init-projects")
         self.assertIn("operations", payload)
         self.assertIn("backups", payload)
-        self.assertIn("trellisProjectSetup", payload)
+        self.assertEqual(payload["sbtdProjectSetup"]["status"], "success")
         self.assertIn("unverifiedChecks", payload)
         self.assertNotIn("Verification passed", result.stdout)
         self.assertNotIn("Backups:", result.stdout)
 
-    def test_init_projects_probes_every_trellis_runtime_category(self) -> None:
-        """Each runtime category needs its own probe: a negation appended after
-        the template re-exposes exactly one category, so probing workspace alone
-        would let the others leak silently."""
+    def test_init_projects_probes_every_sbtd_local_root(self) -> None:
         self.git_init_project_one()
         gitignore = self.project_one / ".gitignore"
         merged = self.init_project_one_gitignore()
         self.assertEqual(merged.returncode, 0, merged.stdout + merged.stderr)
         baseline = gitignore.read_text(encoding="utf-8")
-
-        categories = (
-            ("!.trellis/workspace\n!.trellis/workspace/**\n", ".trellis/workspace/index.md"),
-            ("!.trellis/worktrees/\n!.trellis/worktrees/**\n", ".trellis/worktrees/feature/notes.md"),
-            ("!.trellis/channels/\n!.trellis/channels/**\n", ".trellis/channels/main/message.json"),
-            ("!.trellis/.runtime/\n!.trellis/.runtime/**\n", ".trellis/.runtime/state.json"),
-            ("!.trellis/.cache/\n!.trellis/.cache/**\n", ".trellis/.cache/index.json"),
-            ("!.trellis/.backup/\n!.trellis/.backup/**\n", ".trellis/.backup/spec.md"),
-            ("!.trellis/.template-hashes.json\n", ".trellis/.template-hashes.json"),
-        )
-        for negation, leaked in categories:
-            with self.subTest(leaked=leaked):
-                gitignore.write_text(baseline + negation, encoding="utf-8")
+        for root, leaked in (
+            (".sbtd", ".sbtd/developer"),
+            ("docs/handoffs", "docs/handoffs/session.md"),
+            ("graft", "graft/index.json"),
+            (".graft", ".graft/state.json"),
+        ):
+            with self.subTest(root=root):
+                gitignore.write_text(
+                    baseline + f"!/{root}\n!/{root}/**\n", encoding="utf-8"
+                )
                 result = self.init_project_one_gitignore()
                 output = result.stdout + result.stderr
-
                 self.assertNotEqual(result.returncode, 0, output)
                 self.assertIn("must stay ignored", output)
                 self.assertIn(leaked, output)
@@ -635,9 +735,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         "Verification passed" that reads as "the merged rules were verified"."""
         self.write_executable(
             "git",
-            "#!/bin/sh\n"
-            'echo "fatal: not a git repository" >&2\n'
-            "exit 128\n",
+            '#!/bin/sh\necho "fatal: not a git repository" >&2\nexit 128\n',
         )
 
         result = self.init_project_one_gitignore()
@@ -722,7 +820,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "--projects-root",
             str(self.project_one),
             "--skip-project-agents",
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -761,11 +858,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
     def test_init_projects_preserves_complete_utf8_bom_gitignore(self) -> None:
         gitignore = self.project_one / ".gitignore"
         template = (
-            ROOT
-            / "sbtd-workflow-onboard"
-            / "templates"
-            / "project"
-            / ".gitignore"
+            ROOT / "sbtd-workflow-onboard" / "templates" / "project" / ".gitignore"
         ).read_text(encoding="utf-8")
         initial_bytes = b"\xef\xbb\xbf" + template.encode("utf-8")
         gitignore.write_bytes(initial_bytes)
@@ -774,7 +867,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "--projects-root",
             str(self.project_one),
             "--skip-project-agents",
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -785,7 +877,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertEqual(second.returncode, 0, second.stderr or second.stdout)
         self.assertEqual(gitignore.read_bytes(), initial_bytes)
 
-
     def test_external_skill_project_scope_is_rejected(self) -> None:
         completed = self.run_onboard(
             "install-external-skills",
@@ -795,8 +886,7 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             "--yes",
         )
 
-        self.assertNotEqual(completed.returncode, 0)
-        self.assertIn("invalid choice", completed.stderr)
+        self.assertEqual(completed.returncode, 2)
 
     def test_onboard_public_flags_remove_project_skill_scope(self) -> None:
         completed = self.run_onboard("plan", "--help")
@@ -848,12 +938,11 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             str(global_skills),
             "--global-agents-path",
             str(self.root / "global-AGENTS.md"),
-            "--skip-trellis-init",
             "--yes",
         )
 
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
-        self.assertTrue((global_skills / "trellis-workflow" / "SKILL.md").is_file())
+        self.assertTrue((global_skills / "sbtd-task" / "SKILL.md").is_file())
         self.assertTrue(
             (global_skills / "sbtd-workflow-onboard" / "SKILL.md").is_file()
         )
@@ -899,7 +988,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             str(global_skills),
             "--global-agents-path",
             str(self.root / "global-AGENTS.md"),
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -947,7 +1035,6 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
             str(global_skills),
             "--global-agents-path",
             str(global_agents),
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -963,271 +1050,221 @@ class MultiProjectOnboardCommandTests(unittest.TestCase):
         self.assertFalse(project_agents.exists())
         self.assertFalse((global_skills / "sbtd-workflow-onboard").exists())
 
+    def write_task(
+        self, project: Path, relative_path: str, task_id: str, status: str
+    ) -> Path:
+        target = project / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        metadata = {
+            "schema_version": 1,
+            "id": task_id,
+            "workflow_mode": "default",
+            "mode_source": "default",
+            "mode_note": "Synthetic lifecycle fixture.",
+            "status": status,
+            "branch": None,
+            "created_at": "2026-09-18T00:00:00Z",
+            "updated_at": "2026-09-18T00:00:00Z",
+            "completed_at": "2026-09-18T00:00:00Z" if status == "done" else None,
+        }
+        target.write_text(
+            "---\n" + json.dumps(metadata) + "\n---\n\nPreserve this body.\n",
+            encoding="utf-8",
+        )
+        return target
 
-    def _write_trellis_logger(self, log_path: Path) -> None:
-        self.env["TRELIS_ARGS_LOG"] = str(log_path)
+    def test_init_projects_creates_only_install_assets_without_trellis(self) -> None:
+        log = self.root / "unexpected-trellis-call"
+        self.env["TRELIS_ARGS_LOG"] = str(log)
         self.write_executable(
-            "trellis",
-            """#!/bin/sh
-if [ "$1" = "--version" ]; then
-  echo "trellis 9.9.9"
-  exit 0
-fi
-if [ "$1" = "init" ]; then
-  printf '%s\n' "$@" > "$TRELIS_ARGS_LOG"
-  mkdir -p .trellis
-  exit 0
-fi
-exit 1
-""",
+            "trellis", '#!/bin/sh\nprintf invoked > "$TRELIS_ARGS_LOG"\nexit 99\n'
         )
-
-    def test_init_projects_checks_trellis_and_bootstrap_for_every_root(self) -> None:
-        bootstrap = self.project_two / ".trellis" / "tasks" / "00-bootstrap-guidelines"
-        bootstrap.mkdir(parents=True)
-        self.write_executable(
-            "trellis",
-            """#!/bin/sh
-if [ "$1" = "--version" ]; then
-  echo "trellis 9.9.9"
-  exit 0
-fi
-if [ "$1" = "init" ]; then
-  mkdir -p .trellis
-  exit 0
-fi
-exit 1
-""",
-        )
-
         completed = self.run_onboard(
-            "init-projects",
-            "--platform",
-            "codex",
-            "--projects-root",
-            self.projects_csv,
-            "--trellis-user",
-            "developer",
-            "--yes",
+            "init-projects", "--projects-root", self.projects_csv, "--yes", "--json"
         )
-
-        self.assertEqual(completed.returncode, 6, completed.stderr or completed.stdout)
-        self.assertTrue((self.project_one / ".trellis").is_dir())
-        self.assertIn(str(bootstrap.resolve()), completed.stdout)
-
-    def test_init_projects_forwards_distinct_omp_and_pi_flags(self) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--trellis-platform",
-            "omp,pi,codex",
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
-        self.assertEqual(
-            trellis_args_log.read_text(encoding="utf-8").splitlines(),
-            [
-                "init",
-                "-u",
-                "developer",
-                "--omp",
-                "--pi",
-                "--codex",
-                "--yes",
-                "--skip-existing",
-            ],
-        )
-
-    def test_init_projects_defaults_codex_from_agent_platform(self) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--platform",
-            "codex",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
-        self.assertEqual(
-            trellis_args_log.read_text(encoding="utf-8").splitlines(),
-            [
-                "init",
-                "-u",
-                "developer",
-                "--codex",
-                "--yes",
-                "--skip-existing",
-            ],
-        )
-
-    def test_init_projects_defaults_kimi_from_agent_platform(self) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--platform",
-            "kimi",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
-        self.assertIn("--kimi", trellis_args_log.read_text(encoding="utf-8").splitlines())
-
-    def test_init_projects_explicit_trellis_platform_replaces_agent_default(
-        self,
-    ) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--platform",
-            "codex",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--trellis-platform",
-            "cursor",
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
-        argv = trellis_args_log.read_text(encoding="utf-8").splitlines()
-        self.assertEqual(
-            argv,
-            [
-                "init",
-                "-u",
-                "developer",
-                "--cursor",
-                "--yes",
-                "--skip-existing",
-            ],
-        )
-        self.assertNotIn("--codex", argv)
-
-    def test_init_projects_rejects_empty_trellis_flags(self) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 2, completed.stderr or completed.stdout)
-        self.assertFalse((self.project_one / ".trellis").exists())
-        self.assertFalse(trellis_args_log.exists())
-        combined = completed.stdout + completed.stderr
-        self.assertIn("Claude and Cursor", combined)
-
-    def test_init_projects_skips_existing_trellis_without_platform_flags(
-        self,
-    ) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-        (self.project_one / ".trellis").mkdir()
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--projects-root",
-            str(self.project_one),
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
-        self.assertFalse(trellis_args_log.exists())
-
-    def test_init_projects_oh_my_pi_requires_explicit_trellis_flags(self) -> None:
-        trellis_args_log = self.root / "trellis-args.log"
-        self._write_trellis_logger(trellis_args_log)
-
-        completed = self.run_onboard(
-            "init-projects",
-            "--platform",
-            "oh-my-pi",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--skip-trellis-bootstrap",
-            "--yes",
-        )
-
-        self.assertEqual(completed.returncode, 2, completed.stderr or completed.stdout)
-        self.assertFalse((self.project_one / ".trellis").exists())
-        self.assertFalse(trellis_args_log.exists())
-        combined = completed.stdout + completed.stderr
-        self.assertIn("omp and/or pi", combined)
-
-    def test_plan_json_includes_resolved_trellis_init_command(self) -> None:
-        completed = self.run_onboard(
-            "plan",
-            "--platform",
-            "codex",
-            "--projects-root",
-            str(self.project_one),
-            "--trellis-user",
-            "developer",
-            "--json",
-        )
-
         self.assertEqual(completed.returncode, 0, completed.stderr)
         payload = json.loads(completed.stdout)
-        trellis_init = payload["trellisInit"]
-        self.assertEqual(trellis_init["status"], "planned")
-        self.assertEqual(trellis_init["agentPlatform"], "codex")
-        self.assertEqual(trellis_init["platforms"], ["codex"])
-        self.assertEqual(trellis_init["platformSource"], "agent-platform")
-        self.assertEqual(
-            trellis_init["command"],
-            "trellis init -u developer --codex --yes --skip-existing",
-        )
+        self.assertEqual(payload["sbtdProjectSetup"]["status"], "success")
+        for project in (self.project_one, self.project_two):
+            self.assertEqual(
+                {path.name for path in project.iterdir()}, {"AGENTS.md", ".gitignore"}
+            )
+        self.assertFalse(log.exists())
+        self.assertEqual(list(self.home.iterdir()), [])
 
-    def test_trellis_init_capability_map_is_versioned(self) -> None:
-        spec = importlib.util.spec_from_file_location("sbtd_onboard", ONBOARD)
-        self.assertIsNotNone(spec)
-        self.assertIsNotNone(spec.loader)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["sbtd_onboard"] = module
-        spec.loader.exec_module(module)
-        self.assertEqual(module.TRELLIS_INIT_CAPABILITY_SET, "0.6.15")
-        self.assertEqual(
-            module.TRELLIS_DEFAULT_FROM_AGENT_PLATFORM,
-            {"codex": "codex", "claude": "claude", "kimi": "kimi"},
+    def test_legacy_state_blocks_batch_before_any_project_write(self) -> None:
+        legacy = self.project_two / ".trellis" / "tasks" / "historical.json"
+        legacy.parent.mkdir(parents=True)
+        legacy.write_bytes(b'{"unrecognized": "preserve exact bytes"}\n')
+        before = legacy.read_bytes()
+        completed = self.run_onboard(
+            "init-projects", "--projects-root", self.projects_csv, "--yes", "--json"
         )
-        self.assertNotIn("oh-my-pi", module.TRELLIS_DEFAULT_FROM_AGENT_PLATFORM)
-        for required in ("kimi", "grok", "snow", "dsh", "omp", "pi", "codex", "claude"):
-            self.assertIn(required, module.TRELLIS_INIT_PLATFORMS)
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        projects = json.loads(completed.stdout)["sbtdProjectSetup"]["projects"]
+        self.assertEqual(
+            [project["status"] for project in projects], ["success", "needs-user"]
+        )
+        for project in (self.project_one, self.project_two):
+            self.assertFalse((project / "AGENTS.md").exists())
+            self.assertFalse((project / ".gitignore").exists())
+        self.assertEqual(legacy.read_bytes(), before)
+        self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_explicit_bootstrap_reports_recorded_status_without_changing_it(
+        self,
+    ) -> None:
+        relative = "ai/tasks/00-bootstrap-guidelines/task.md"
+        task = self.write_task(
+            self.project_one, relative, "00-bootstrap-guidelines", "planned"
+        )
+        before = task.read_bytes()
+        completed = self.run_onboard(
+            "init-projects", "--projects-root", str(self.project_one), "--yes", "--json"
+        )
+        self.assertEqual(completed.returncode, 6, completed.stderr)
+        report = json.loads(completed.stdout)["sbtdProjectSetup"]
+        self.assertEqual(report["status"], "bootstrap-required")
+        self.assertEqual(task.read_bytes(), before)
+        self.assertFalse((self.project_one / "AGENTS.md").exists())
+        self.write_task(self.project_one, relative, "00-bootstrap-guidelines", "done")
+        done_bytes = task.read_bytes()
+        completed = self.run_onboard(
+            "init-projects", "--projects-root", str(self.project_one), "--yes", "--json"
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(task.read_bytes(), done_bytes)
+        self.assertFalse((self.project_one / ".sbtd").exists())
+
+    def test_invalid_active_pointer_blocks_before_global_install(self) -> None:
+        pointer = self.project_one / ".sbtd" / "active-task.json"
+        pointer.parent.mkdir()
+        pointer.write_bytes(b'{"schema_version": 1,')
+        skills = self.root / "global-skills"
+        agents = self.root / "global-AGENTS.md"
+        completed = self.run_onboard(
+            "init",
+            "--projects-root",
+            str(self.project_one),
+            "--global-skills-dir",
+            str(skills),
+            "--global-agents-path",
+            str(agents),
+            "--yes",
+            "--json",
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(
+            json.loads(completed.stdout)["sbtdProjectSetup"]["status"], "blocked"
+        )
+        self.assertEqual(pointer.read_bytes(), b'{"schema_version": 1,')
+        self.assertFalse(skills.exists())
+        self.assertFalse(agents.exists())
+        self.assertFalse((self.project_one / "AGENTS.md").exists())
+
+    def test_check_and_plan_accept_uninitialized_project_without_writes(self) -> None:
+        for mode in ("check-projects", "plan"):
+            with self.subTest(mode=mode):
+                completed = self.run_onboard(
+                    mode, "--projects-root", str(self.project_one), "--json"
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                payload = json.loads(completed.stdout)
+                report = (
+                    payload["projects"][0]["sbtd"]
+                    if mode == "check-projects"
+                    else payload["sbtdInit"]
+                )
+                self.assertEqual(report["status"], "success")
+                self.assertEqual(list(self.project_one.iterdir()), [])
+                self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_new_ignore_protection_does_not_hide_existing_reserved_data(self) -> None:
+        private = self.project_one / "graft" / "user-content.txt"
+        private.parent.mkdir()
+        private.write_bytes(b"user-owned, not a graph\n")
+        completed = self.run_onboard(
+            "init-projects", "--projects-root", str(self.project_one), "--yes", "--json"
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(
+            json.loads(completed.stdout)["sbtdProjectSetup"]["status"], "needs-user"
+        )
+        self.assertEqual(private.read_bytes(), b"user-owned, not a graph\n")
+        self.assertFalse((self.project_one / ".gitignore").exists())
+        self.assertFalse((self.project_one / "AGENTS.md").exists())
+
+    def test_ignore_symlink_cannot_modify_an_external_file(self) -> None:
+        external = self.root / "external-ignore"
+        external.write_bytes(b"private-pattern\n")
+        (self.project_one / ".gitignore").symlink_to(external)
+        completed = self.run_onboard(
+            "init-projects", "--projects-root", str(self.project_one), "--yes", "--json"
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(external.read_bytes(), b"private-pattern\n")
+        self.assertTrue((self.project_one / ".gitignore").is_symlink())
+        self.assertFalse((self.project_one / "AGENTS.md").exists())
+
+    def test_project_check_respects_explicitly_skipped_agents_target(self) -> None:
+        external = self.root / "user-agents"
+        external.write_bytes(b"preserve external instructions\n")
+        agents = self.project_one / "AGENTS.md"
+        agents.symlink_to(external)
+        rejected = self.run_onboard(
+            "check-projects", "--projects-root", str(self.project_one), "--json"
+        )
+        self.assertEqual(rejected.returncode, 2, rejected.stderr)
+        allowed = self.run_onboard(
+            "check-projects",
+            "--projects-root",
+            str(self.project_one),
+            "--skip-project-agents",
+            "--json",
+        )
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+        self.assertEqual(
+            json.loads(allowed.stdout)["projects"][0]["sbtd"]["status"], "success"
+        )
+        self.assertTrue(agents.is_symlink())
+        self.assertEqual(external.read_bytes(), b"preserve external instructions\n")
+        self.assertFalse((self.project_one / ".gitignore").exists())
+
+    def test_reset_preserves_existing_project_data_bytes(self) -> None:
+        initial = self.run_onboard(
+            "init-projects", "--projects-root", str(self.project_one), "--yes", "--json"
+        )
+        self.assertEqual(initial.returncode, 0, initial.stderr)
+        contents = {
+            ".sbtd/developer": b"name=fixture\n",
+            ".sbtd/tasks/history/task.md": b"unselected historical task\n",
+            "ai/tasks/history/task.md": b"shared history\n",
+            "docs/spec/project.md": b"existing conventions\n",
+            "docs/lessons/topics/history.md": b"existing lessons\n",
+            "docs/handoffs/session.md": b"existing handoff\n",
+        }
+        for relative, content in contents.items():
+            target = self.project_one / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+        completed = self.run_onboard(
+            "reset",
+            "--projects-root",
+            str(self.project_one),
+            "--global-skills-dir",
+            str(self.root / "global-skills"),
+            "--global-agents-path",
+            str(self.root / "global-AGENTS.md"),
+            "--yes",
+            "--json",
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        for relative, content in contents.items():
+            self.assertEqual((self.project_one / relative).read_bytes(), content)
+        self.assertFalse((self.project_one / ".sbtd" / "active-task.json").exists())
+        self.assertFalse(
+            (self.project_one / "ai/tasks/00-bootstrap-guidelines").exists()
+        )
 
     def _required_external_skill_names(self) -> list[str]:
         catalog = json.loads(
@@ -1252,10 +1289,10 @@ exit 1
 
     def test_plan_reports_skill_write_actions_for_valid_shells(self) -> None:
         global_skills = self.root / "global-skills"
-        bundled = global_skills / "trellis-workflow"
+        bundled = global_skills / "sbtd-task"
         bundled.mkdir(parents=True)
         (bundled / "SKILL.md").write_text(
-            "---\nname: trellis-workflow\n---\n",
+            "---\nname: sbtd-task\n---\n",
             encoding="utf-8",
         )
         completed = self.run_onboard(
@@ -1275,20 +1312,18 @@ exit 1
         entry = next(
             item
             for item in payload["operations"]
-            if item["label"] == "global skill trellis-workflow"
+            if item["label"] == "global skill sbtd-task"
         )
         self.assertTrue(entry["targetValid"])
         self.assertEqual(entry["plannedActionOnInit"], "skipped-already-valid")
-        self.assertEqual(
-            entry["plannedActionOnReset"], "overwritten-without-backup"
-        )
+        self.assertEqual(entry["plannedActionOnReset"], "overwritten-without-backup")
 
     def test_init_skips_valid_bundled_and_external_skill_shells(self) -> None:
         global_skills = self.root / "global-skills"
         self._seed_required_external_skills(global_skills)
-        bundled = global_skills / "trellis-workflow"
+        bundled = global_skills / "sbtd-task"
         bundled.mkdir(parents=True)
-        valid_bundled = "---\nname: trellis-workflow\n---\nstale-but-valid-bundled\n"
+        valid_bundled = "---\nname: sbtd-task\n---\nstale-but-valid-bundled\n"
         (bundled / "SKILL.md").write_text(valid_bundled, encoding="utf-8")
         (bundled / "keep-init.txt").write_text("keep-bundled\n", encoding="utf-8")
         invalid_bundled = global_skills / "gherkin-bdd"
@@ -1323,7 +1358,6 @@ exit 1
             str(global_skills),
             "--global-agents-path",
             str(self.root / "global-AGENTS.md"),
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -1358,10 +1392,10 @@ exit 1
     def test_reset_overwrites_valid_bundled_and_external_skills(self) -> None:
         global_skills = self.root / "global-skills"
         self._seed_required_external_skills(global_skills)
-        bundled = global_skills / "trellis-workflow"
+        bundled = global_skills / "sbtd-task"
         bundled.mkdir(parents=True)
         (bundled / "SKILL.md").write_text(
-            "---\nname: trellis-workflow\n---\n",
+            "---\nname: sbtd-task\n---\n",
             encoding="utf-8",
         )
         (bundled / "drop-reset.txt").write_text("stale-bundled\n", encoding="utf-8")
@@ -1379,7 +1413,6 @@ exit 1
             str(global_skills),
             "--global-agents-path",
             str(self.root / "global-AGENTS.md"),
-            "--skip-trellis-init",
             "--yes",
             timeout=120,
         )
@@ -1391,7 +1424,7 @@ exit 1
             / "sbtd-workflow-onboard"
             / "templates"
             / "skills"
-            / "trellis-workflow"
+            / "sbtd-task"
             / "SKILL.md"
         )
         self.assertEqual(
@@ -1415,8 +1448,109 @@ exit 1
                 name,
             )
 
+    def test_init_installs_complete_sbtd_task_bundle_without_retired_skills(
+        self,
+    ) -> None:
+        """Package-layer proof for the catalog cutover: a fresh isolated init
+        must install sbtd-task as the full canonical directory -- entry,
+        references, schema and licenses, byte-identical to the declared source
+        -- while the retired trellis-workflow/trellis-channel Skills are gone
+        from the catalog, the package templates and every installed copy."""
+        global_skills = self.root / "global-skills"
+        self._seed_required_external_skills(global_skills)
+        global_agents = self.root / "global-AGENTS.md"
+        args = (
+            "--projects-root",
+            str(self.project_one),
+            "--global-skills-dir",
+            str(global_skills),
+            "--global-agents-path",
+            str(global_agents),
+        )
 
+        planned = self.run_onboard("plan", *args, "--json")
+        self.assertEqual(planned.returncode, 0, planned.stderr)
+        contained_roots = (global_skills.resolve(), self.project_one.resolve())
+        for operation in json.loads(planned.stdout)["operations"]:
+            target = Path(operation["target"]).resolve()
+            self.assertTrue(
+                target == global_agents.resolve()
+                or any(target.is_relative_to(root) for root in contained_roots),
+                operation["target"],
+            )
 
+        completed = self.run_onboard("init", *args, "--yes")
+        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+
+        catalog = json.loads(
+            (ROOT / "sbtd-workflow-onboard" / "catalog.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        bundled_entries = [
+            entry for entry in catalog["entries"] if entry["kind"] == "bundled-skill"
+        ]
+        external_entries = [
+            entry for entry in catalog["entries"] if entry["kind"] == "external-skill"
+        ]
+        self.assertEqual(len(bundled_entries), 14)
+        self.assertEqual(len(external_entries), 19)
+        entry_ids = {entry["id"] for entry in catalog["entries"]}
+        self.assertNotIn("skill:trellis-workflow", entry_ids)
+        self.assertNotIn("skill:trellis-channel", entry_ids)
+        sbtd_task_entry = next(
+            entry for entry in bundled_entries if entry["id"] == "skill:sbtd-task"
+        )
+        self.assertEqual(sbtd_task_entry["source"], "templates/skills/sbtd-task")
+        self.assertEqual(sbtd_task_entry["targetRole"], "skill")
+
+        canonical = (
+            ROOT / "sbtd-workflow-onboard" / "templates" / "skills" / "sbtd-task"
+        )
+        canonical_files = sorted(
+            path.relative_to(canonical)
+            for path in canonical.rglob("*")
+            if path.is_file()
+        )
+        for required in (
+            Path("SKILL.md"),
+            Path("LICENSE"),
+            Path("NOTICE"),
+            Path("references") / "task-data.schema.json",
+            Path("references") / "strict.md",
+            Path("references") / "state.md",
+            Path("references") / "handoff.md",
+            Path("references") / "methods.md",
+            Path("references") / "tooling.md",
+            Path("references") / "presentation.md",
+        ):
+            self.assertIn(required, canonical_files)
+        installed = global_skills / "sbtd-task"
+        installed_files = sorted(
+            path.relative_to(installed)
+            for path in installed.rglob("*")
+            if path.is_file()
+        )
+        self.assertEqual(installed_files, canonical_files)
+        for relative in canonical_files:
+            self.assertEqual(
+                (installed / relative).read_bytes(),
+                (canonical / relative).read_bytes(),
+                str(relative),
+            )
+
+        installed_onboard_templates = (
+            global_skills / "sbtd-workflow-onboard" / "templates" / "skills"
+        )
+        for retired in ("trellis-workflow", "trellis-channel"):
+            self.assertFalse(
+                (
+                    ROOT / "sbtd-workflow-onboard" / "templates" / "skills" / retired
+                ).exists(),
+                retired,
+            )
+            self.assertFalse((global_skills / retired).exists(), retired)
+            self.assertFalse((installed_onboard_templates / retired).exists(), retired)
 
     def test_plan_skips_omp_global_agents_when_omp_root_absent(self) -> None:
         completed = self.run_onboard(
@@ -1443,7 +1577,9 @@ exit 1
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         operations = json.loads(completed.stdout)["operations"]
-        omp_op = next(item for item in operations if item["label"] == "omp global AGENTS.md")
+        omp_op = next(
+            item for item in operations if item["label"] == "omp global AGENTS.md"
+        )
         self.assertEqual(
             omp_op["target"],
             str((omp_root / "agent" / "AGENTS.md").resolve()),
@@ -1451,7 +1587,8 @@ exit 1
         self.assertTrue(
             any(
                 item["label"] == "codex global AGENTS.md"
-                and item["target"] == str((self.root / "custom-global-AGENTS.md").resolve())
+                and item["target"]
+                == str((self.root / "custom-global-AGENTS.md").resolve())
                 for item in operations
             )
         )
@@ -1473,7 +1610,9 @@ exit 1
         self.assertIn("codex global AGENTS.md", labels)
         self.assertNotIn("omp global AGENTS.md", labels)
         self.assertEqual(
-            sum(1 for item in operations if item["target"] == str(omp_agents.resolve())),
+            sum(
+                1 for item in operations if item["target"] == str(omp_agents.resolve())
+            ),
             1,
         )
 
@@ -1484,11 +1623,7 @@ exit 1
         omp_agents.parent.mkdir(parents=True)
         omp_agents.write_text("stale omp agents\n", encoding="utf-8")
         template = (
-            ROOT
-            / "sbtd-workflow-onboard"
-            / "templates"
-            / "agents"
-            / "AGENTS.global.md"
+            ROOT / "sbtd-workflow-onboard" / "templates" / "agents" / "AGENTS.global.md"
         ).read_text(encoding="utf-8")
 
         completed = self.run_onboard(
@@ -1499,7 +1634,6 @@ exit 1
             str(global_skills),
             "--global-agents-path",
             str(omp_agents),
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -1521,11 +1655,7 @@ exit 1
         omp_agents = project_root / "AGENTS.md"
         omp_agents.write_text("stale omp agents\n", encoding="utf-8")
         template = (
-            ROOT
-            / "sbtd-workflow-onboard"
-            / "templates"
-            / "agents"
-            / "AGENTS.global.md"
+            ROOT / "sbtd-workflow-onboard" / "templates" / "agents" / "AGENTS.global.md"
         ).read_text(encoding="utf-8")
 
         planned = self.run_onboard(
@@ -1551,7 +1681,6 @@ exit 1
             str(project_root),
             "--global-skills-dir",
             str(global_skills),
-            "--skip-trellis-init",
             "--yes",
         )
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
@@ -1564,9 +1693,6 @@ exit 1
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_text(encoding="utf-8"), "stale omp agents\n")
 
-
-
-
     def test_init_overwrites_existing_omp_global_agents(self) -> None:
         global_skills = self.root / "global-skills"
         self._seed_required_external_skills(global_skills)
@@ -1574,11 +1700,7 @@ exit 1
         omp_agents.parent.mkdir(parents=True)
         omp_agents.write_text("stale omp agents\n", encoding="utf-8")
         template = (
-            ROOT
-            / "sbtd-workflow-onboard"
-            / "templates"
-            / "agents"
-            / "AGENTS.global.md"
+            ROOT / "sbtd-workflow-onboard" / "templates" / "agents" / "AGENTS.global.md"
         ).read_text(encoding="utf-8")
 
         completed = self.run_onboard(
@@ -1589,7 +1711,6 @@ exit 1
             str(global_skills),
             "--global-agents-path",
             str(self.root / "global-AGENTS.md"),
-            "--skip-trellis-init",
             "--yes",
         )
 
@@ -1607,7 +1728,6 @@ exit 1
             "init-projects",
             "--projects-root",
             str(self.project_one),
-            "--skip-trellis-init",
             "--yes",
         )
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
@@ -1654,9 +1774,6 @@ class OmpHomePathTests(unittest.TestCase):
         finally:
             module.os = original_os
             sys.modules.pop(spec.name, None)
-
-
-
 
 
 if __name__ == "__main__":

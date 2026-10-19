@@ -245,7 +245,10 @@ export async function validateEmbeddedKit({
       path === "manifest.json" || path === "projection-report.json"
         ? maskExemptPathStrings(actual)
         : actual;
-    if (path.toLowerCase().includes("codex") || containsForbiddenToken(scanned)) {
+    if (
+      path.toLowerCase().includes("codex") ||
+      containsForbiddenToken(scanned)
+    ) {
       const approvedDigest = isCanonicalOnboardRuntimePackagePath(path)
         ? manifest.assets[path]
         : undefined;

@@ -134,7 +134,7 @@ Feature: 三目标 AGENTS 转换
       And sync report 将该 mapping 标记为 Removed 或 Unknown
 
     Scenario: 提升以精确 HEAD Git 对象为来源
-      Given 本地 canonical 仓库包含 committed revision "4222b15cc0e101bfe3489f1cebc0e5bfb4d1bddb"
+      Given 本地 canonical 仓库包含 committed revision "1d82494d74f6df9bca7dccef2da409f87091883e"
       And live mapping 与 OMP distribution map 已按该 revision 分类
       When 维护者对该 commit 运行 "sync-upstream --plan"
       Then 结果 resolvedRevision 等于该 commit

@@ -13,6 +13,8 @@ It first analyzes frontend pages, routes, components, APIs, user flows, and sele
 - Analyze Playwright JSON reports and output failure classifications and repair recommendations.
 - Generate Chinese test summary reports describing coverage, risks, and follow-up actions.
 
+Formal execution summaries use the fixed Chinese template in the installed `project-validation` Skill (`references/run-summary.zh-CN.md.template`) and share the named native report's stem. This Skill's `summary.zh-CN.md.template` is a coverage-assessment appendix; `summary.md` does not replace per-run execution evidence. Keep failed rounds and historical reports, distinguish generated assets from executed tests, and do not invent missing counts.
+
 ## Default Output Structure
 
 ```text

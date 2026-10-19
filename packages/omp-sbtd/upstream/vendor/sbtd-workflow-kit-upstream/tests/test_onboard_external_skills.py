@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import cast
 from unittest import mock
 
-
 ROOT = Path(__file__).resolve().parents[1]
 ONBOARD = ROOT / "sbtd-workflow-onboard" / "scripts" / "onboard.py"
+sys.path.insert(0, str(ONBOARD.parent))
 
 
 class ExternalSkillInstallTests(unittest.TestCase):
@@ -359,6 +359,14 @@ class ExternalSkillInstallTests(unittest.TestCase):
         ):
             self.assertTrue((self.skills_dir / name / "SKILL.md").is_file(), name)
 
+    def test_removed_zoom_out_recommendation_uses_current_route(self) -> None:
+        completed = self.install("zoom-out", "stable")
+
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("Removed external skill", completed.stderr)
+        self.assertIn("codebase-design", completed.stderr)
+        self.assertNotIn("GitNexus", completed.stderr)
+
     def test_migrate_external_skills_aborts_before_installing_on_identity_conflict(
         self,
     ) -> None:
@@ -577,6 +585,71 @@ class ExternalSkillInstallTests(unittest.TestCase):
         self.assertIn(
             "old", (rollback_path / "diagnosing-bugs" / "SKILL.md").read_text()
         )
+
+    def test_init_and_reset_json_preserve_failed_rollback_recovery(self) -> None:
+        for mode in ("init", "reset"):
+            with self.subTest(mode=mode):
+                onboard = self.load_onboard_module()
+                skills_dir = self.root / mode / "skills"
+                original = skills_dir / "diagnosing-bugs" / "SKILL.md"
+                original.parent.mkdir(parents=True)
+                original.write_text("previous payload", encoding="utf-8")
+                args = onboard.build_parser().parse_args(
+                    [
+                        mode,
+                        "--global-skills-dir",
+                        str(skills_dir),
+                        "--global-agents-path",
+                        str(self.home / "global.md"),
+                        "--yes",
+                        "--json",
+                    ]
+                )
+                real_move = shutil.move
+                skills_root = skills_dir.resolve()
+
+                def reject_install_and_restore(
+                    source,
+                    destination,
+                    *args,
+                    target_root=skills_root,
+                    move=real_move,
+                    **kwargs,
+                ):
+                    destination = Path(destination)
+                    if (
+                        destination.name == "diagnosing-bugs"
+                        and destination.parent == target_root
+                    ):
+                        raise OSError("simulated install and restore failure")
+                    return move(source, destination, *args, **kwargs)
+
+                stdout = io.StringIO()
+                stderr = io.StringIO()
+                with (
+                    mock.patch.dict(
+                        os.environ,
+                        {"HOME": str(self.home), "PATH": str(self.bin_dir)},
+                        clear=True,
+                    ),
+                    mock.patch.object(
+                        onboard.shutil, "move", side_effect=reject_install_and_restore
+                    ),
+                    contextlib.redirect_stdout(stdout),
+                    contextlib.redirect_stderr(stderr),
+                ):
+                    code = onboard.run(mode, args)
+
+                self.assertEqual(code, 4, stderr.getvalue())
+                payload = json.loads(stdout.getvalue())
+                transaction = payload["requiredExternalInstall"]["transaction"]
+                self.assertEqual(transaction["status"], "rollback-failed")
+                recovery = (
+                    Path(transaction["rollbackPath"]) / "diagnosing-bugs" / "SKILL.md"
+                )
+                self.assertEqual(
+                    recovery.read_text(encoding="utf-8"), "previous payload"
+                )
 
     def test_stable_manifest_paths_cannot_escape_the_declared_root(self) -> None:
         onboard = self.load_onboard_module()

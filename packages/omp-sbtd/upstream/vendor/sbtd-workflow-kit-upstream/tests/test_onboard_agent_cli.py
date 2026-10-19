@@ -104,6 +104,58 @@ class AgentCliCommandTests(unittest.TestCase):
             playwright_mcp["steps"][0],
         )
 
+    def test_local_rtk_probe_does_not_write_user_history_or_require_npm(self) -> None:
+        external_history = self.root / "user-history.db"
+        self.env["RTK_HISTORY_FILE"] = str(external_history)
+        self.write_executable(
+            "rtk",
+            """
+            #!/bin/sh
+            if [ "$1" = "--version" ]; then echo "rtk 1.0.0"; exit 0; fi
+            if [ "$1" = "gain" ]; then
+              printf 'probe history\\n' > "${RTK_HISTORY_FILE:-$HOME/history.db}"
+              echo "No tracked commands"
+              exit 0
+            fi
+            exit 1
+            """,
+        )
+        completed = self.run_onboard("check", "--json")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        payload = json.loads(completed.stdout)
+        rtk = next(tool for tool in payload["tools"] if tool["name"] == "rtk")
+        self.assertTrue(rtk["installed"])
+        self.assertEqual(rtk["verificationScope"], "isolated-probe")
+        self.assertFalse(payload["runtime"]["npm"]["installed"])
+        self.assertFalse(external_history.exists())
+        self.assertEqual(list(self.home.iterdir()), [])
+
+    def test_optional_graft_never_becomes_a_required_raw_npm_install(self) -> None:
+        for conflict in (False, True):
+            with self.subTest(conflict=conflict):
+                if conflict:
+                    self.write_executable("graft", "#!/bin/sh\nexit 99\n")
+                completed = self.run_onboard("check", "--json")
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                payload = json.loads(completed.stdout)
+                self.assertEqual(
+                    payload["graft"]["status"],
+                    "blocked" if conflict else "not-available",
+                )
+                self.assertNotIn("graft", payload["missing"]["tools"])
+                graft_tool = next(
+                    tool for tool in payload["tools"] if tool["name"] == "graft"
+                )
+                self.assertEqual(graft_tool, payload["graft"])
+                self.assertTrue(graft_tool["optional"])
+                required = payload["installationReport"]["failedOrMissing"]["tools"]
+                self.assertNotIn("graft", [entry["name"] for entry in required])
+                human = self.run_onboard("check")
+                self.assertEqual(human.returncode, 0, human.stderr)
+                self.assertIn(payload["graft"]["reason"], human.stdout)
+                self.assertIn(payload["graft"]["nextStep"], human.stdout)
+                self.assertNotIn("npm install -g @nanonets/graft", human.stdout)
+
     def test_install_agent_cli_requires_npm_when_command_is_missing(self) -> None:
         completed = self.run_onboard(
             "install-agent-cli",
