@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-prd
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求 omp-sbtd 0.2.0-rc.1 任务 0 用 strict；PRD 规则为每个任务都用 strict
-status: "in-progress"
+status: "done"
 branch: docs/omp-sbtd-0.2.0-rc.1-prd
 created_at: '2026-10-19T11:21:02+08:00'
 updated_at: '2026-10-19T14:40:10+08:00'
-completed_at: null
+completed_at: '2026-10-19T13:44:27+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 PRD（任务 0：grill + DDD）
 
@@ -78,4 +78,5 @@ grill Round 1 已全部锁定（用户 2026-10-19 11:39/11:43/11:44，Asia/Shang
 | 2026-10-19T12:12:00+08:00 | in-progress | in-progress | 修复 Reviewy DDD Boundary Review R1 findings（用户指令一批）：行 A 字节级 CLEAN 例外精确化（例外恰为 package.json 两处编辑 + pnpm-lock.yaml kit 移除）；omp 18 升级归行 C 独占并写入行 A/B 非目标、D11 与 DDD；D9 与行 B 逐文件审清单移除 requirements.txt（D8 已锁随包）；DDD omp 宿主措辞修正；本任务去除 stale「不 commit/push/开 PR」（PR #102 已开）、任务序列补行 R、验收改 D1–D13 | 用户 2026-10-19 指令；实测 `git show 4f7388c:packages/omp-sbtd/package.json`（第 47 行 devDep `"@kunolu/sbtd-workflow-kit": "workspace:*"`、第 62 行 `scripts.build` 含 `pnpm --filter @kunolu/sbtd-workflow-kit check-generated`、peer `>=17.3.5 <18`、devDep omp `17.3.5`）；根 `pnpm-lock.yaml` 存在实测；PRD 修订日志 R3 |
 | 2026-10-19T12:36:00+08:00 | in-progress | in-progress | 修复 Reviewy 剩余 blocker（用户指令）：行 A CLEAN 门新增第三例外 `packages/omp-sbtd/SBOM.spdx.json`——仅允许删除 kit 包条目（4f7388c 第 6195 行包 `@kunolu/sbtd-workflow-kit`、第 6196 行 SPDXID `SPDXRef-Package-kunolu-sbtd-workflow-kit`）与 relatedSpdxElement 指向它的那一条 relationship（第 8252 行），其余条目逐字节等于 `4f7388c` 构建；明确行 A 不把迁入代码在 SBOM 中改归属 omp-sbtd（纯搬移，如需改归属属行 B 或 C）；PRD §2.1、行 A、§4 与本任务任务 A 验收行同步为「例外恰为三处」；PRD 修订日志 R4 | 用户 2026-10-19 指令（含 `4f7388c:packages/omp-sbtd/SBOM.spdx.json` 实测行号 6195/6196/8252）；PRD 修订日志 R4 |
 | 2026-10-19T13:06:00+08:00 | in-progress | in-progress | 并入 Researchy 两项实测 findings（用户指令）：行 A package.json 例外由恰好两处编辑改为恰好三处编辑——新增 (c) devDep `yaml: 2.8.2` 精确钉（build-time only、不进 dependencies；4f7388c kit 包 dependencies 含 yaml 2.8.2/zod 4.1.12、devDep tsx 4.20.6，omp-sbtd 已有后两者但无 yaml；4f7388c SBOM 无 yaml 条目，SBOM 不含 devDependencies，(c) 不影响 SBOM）；根 `pnpm-lock.yaml` 例外明确为移除 kit workspace 包 importer 并把 yaml importer 条目从 kit 移到 omp-sbtd；SBOM 生成器同 PR 修改明确化（`write-sbom.ts` 13–16 kitRoot/env `KPI_SBOM_KIT_ROOT`；`release-validator.ts` 4320 kitSpdxId、4428 `join(kitRoot,"package.json")`；删 kit 后 build 会直接失败，须同 PR 停止生成/期待 kit 节点与其 relationship；两脚本不在 files 中，不影响 pack 身份）；PRD §2.1、行 A、§4 与本任务任务 A 验收行同步更新 | 用户 2026-10-19 指令（Researchy 实测：4f7388c kit 包依赖与 omp-sbtd 依赖、4f7388c SBOM 无 yaml 条目、write-sbom.ts/release-validator.ts 行号）；PRD 修订日志 R5 |
+| 2026-10-19T13:44:27+08:00 | in-progress | done | 用户批准「开始 A 行」（2026-10-19 13:42 +08:00）并指令回填：行 0 由 PR #102 squash-merge 完成，任务 0 转 done | 用户 2026-10-19 指令；PR #102 merge SHA `1d9a5cd1d36c64381b1a95f8254fd217f2bcdba5`（merge commit 时间 2026-10-19T13:39:54+08:00）；PRD 任务表行 0 已回填 done |
 | 2026-10-19T14:40:10+08:00 | in-progress | in-progress | R6：并入 Researchy finding（SBOM documentNamespace 须随新来源 digest 更新）与 Reviewy 核验（旧值仅在 4f7388c SBOM 第 12 行，为唯一新增打包文件差异）；明确可复现 digest 规则（保留 kit.generatedSha256、仅移除 kit.name/version，plugin/files 与 canonical 序列化、哈希不变）、kit/manifest.json 上游 digest 不放宽、行 A 真实 p0 证据要求；用户 14:14 决定「先单独开」，本次仅两份文档与一个 commit，不回填行 0、不改任务表状态列、不 push/不开 PR | 用户 2026-10-19 14:14 +08:00 决定及本次指令；当前修订分支 `docs/omp-sbtd-0.2.0-rc.1-prd-r6` 基于 main `1d9a5cd`；实测 `git show 4f7388c:packages/omp-sbtd/SBOM.spdx.json` 第 12 行、全树检索仅命中该文件；`git show 4f7388c:packages/omp-sbtd/kit/manifest.json` 第 8 行；`git show 4f7388c:packages/omp-sbtd/scripts/p0/release-validator.ts` 第 790、4023、4042、5420/5440–5450 行；PRD 修订日志 R6。TaskStore.rebind 因仓内记录 `task state event fails the bundled stateEvent schema` 未写入，保留原 branch 元数据；本次事件是显式要求的文档记录，不声称自动恢复已重绑定 |
