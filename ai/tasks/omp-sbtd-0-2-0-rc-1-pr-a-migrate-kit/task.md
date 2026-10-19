@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-pr-a-migrate-kit
 workflow_mode: strict
 mode_source: user
 mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-19 13:42 +08:00 批准「开始 A 行」
-status: "in-progress"
+status: "done"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-a-migrate-kit
 created_at: '2026-10-19T13:44:27+08:00'
-updated_at: '2026-10-19T16:46:17+08:00'
-completed_at: null
+updated_at: '2026-10-19T19:11:42+08:00'
+completed_at: '2026-10-19T17:13:57+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 A：迁移 kit 进 omp-sbtd 并删除 packages/sbtd-workflow-kit
 
@@ -33,7 +33,7 @@ completed_at: null
 - 不触碰 omp 宿主版本声明：peerDependencies `>=17.3.5 <18`、devDep omp 精确钉 `17.3.5` 及相关 lockfile 条目均归行 C（D11）；package.json 其余字段（`dependencies`/`files`/`version` 等）全部不变。
 - SBOM 不把迁入代码改归属 omp-sbtd（如需改归属属行 B 或 C）。
 - 不执行 ROADMAP 归档 chore（D12 独立 chore）。
-- ~~不 push、不开 PR~~（已被取代：PR #104 已在 b8e015c 开启；本轮 review 修复只新增本地 commit，是否 push 仍由用户决定）。
+- 行 A 已完结：PR #104 已 squash-merge 为 main `f1bba41d168af04807914914ad8dce27dfc8688b`（2026-10-19T17:13:57+08:00）。
 
 ## 验收（行 A CLEAN 门，逐字）
 
@@ -58,7 +58,7 @@ completed_at: null
 - [x] CLEAN 门对比（`compare-clean-gate.mjs`，本任务文件夹）+ 全量测试/lint/typecheck/p0 validator
 - [x] rebase 到 main `c735629`（PR #103，R6）后按 R6 修正 digest（release-validator.ts 两处 + 注释、compare-clean-gate.mjs namespace 断言 + 独立重算）并经真实构建重生成 SBOM
 - [x] R6 证据：pack/逐文件 sha256/package.json+SBOM diff/embedded 哈希/upstream.lock 身份/p0 validator（namespace + candidate/approval 一致性）/独立 R6 重算
-- [ ] 移除额外 worktree；最终报告
+- [x] 移除额外 worktree；最终报告（`git worktree list` 实测仅剩主 checkout `/workspace/sbtd-plugins`；基线/候选 worktree 均已移除）
 
 ## 验证证据
 
@@ -131,3 +131,4 @@ Deferred（本轮明确不修）：
 | 2026-10-19T15:38:46+08:00 | in-progress | in-progress | R6 digest 修正：release-validator.ts 两处 digest 输入改为 `{ plugin:{name,version}, kit:{generatedSha256}, files }`（删 kit.name/version，注释同步）；真实构建重生成 SBOM，新 sourceTreeSha256 `9ede541463d0d044761825ff5ac3d5db572c24ef15defb40ad235b46976804be`；SBOM diff 恰好为 kit 节点+relationship 删除与第 12 行 namespace；独立 R6 重算与 SBOM 第 12 行相等；p0 check-package exit 0、decideRelease 记录一致性 ready/对照组 blocker 触发；compare-clean-gate.mjs 复跑 12×PASS + CLEAN GATE: PASS | 本任务「验证证据 → R6 digest 修正」节；候选 tarball sha256 `2ed98b57…36cb`；SBOM 第 12 行 `https://kpi.local/spdx/9ede5414…04be` |
 | 2026-10-19T15:57:47+08:00 | in-progress | in-progress | PR #104 开启（head `b8e015c`）；原非目标「不 push、不开 PR」被取代，后续 push 仍由用户决定 | `gh pr view 104 --json createdAt,headRefOid` → createdAt `2026-10-19T07:57:47Z`、headRefOid `b8e015c902d3f95dbb2e94f4ddfa7bf437e12ad0` |
 | 2026-10-19T16:46:17+08:00 | in-progress | in-progress | Reviewy review round 1 修复 B1–B5：B1 共享 `defaultPluginRoot()` + CLI 布局回归测试（旧代码红/新代码绿，`kit-sync-upstream.mjs --plan` 修复前 failed、修复后 planned 且无残留）；B2 task.md 措辞更正 + 真实 `verifyCandidateEquivalence` 三跑（新 digest 过 namespace 后遇 pre-existing checksum 失败、旧 digest 被 namespace 拒绝、4f7388c 基线同后续失败）；B3 本文件事实修正；B4 spec 链接；B5 digest 措辞；7 项 deferred 如实记录。复跑：构建 digest 不变；CLEAN 门 12×PASS（pack 412=412、tarball 与 R6 候选逐字节相同 `2ed98b57…36cb`）；p0 check-package exit 0；`pnpm -r test` 835 passed/3 skipped/1 failed（基线同因 bun-offline 环境性失败）+ upstream 50 passed/2 skipped；typecheck/biome 全绿 | 本任务「验证证据 → Review round 1 修复」节；候选 `/workspace/.worktrees/candidate-row-a-r1/`；修复前复现输出 `status:"failed"`（ENOTEMPTY cleanup 掩盖底层 staging 失败） |
+| 2026-10-19T19:11:42+08:00 | in-progress | done | PR #104 已 squash-merge 为 main `f1bba41d168af04807914914ad8dce27dfc8688b`（merge 时间 2026-10-19T17:13:57+08:00）；行 A 验收证据见上节，done 以 merge commit 时间记 | `git log -1 --format='%H %cI' f1bba41` → `f1bba41d168af04807914914ad8dce27dfc8688b 2026-10-19T17:13:56+08:00`；PRD 任务表行 A 已回填 done/#104/merge SHA |
