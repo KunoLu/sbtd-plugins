@@ -16,8 +16,12 @@
 //          invocation with the in-package entry;
 //      (c) devDependency "yaml": "2.8.2" added.
 //   4. SBOM.spdx.json diff contains exactly the kit package node removal and
-//      the single relationship whose relatedSpdxElement points at it; every
-//      other entry is deep-equal.
+//      the single relationship whose relatedSpdxElement points at it, plus
+//      (PRD R6) the documentNamespace change to
+//      https://kpi.local/spdx/<new sourceTreeSha256>; every other entry is
+//      deep-equal. The new digest is recomputed independently here with the
+//      R6 formula { plugin: { name, version }, kit: { generatedSha256 },
+//      files } and must equal the candidate documentNamespace suffix.
 //   5. Embedded kit/, skills/, and kit/manifest.json hashes are identical
 //      (covered by (2); reported separately for the gate record).
 // The whole-tarball sha256 is expected to differ and is reported, not asserted.
@@ -173,7 +177,8 @@ try {
     "package.json: every other field byte-identical (peer/devDep omp pin, dependencies, files, version)",
   );
 
-  // 4. SBOM: only the kit package node and its relationship removed.
+  // 4. SBOM: only the kit package node and its relationship removed, plus the
+  //    R6 documentNamespace change.
   const baselineSbom = JSON.parse(
     readFileSync(join(baselineRoot, "SBOM.spdx.json"), "utf8"),
   );
@@ -195,13 +200,88 @@ try {
       ),
     "baseline SBOM contains the kit package node and relationship (sanity)",
   );
+  // PRD R6: documentNamespace is allowed (and required) to change to
+  // https://kpi.local/spdx/<new sourceTreeSha256>; everything else identical.
+  expectedSbom.documentNamespace = candidateSbom.documentNamespace;
   check(
     deepEqual(candidateSbom, expectedSbom),
-    "SBOM.spdx.json: only the kit package node and its relationship removed; all other entries identical",
+    "SBOM.spdx.json: only the kit package node, its relationship, and the R6 documentNamespace changed; all other entries identical",
+  );
+  const namespaceMatch = candidateSbom.documentNamespace.match(
+    /^https:\/\/kpi\.local\/spdx\/([0-9a-f]{64})$/,
   );
   check(
-    candidateSbom.documentNamespace === baselineSbom.documentNamespace,
-    `SBOM documentNamespace identical (${baselineSbom.documentNamespace})`,
+    namespaceMatch !== null &&
+      candidateSbom.documentNamespace !== baselineSbom.documentNamespace,
+    `SBOM documentNamespace changed to kpi.local/spdx/<new digest> (baseline ${baselineSbom.documentNamespace})`,
+  );
+  // Independent recompute of the R6 digest from the candidate tree:
+  // sha256(stableJson({ plugin: {name, version}, kit: {generatedSha256},
+  // files })) where stableJson is JSON.stringify with recursively sorted
+  // keys, 2-space indent, trailing newline; files is the declared-path
+  // inventory { path, sha256, license: "Apache-2.0" } sorted by path.
+  const sortedJson = (value) => {
+    if (Array.isArray(value)) return value.map(sortedJson);
+    if (value !== null && typeof value === "object")
+      return Object.fromEntries(
+        Object.entries(value)
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([key, nested]) => [key, sortedJson(nested)]),
+      );
+    return value;
+  };
+  const declaredPaths = [
+    "dist",
+    "kit",
+    "plugin.json",
+    "skills",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "THIRD_PARTY_NOTICES.md",
+    "validation/p0/compatibility.v2.json",
+  ];
+  const inventory = [];
+  for (const declaredPath of declaredPaths) {
+    const full = join(candidateRoot, declaredPath);
+    if (statSync(full).isDirectory()) {
+      for (const path of listFiles(full)) {
+        inventory.push({
+          path: `${declaredPath}/${path}`,
+          sha256: sha256(readFileSync(join(full, path))),
+          license: "Apache-2.0",
+        });
+      }
+    } else {
+      inventory.push({
+        path: declaredPath,
+        sha256: sha256(readFileSync(full)),
+        license: "Apache-2.0",
+      });
+    }
+  }
+  inventory.sort((left, right) => left.path.localeCompare(right.path));
+  const candidateManifest = JSON.parse(
+    readFileSync(join(candidateRoot, "kit/manifest.json"), "utf8"),
+  );
+  const recomputed = sha256(
+    `${JSON.stringify(
+      sortedJson({
+        plugin: { name: candidatePkg.name, version: candidatePkg.version },
+        kit: {
+          generatedSha256: candidateManifest.projection.generatedSha256,
+        },
+        files: inventory,
+      }),
+      null,
+      2,
+    )}\n`,
+  );
+  notes.push(`INFO recomputed R6 sourceTreeSha256=${recomputed}`);
+  check(
+    namespaceMatch !== null && recomputed === namespaceMatch[1],
+    "candidate documentNamespace digest equals independent R6 recompute",
   );
 
   // 5. Tarball sha256: expected to differ; reported only.

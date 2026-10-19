@@ -5406,14 +5406,13 @@ export async function writePluginSpdxSbom(
     files,
     input.releaseRoot ?? "source-package",
   );
-  // The `kit` digest key and the moved supply-chain name/version are kept
-  // byte-identical so documentNamespace matches the pre-move SBOM exactly.
+  // PRD R6: the kit package identity no longer exists after the move, so the
+  // digest input is exactly plugin name/version, kit generatedSha256, and the
+  // file inventory; documentNamespace changes accordingly.
   const sourceTreeSha256 = digest(
     stableJson({
       plugin: { name: metadata.plugin.name, version: metadata.plugin.version },
       kit: {
-        name: metadata.upstream.name,
-        version: metadata.upstream.version,
         generatedSha256: kitManifest.projection.generatedSha256,
       },
       files: inventory,
@@ -6065,14 +6064,13 @@ export async function verifyPluginReleaseArtifacts(
     files,
     "source-package",
   );
-  // The `kit` digest key and the moved supply-chain name/version are kept
-  // byte-identical so documentNamespace matches the pre-move SBOM exactly.
+  // PRD R6: the kit package identity no longer exists after the move, so the
+  // digest input is exactly plugin name/version, kit generatedSha256, and the
+  // file inventory; documentNamespace changes accordingly.
   const sourceTreeSha256 = digest(
     stableJson({
       plugin: { name: metadata.plugin.name, version: metadata.plugin.version },
       kit: {
-        name: metadata.upstream.name,
-        version: metadata.upstream.version,
         generatedSha256: kitManifest.projection.generatedSha256,
       },
       files: inventory,
