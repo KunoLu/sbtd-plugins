@@ -277,7 +277,7 @@ test("README documents /sbtd command and install pins", () => {
   assert.match(readme, /\/sbtd plan/);
   assert.match(readme, /\/sbtd maestro/);
   assert.match(readme, /@kunolu\/dsh-sbtd@next/);
-  assert.match(readme, /@deepseek-ai\/dsh@0\.1\.1-rc\.2/);
+  assert.match(readme, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/);
   assert.match(readme, /640-skills/);
   assert.match(readme, /MCP/);
 });

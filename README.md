@@ -21,7 +21,7 @@ SBTD host-plugin monorepo: a shared workflow kit plus OMP and DSH host adapters.
 | Package | Path | Role |
 | --- | --- | --- |
 | `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Version **0.1.0-rc.14** on the `next` tag. |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter (T5): sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.1** on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Host pin `@deepseek-ai/dsh@0.1.1-rc.2`. |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter (T5): sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.1** on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
 | `@kunolu/sbtd-workflow-kit` | [`packages/sbtd-workflow-kit`](packages/sbtd-workflow-kit) | Shared kit / projection layer. **Not** a host plugin. |
 
 ## Install
@@ -34,13 +34,13 @@ omp plugin install @kunolu/omp-sbtd@next
 
 This is 0.1.0-rc.14 on dist-tag next. Never recommend @latest. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-DSH host pin: @deepseek-ai/dsh@0.1.1-rc.2.
+DSH host pin: @deepseek-ai/dsh@0.2.0-rc.2.
 
-DSH plugin **0.2.0-rc.1** is published on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Install with `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.1.1-rc.2`. Never `@latest` or a github path.
+DSH plugin **0.2.0-rc.1** is published on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Install with `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.2.0-rc.2`. Never `@latest` or a github path.
 
 ```bash
-npx @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
-npx @deepseek-ai/dsh@0.1.1-rc.2 --profile web --dump-config
+npx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
+npx @deepseek-ai/dsh@0.2.0-rc.2 --profile web --dump-config
 ```
 
 Expect dump-config id: sbtd.
@@ -48,7 +48,7 @@ Expect dump-config id: sbtd.
 Optional global install:
 
 ```bash
-npm i -g @deepseek-ai/dsh@0.1.1-rc.2
+npm i -g @deepseek-ai/dsh@0.2.0-rc.2
 dsh plugin --profile web add @kunolu/dsh-sbtd@next
 dsh --profile web --dump-config
 dsh web --no-open
