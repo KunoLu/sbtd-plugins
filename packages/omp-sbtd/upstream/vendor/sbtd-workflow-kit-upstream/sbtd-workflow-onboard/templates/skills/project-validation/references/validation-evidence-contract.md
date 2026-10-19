@@ -8,6 +8,7 @@ The native runner report and its same-stem Chinese Markdown summary remain the p
 
 - `developer-local`, `ci`, and `knowledge-server` are separate evidence sources and must never overwrite or masquerade as one another. `ci` means a CI runner created the evidence; it is not an alias for developer-local upload or knowledge-server smoke.
 - Record the repository key, raw source ref, full commit SHA when available, worktree state, trigger, and creation time. `branch_slug` is only a filename-safe label; it is not revision identity.
+- Migration consumers keep the native schemas unchanged: when the outer migration `source_ref` is null, native `repository.sourceRef` and raw `sourceRef` use `HEAD` for detached Git with its exact OID, or `non-git` with null commit and `sourceRevision: unknown` outside Git. These are explicit branchless labels, not fabricated branch names; named refs remain exact and the outer migration values stay null.
 - A dirty developer worktree uses `sourceRevision: dirty` and `evidencePublication: local-only`. It may assist diagnosis, but it cannot attest a PR head.
 - Developer evidence used by a PR must use `sourceRevision: exact`, match the current PR head SHA, and be invalidated by every new commit.
 - CI evidence uses a clean checkout and `sourceRevision: exact`. When its target is a pull request, the recorded commit must equal the final PR head SHA; a new commit invalidates the evidence and requires a new run or a provider-backed revalidation.

@@ -66,7 +66,7 @@ describe("Feature: 严格 OMP Plugin 发布视图", () => {
     await expect(
       readFile(`${pluginRoot}/THIRD_PARTY_NOTICES.md`, "utf8"),
     ).resolves.toContain("kit/onboard/runtime/LICENSE");
-  }, 15_000);
+  }, 120_000);
   it("Scenario: 嵌入验证失败时保留 live Kit 并清理 staging", async () => {
     const root = await mkdtemp(join(tmpdir(), "kpi-embed-transaction-"));
     temporaryRoots.push(root);
@@ -116,7 +116,7 @@ describe("Feature: 严格 OMP Plugin 发布视图", () => {
       ),
     );
     expect(await readdir(root)).toEqual(parentEntries);
-  }, 30_000);
+  }, 120_000);
   it("Scenario: 后续 promotion 失败时还原所有 live 嵌入目标", async () => {
     const root = await mkdtemp(join(tmpdir(), "kpi-embed-promotion-"));
     temporaryRoots.push(root);

@@ -10,7 +10,7 @@ const runtimeRoot = resolve(
   "upstream/vendor/sbtd-workflow-kit-upstream/sbtd-workflow-onboard",
 );
 const runtimeScriptSha256 =
-  "9977dbf4c7ad196e46ba83a8a8c1632b8b1b4437aa5dd498e48d6d2f30758b30";
+  "72ea5e6fd6d118018ed1d953e8c603321012241cc47c00bfbbb39c81b8611a33";
 
 function processFor(result: {
   readonly stdout: string;

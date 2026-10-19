@@ -2,27 +2,27 @@
 
 ## SBTD Workflow Onboard
 
-- Source: https://github.com/KunoLu/640-skills@f8aa0d7225a26c5e00b81d2f1b05121108e63630
+- Source: https://github.com/KunoLu/640-skills@1d82494d74f6df9bca7dccef2da409f87091883e
 - License: Apache-2.0
 - Retained license: onboard/runtime/LICENSE
 - Retained notice: onboard/runtime/NOTICE
 
-## Stable External Skills (stable set 2026-08-27.1)
+## Stable External Skills (stable set 2026-09-14.6)
 
 ### mattpocock-skills
 
-- Source: https://github.com/mattpocock/skills.git@6654f6b60cd9d5be8b54c6fafe44346dabeb3b76
+- Source: https://github.com/mattpocock/skills.git@3cca18b368ae95cdbdebbff572ccafa662551015
 - License: MIT
 - Retained license: onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE
 
 ### ui-ux-pro-max-skill
 
-- Source: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git@e4f45473691e4b389519ee4bc359a3d6df666c26
+- Source: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git@7f69fed6a2717900085f1bc3b263721f8ba025e2
 - License: MIT
 - Retained license: onboard/runtime/assets/external-skills/stable/licenses/ui-ux-pro-max-skill-LICENSE
 
 ### ponytail
 
-- Source: https://github.com/DietrichGebert/ponytail.git@2ed6c52c9d7e5e56942508591085fd45dea277d3
+- Source: https://github.com/DietrichGebert/ponytail.git@356918eba965ee1eac64bd3a7f0dd02108350de5
 - License: MIT
 - Retained license: onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE

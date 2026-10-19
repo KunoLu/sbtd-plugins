@@ -11,7 +11,8 @@ Feature: Certified Skill 所有权切交（M3）
       Given Workflow Kit 的 OMP catalog overlay
       When 维护者重新生成 generated-omp 并重新嵌入 kit
       Then catalog 不含任何 certified 名的 bundled-skill 条目
-      And "trellis-workflow"、"trellis-channel"、"sbtd-workflow-onboard" 仍为 bundled 条目
+      And "sbtd-workflow-onboard" 与 "sbtd-task"（p0-v4 / D14 新增）为 bundled 条目
+      And "skill:trellis-workflow"、"skill:trellis-channel" 条目已随上游 v2.0.2 删除（p0-v4 / D14）
       And 12 个 external stable 条目保持不变
       And "kit/onboard/runtime/catalog.json" 与 "generated-omp" 字节一致
 

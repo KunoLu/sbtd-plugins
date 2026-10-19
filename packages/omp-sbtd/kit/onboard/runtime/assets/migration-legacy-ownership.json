@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "source_tag": "v1.0.15",
+  "source_commit": "bc8eec1549928fb0966254751b96b611b6334183",
+  "global_agents_sha256": "d7fb45fb8440b64fe6d0ef6a7c1b1780568812887637a37d65b020b769e602d4",
+  "project_source_commit": "833a5846d18ad7a5ccd8c41c876d89cc936f5fd9",
+  "project_config_templates": {
+    ".codex/config.toml": [
+      "9f2d20e28f0bc9c886312eca3ad3bba41533ef4615aaaafe25e98152302267bb"
+    ],
+    ".codex/hooks.json": [
+      "85a58ba7cdf1e19e7f75ddcc64e5680180c487ca266a74bd5005f31abeee2e02",
+      "c7c638e0982599b0692ad97bc835651c9fa83af5310be5d86a58c59132eb2dec"
+    ],
+    ".claude/settings.json": [
+      "01226db3027908dac1260955e205877ee46c1d410912172d8bae9c53527b3b0f",
+      "d13cd05659281a287d7f50c7e25eb6a89c2a6597773511bd6885538acced2855"
+    ]
+  },
+  "skills": {
+    "trellis-workflow": {
+      "type": "directory",
+      "checksum": "ad404b8c206815227fa5a4c0e96c2f6ccdc32e319902fb7d2e7898a85f2f2388"
+    },
+    "trellis-channel": {
+      "type": "directory",
+      "checksum": "b1e2fe61b0f706688363c33fba3a66b07684285318df92472dce12d79ff55238"
+    }
+ },
+ "official_template_payloads": {
+  "package": "@mindfoldhq/trellis",
+  "normalization": "UTF-8, CRLF to LF only",
+  "releases": {
+   "0.6.16": {
+    "tarball": "https://registry.npmjs.org/@mindfoldhq/trellis/-/trellis-0.6.16.tgz",
+    "integrity": "sha512-guWqyWiRJ2Eine2H6+rI0X1DhHKpe9zkfC9pJdm2HHGEL+E2mPhGd78pbLZ917CeDuED0frYKNs/aC9lR1mMuQ=="
+   },
+   "0.6.17": {
+    "tarball": "https://registry.npmjs.org/@mindfoldhq/trellis/-/trellis-0.6.17.tgz",
+    "integrity": "sha512-u65OJbzR3OBzFWybX/uzBXaZdzn+71Afaknodu0GUcFIrTyp3ZegK9rHNeTX0guHow35WXkqDVuyrhn8vVzSQg=="
+   }
+  },
+  "files": {
+   ".codex/agents/trellis-check.toml": [
+    {
+     "sha256": "206fd96a8aa17e95ed344cc435661d597093ece571671f298ca64490422fffe0",
+     "version": "0.6.17",
+     "member": "package/dist/templates/codex/agents/trellis-check.toml",
+     "rendering": "verbatim"
+    }
+   ],
+   ".codex/agents/trellis-implement.toml": [
+    {
+     "sha256": "388fb8f39797e0ee6cf4db447c859c79b4ac15f531f7e1e3c68c1d1d71a1c188",
+     "version": "0.6.17",
+     "member": "package/dist/templates/codex/agents/trellis-implement.toml",
+     "rendering": "verbatim"
+    }
+   ],
+   ".codex/agents/trellis-research.toml": [
+    {
+     "sha256": "4435ce73197ba1d29d40359a3279b6423f7e4f559a449f934c016808090066c4",
+     "version": "0.6.17",
+     "member": "package/dist/templates/codex/agents/trellis-research.toml",
+     "rendering": "verbatim"
+    }
+   ],
+   ".codex/hooks/inject-subagent-context.py": [
+    {
+     "sha256": "9b68be8d08f85e824e39d901a29f14d38346dbeeda15880e4cba03076f2a8caa",
+     "version": "0.6.16",
+     "member": "package/dist/templates/shared-hooks/inject-subagent-context.py",
+     "rendering": "verbatim"
+    }
+   ],
+   ".codex/hooks/inject-workflow-state.py": [
+    {
+     "sha256": "71ef1aa1ed1051a697cae3c9ebffa518958a3bbd4d147434f382348829915f8c",
+     "version": "0.6.17",
+     "member": "package/dist/templates/shared-hooks/inject-workflow-state.py",
+     "rendering": "verbatim"
+    }
+   ],
+   ".codex/hooks/session-start.py": [
+    {
+     "sha256": "efdd015c7c4687227ce34a84ac6249d5554c704f737e00d4844c9284ddcf696f",
+     "version": "0.6.17",
+     "member": "package/dist/templates/codex/hooks/session-start.py",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/commands/trellis-continue.md": [
+    {
+     "sha256": "c35d8fdd181c70fb8cf62f8f47453f57b0f59c8f23c63227a5a08639e501069f",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/commands/continue.md",
+     "rendering": "omp-command"
+    }
+   ],
+   ".omp/extensions/trellis/index.ts": [
+    {
+     "sha256": "804d23c4c78684f542e1ab3ae6a8d77bd663ed9ed66b60d64c763c7a9b23dd86",
+     "version": "0.6.17",
+     "member": "package/dist/templates/omp/extensions/trellis/index.ts.txt",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-before-dev/SKILL.md": [
+    {
+     "sha256": "00c9d1c83bc318e91b27a019bc954c2957cfad907ff20d854b596f16cad2c0f3",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/skills/before-dev.md",
+     "rendering": "omp-skill"
+    }
+   ],
+   ".omp/skills/trellis-brainstorm/SKILL.md": [
+    {
+     "sha256": "17d9bf209730c14f584eb97f38198d0683ad3f8da982d9a6e6d4e84c853f9a94",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/skills/brainstorm.md",
+     "rendering": "omp-skill"
+    }
+   ],
+   ".omp/skills/trellis-check/SKILL.md": [
+    {
+     "sha256": "dfb0600e95c19c7a83200465b6a92a5514ec9778ba4083efa881bed541cc74a8",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/skills/check.md",
+     "rendering": "omp-skill"
+    }
+   ],
+   ".omp/skills/trellis-meta/SKILL.md": [
+    {
+     "sha256": "ee7bcfd0023def62688339c4b63c50f2fbeea12a34eb89e8bb63a992b58cb168",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/SKILL.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-meta/references/local-architecture/bundled-skills.md": [
+    {
+     "sha256": "aa6a0bf83060205ee4ea621c467fb900a7db06b4476a4ad472cc4e248c887389",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/references/local-architecture/bundled-skills.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-meta/references/local-architecture/context-injection.md": [
+    {
+     "sha256": "b1ebaac467bf0195e2a21f2f8492a8b7c91ff3e0f9312f853468cda0255df1c7",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/references/local-architecture/context-injection.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-meta/references/local-architecture/task-system.md": [
+    {
+     "sha256": "b154568e74f1c738a51633df9f2503f416b3afa5f309325224422162e0b707e4",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/references/local-architecture/task-system.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-meta/references/platform-files/agents.md": [
+    {
+     "sha256": "b806b1f0de6dfc74720014aee15ede767a58925b2b3b964f2e557ed39a65bbc0",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/references/platform-files/agents.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-meta/references/platform-files/hooks-and-settings.md": [
+    {
+     "sha256": "91e9855e418673bcd7770411e24e28390738b123532eef000beba0a29cf154e1",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/references/platform-files/hooks-and-settings.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".omp/skills/trellis-meta/references/platform-files/platform-map.md": [
+    {
+     "sha256": "3c0d4546461c06d1aaf006276e34e250e0ca7bbb5b853fb45c58114cebca4042",
+     "version": "0.6.17",
+     "member": "package/dist/templates/common/bundled-skills/trellis-meta/references/platform-files/platform-map.md",
+     "rendering": "verbatim"
+    }
+   ],
+   ".trellis/workflow.md": [
+    {
+     "sha256": "eb4508a4f6792f3d53705c1f9e7d21807dabd774543bd7b01f56372a704f6ad0",
+     "version": "0.6.17",
+     "member": "package/dist/templates/trellis/workflow.md",
+     "rendering": "verbatim"
+    }
+   ]
+  }
+ }
+}

@@ -9,7 +9,7 @@ allowed-tools: read grep glob bash
 metadata:
   sbtd.category: domain
   sbtd.portable: "true"
-  sbtd.source-revision: f8aa0d7225a26c5e00b81d2f1b05121108e63630
+  sbtd.source-revision: 1d82494d74f6df9bca7dccef2da409f87091883e
 compatibility: Requires project evidence; Trellis task artifacts and
   clarification workflows are optional.
 ---
@@ -18,7 +18,7 @@ compatibility: Requires project evidence; Trellis task artifacts and
 
 Use this Skill to sharpen domain language before turning a business request into PRD, issues, design, or code.
 
-It is derived from the `mini` rule style of `agent-rules-books` and should run after project evidence is read. It complements `grill-with-docs`, `to-spec`, and Trellis planning.
+It is derived from the `mini` rule style of `agent-rules-books` and should run after project evidence is read. It complements `grill-with-docs`, `to-spec`, and task planning.
 
 ## Mandatory Post-grill Review
 
@@ -26,7 +26,7 @@ Every fully completed `grill-with-docs` session MUST be followed immediately by 
 
 Re-read the completed clarification result and the supporting project facts. Look for boundary errors, hidden term collisions, unsupported invariants, misplaced responsibilities, and unresolved context ownership rather than merely restating the interview.
 
-The review is a gate before requirement confirmation, PRD, design, Trellis task creation, or implementation:
+The review is a gate before requirement confirmation, PRD, design, task creation, or implementation:
 
 - `confirmed`: no unresolved boundary issue prevents the workflow from advancing.
 - `needs-clarification`: output the findings, return to one-question-at-a-time clarification, and rerun this Skill after resolution.
@@ -46,7 +46,7 @@ When `grill-with-docs` was not used, do not use this Skill for purely technical 
 
 ## Workflow
 
-1. Read existing project facts first: README, domain docs, `.trellis/spec`, ADRs, task artifacts, and relevant code.
+1. Read existing project facts first: README, domain docs, `docs/spec`, ADRs, task artifacts, and relevant code.
 2. List the key terms and their current meanings in the project.
 3. Identify bounded contexts where the same word may have different meanings.
 4. Distinguish core, supporting, and generic subdomains when that affects priority or design.
@@ -70,7 +70,7 @@ Open conflicts and questions: ...
 
 Use `not-applicable` for a subdomain classification only when it has no bearing on the current decision; do not omit the field. A post-grill review must explicitly state whether it corrected the earlier result, even when the answer is `none`.
 
-Only stable, cross-task domain decisions should be promoted to `docs/CONTEXT.md`, ADRs, or `.trellis/spec`. Keep the complete review in task-level output or the current `prd.md`, `design.md`, or `implement.md`.
+Only stable, cross-task domain decisions should be promoted to `docs/CONTEXT.md`, ADRs, or `docs/spec`. Keep the complete review in task-level output or the current `prd.md`, `design.md`, or `implement.md`.
 
 ## Guardrails
 

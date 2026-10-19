@@ -6,13 +6,13 @@ Feature: Agent Plugin 可移植 Skill 投影
     Scenario: 审计全部 portable 候选
       Given canonical Kit 已由固定 upstream revision 生成
       When 生成 Agent Plugin Skill 投影
-      Then 迁移清单中的 13 个 portable 候选各有六类审计结论
+      Then 迁移清单中的 12 个 portable 候选各有六类审计结论
       And 明确排除的 OMP 专属 Skill 不进入候选集合
 
-    Scenario: 审计失败的 Skill 不进入投影
-      Given portable 候选正文引用 OMP 专属运行时路径
+    Scenario: 上游已删除的 Skill 不进入候选集合
+      Given 上游 v2.0.2 已删除 trellis-workflow 实体（p0-v4 / PRD D14）
       When 生成 Agent Plugin Skill 投影
-      Then 该 Skill 的 disposition 为 onboard-owned
+      Then 候选集合与审计结果不包含 trellis-workflow
       And 输出 skills 目录不包含该 Skill
 
     Scenario: 审计阻塞不发布部分投影

@@ -35,7 +35,7 @@ scripts/audit_selectors.py         # 选择器稳定性审计，生成 ui-select
 scripts/check_coverage.py          # 清单和用例覆盖率检查，生成 ui-test-coverage.json
 scripts/analyze_failures.py        # Playwright JSON 报告分析，生成 ui-test-repair-plan.json
 assets/templates/                  # Playwright 起始模板
-assets/templates/summary.zh-CN.md.template # 中文最终测试报告模板
+assets/templates/summary.zh-CN.md.template # 中文覆盖率评估附录模板
 ```
 
 ## 工作流程
@@ -201,7 +201,7 @@ rg --files
 - `auth-fixture.ts.template`：需要鉴权但项目登录方式不明确时使用。
 - `package-scripts.json.template`：补充 npm scripts 时使用。
 - `github-actions-e2e.yml.template`：补充 GitHub Actions CI 时使用。
-- `summary.zh-CN.md.template`：编写最终中文测试报告时使用。
+- `summary.zh-CN.md.template`：编写覆盖率评估附录时使用；执行汇总统一使用 `project-validation` 的固定模板。
 
 每个业务页面通常应覆盖：
 
@@ -377,7 +377,7 @@ npx playwright test
 
 ## 中文报告
 
-最终面向人阅读的测试报告必须使用中文。写入 `tests/e2e/reports/summary.md` 时，使用 `assets/templates/summary.zh-CN.md.template`。
+最终面向人阅读的测试报告必须使用中文。正式执行报告的同 stem Markdown 必须加载并按已安装 `project-validation/references/run-summary.zh-CN.md.template` 固定章节编写，遵守其填值、核验、脱敏和历史证据边界。`tests/e2e/reports/summary.md` 是套件覆盖率评估入口，不能替代每轮命名报告的同 stem 汇总；其覆盖率部分使用 `assets/templates/summary.zh-CN.md.template`，可作为执行汇总之后的附录。仅生成测试资产而未执行时，明确写“未执行”，不得把静态覆盖率评分写成测试通过。
 
 报告必须包含：
 

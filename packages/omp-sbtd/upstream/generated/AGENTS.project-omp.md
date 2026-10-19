@@ -1,11 +1,11 @@
-<!-- KPi template: project-omp; sourceId=sbtd-workflow-kit-upstream; revision=f8aa0d7225a26c5e00b81d2f1b05121108e63630; transform=p0-v3 -->
+<!-- KPi template: project-omp; sourceId=sbtd-workflow-kit-upstream; revision=1d82494d74f6df9bca7dccef2da409f87091883e; transform=p0-v4 -->
 @../AGENTS.md
 
 # OMP Project Adapter
 
 This adapter preserves Root Project Facts through the import above.
 
-<!-- sbtd-plugins overlay: project-omp policy; version=p0-v3 -->
+<!-- sbtd-plugins overlay: project-omp policy; version=p0-v4 -->
 
 ## sbtd-plugins OMP Trellis Phase Routing
 

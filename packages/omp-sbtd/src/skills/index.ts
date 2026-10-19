@@ -12,8 +12,7 @@ export const packagedSkillsRoot = join(pluginRoot, "skills");
 
 const retainedBundledSkillNames = [
   "sbtd-workflow-onboard",
-  "trellis-workflow",
-  "trellis-channel",
+  "sbtd-task",
 ] as const;
 
 const bookGateBySkill: Readonly<Record<string, BookGateId>> = {

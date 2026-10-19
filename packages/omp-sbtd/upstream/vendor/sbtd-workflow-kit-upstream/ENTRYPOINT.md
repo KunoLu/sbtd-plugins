@@ -1,26 +1,31 @@
 # AI Tools 项目工具流程精简概要
 
-> 本文件记录个人 Codex Agent Harness 的模板化工具定位、版本监控基线和 Skill 编排规则。
-> 当前主流程已收敛为 `Codex + GitNexus + Trellis + Chrome DevTools MCP + Playwright + Maestro`。
+> 本文件记录个人 Codex / OMP Agent Harness 的模板化工具定位、版本监控基线和 Skill 编排规则。
+> 当前主流程已收敛为 `Codex / OMP + sbtd-task + Graft + Chrome DevTools MCP + Playwright + Maestro`。
 > Chrome DevTools MCP 负责 Web 运行时诊断，Playwright CLI 负责 Web 可重复回归，Maestro 负责移动 App E2E 和可选跨端 smoke。
 > `web-ui-autotest-generator` 作为 Web UI Playwright 测试资产生成、选择器审计和覆盖率报告的可选专项分支。
 > `shadcn Skill` 作为 shadcn/ui 项目组件、registry、preset 和 CLI 工作流的可选辅助，必须先确认项目存在 `components.json`、使用或准备初始化 shadcn/ui，或任务明确涉及 shadcn registry / preset / CLI。
 > `React Bits Pro Skill` 仅作为 React / shadcn UI 项目的可选前端组件与 blocks 集成辅助，必须先确认技术栈、项目内 Skill 安装状态和可读取的 license key。
 > `ponytail` / `ponytail-review` / `ponytail-audit` / `ponytail-debt` 作为 required external Skills 由 Onboard stable set 统一安装和管理：缺失即补装、失败即阻断；官方 Ponytail plugin 与 Onboard stable provider 不得同时启用，检测到已启用 plugin 时 check / init / reset 阻断并交由人工处理。Ponytail 版本基线只以 `assets/external-skills/stable/MANIFEST.json` 为事实源，不纳入下方版本监控表。
+> `i-have-adhd` 同为 required external Skill 由 Onboard stable set 统一安装和管理：缺失即补装、失败即阻断；版本基线只以 `assets/external-skills/stable/MANIFEST.json` 为事实源，不纳入下方版本监控表。
 > 本仓库当前可复用模板和本地安装 / 重置自动化集中在 `sbtd-workflow-onboard/`，旧 `agents/` 和 `skills/` 顶层目录已移除。
+> SBTD 自身发布状态与使用示例以[中文变更日志](CHANGELOG.zh.md)、[英文 CHANGELOG](CHANGELOG.md)、[中文 README](README.zh.md)和[英文 README](README.md)为准；首次 v2 初始化、已有环境 init/reset、v1→v2 迁移采用各自提示词和确认门。两份变更日志逐项同义。下表仍是外部工具监控基线，不因 SBTD 发布或文档同步改写其他工具；唯一例外是 Graft 的版本号，已发布 workflow 的受管 pin 变化时由版本检查按第 0 节同步。
 
 ## 0. 版本监控配置
 
 > 自动化任务优先读取本章节。后续如需新增指定工具，在下表继续追加即可。
+>
+> 自动化必须处理所有“是否启用监控”为“是”的工具。除 Graft 外，`update` / `更新` 必须把 `UPDATE.md` 对应章节的目标版本写回本表和“当前版本汇总”。Graft 的当前使用版本不由官方 Graft 发行或 `update` 写回；只在已发布的 SBTD workflow 版本中的受管 pin 变化时，由版本检查按该 pin 同步本表、“当前版本汇总”和“Graft 当前使用要点”中的版本号。OMP 监控对象是 npm `@oh-my-pi/pi-coding-agent`（CLI `omp`）；版本字段使用 GitHub tag 格式 `v<semver>`。
 
 | 工具 | GitHub 仓库 | 当前使用版本 | 版本通道策略 | 是否启用监控 | 备注 |
 |---|---|---:|---|---|---|
-| Codex | openai/codex | v0.151.0 | stable-only | 是 | 核心 Coding Agent |
-| Trellis | mindfold-ai/trellis | v0.6.16 | stable-only | 是 | 复杂任务编排 / TDD workflow |
-| GitNexus | abhigyanpatwari/GitNexus | v1.6.10 | stable-only | 是 | 代码理解、依赖关系、影响分析 |
+| Codex | openai/codex | v0.162.1 | stable-only | 是 | 核心 Coding Agent |
+| OMP | can1357/oh-my-pi | v18.11.0 | stable-only | 是 | Oh My Pi Coding Agent / `@oh-my-pi/pi-coding-agent` |
+| Caveman Skill Installer | JuliusBrussee/caveman | v4.0.1 | stable-only | 是 | 仅监控 `v*` installer / skill tags，忽略 `bin-v*` engine binary releases；`更新` 只回写 ENTRYPOINT 的 Caveman 版本记录（本表与“当前版本汇总”），不得改 `CAVEMAN_PINNED_REF` / revision / hash。payload 维护由正常 `init` / `reset` 按受管 family 的完整目录集合与内容指纹判定 `current` / `outdated`，已知旧版备份后升级；非 symlink 异常核心在不存在未知 companion 时修复，嵌套或顶层 symlink 一律 fail-closed 只报告；替换 / 备份仅限 `caveman`、`caveman-*`、`cavecrew`、`cavecrew-*`，更宽的 `caveman*` / `cavecrew*` 前缀仅用于 symlink 侦测。 |
+| Graft | nanonets/graft | v0.22.0 | stable-only | 是 | 固定结构图 CLI / `@nanonets/graft` 受管 pin。ENTRYPOINT 基线只跟已发布 SBTD workflow 中一致的 `GRAFT_PINNED_VERSION` 与 `graft-build-policy.json` `version`；官方新版本只评估，不写本表。`update` / `更新` 不写回 Graft。 |
 | Chrome DevTools MCP | ChromeDevTools/chrome-devtools-mcp | latest | stable-only | 否 | Web 运行时诊断 / MCP 浏览器检查 |
-| Playwright | microsoft/playwright | v1.62.1 | stable-only | 是 | Web E2E / 回归测试 / Playwright MCP |
-| Maestro | mobile-dev-inc/Maestro | cli-2.10.0 | stable-only | 是 | Android / iOS / Hybrid App E2E |
+| Playwright | microsoft/playwright | v1.64.1 | stable-only | 是 | Web E2E / 回归测试 / Playwright MCP |
+| Maestro | mobile-dev-inc/Maestro | cli-2.11.0 | stable-only | 是 | Android / iOS / Hybrid App E2E |
 | web-ui-autotest-generator | KunoLu/640-skills | bundled | repository-controlled | 否 | 内置 Web UI Playwright 测试资产生成 Skill |
 | React Bits Pro Skill | pro.reactbits.dev | manual | manual | 否 | React / shadcn UI 组件与 blocks 集成辅助 |
 | 待添加 | owner/repo | 未明确 | stable-only | 否 | 后续需要监控的新工具在此补充 |
@@ -41,7 +46,7 @@
 | Onboard 机器目录 | `sbtd-workflow-onboard/catalog.json`、`catalog.schema.json` | 统一描述 bundled Skill、external Skill 上游源与模板源路径，并提供 Draft 2020-12 校验契约 |
 | Orca 版本检查 prompt | `prompts/automations/sbtd-workflow-tools-version-check.md` | 同步更新 `SBTD Workflow Tools Version Check` live automation，并作为后续审计和恢复来源 |
 
-公开仓库也可通过官方 `npx skills add` 只 bootstrap 自包含的 `sbtd-workflow-onboard` 到用户级全局目录；这不是完整 onboarding，不自动执行 `scripts/onboard.py`、安装其余 Skills / Trellis / GitNexus、写入 AGENTS 或初始化项目。安装后由 Agent 调用该 Skill，再执行 `plan` / `init` / `reset`。全局 Skill 目录按显式参数、`$AGENT_SKILLS_DIR`、已安装 Onboard Skill 的受信父目录、平台默认值依次解析，JSON 结果暴露 `globalSkillsDirSource`。
+公开仓库也可通过官方 `npx skills add` 只 bootstrap 自包含的 `sbtd-workflow-onboard` 到用户级全局目录；这不是完整 onboarding，不自动执行 `scripts/onboard.py`、安装其余 Skills、写入 AGENTS 或初始化项目。安装后由 Agent 调用该 Skill，再执行 `plan` / `init` / `reset`。全局 Skill 目录按显式参数、`$AGENT_SKILLS_DIR`、已安装 Onboard Skill 的受信父目录、平台默认值依次解析，JSON 结果暴露 `globalSkillsDirSource`。
 
 定时版本检查自动化评估规则影响时，应扫描版本化 automation prompt 和 `sbtd-workflow-onboard/` 下的 Skill 入口、参考文档、安装脚本与 bundled templates；本机若存在根 `AGENTS.md` 则一并扫描，缺失时跳过，不得把它的存在当作 Gate。不要再扫描已删除的旧 `agents/` 或 `skills/` 顶层目录。
 
@@ -53,13 +58,13 @@
 
 ```mermaid
 flowchart TD
-    A[PRD / 需求输入] --> B[Codex]
-    B --> C{任务是否复杂 / 高风险 / 跨模块?}
-    C -- 是 --> D[Trellis workflow]
-    C -- 否 --> E[直接实现或聚焦修改]
-    D --> F[GitNexus 代码理解 / 影响分析]
-    E --> F
-    F --> G[Codex implementation]
+    A[PRD / 需求输入] --> B[Codex / OMP]
+    B --> C[sbtd-task 模式路由: default / lite / strict]
+    C --> D{是否需要结构证据或影响分析?}
+    D -- 是 --> E[Graft 结构图 / 影响分析]
+    D -- 否 --> F[源码 / LSP / contract 补充]
+    E --> G[Codex / OMP implementation]
+    F --> G
     G --> H[项目测试 / 回归验证]
     H --> I{是否涉及 Web 运行时诊断?}
     I -- 是 --> J[Chrome DevTools MCP 诊断 console / network / trace / screenshot]
@@ -81,8 +86,9 @@ flowchart TD
 | 工具 | 当前定位 | 是否进入主流程 | 使用边界 |
 |---|---|---:|---|
 | Codex | 主 coding agent | 是 | 默认执行代码理解、修改、调试、测试、文档生成等任务 |
-| GitNexus | 代码理解 / 影响分析 / debug / refactor 辅助 | 是 | 代码结构、影响范围、Bug 根因或重构风险不清时调用 |
-| Trellis | 复杂任务编排 / 多阶段任务 / TDD workflow | 按场景启用 | 中大型任务、高风险任务、跨模块任务、长期任务启用；小任务不强制使用 |
+| OMP | Oh My Pi coding agent | 是 | 当前 host 为 OMP 时作为主 coding agent；CLI 为 `omp`，npm 包为 `@oh-my-pi/pi-coding-agent` |
+| sbtd-task | default / lite / strict 任务路由、记录、状态、handoff | 是 | 每个新任务先路由；strict 才加载完整适用 Gate，default/lite 按需使用，不引入替代调度器 |
+| Graft | 固定版本结构图与影响分析辅助 | 按需启用 | 仅对授权单仓根、固定 `@nanonets/graft@0.22.0` 且满足 DNT / 禁 LLM / cloud 边界时启用；不可用则用源码 / LSP / contract 补充 |
 | Chrome DevTools MCP | Web 运行时诊断 / 浏览器现场证据 | 按场景启用 | 页面白屏、console error、network、cookie、storage、性能 trace、截图或临时复现需要真实 Chrome 检查时启用；不替代 Playwright 测试 |
 | Playwright CLI | Web E2E / Web 回归 / CI gate | Web 测试阶段启用 | Web UI、路由、表单、权限、跨页面流程、API 集成或浏览器兼容需要可重复验证时启用；项目内未安装时先询问用户 |
 | Playwright MCP | Agentic Web 探索 / locator 辅助 | 可选启用 | 需要 agent 通过可访问性快照探索页面、辅助生成 locator 或临时检查时启用；不替代项目内 `playwright test` |
@@ -95,7 +101,7 @@ flowchart TD
 
 ## 2. mattpocock/skills 接入规则
 
-仅接入外部评估表格中“是否建议接入”为“是”的官方 Skill，并保持官方文件原样。Onboard 内部维护带精确 commit、checksum 和许可证的原样 stable 镜像；普通安装默认使用该镜像，只有显式 `--source upstream` 才直接获取当前上游用于评估或升级验证。本配置沿用既有 canonical 基线；需特别区分：`diagnose`、`write-a-skill` 与 `zoom-out` 属于较早的迁移 / 移除项，而 `to-prd` → `to-spec`、`to-plan` / `to-issues` → `to-tickets` 是 mattpocock/skills v1.1.0 的后续变更。当前只安装最终 canonical Skill：
+仅接入外部评估表格中“是否建议接入”为“是”的官方 Skill，并保持官方文件原样。Onboard 内部维护带精确 commit、checksum 和许可证的原样 stable 镜像；普通安装默认使用该镜像，只有显式 `--source upstream` 才直接获取当前上游用于评估或升级验证。本配置沿用既有 canonical 基线；需特别区分：`diagnose`、`write-a-skill` 与 `zoom-out` 属于较早的迁移 / 移除项，`writing-great-skills` 只是 `writing-for-agents` 的迁移别名，不是当前安装名，而 `to-prd` → `to-spec`、`to-plan` / `to-issues` → `to-tickets` 是 mattpocock/skills v1.1.0 的后续变更。当前只安装最终 canonical Skill：
 
 ```text
 diagnosing-bugs
@@ -106,7 +112,7 @@ grilling
 domain-modeling
 codebase-design
 handoff
-writing-great-skills
+writing-for-agents
 to-spec
 to-tickets
 ```
@@ -115,17 +121,17 @@ to-tickets
 
 | Skill | 使用场景 | 本地适配 |
 |---|---|---|
-| `diagnosing-bugs` | bug、测试失败、运行时错误、性能回归、线上问题、日志异常、数据不一致 | 结合 GitNexus debugging / impact-analysis；修复后补充回归测试 |
+| `diagnosing-bugs` | bug、测试失败、运行时错误、性能回归、线上问题、日志异常、数据不一致 | 结合源码 / LSP / contract 定位；修复后补充回归测试 |
 | `tdd` | bug 修复、核心业务逻辑、算法行为、数据转换、导入 / 导出 / 同步逻辑、高风险修改 | 依赖 `codebase-design`；不强制用于简单文案、样式、配置说明或一次性脚本 |
 | `grill-me` | 通用需求澄清、方案质询、计划压力测试 | 依赖 `grilling`；一次问一个关键问题；能通过读项目文件回答时先读文件 |
 | `grill-with-docs` | 项目内需求澄清、术语对齐、CONTEXT.md / ADR 沉淀 | 依赖 `grilling` 和 `domain-modeling`；不把 CONTEXT.md 写成临时规格书；未调用时说明原因，仅在调用与跳过存在实质决策权衡时询问 |
 | `grilling` | 可复用逐问题访谈循环 | 作为 `grill-me` / `grill-with-docs` 的底层依赖，不作为默认独立入口 |
 | `domain-modeling` | 项目语言、glossary、CONTEXT.md / ADR 建模辅助 | 遵守本地 `docs/CONTEXT.md`、`docs/adr/*.md` 路径约束 |
 | `codebase-design` | 模块、接口、seam、adapter 和测试面设计 | 作为 `tdd`、陌生模块理解和结构性修改前的设计辅助 |
-| `handoff` | 长会话切换、`/clear`、新会话、Trellis 暂停或多会话交接 | 输出目标、已完成工作、决策、文件、命令、开放问题、下一步和脱敏说明 |
-| `writing-great-skills` | 创建或维护自定义 Skill 的质量规则 | `SKILL.md` 做入口；长内容拆 reference；确定性操作优先脚本化 |
+| `handoff` | 长会话切换、`/clear`、新会话、任务暂停或多会话交接 | 输出目标、已完成工作、决策、文件、命令、开放问题、下一步和脱敏说明 |
+| `writing-for-agents` | 创建或维护 Skill、AGENTS.md、CLAUDE.md | `SKILL.md` 做入口；长内容拆 reference；确定性操作优先脚本化。`writing-great-skills` 只是迁移别名，不是当前安装名 |
 | `to-spec` | 将当前对话和代码库理解整理为 spec / PRD | 默认输出 Markdown spec / PRD；不自动发布到 issue tracker |
-| `to-tickets` | 将 PRD、plan 或 spec 拆成实现任务 | 默认输出 Trellis-ready Markdown vertical slices；不自动发布到 issue tracker |
+| `to-tickets` | 将 PRD、plan 或 spec 拆成实现任务 | 默认输出任务可执行的 Markdown vertical slices；不自动发布到 issue tracker |
 
 ### 2.2 推荐编排
 
@@ -141,8 +147,7 @@ Codex
 
 ```text
 diagnosing-bugs
-  → GitNexus debugging（根因不清时）
-  → Codex fix
+  → 源码 / LSP / contract debugging（根因不清时）
   → tdd / codebase-design（需要回归测试或测试面设计时）
   → 项目测试
 ```
@@ -152,8 +157,7 @@ diagnosing-bugs
 ```text
 diagnosing-bugs
   → 时间线 / 事实 / 假设 / 排除项
-  → GitNexus debugging（涉及代码根因时）
-  → Codex fix or mitigation
+  → 源码 / LSP / contract debugging（涉及代码根因时）
   → tdd regression test
   → Chrome DevTools MCP（需要 Web 运行时诊断时）
   → Playwright CLI（涉及 Web 回归时）
@@ -166,9 +170,9 @@ diagnosing-bugs
 ```text
 grill-me / grill-with-docs（内部使用 grilling，涉及项目语言时使用 domain-modeling）
   → to-spec
-  → to-tickets as Trellis-ready Markdown tasks
-  → Trellis workflow（默认 native）
-  → GitNexus impact-analysis
+  → to-tickets as executable Markdown tasks
+  → sbtd-task strict workflow（适用时）
+  → Graft impact-analysis（固定可用且授权时；否则源码 / LSP / contract）
   → ponytail（首次实现编辑前选择最小正确实现）
   → Codex implementation
   → tdd / codebase-design（行为风险需要回归测试或测试面设计时）
@@ -190,10 +194,10 @@ grill-me / grill-with-docs（内部使用 grilling，涉及项目语言时使用
 grill-with-docs
   → domain-modeling
   → to-spec
-  → to-tickets as Trellis-ready Markdown tasks
-  → Trellis TDD workflow
+  → to-tickets as executable Markdown tasks
+  → sbtd-task strict workflow（适用时）
+  → Graft impact-analysis（固定可用且授权时；否则源码 / LSP / contract）
   → tdd / codebase-design
-  → GitNexus impact-analysis
   → Codex implementation
   → regression tests
 ```
@@ -202,48 +206,41 @@ grill-with-docs
 
 ```text
 代码阅读 / codebase-design
-  → GitNexus exploring
-  → GitNexus impact-analysis
-  → Codex implementation
+  → Graft exploring / impact-analysis（固定可用且授权时；否则源码 / LSP / contract）
 ```
 
 长任务切换 / 上下文压缩：
 
 ```text
 handoff
-  → new session / Codex / Trellis continuation
+  → new session / Codex / sbtd-task continuation
 ```
 
 ---
 
-## 3. Trellis 当前使用要点
+## 3. sbtd-task 当前使用要点
 
 | 项目 | 当前结论 |
 |---|---|
-| 当前关注版本 | v0.6.16 |
-| 当前定位 | 复杂任务编排 / 多阶段任务 / TDD workflow |
-| 启用条件 | 存在 Trellis 强证据，或任务复杂度需要 Trellis |
-| Native Workflow | 普通功能开发、文档修改、小型 bug 修复、工具配置调整 |
-| TDD Workflow | 后端算法逻辑、数据处理逻辑、高风险改动、回归敏感模块 |
-| Channel | 仅用户明确要求多 Agent、多模型、worker、forum、thread、并行评审或外部 orchestrator 时启用 |
-| Platform identity | `.trellis/**` 只定义共享 workflow gate；当前 host 与其 `.codex/**` / `.omp/**` 生成资产决定本次执行。二者共存时按当前 host 选择；仅静态文件不足时标记 unknown |
-| Codex phase dispatch | 仅当前 host 为 Codex 且 `.codex/**` 集成可用时：以有效 `codex.dispatch_mode` 为准；`auto` 由主会话协调、按职责调度 role subagent；`inline` 可显式选择，也可作为非法显式值的 fail-closed fallback |
-| OMP phase dispatch | 仅当前 host 为 OMP 且 `.omp/**` 集成可用时：使用 OMP `task` worker 与生成的 agent 定义；不适用 `codex.dispatch_mode` 或 Codex Inline fallback |
-| Channel 边界 | 独立的持久协作 runtime；单个 platform role subagent 不触发 Channel。每项变更职责只允许一个写入执行者；用户请求的独立只读复核可并行 |
-
+| 当前定位 | 三模式任务路由、任务记录、状态、handoff 与最小校验 |
+| 模式分层 | 新任务未指定为 `default`；`lite` 使用短清单；`strict` 才加载完整适用 before-dev / check / finish-work 与 Book Gate |
+| 记录位置 | default 普通本地任务使用 `.sbtd/tasks/<id>/task.md`；lite/strict 或明确共享任务使用 `ai/tasks/<id>/task.md` |
+| 只读边界 | 显式只读任务不写 task / active / handoff / developer / ignore，不运行有缓存或接线副作用的查询 |
+| 迁移边界 | 旧 `.trellis` 数据只作为显式迁移输入；当前 Onboard 不安装、调用或初始化 Trellis |
+| Channel / dispatch | 不保留 Trellis Channel runtime 或按职责调度 subagent；一项职责一个 writer，一个验证环境一个 controller |
 
 ---
 
-## 4. GitNexus 当前使用要点
+## 4. Graft 当前使用要点
 
 | 项目 | 当前结论 |
 |---|---|
-| 当前定位 | 代码结构理解、影响分析、调试辅助、重构辅助 |
-| 使用方式 | 优先使用全局 gitnexus-mcp |
-| Skills 处理 | `gitnexus_impact_analysis` 和 `gitnexus_detect_changes` 不再作为自定义 Skills 维护 |
-| 常见命令 | `gitnexus analyze --force`、`gitnexus analyze --embeddings` |
-| 使用条件 | GitNexus MCP 可用，且当前项目已建立索引 |
-| 不可用时 | 跳过 GitNexus，不阻塞任务 |
+| 当前定位 | 固定版本结构图、影响分析和结构证据辅助 |
+| 固定版本 | `@nanonets/graft@0.22.0` npm pin；不使用 latest。监控表版本只在已发布 workflow 的该 pin 变化后由版本检查同步，不由官方发行或 `update` 写回。版本变化仍需重新证明能力和遥测边界 |
+| 安全边界 | 受管入口持续 `DO_NOT_TRACK=1`，禁止 `--deep`、`blast --name`、LLM / cloud、代码或查询上传；父目录不建图 |
+| 使用条件 | 只对明确授权的单仓根调用；安装前确认固定包、native lifecycle 与 telemetry 变更 |
+| 不可用时 | 不循环安装；使用源码 / LSP / contract 补充，不以空图或 exit 0 证明无影响 |
+| 迁移边界 | GitNexus CLI / MCP / 索引契约已退役，只作为历史或迁移输入；本表不再监控 GitNexus |
 
 ---
 
@@ -326,12 +323,14 @@ handoff
 
 | 类别 | 工具 | 当前版本记录 |
 |---|---|---:|
-| Coding Agent | Codex | v0.151.0 |
-| Agent Harness | Trellis | v0.6.16 |
-| 代码理解 | GitNexus | v1.6.10 |
+| Coding Agent | Codex | v0.162.1 |
+| Coding Agent | OMP | v18.11.0 |
+| Agent Output | Caveman Skill Installer | v4.0.1 |
+| 任务路由 | sbtd-task | bundled |
+| 结构分析 | Graft | v0.22.0 |
 | Web 诊断 | Chrome DevTools MCP | latest |
-| Web 回归测试 | Playwright | v1.62.1 |
-| 移动 E2E | Maestro | cli-2.10.0 |
+| Web 回归测试 | Playwright | v1.64.1 |
+| 移动 E2E | Maestro | cli-2.11.0 |
 | Web UI 测试资产 | web-ui-autotest-generator | bundled |
 | 前端 UI 组件辅助 | React Bits Pro Skill | manual |
 
@@ -342,9 +341,9 @@ handoff
 当前 AI Tools 的主线调整为：
 
 ```text
-Codex 作为核心开发入口
-GitNexus 负责当前代码理解和影响分析
-Trellis 负责复杂任务编排和 TDD workflow
+Codex / OMP 作为核心开发入口
+sbtd-task 负责 default / lite / strict 任务路由、记录与恢复
+Graft 负责固定版本结构图和影响分析辅助
 Chrome DevTools MCP 负责 Web 运行时诊断和现场证据
 Playwright CLI 负责 Web E2E / 回归 / CI gate
 Playwright MCP 负责 agentic Web 探索和 locator 辅助

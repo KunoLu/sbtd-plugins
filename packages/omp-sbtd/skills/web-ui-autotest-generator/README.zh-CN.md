@@ -13,6 +13,8 @@
 - 分析 Playwright JSON 报告，并输出失败分类与修复建议。
 - 生成中文测试总结报告，说明覆盖情况、风险和后续动作。
 
+正式执行汇总使用已安装 `project-validation` Skill 的固定中文模板（`references/run-summary.zh-CN.md.template`），与命名后的 native 报告同 stem。本 Skill 的 `summary.zh-CN.md.template` 是覆盖率评估附录；`summary.md` 不替代每轮执行证据。保留失败轮次及历史报告，区分已生成资产与已执行测试，不补造缺失统计。
+
 ## 默认输出结构
 
 ```text

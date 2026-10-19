@@ -209,7 +209,7 @@
 
 ## 中文最终测试报告
 
-面向人阅读的最终测试报告默认使用中文，建议输出到 `tests/e2e/reports/summary.md`，并以 `assets/templates/summary.zh-CN.md.template` 为基础。
+面向人阅读的报告使用中文。正式执行汇总使用已安装 `project-validation/references/run-summary.zh-CN.md.template` 的固定章节，并与每轮命名 native 报告同 stem；填写与生成后核验均遵循 `project-validation`，不能用自由长段落或 JSON 代替结果表。`tests/e2e/reports/summary.md` 仅作为套件覆盖率评估入口，使用 `assets/templates/summary.zh-CN.md.template` 编写覆盖率附录，不替代正式执行汇总。未执行测试时必须保留未执行状态。
 
 报告应包含：
 

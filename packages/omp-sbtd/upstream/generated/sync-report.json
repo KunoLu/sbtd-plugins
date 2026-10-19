@@ -4,12 +4,12 @@
   "removed": [],
   "unmapped": [],
   "inputReadSet": {
-    "sourceTreeSha256": "a513e97635691a97c6994bae8b45b70f450d501eedaf24d00d5c23b262816400",
-    "mappingSha256": "567a8fb447c4c60d89b6a8ab21420cdaa753133477d975cab80865afc5362901",
+    "sourceTreeSha256": "c1fc3f679c375a22c6272de92c3377ac04ea8edb996acd314ea76f73257739b0",
+    "mappingSha256": "3c9a0aac7d9cdebe107604567343c6965cdae1850e12e737c8f7d7458ce4bbc4",
     "overlayDigests": {
-      "AGENTS.project-omp.md": "32b7bb31d15a8172ba76e37c0a7dfe8692da5522a162841aebe444215b464662"
+      "AGENTS.project-omp.md": "500a555c35cd85822e12d738389b591cf42f95ec1571562ea1a7e81fad7b2a3c"
     },
-    "stableManifestSha256": "cf1c7f48b03a5c987a5ee00afcc9719b37667b10c0f7d6005c63d6283f765cdb"
+    "stableManifestSha256": "0dd20aac6c69f3d65f2c748739bdf8ac234992eb610acc25ad1d87925568bf88"
   },
-  "generatedSha256": "15af406f9cc124e9b84f891b4048d6dabd6793a2aa6f302328532ebf19b64305"
+  "generatedSha256": "de3686e03a49ae2abe9c677f3b520136fc75ab0c6c32adb2ae871ab217b9c2a2"
 }

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "stableSet": "2026-08-27.1",
-  "promotedAt": "2026-08-27",
+  "stableSet": "2026-09-14.6",
+  "promotedAt": "2026-09-14",
   "repositories": {
     "mattpocock-skills": {
       "url": "https://github.com/mattpocock/skills.git",
-      "revision": "6654f6b60cd9d5be8b54c6fafe44346dabeb3b76",
+      "revision": "3cca18b368ae95cdbdebbff572ccafa662551015",
       "license": "MIT",
       "licenseFiles": [
         {
@@ -16,7 +16,7 @@
     },
     "impeccable": {
       "url": "https://github.com/pbakaus/impeccable.git",
-      "revision": "63b04e2530f5c7b41ea83c133daab24f34912456",
+      "revision": "cb56ed6c19a07329a9fa0cd4e657bee040156593",
       "license": "Apache-2.0",
       "licenseFiles": [
         {
@@ -31,7 +31,7 @@
     },
     "ui-ux-pro-max-skill": {
       "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
-      "revision": "e4f45473691e4b389519ee4bc359a3d6df666c26",
+      "revision": "7f69fed6a2717900085f1bc3b263721f8ba025e2",
       "license": "MIT",
       "licenseFiles": [
         {
@@ -42,7 +42,7 @@
     },
     "shadcn-ui": {
       "url": "https://github.com/shadcn-ui/ui.git",
-      "revision": "683a5a9b370acdb7785a0529434e6a3b8c7e0441",
+      "revision": "2b3e6d4f8d9161fe5c19340dc383aade392012dd",
       "license": "MIT",
       "licenseFiles": [
         {
@@ -53,12 +53,23 @@
     },
     "ponytail": {
       "url": "https://github.com/DietrichGebert/ponytail.git",
-      "revision": "2ed6c52c9d7e5e56942508591085fd45dea277d3",
+      "revision": "356918eba965ee1eac64bd3a7f0dd02108350de5",
       "license": "MIT",
       "licenseFiles": [
         {
           "source": "LICENSE",
           "stablePath": "licenses/ponytail-LICENSE"
+        }
+      ]
+    },
+    "i-have-adhd": {
+      "url": "https://github.com/ayghri/i-have-adhd.git",
+      "revision": "4092de07ce3ed88389d77c0d623b7af89b40ac0e",
+      "license": "MIT",
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "stablePath": "licenses/i-have-adhd-LICENSE"
         }
       ]
     }
@@ -134,19 +145,19 @@
       "repository": "impeccable",
       "sourceSubpath": "plugin/skills/impeccable",
       "stablePath": "skills/impeccable",
-      "treeSha256": "f6c3e2cb2aaca6efd09dbddfc00dd2b47aa94073f4c300185ccb28afd2f87fdf"
+      "treeSha256": "44da5f30273b944e77f5312cebcf730ed594c928acde4d4800666a70e786e9ae"
     },
     "ui-ux-pro-max": {
       "repository": "ui-ux-pro-max-skill",
       "sourceSubpath": ".claude/skills/ui-ux-pro-max",
       "stablePath": "skills/ui-ux-pro-max",
-      "treeSha256": "bea2ecac7e8d09ee77f77e9d8b9833164adb6fdada9957ecff54e1043d302b58"
+      "treeSha256": "93f67a282405730a1e225e8dc3c772950c25eef3e467e3d2fc2eb42da6165486"
     },
     "shadcn": {
       "repository": "shadcn-ui",
       "sourceSubpath": "skills/shadcn",
       "stablePath": "skills/shadcn",
-      "treeSha256": "c57e3cc8688fe5f0956c8e91ee02d1ee97fb5b0e8115e2d6ca6447c1ade69686"
+      "treeSha256": "45192dee2f4f3043b21b61e232c4d5e6c1459345f27e9bbbe22ef6ae749d04f3"
     },
     "ponytail": {
       "repository": "ponytail",
@@ -171,6 +182,12 @@
       "sourceSubpath": "skills/ponytail-debt",
       "stablePath": "skills/ponytail-debt",
       "treeSha256": "f9926b4440b0ce1c92008a0a2baff465bd4fdfacf3cbaf7652fe575dacc5345c"
+    },
+    "i-have-adhd": {
+      "repository": "i-have-adhd",
+      "sourceSubpath": "skills/i-have-adhd",
+      "stablePath": "skills/i-have-adhd",
+      "treeSha256": "f16ccbc5e669c80344dc887aed4698d27579dc812c3a3989067d7f5531121c09"
     }
   }
 }

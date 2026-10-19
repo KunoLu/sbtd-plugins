@@ -5,9 +5,9 @@ description: Use when adding, changing, reviewing, testing, synchronizing, or re
 
 # Gherkin BDD
 
-Use this Skill for user-visible behavior. BDD is a default hard rule: new or changed behavior that a user, administrator, API client, CLI user, integration system, exported file consumer, notification recipient, or permission/error-state observer can see must have a persistent BDD scenario before implementation is completed.
+Use this Skill for user-visible behavior. In strict tasks, new or changed behavior that a user, administrator, API client, CLI user, integration system, exported file consumer, notification recipient, or permission/error-state observer can see must have a persistent BDD scenario before implementation is completed. In default/lite tasks, apply this Skill when user-visible behavior, project rules, risk, or explicit delivery requirements call for persistent behavior evidence.
 
-BDD does not replace PRD, DDD, TDD, project validation, or Trellis. It turns confirmed acceptance behavior into executable examples. PRD explains intent and scope, DDD stabilizes vocabulary and boundaries, BDD specifies observable behavior, and TDD turns the scenario into red tests and green implementation.
+BDD does not replace PRD, DDD, TDD, project validation, or task workflows. It turns confirmed acceptance behavior into executable examples. PRD explains intent and scope, DDD stabilizes vocabulary and boundaries, BDD specifies observable behavior, and TDD turns the scenario into red tests and green implementation.
 
 ## When To Use
 
@@ -16,7 +16,7 @@ Use this Skill when:
 - The user asks for BDD, Gherkin, Given/When/Then, `.feature`, scenarios, acceptance criteria, or behavior specs.
 - A task adds or changes UI, API, CLI, exported files, notifications, permissions, errors, status changes, or externally observable integration behavior.
 - A user-visible bug is being fixed.
-- A Trellis task has acceptance criteria that describe user-visible behavior.
+- A task has acceptance criteria that describe user-visible behavior.
 - Existing code needs BDD coverage backfilled for touched behavior.
 - A knowledge system needs to read repository-owned `.feature` files from configured refs without modifying them.
 
@@ -32,7 +32,7 @@ Project conventions win:
 4. Monorepos use the owning workspace root, such as `apps/web/features/checkout/cart-update.feature`, `services/billing/features/invoice-export.feature`, or `packages/cli/features/project-init.feature`.
 5. Cross-package behavior belongs near the product entry point that owns the observable capability, not in every internal package.
 
-Trellis task artifacts can draft or reference scenarios, but they are not the default long-term behavior source of truth. Use another persistent BDD path only when project-level rules explicitly define it.
+Task artifacts can draft or reference scenarios, but they are not the default long-term behavior source of truth. Use another persistent BDD path only when project-level rules explicitly define it.
 
 ## Language Rules
 
@@ -41,7 +41,7 @@ Trellis task artifacts can draft or reference scenarios, but they are not the de
 - Use English Gherkin structural keywords by default: `Feature`, `Rule`, `Background`, `Scenario`, `Scenario Outline`, `Examples`, `Given`, `When`, `Then`, `And`, and `But`.
 - Do not add `# language: zh-CN` when using English Gherkin keywords. Add it only when the project already uses localized Chinese Gherkin keywords or the user explicitly requests them.
 - Avoid mixing keyword languages inside the same bounded context or feature area.
-- Domain terms must follow the project glossary, `docs/CONTEXT.md`, context docs, `.trellis/spec`, and existing scenario vocabulary.
+- Domain terms must follow the project glossary, `docs/CONTEXT.md`, context docs, `docs/spec`, and existing scenario vocabulary.
 
 Before creating or rewriting a `.feature` file, make an explicit language decision:
 
@@ -100,7 +100,7 @@ If evidence is `missing`, ask for the smallest missing fact that blocks a truthf
 
 ## Workflow
 
-1. Decide whether the change is user-visible. If yes, BDD applies.
+1. Decide whether the change is user-visible and whether BDD is the selected behavior-evidence method for the current mode, project rules, risk, or explicit delivery.
 2. Read existing `.feature` files and project vocabulary before drafting.
 3. Run the language decision gate and report the chosen scenario text language and Gherkin keyword language.
 4. For split-repository or incomplete-chain behavior, run the split-repository gate and record the evidence class before treating the scenario as confirmed.
@@ -119,10 +119,9 @@ If a scenario cannot be automated yet, tag it `@todo` or the project's equivalen
 
 For existing projects, use `no new uncovered behavior`:
 
-- New user-visible behavior must have BDD coverage before implementation.
-- Touched existing behavior must get or update relevant scenarios.
-- User-visible bug fixes first add the correct behavior scenario, then a failing regression test, then the fix.
-- Untouched legacy behavior can remain uncovered until it is changed or an explicit BDD migration is requested.
+- When BDD is the selected behavior-evidence method, touched existing behavior must get or update relevant scenarios.
+- When BDD is selected for a user-visible bug fix, first add the correct behavior scenario, then a failing regression test, then the fix.
+- Untouched legacy behavior can remain uncovered until it is changed, an explicit BDD migration is requested, or the current mode/project rules require backfill.
 
 When backfilling from code, record what the code does today in product language. If behavior appears suspicious or contradicts docs, names, comments, tests, or obvious user expectation, ask whether it is intended. If it is a defect, write the intended behavior as the scenario and let the derived test go red.
 
@@ -134,7 +133,7 @@ BDD Sync Mode is a full repository behavior audit, not a diff-only update:
 
 1. Build a whole-repository inventory with the current working tree, including uncommitted changes. Check `git status --short`, relevant `git diff` output, and a complete file list such as `rg --files`. Do not rely only on committed `HEAD` or only on changed files.
 2. Locate every project `features/` directory and existing `.feature` file under the project's conventions, including workspace-level paths such as `apps/web/features/`, `services/*/features/`, or the product entry repository's `features/`.
-3. Scan the code and durable project facts that can define user-visible behavior: routes, pages/screens, API schemas, controllers, services, permission checks, validation rules, CLI commands, exported file formats, notifications, integration adapters, tests, PRD/design artifacts, `.trellis/spec`, context docs, and README / runbooks that describe externally observable behavior.
+3. Scan the code and durable project facts that can define user-visible behavior: routes, pages/screens, API schemas, controllers, services, permission checks, validation rules, CLI commands, exported file formats, notifications, integration adapters, tests, PRD/design artifacts, `docs/spec`, context docs, and README / runbooks that describe externally observable behavior.
 4. Before updating existing `.feature` files, decide whether the current repository contains enough evidence for a truthful full sync. If behavior depends on another repository, service, app, or backend/frontend split that is not present locally, treat the scope as multi-repository.
 5. For multi-repository scope, ask the user whether the other repositories have changed. If yes, request the local paths and scan those repositories together before updating `.feature` files. If the user confirms the other repositories have no relevant changes, record that confirmation and sync only from the current repository's current working tree. If the user cannot confirm or provide required paths, mark the affected features `blocked` or `@todo` instead of guessing.
 6. Compare code behavior to existing scenarios and decide, per feature area, whether to update, create, delete, or leave files unchanged. Create new `.feature` files for newly discovered user-visible capabilities that lack coverage. Delete stale `.feature` files only when the audited behavior clearly no longer exists or has been intentionally superseded; when uncertain, report a deletion candidate instead of deleting.
@@ -185,7 +184,7 @@ For confirmed user-visible behavior, the persistent `.feature` file is the behav
 - `design.md` and `implement.md` hold technical decisions and plans.
 - Tests prove the implementation matches the scenarios.
 
-If PRD, Trellis artifacts, `.feature`, tests, and code disagree, do not implement through the conflict. First align the PRD and `.feature`, then adjust tests and code.
+If PRD, task artifacts, `.feature`, tests, and code disagree, do not implement through the conflict. First align the PRD and `.feature`, then adjust tests and code.
 
 ## Output
 

@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "sourceId": "sbtd-workflow-kit-upstream",
   "canonicalSourceUri": "https://github.com/KunoLu/640-skills",
-  "resolvedRevision": "f8aa0d7225a26c5e00b81d2f1b05121108e63630",
-  "sourceTreeSha256": "a513e97635691a97c6994bae8b45b70f450d501eedaf24d00d5c23b262816400",
+  "resolvedRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
+  "sourceTreeSha256": "c1fc3f679c375a22c6272de92c3377ac04ea8edb996acd314ea76f73257739b0",
   "transformVersion": "agent-plugin-p0-v1",
-  "auditSha256": "1b614985924e41cb2fb04b382e83ca4e8e594f2184072e3146ea9e268691b75d",
-  "catalogSha256": "0fc00dccc5412aabed76936810593393220432c7f9b6cca1d193ae21ba3a2160",
-  "generatedSha256": "9fb110d469566c62829e1249b0e083655d2ebf772da3114b834ce972e9b35b2f",
-  "candidateCount": 13,
+  "auditSha256": "5dfe17c1804cf9ce54572f7dad92a2ca108379a944d30ad4c455bac91af40ec5",
+  "catalogSha256": "7507b6aece43f98f6e20c3b51455d3f6606d7fd617fe3288d0d7ededf17eae40",
+  "generatedSha256": "c54693b2df910565bc4638c384bb531945517f88d81b30c86613dff0142887e1",
+  "candidateCount": 12,
   "certifiedCount": 12,
   "certified": [
     "project-validation",
@@ -24,39 +24,31 @@
     "book-release-readiness",
     "seo-geo"
   ],
-  "excluded": [
-    {
-      "name": "trellis-workflow",
-      "reasons": [
-        "references the OMP-private .omp path",
-        "contains host-specific .codex dispatch instructions"
-      ]
-    }
-  ],
+  "excluded": [],
   "assets": {
-    "audit.json": "1b614985924e41cb2fb04b382e83ca4e8e594f2184072e3146ea9e268691b75d",
-    "catalog.json": "0fc00dccc5412aabed76936810593393220432c7f9b6cca1d193ae21ba3a2160",
+    "audit.json": "5dfe17c1804cf9ce54572f7dad92a2ca108379a944d30ad4c455bac91af40ec5",
+    "catalog.json": "7507b6aece43f98f6e20c3b51455d3f6606d7fd617fe3288d0d7ededf17eae40",
     "skills/book-ddd-distilled-modeling/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/book-ddd-distilled-modeling/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/book-ddd-distilled-modeling/SKILL.md": "64a6f35e2e40887fe57776a68d31fd12c7074a32262f52109be6aeb5aeca34b5",
+    "skills/book-ddd-distilled-modeling/SKILL.md": "a7488f5f1a13fcb4601b4c9da3b708fbc67e6a9bd639d63e8b923c66c8f28c04",
     "skills/book-ddia-data-design/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/book-ddia-data-design/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/book-ddia-data-design/SKILL.md": "f82ef20a2215e7edaaebd2ccdce6cb3c48c89a2683435d67c9b798f7273245a2",
+    "skills/book-ddia-data-design/SKILL.md": "cf42c537afe7d5512603faf2ef76beb568c999e762d34da2a6f19db1b2dc9f5b",
     "skills/book-legacy-change-safety/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/book-legacy-change-safety/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/book-legacy-change-safety/SKILL.md": "90b72e63629c8a8a8fb751be71e00e933965d0935e01546600dced8a9e0e879c",
+    "skills/book-legacy-change-safety/SKILL.md": "5edb1197eee20297867a952f9e9829f39142d7b0b020a9e5bccc12025acb6e59",
     "skills/book-refactoring-pass/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/book-refactoring-pass/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/book-refactoring-pass/SKILL.md": "59f7bcdba95f6bd20a4dd9212459878c5658161a9af2cf42483cf008d4c0fd7b",
+    "skills/book-refactoring-pass/SKILL.md": "d99c8d527f939f4d934d1857251c49d30d9dcec44f4cf86c4e73c4d4cfe0cc32",
     "skills/book-release-readiness/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/book-release-readiness/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/book-release-readiness/SKILL.md": "ef560a6651f869f076c2c8511ae89ce8551090768aa4ed33ce6c5ff3f24fabc8",
+    "skills/book-release-readiness/SKILL.md": "c7e99a4b500f57e713bab4875335cb33e7d3edbab211f3be647421843b74586d",
     "skills/gherkin-bdd/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/gherkin-bdd/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/gherkin-bdd/SKILL.md": "5dceb4f8501502ca4941a9d59eda2f1866dc1bc24bd96bb83d629e296147ed1f",
+    "skills/gherkin-bdd/SKILL.md": "9ccb2c717eb1d7f65c77db57c587ba988d8a12bd01c6a90cfac831d4c3b40d9a",
     "skills/knowledge-base-integration/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/knowledge-base-integration/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/knowledge-base-integration/SKILL.md": "6a724e892d1de6dc9661208362ecb0cc300de654dec3db9e589e968f54e14d6d",
+    "skills/knowledge-base-integration/SKILL.md": "5df1556aa56d46c1c61255c7356bca9eb9dedca18701b315d8eca27bd83b53db",
     "skills/knowledge-base-integration/references/artifact-manifest.schema.json": "1bbe0f275b6d060f9f1b4eeff8fbb51236b0b2e158007aca5156715297284d2d",
     "skills/knowledge-base-integration/references/deployment-manifest.example.yaml": "330fed17a360f027be805522140734bdef0e8196d555c44b773ff1e6b4a4fe07",
     "skills/knowledge-base-integration/references/deployment-manifest.schema.json": "07af203f410f15149317995dc2086805fc8b76d5d12903f9d9d4a58d1f805ff9",
@@ -74,23 +66,25 @@
     "skills/knowledge-base-integration/scripts/knowledge_base_p1.py": "b949b8cbd1ed1d78d2cdf8636f7d513ea30d2e120860fe1294409a66fa124d7d",
     "skills/lessons-record/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/lessons-record/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/lessons-record/SKILL.md": "8451e65f8bfe17da1f3a9fefd3655cfc73545d1f12d4f146f31d03ec1110634a",
+    "skills/lessons-record/SKILL.md": "34390b7c38f5a25cfba6963f3d4f367f078a508f2e7c7e4762cad449ac740f40",
+    "skills/lessons-record/references/identity-migration.md": "e0cffa1ef83303e87f8f311c63e91c2116667bc6de155075e9974a716f0871e4",
     "skills/maestro-mobile-e2e/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/maestro-mobile-e2e/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/maestro-mobile-e2e/SKILL.md": "5abc16849369bfb5787ffcbdee5c036649a073ab44172849f7c54290f50f96fa",
+    "skills/maestro-mobile-e2e/SKILL.md": "29f65509f47efea6e0adf9832590d3acd93f84e9f2abb8cc1ae177f66654917f",
     "skills/maestro-mobile-e2e/references/ios-real-device-setup.md": "ab8b12c2c87820ec43b3235a6b756a5c3884c6484c2b5cd7988be6b09ceef96a",
     "skills/maestro-mobile-e2e/references/lessons-index.md": "b6281cf21ae53d5a2f71fa250b9a09bafbaf47c9061283cd87fde6c3bfd591c9",
     "skills/project-validation/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/project-validation/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/project-validation/SKILL.md": "2cc2bebf7db029a805f96300eac12747c529f9d3b82bf16e4e9c34f900af514e",
-    "skills/project-validation/references/validation-evidence-contract.md": "cf83aad7beb22a5a202b79fda89de7cac15a441967ce3effc39d4e384bc298d6",
+    "skills/project-validation/SKILL.md": "67be4da449cfc3774791dbe01e16eee4878cc0a9831e681d09a30a76dbab0974",
+    "skills/project-validation/references/run-summary.zh-CN.md.template": "acc0be7f887cf24a357217c708b7d5f710b790ce0e3dd31bd03f41ca979c198c",
+    "skills/project-validation/references/validation-evidence-contract.md": "aa156da6d1646ecaa2f8fef92aca32397f9c3f7602def90c88a985377dcb2c46",
     "skills/project-validation/references/validation-evidence.schema.json": "420142367974b7baf9ab3810471cfe89d19a2618370e8b37489b184497b62f0e",
     "skills/project-validation/references/validation-evidence.v2.schema.json": "7b1d6b4b7b47f55512766eaec280e7eeb6c3e26b61541cefd24b82e19d9be8a5",
     "skills/project-validation/requirements.txt": "9984fa6ad6d35d2468011c4c278583e9bb4983d83be6bb3f5aabcef9c99b19b7",
     "skills/project-validation/scripts/validate_validation_evidence.py": "67d96c70522d4344b0402a514abc67367ce92ce8bea8ab312f8376a663d450ca",
     "skills/seo-geo/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/seo-geo/NOTICE": "be9cb9e085b8ca791638a4ee50d9f72876ebdd4a570df4439b30c4fa1d4562a2",
-    "skills/seo-geo/SKILL.md": "66dc3018d2393e3d95fd5896f4a40dcd4c70ff4e33f6c48964959f80692fec0b",
+    "skills/seo-geo/SKILL.md": "82a23cfb22699e8bced8a2b9b367273fdc2e2220316486258390f62ec58620f7",
     "skills/seo-geo/examples/opc-skills-case-study.md": "ab54ba136f23234c6362487c406c26c1eeabbe8531115479d6feb223390bdd96",
     "skills/seo-geo/references/geo-research.md": "901516a3b7964aee88297e0f52e517abef6111150ba781d27e5e9e76c08be1c8",
     "skills/seo-geo/references/google-docs-summary.md": "214544d0b4891c1f3613727b73da23be2361d83214190b7455a058dd0c784638",
@@ -110,9 +104,9 @@
     "skills/seo-geo/scripts/serp_analysis.py": "2d2459a9027be63d988f420373ad312181178b230ab079dc407764581904acda",
     "skills/web-ui-autotest-generator/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "skills/web-ui-autotest-generator/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-    "skills/web-ui-autotest-generator/README.md": "e676d50e4c372ea860dbc092ef18fa2d29e7f9fc201a1c49264c8eb42981eb41",
-    "skills/web-ui-autotest-generator/README.zh-CN.md": "99bc3e7758fa5ec5355a113946ed562b3a9e07584d31180faa84d9ab844c7a5d",
-    "skills/web-ui-autotest-generator/SKILL.md": "3efffa4ab16dd54c094dfc39ff873f49fa99c03d1aa28c9768385ff043b23699",
+    "skills/web-ui-autotest-generator/README.md": "c4b38fadc033909116accc5ce98d7597d10be667cc3b5ada440bbfeff8966665",
+    "skills/web-ui-autotest-generator/README.zh-CN.md": "b4e21929d618061379452fd1c0adaf52ead545e3681350e4cddcc5b76b385ace",
+    "skills/web-ui-autotest-generator/SKILL.md": "67242f09321f1ed416be9d58c097731cd39197106a8e2a823d62ee6f1671cc7f",
     "skills/web-ui-autotest-generator/agents/openai.yaml": "3515f3e5fa1d25a856dabebe2ba4fb637713a2b05a2b960c94d15f7c85f43b4c",
     "skills/web-ui-autotest-generator/assets/templates/auth-fixture.ts.template": "dd28e90b01a5a2e7c6286ae83064c8d6aa6b0b5ee5eb1a4a16a1b33c22586bd5",
     "skills/web-ui-autotest-generator/assets/templates/github-actions-e2e.yml.template": "0f4b8c13ccdcd34f3c891cb4497f8d096feade72e730769ef1e68662f426fa9e",
@@ -120,10 +114,10 @@
     "skills/web-ui-autotest-generator/assets/templates/page-object.ts.template": "cddc39f08675567bf5c5f39bff9c5c8095cf9f118ace6dfc327659b96cfa9d34",
     "skills/web-ui-autotest-generator/assets/templates/page-spec.ts.template": "1cc050db108194eff18e921955c88bc83e7bf1e276218a5e5b781e100c2f00f4",
     "skills/web-ui-autotest-generator/assets/templates/playwright.config.ts.template": "6cb51aa56932b62fee8968af13d85ed7dedeafa0d567d23f42e7afa7f0c4b9ce",
-    "skills/web-ui-autotest-generator/assets/templates/summary.zh-CN.md.template": "87da8bf5bd2dbd1a6d537521a9c156e546b1b8fc7afbee781da0f55dc5eaad1f",
+    "skills/web-ui-autotest-generator/assets/templates/summary.zh-CN.md.template": "ac6d28b9dc9fd8d09028b4fdbaa021ca4af768d23184b8ca2c63e43efb268a79",
     "skills/web-ui-autotest-generator/gitignore.template": "ffb3aaf5cb9130091af705258221159d357320f1a3436dd70a92f1ae9e4a97a8",
     "skills/web-ui-autotest-generator/references/coverage-rubric.md": "f58bf93fb3d908d28134dce914ecde315e398a1b3c372d9b33ac1646e76b9fcb",
-    "skills/web-ui-autotest-generator/references/output-contract.md": "d71cddf09999fe464566d4a13722d261de5bf4cd878fef5b4b2c778007e32324",
+    "skills/web-ui-autotest-generator/references/output-contract.md": "2dac1a1e7aa31928d51aa683be5f0afdc85521b74542afad981162896493fb94",
     "skills/web-ui-autotest-generator/scripts/analyze_failures.py": "3c66a51c8ea1336a29d765451ba9696b0bd1120248de7ec376950c07eb7e2545",
     "skills/web-ui-autotest-generator/scripts/audit_selectors.py": "a3f8ec8ba61699be89f3b3a246934fb72d4e1d6e1e59efedc2d4a30bdb8688e3",
     "skills/web-ui-autotest-generator/scripts/check_coverage.py": "9358c7670cd207bc44231931ae6180632b32cb967b7ad1a44912a7ac6e0df53b",
@@ -131,13 +125,14 @@
   },
   "skills": {
     "project-validation": {
-      "sourceSha256": "788e7d30af6fb69dd67fd23869ee068a0983a7884175288b4c47043f22ae878e",
-      "projectionSha256": "ba4c89c47838760d72ab80a246d72dc370f41cf664623bf9c4fa26af76817796",
+      "sourceSha256": "273f1fac96d52deb3477c56a74dd4d27bd46b2dc55bbd08fc2b62bf0653620e4",
+      "projectionSha256": "1c8736e9f09d6d15e7b75c9e3b4f77ce734d9bfd306d75dd0380ab55b729d719",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "2cc2bebf7db029a805f96300eac12747c529f9d3b82bf16e4e9c34f900af514e",
-        "references/validation-evidence-contract.md": "cf83aad7beb22a5a202b79fda89de7cac15a441967ce3effc39d4e384bc298d6",
+        "SKILL.md": "67be4da449cfc3774791dbe01e16eee4878cc0a9831e681d09a30a76dbab0974",
+        "references/run-summary.zh-CN.md.template": "acc0be7f887cf24a357217c708b7d5f710b790ce0e3dd31bd03f41ca979c198c",
+        "references/validation-evidence-contract.md": "aa156da6d1646ecaa2f8fef92aca32397f9c3f7602def90c88a985377dcb2c46",
         "references/validation-evidence.schema.json": "420142367974b7baf9ab3810471cfe89d19a2618370e8b37489b184497b62f0e",
         "references/validation-evidence.v2.schema.json": "7b1d6b4b7b47f55512766eaec280e7eeb6c3e26b61541cefd24b82e19d9be8a5",
         "requirements.txt": "9984fa6ad6d35d2468011c4c278583e9bb4983d83be6bb3f5aabcef9c99b19b7",
@@ -145,14 +140,14 @@
       }
     },
     "web-ui-autotest-generator": {
-      "sourceSha256": "5e20d3313a5af26bd1bece8a2f0f01e5973536620671b4d1fc6545a0145d68b8",
-      "projectionSha256": "bd2a99a7d2384760d60196028ab3f2e64aa18424b8e62dd64ebdc9d58dbcd19d",
+      "sourceSha256": "1120baae7f2a8e84dc9836f6beb0b310e6dabd78843e386e6d4a140bf6a94918",
+      "projectionSha256": "6a1ad6f7c093ac86b6c6c6625cd2591036553c378a57bc686d04fda4c685c8e4",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "README.md": "e676d50e4c372ea860dbc092ef18fa2d29e7f9fc201a1c49264c8eb42981eb41",
-        "README.zh-CN.md": "99bc3e7758fa5ec5355a113946ed562b3a9e07584d31180faa84d9ab844c7a5d",
-        "SKILL.md": "3efffa4ab16dd54c094dfc39ff873f49fa99c03d1aa28c9768385ff043b23699",
+        "README.md": "c4b38fadc033909116accc5ce98d7597d10be667cc3b5ada440bbfeff8966665",
+        "README.zh-CN.md": "b4e21929d618061379452fd1c0adaf52ead545e3681350e4cddcc5b76b385ace",
+        "SKILL.md": "67242f09321f1ed416be9d58c097731cd39197106a8e2a823d62ee6f1671cc7f",
         "agents/openai.yaml": "3515f3e5fa1d25a856dabebe2ba4fb637713a2b05a2b960c94d15f7c85f43b4c",
         "assets/templates/auth-fixture.ts.template": "dd28e90b01a5a2e7c6286ae83064c8d6aa6b0b5ee5eb1a4a16a1b33c22586bd5",
         "assets/templates/github-actions-e2e.yml.template": "0f4b8c13ccdcd34f3c891cb4497f8d096feade72e730769ef1e68662f426fa9e",
@@ -160,10 +155,10 @@
         "assets/templates/page-object.ts.template": "cddc39f08675567bf5c5f39bff9c5c8095cf9f118ace6dfc327659b96cfa9d34",
         "assets/templates/page-spec.ts.template": "1cc050db108194eff18e921955c88bc83e7bf1e276218a5e5b781e100c2f00f4",
         "assets/templates/playwright.config.ts.template": "6cb51aa56932b62fee8968af13d85ed7dedeafa0d567d23f42e7afa7f0c4b9ce",
-        "assets/templates/summary.zh-CN.md.template": "87da8bf5bd2dbd1a6d537521a9c156e546b1b8fc7afbee781da0f55dc5eaad1f",
+        "assets/templates/summary.zh-CN.md.template": "ac6d28b9dc9fd8d09028b4fdbaa021ca4af768d23184b8ca2c63e43efb268a79",
         "gitignore.template": "ffb3aaf5cb9130091af705258221159d357320f1a3436dd70a92f1ae9e4a97a8",
         "references/coverage-rubric.md": "f58bf93fb3d908d28134dce914ecde315e398a1b3c372d9b33ac1646e76b9fcb",
-        "references/output-contract.md": "d71cddf09999fe464566d4a13722d261de5bf4cd878fef5b4b2c778007e32324",
+        "references/output-contract.md": "2dac1a1e7aa31928d51aa683be5f0afdc85521b74542afad981162896493fb94",
         "scripts/analyze_failures.py": "3c66a51c8ea1336a29d765451ba9696b0bd1120248de7ec376950c07eb7e2545",
         "scripts/audit_selectors.py": "a3f8ec8ba61699be89f3b3a246934fb72d4e1d6e1e59efedc2d4a30bdb8688e3",
         "scripts/check_coverage.py": "9358c7670cd207bc44231931ae6180632b32cb967b7ad1a44912a7ac6e0df53b",
@@ -171,21 +166,21 @@
       }
     },
     "gherkin-bdd": {
-      "sourceSha256": "9b1381d5b3bfa18228e24ca220524c8025aafde362ea66febdb41cb33b444832",
-      "projectionSha256": "6cce84b64edee236b998157bbe09422d413c8c6ccf28b7b4ae8fac99cf4a2e4c",
+      "sourceSha256": "d63e1c3e49a7dbe6923d7a0bc53a65c02f0cf8d6e29ef700080072b35bb8d873",
+      "projectionSha256": "e8ed2ea29ba90ba12732b26bd209f11b1797862f12a1d4e327fe4cf4ff093608",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "5dceb4f8501502ca4941a9d59eda2f1866dc1bc24bd96bb83d629e296147ed1f"
+        "SKILL.md": "9ccb2c717eb1d7f65c77db57c587ba988d8a12bd01c6a90cfac831d4c3b40d9a"
       }
     },
     "knowledge-base-integration": {
       "sourceSha256": "ec2c0c2ac078ac91b12cac3344818d3d97694d1afe0f84ee22a7281e35c75a1b",
-      "projectionSha256": "b3c68ad7bf87288946b566e4d55249902f24f28f61b9a9c8c79aa50c6bf7ef63",
+      "projectionSha256": "0aaa7b20476e62bd662a980f4b28c704eef79874b681f3c69896706fa34b82ad",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "6a724e892d1de6dc9661208362ecb0cc300de654dec3db9e589e968f54e14d6d",
+        "SKILL.md": "5df1556aa56d46c1c61255c7356bca9eb9dedca18701b315d8eca27bd83b53db",
         "references/artifact-manifest.schema.json": "1bbe0f275b6d060f9f1b4eeff8fbb51236b0b2e158007aca5156715297284d2d",
         "references/deployment-manifest.example.yaml": "330fed17a360f027be805522140734bdef0e8196d555c44b773ff1e6b4a4fe07",
         "references/deployment-manifest.schema.json": "07af203f410f15149317995dc2086805fc8b76d5d12903f9d9d4a58d1f805ff9",
@@ -204,77 +199,78 @@
       }
     },
     "maestro-mobile-e2e": {
-      "sourceSha256": "dec4a94829ec6809310aae5ace807db38db1e37da0e081cf7526accd4225a227",
-      "projectionSha256": "82b2027a447e62af37162365ef05d2ceb4b36d149f4f173042a70098c5f34ab0",
+      "sourceSha256": "cc0bdea9380294f42e70b5799dec2c8eca2430a4c1a832a1cd796702b2637211",
+      "projectionSha256": "e0e5c7286d5d29ed0dd22773c4f513fd4f2b3b0ffb0f64444c4a48d44df69704",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "5abc16849369bfb5787ffcbdee5c036649a073ab44172849f7c54290f50f96fa",
+        "SKILL.md": "29f65509f47efea6e0adf9832590d3acd93f84e9f2abb8cc1ae177f66654917f",
         "references/ios-real-device-setup.md": "ab8b12c2c87820ec43b3235a6b756a5c3884c6484c2b5cd7988be6b09ceef96a",
         "references/lessons-index.md": "b6281cf21ae53d5a2f71fa250b9a09bafbaf47c9061283cd87fde6c3bfd591c9"
       }
     },
     "lessons-record": {
-      "sourceSha256": "59e162cda04b74e8d707397c61489c7b24f7a4c6eaa8cff8342296ec40a9cb81",
-      "projectionSha256": "3b166e5eb3c3062b55815bb8ccfa367b1aeba79c8032655748d4d5822fa98ec7",
+      "sourceSha256": "aa71f23e7c0a9549b219edd90380025432fb23d48ed21653dc616947969fd93f",
+      "projectionSha256": "5fc61d51e1cc09795a4584796542a1271e2dc19de62e2ef0f32258c1c6bfeeb0",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "8451e65f8bfe17da1f3a9fefd3655cfc73545d1f12d4f146f31d03ec1110634a"
+        "SKILL.md": "34390b7c38f5a25cfba6963f3d4f367f078a508f2e7c7e4762cad449ac740f40",
+        "references/identity-migration.md": "e0cffa1ef83303e87f8f311c63e91c2116667bc6de155075e9974a716f0871e4"
       }
     },
     "book-refactoring-pass": {
-      "sourceSha256": "3c7c25f884a91c339a6f8e3dbd01bab888a8ef01b42c68204f7a3b617478a1ae",
-      "projectionSha256": "8a6da069fb0fc61404f6d8aee3ae85eecb6bf49ce75df1b0e97d54b77dbc5656",
+      "sourceSha256": "0401d0854199e01989e7d17307271be35fdd064152c0cccb8e78f07f066af891",
+      "projectionSha256": "62e2f19c679a595bac3a347f63997c66fe9beb680232cbfb1ffbbe589b41ca7f",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "59f7bcdba95f6bd20a4dd9212459878c5658161a9af2cf42483cf008d4c0fd7b"
+        "SKILL.md": "d99c8d527f939f4d934d1857251c49d30d9dcec44f4cf86c4e73c4d4cfe0cc32"
       }
     },
     "book-legacy-change-safety": {
-      "sourceSha256": "49be2858f499b0f2ad87f451e175311eb337109d38b4df45d4a7296f087d0525",
-      "projectionSha256": "800685b68115c0adc95cb5788d2ffe906869ea5beb0c140c5ab9be7f8e688599",
+      "sourceSha256": "9dc5e957dad5f726f37c31b87f75e3f6b87f5ec7b7e393dcf9611fd5b7037f75",
+      "projectionSha256": "ee1e97a28f471eb146aa885c3b96266b8f1a9c2204e308d6211c75e08834290d",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "90b72e63629c8a8a8fb751be71e00e933965d0935e01546600dced8a9e0e879c"
+        "SKILL.md": "5edb1197eee20297867a952f9e9829f39142d7b0b020a9e5bccc12025acb6e59"
       }
     },
     "book-ddd-distilled-modeling": {
-      "sourceSha256": "d3780c96d0136013966391e5ffa8bc47810e41d211a7a2a3c67ff192f11a9cc8",
-      "projectionSha256": "4c96fcecaad8aa102e9d42cda6835070995e9e10a424f3ef6cf1c8298bc38282",
+      "sourceSha256": "d8ebfdad0c7a3d85810870148b91a010373c6d3da2be9ab97590aa56b9e86fca",
+      "projectionSha256": "81ad5a499c6520e1af65e2e52b96c9b3f74188b7a936d7b63cbcf8a5fb48a058",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "64a6f35e2e40887fe57776a68d31fd12c7074a32262f52109be6aeb5aeca34b5"
+        "SKILL.md": "a7488f5f1a13fcb4601b4c9da3b708fbc67e6a9bd639d63e8b923c66c8f28c04"
       }
     },
     "book-ddia-data-design": {
-      "sourceSha256": "e929ed7d6d45b8c97c08c46c92921dd59fee87b6dcddc035935b1c8f5f511ac4",
-      "projectionSha256": "f7ebc0b90c24dbe65b519cf0da3478ca8f0262818f7d3c720820e093939ee5e0",
+      "sourceSha256": "b5f8ef4613e67d6a41cdde05bcf136de1d2f46a3b45196e1128861e06523118d",
+      "projectionSha256": "6262ccdd33a014e81b080d3bd913683592c34186bc566944c608170af0cd1fc4",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "f82ef20a2215e7edaaebd2ccdce6cb3c48c89a2683435d67c9b798f7273245a2"
+        "SKILL.md": "cf42c537afe7d5512603faf2ef76beb568c999e762d34da2a6f19db1b2dc9f5b"
       }
     },
     "book-release-readiness": {
-      "sourceSha256": "e0fe33579c6bbcb35448126eac6df7d14d91f8cbef79920b6f0b0ef447509cba",
-      "projectionSha256": "36d15a45a56ef704fe9488b88fa724d6661c97800785b90a3e23087cda8fab0f",
+      "sourceSha256": "f4bcea3cf615afdca4f288192fcad5100f6e526bde684d349bdcd451ccd7cccf",
+      "projectionSha256": "d943dc81d0e5f4a4228b23d5f478be84fce9a26b623e5231451c924c755d931a",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
-        "SKILL.md": "ef560a6651f869f076c2c8511ae89ce8551090768aa4ed33ce6c5ff3f24fabc8"
+        "SKILL.md": "c7e99a4b500f57e713bab4875335cb33e7d3edbab211f3be647421843b74586d"
       }
     },
     "seo-geo": {
       "sourceSha256": "4e70d1cb03fd858bfcd9439d2ba90cc8a5c543daeb6866a7d9f2ad5ad1cf8281",
-      "projectionSha256": "fa5db25035028d3af7051ac8c177fe7dc71ea3534fb75ccaf64da743fe72f01e",
+      "projectionSha256": "da93669a4060b572069d02b5828b4f0b98f348cf55de708a8c48f0a882dbe317",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "be9cb9e085b8ca791638a4ee50d9f72876ebdd4a570df4439b30c4fa1d4562a2",
-        "SKILL.md": "66dc3018d2393e3d95fd5896f4a40dcd4c70ff4e33f6c48964959f80692fec0b",
+        "SKILL.md": "82a23cfb22699e8bced8a2b9b367273fdc2e2220316486258390f62ec58620f7",
         "examples/opc-skills-case-study.md": "ab54ba136f23234c6362487c406c26c1eeabbe8531115479d6feb223390bdd96",
         "references/geo-research.md": "901516a3b7964aee88297e0f52e517abef6111150ba781d27e5e9e76c08be1c8",
         "references/google-docs-summary.md": "214544d0b4891c1f3613727b73da23be2361d83214190b7455a058dd0c784638",

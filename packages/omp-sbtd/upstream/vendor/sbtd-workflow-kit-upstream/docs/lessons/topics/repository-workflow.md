@@ -14,6 +14,7 @@
 - 根因：automation prompt 没有明确区分“每日检查”和用户手动输入 `更新` / `update` 后的写回动作，也没有要求 `UPDATE.md` 必须使用中文。
 - 修复：每日自动化只读取 `ENTRYPOINT.md` 当前版本作为固定比对起点，只用中文刷新 `UPDATE.md`，不得写回 `ENTRYPOINT.md`；只有用户手动输入 `更新` / `update` 时才允许更新版本号并归档。
 - 预防：后续涉及自动化写入项目基线文件时，必须在 prompt 和 `AGENTS.md` 中同时明确“只读基线”和“手动确认写回”的边界。
+- 现行边界：历史修复仍然禁止用官方工具新版本或每日检查推进其他工具的 `ENTRYPOINT.md` 版本。Graft 例外只同步已发布 workflow pin，不经 `update`，也不要求 `UPDATE.md` 章节；以版本化 automation prompt 和 `version-check-scope.md` 的 Graft 基线同步为准。
 
 ## LESSON-20260701-config-excerpt-repo-boundary: Config Excerpt Repo Boundary
 
@@ -437,3 +438,131 @@
 - 根因：把语义上只读的子命令当成进程级无副作用，没有先检查平台配置根是否存在，也没有在检测契约中验证 HOME 字节状态。
 - 修复：OMP provider 探测仅在 `~/.omp` 已存在时执行 CLI；缺失时报告 per-platform `not-configured`。保留 configured OMP 的官方 plugin 冲突检测，并用隔离 HOME 聚焦测试覆盖。
 - 预防：调用第三方 CLI 的 read-only 子命令前，先验证它不会 bootstrap 配置 / cache；无法证明时先检查既有配置根或在隔离 HOME 运行。check/preflight 测试必须断言目标 HOME 没有新增路径。
+
+<!-- lessons:pr:start -->
+
+## LESSON-20260928-pr-merge-confirm-before-branch-cleanup: Confirm MERGED Before Any Branch Cleanup
+
+- 日期：2026-09-28
+- 标签：git, github, pr, merge, branch, workflow, recovery
+- 适用场景：合并任务 PR / 状态 PR、删除已合并分支、把 `gh pr merge` 与分支清理串成一条命令链
+- 严重级别：high
+- 来源：P1-21 任务 PR #84 的合并流程操作失误
+- 问题：`gh pr merge` 因分支保护（需 admin）未合并成功，但同一 `&&` 命令链仍继续执行了本地与远端任务分支删除，导致 PR 自动关闭、head 分支悬空，需要从 Git 对象库恢复 `b193930`、重推分支并重开 PR 后才完成合并。
+- 根因：把 `gh pr merge` 的输出提示当成已合并事实，没有在执行任何破坏性操作前核验 PR 实际状态；`gh pr merge` 在保护规则不满足时的退出行为没有被命令链当作阻断。
+- 修复：从对象库恢复被删分支的同一 head、重推远端、重开 PR，确认 CI 全绿后以 admin 合并，并核验 merge SHA、合并树等于验证 head、main/origin 一致后才删除分支；失误事实如实记入 §18.3 与设计文档 §6。
+- 预防：合并与分支清理必须分步执行：`gh pr merge` 后先用 `gh pr view --json state` / merge SHA / main 新 HEAD 证明 MERGED，再允许任何本地或远端分支删除；禁止把 merge、checkout、pull、branch -d、push --delete 串成一条 `&&` 链。分支被误删时先恢复同一 head 重推重开，不要新建替代 PR 或改写历史。
+
+<!-- lessons:pr:end -->
+
+<!-- lessons:kuno:start -->
+
+## LESSON-20261001-kuno-cleanup-scope: Digests And Vendor Commands Are Not Cleanup Authorization
+
+- 日期：2026-10-01
+- 标签：cleanup, migration, authorization, scope, vendor-cli, backups, partial-failure
+- 适用场景：确认 ID 绑定删除计划、调用第三方卸载器、删除全局 MCP/Skill 与项目缓存。
+- 严重级别：high
+- 来源：清理扩展的隔离回归与真实 vendor CLI smoke。
+- 问题：仅重算计划 hash 并校验 before-state，仍能把候选换成不在项目范围内的目录；正式卸载器也可能修改命令名没有表达的平台文件和配置。用 `.trellis` 的单一路径结果无法说明这些副作用是否发生。
+- 根因：把内容完整性误当成路径/身份授权；把官方命令误当成单目录删除操作；把非零退出误当成零写入。
+- 修复：执行前重新验证候选 kind、精确项目根/全局配置位置、Skill 内部身份及状态。对 vendor 命令先取得并核对完整 footprint，备份每个可变更资源，调用后测量真实 after-state，保留逐资源证据；部分失败不自动重放。解析及目标文件的可渲染性在计划阶段检查，而不是删完前几项后才发现格式错误。
+- 预防：确认 hash 只绑定用户看过的内容，不是权限来源；测试要覆盖重新计算 hash 后的越界目标、其他 server 参数中出现目标工具名、异常配置、vendor 修改非主目标后失败、缺回执/备份的重试。只使用隔离数据做破坏性回归；无权把这种测试对准真实 HOME。
+
+## LESSON-20261002-kuno-cleanup-target-set: Resolve Once Validate The Whole Set
+
+- 日期：2026-10-02
+- 标签：cleanup, scope, path-resolution, authorization, overlap, cli
+- 适用场景：组合多个来源的删除候选，或通过环境变量、profile、CLI 参数选择全局配置路径。
+- 严重级别：high
+- 来源：清理范围审核的隔离复现与修复后实际 CLI 验证。
+- 问题：单个候选身份都合法，父子候选仍会在执行时互相破坏前态；独立维护的探测路径表还会遗漏安装/运行时已支持的自定义目录。
+- 根因：只验证单项和完全相同的路径，未校验整个目标集合的包含关系；清理入口没有复用现有路径选择规则。
+- 修复：计划与执行前复用同一集合范围检查；检测复用已有有效配置解析器；显式参数选出的 Skills 根封存到计划，执行只消费该根，不由新的环境选择重定向。
+- 预防：用父子候选、参数与环境冲突、非默认配置根/profile、目录项拼写别名去重和未选目录保留场景验证；不同硬链接目录项必须分别处理，不能按文件 inode 合并，因为原子替换只改变一个目录项。实际 CLI 与安装器参数绑定都要演练，不能只证明底层函数接受参数。
+
+## LESSON-20261002-kuno-prepared-resource-binding: Bind Backups And Effects To The Same Resource
+
+- 日期：2026-10-02
+- 标签：cleanup, vendor, prepared-plan, path-binding, backups, integrity
+- 适用场景：计划同时保存绝对路径、根与相对路径，执行器和备份器采用不同路径表示。
+- 严重级别：high
+- 来源：P3 清理观察问题的公开执行接口 red/green 回归及真实 vendor 隔离 smoke。
+- 问题：重封计划把 AGENTS 的绝对路径换成诱饵并更新 before，vendor 仍修改根下真实文件；备份和结果测量却针对诱饵，可能报告成功而漏存真实原件。
+- 根因：摘要和 before 只能证明调用方给定对象的内容；仅比较 relative/kind/expected-after 的 footprint 不能证明绝对路径指向 vendor 实际操作对象。
+- 修复：严格验证 relative，并要求 path 精确等于受检 root/relative；fresh replay 对照绑定路径，之后复验、备份和测量只使用已绑定 Path。持久 fingerprint 形状不变，避免无关地使既有合法计划失效。
+- 预防：多种路径表示必须在信任边界合一，不能在备份和执行阶段各自选择指针。负例要同时重算摘要、更新诱饵 before 并保持预期后态，断言拒绝先于 vendor、实际文件与 vault 均未变；正例验证备份字节确实来自被修改的对象。
+
+## LESSON-20261003-kuno-global-mcp-domains: Global Coverage And Retirement Need Different Proofs
+
+- 日期：2026-10-03
+- 标签：mcp, configuration-scope, ownership, migration, approvals, preflight
+- 适用场景：把逐项目配置改为共享全局定义，或用独立批准文件驱动多阶段安装和旧项退役。
+- 严重级别：high
+- 来源：全局会话 MCP 改造的独立代码／安全复核与消费者回归。
+- 问题：某项目的等价继承连接不能证明其他项目具备全局连接；忽略扩展字段的连接等价比较不能授权删除自定义旧项；批准文件若落在安装器先行替换的 Skill 目录中，可能先被删除、到最终配置步骤才发现。
+- 根因：混淆配置生效域与字段等价、复用运行期等价判定充当删除所有权证明，以及只检查底层配置操作而遗漏完整安装写集。
+- 修复：只有明确 user-wide 来源可满足全局安装；旧项删除使用闭集形状、精确根和显式运行时契约；批准文件避让完整写集，并在首个安装副作用及每个资源执行前复验。
+- 预防：同时覆盖项目 A 有继承项／B 没有、旧受管形状附加用户字段、批准文件位于即将替换的目录、首写前及耗时构图期间批准漂移。断言实际文件保全和部分结果，而不是只检查渲染器返回成功。
+
+## LESSON-20261003-kuno-executable-proof: Executable Proof Must Bind the Actual Target
+
+- 日期：2026-10-03
+- 标签：windows, mcp, executable, path, ownership, validation
+- 适用场景：从 PATH 选择用于安全证明的子进程，或根据序列化 MCP 记录认定受管启动入口。
+- 严重级别：high
+- 来源：PR #108 的五项审查修正；OMP 消费者红绿回归，Windows 专属用例由原生 CI 验证。
+- 问题：外部 PATH 参数不阻止 Windows `which` 隐式搜索 cwd，PATHEXT 又可能选中批处理包装器；只核对脚本 basename 的状态校验会接受相对启动路径。
+- 根因：把名称／搜索目录当成实际可执行目标证明，没有把生产者的绝对路径约束完整保持到消费者，也忽略 Windows 批处理参数会经过 shell。
+- 修复：按明确目录选择 Windows 原生 `git.exe`，复验解析后目标类型与项目外边界；全局 ownership 校验同时验证 launcher／cli 的绝对路径与受管文件名。
+- 预防：使用真实平台覆盖 cwd 同名可执行文件、外部批处理、带 CMD 元字符的目录、无原生 Git 的拒绝；对受管记录分别篡改两处路径并检查 state-conflict。不要以 POSIX 成功或 basename 一致替代 Windows／绝对路径证明。
+
+## LESSON-20261003-kuno-yes-omitted-optional-is-not-default-y: Confirmation Does Not Select Project Roots
+
+- 日期：2026-10-03
+- 标签：installer, authorization, scope, cli, confirmation
+- 适用场景：安装器通过自动确认运行，但可选项目目标列表为空。
+- 严重级别：high
+- 来源：PR #108 修正中用户明确追加的 R6；Bash 和 PowerShell 实际安装器进程的红绿回归。
+- 问题：通用 yes/no helper 把“是否将 cwd 作为项目”也回答为 yes，导致省略项目参数仍扩大写入范围。
+- 根因：把确认既定操作与选择可选写入目标混为一谈；原有测试 helper 自动补齐 roots，掩盖了真正的省略路径。
+- 修复：只在项目选择分支处理自动确认加空目标的 global-only 语义，保留通用确认 helper、显式 roots 和交互流程。
+- 预防：回归必须直接启动实际脚本且确实省略项目参数，检查目标集合、项目检查未执行和项目文件未创建；不要使用会自动补入目标的测试 helper。
+
+## LESSON-20261012-kuno-cleanup-only-discovery-and-upgrade-hop: Cleanup-only Inputs And Upgrade Proof
+
+- 日期：2026-10-12
+- 标签：cleanup, migration, upgrade, dependency-scope, provenance, receipts
+- 适用场景：已验收迁移的旧资产退出，或普通 Onboard 升级后继续处理历史清理。
+- 严重级别：high
+- 来源：RC4 聚焦回归、已安装副本原生 CLI／vendor 隔离 smoke 与独立安全复核。
+- 问题：cleanup 复用部署来源的整文件比较，会被与实际删除无关的宿主配置变化阻断；仅换执行器又会引入旧证据的信任断层。
+- 根因：混淆历史证明、部署发现输入和当前清理依赖；用整个项目目录替代实际 vendor footprint 也会误伤无关项目配置。
+- 修复：保持发现路径集合及工具／profile 绑定，按精确根身份、实际 vendor 足迹、操作目标、原件及来源证明区分 file／absent 漂移；仅清理可消费完整原生升级回执及旧包原件承接历史信任，不将该能力传播给 followup。
+- 预防：不能修改旧 manifest 或要求用户恢复猜测配置来消除漂移。最后复验应位于耗时备份之后、真正副作用之前；失败回执保留封存引用和实测结果，序列化时不要重新解释已变化的 live alias。CLI 验证要经过真实参数解析及消费链，不以 mock 转发断言代替实际文件后态。
+
+## LESSON-20261015-kuno-pin-promotion-contract-closure: Pin Promotion Needs Consumer Closure
+
+- 日期：2026-10-15
+- 标签：graft, pin, native-runtime, ownership, environment, path-scope, validation
+- 适用场景：晋升固定第三方 CLI，尤其新增别名、自动接线或查询数据源时。
+- 严重级别：high
+- 来源：Graft 0.22.0 独立代码／安全审查、真实固定包 smoke 与拒绝路径回归。
+- 问题：更新包版本与策略资产后，旧策略摘要仍使部署拒绝；把官方 npm bin 直接写入持久绑定会破坏既有 ownership 消费者。新包还可通过继承环境和自动品牌迁移改变工具合同，并从此前未验证的笔记／技能树读取内容。
+- 根因：把版本探针成功当成完整能力重证，遗漏策略摘要、生产者／消费者和新上游读取面。
+- 修复：同步策略摘要；发现入口与 canonical 持久入口分别证明；锁定受管品牌并阻止隐式迁移／fetch，隔离新增环境输入；按上游实际 checkout 发现规则验证笔记及技能树，并在每请求前重验。
+- 预防：pin 晋升同时验证安装、生成配置的消费、真实 build/check/MCP/hook、父环境污染及新增读取路径；旧 stamp 不代表新版启动无副作用。版本／摘要复制断言不能替代真实消费链，源码验收、独立安装和 live 切换必须分别报告。
+
+## LESSON-20261015-kuno-strict-record-before-edit: Persist Strict Selection Before Editing
+
+- 日期：2026-10-15
+- 标签：strict, task-state, workflow, gates, recovery
+- 适用场景：用户明确选择 strict，或任务从只读分析转为可写实现。
+- 严重级别：high
+- 来源：用户指出 Graft pin 任务已开始实现，但 `ai/tasks` 没有任务记录。
+- 问题：已口头承诺 strict 并读取 Skill，却未调用 TaskStore 保存任务、模式和状态；旧活动指针仍指向无关的已完成任务。
+- 根因：把会话里的计划和 Skill 阅读当成已执行的工作流，将持久化推迟到实现之后。
+- 修复：按当前分支补建明确的 strict/user 任务，保留真实补录时间与顺序偏差；后续审查、RED/GREEN 和完成事件依据实际证据记录，不回填先前未执行的 Gate。
+- 预防：首个生产编辑前必须完成 TaskStore 保存并验证 task／index／active 三者指向一致；只读转可写时重新核对该前提。若保存失败，明确 strict 记录未完成，不用 Todo、模式口头承诺或旧任务指针替代。
+
+<!-- lessons:kuno:end -->

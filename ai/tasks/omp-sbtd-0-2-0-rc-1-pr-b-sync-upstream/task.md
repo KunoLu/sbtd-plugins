@@ -1,0 +1,167 @@
+---
+schema_version: 1
+id: omp-sbtd-0-2-0-rc-1-pr-b-sync-upstream
+workflow_mode: strict
+mode_source: user
+mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-19 18:57 +08:00 指示「开始B行」
+status: "done"
+branch: feat/omp-sbtd-0.2.0-rc.1-pr-b-sync-upstream
+created_at: '2026-10-19T19:11:42+08:00'
+updated_at: '2026-10-20T03:14:01+08:00'
+completed_at: '2026-10-20T03:14:01+08:00'
+---
+# omp-sbtd 0.2.0-rc.1 行 B：同步上游到 v2.0.2（1d82494）
+
+## 目标
+
+按 `docs/prd/omp-sbtd-0.2.0-rc.1.md` 行 B（L66）与 §4 任务 B 验收执行：把 `packages/omp-sbtd/upstream/upstream.lock.json` 的 resolvedRevision 从 `f8aa0d7225a26c5e00b81d2f1b05121108e63630`（v1.0.13）升为 `1d82494d74f6df9bca7dccef2da409f87091883e`（v2.0.2），重算 sourceTreeSha256；对 distribution map 的每个新文件逐个决定收录（D9）；统一两个嵌入 AGENTS 模板的上游版本（现 `4222b15` 与 `f8aa0d7` 分叉）到 `1d82494`；重新生成 third-party notices。
+
+## 范围
+
+- 上游源：`/workspace/640-skills`（canonical `https://github.com/KunoLu/640-skills`），钉 `1d82494d74f6df9bca7dccef2da409f87091883e`（tag v2.0.2）。
+- 入口：`node scripts/kit-sync-upstream.mjs --source-root /workspace/640-skills --revision 1d82494d74f6df9bca7dccef2da409f87091883e`（`--plan` → `--apply --plan-digest …`），随后按仓库惯例 generate / check-generated / embed。
+- `packages/omp-sbtd/upstream/omp-distribution-map.yaml` 逐文件决策（详见「D9 逐文件决策」节）。
+- 嵌入产物再生成：`upstream/generated*`、`packages/omp-sbtd/kit/`、`skills/`、`THIRD_PARTY_NOTICES.md`（插件根 + kit）、`SBOM.spdx.json`。
+- 钉 `f8aa0d7`/`4222b15` 的测试与文档断言随同步更新到 `1d82494`。
+- 本 PR 第一个 commit 回填行 A（PR #104 / merge SHA `f1bba41d168af04807914914ad8dce27dfc8688b` / done 2026-10-19T17:13:57+08:00）并修正行 A task.md 的 stale 措辞。
+
+## 非目标（行 B 明确）
+
+- sourceId 保持 `sbtd-workflow-kit-upstream`；transformVersion 按 R7/D14 升 `p0-v3` → `p0-v4`。行 B 改 resolvedRevision、sourceTreeSha256，并执行且仅执行 D14 三项 transform 变更：(b) PROJECTION_FORBIDDEN_TOKEN 豁免扩为 digest 绑定的 canonical onboard runtime 包路径集（`onboard/runtime/scripts/*.py`、`onboard/runtime/assets/*`、`onboard/runtime/onboard-contracts.schema.json`、`onboard/runtime/upgrade.schema.json`，内容仍逐字节绑定 canonical manifest digest，overlay 不得走私）；(c) CANDIDATES 删 `trellis-workflow`（ENOENT 仍 fail-closed）；(d) overlay catalog 删 `skill:trellis-workflow`/`skill:trellis-channel`、增 `skill:sbtd-task`。其余投影/生成逻辑不变。
+- 不触碰 omp peerDependencies（`>=17.3.5 <18`）/ devDependency omp（`17.3.5`）及相关 `pnpm-lock.yaml` omp 条目——行 C（D11）独占。
+- 不 bump package version、不发布、不做行 E 工作。
+- 不执行 ROADMAP 归档 chore（D12）；不做 dsh-sbtd 行 G。
+- 不自动 pip install Python 依赖（D8：fail-closed 预检；5 依赖预检接线属行 C，若非已存在）。
+- 不 push、不开 PR（用户指示）。
+
+## 验收（PRD §4 任务 B，逐字要点）
+
+- v2.0.2 diff 实测 229 文件变更（67 新增 / 107 删除 / 53 修改，`sbtd-workflow-onboard/` 子树）；`scripts/` 33 个 `.py` 全 include；`assets/` 与两个 schema json 逐文件 include/omit 并逐条记录 reason（`requirements.txt` 由 D8 锁定随包发布，不在逐文件审清单）；AGENTS 模板统一到 `1d82494`；third-party notices 重新生成。
+- 供应链身份不变量：sourceId `sbtd-workflow-kit-upstream` 不变；transformVersion 按 R7/D14 升 `p0-v4`；行 B 同时改 resolvedRevision、sourceTreeSha256 并执行 D14 三项 transform 变更（不再只是改钉）。
+- check-generated、全量 package build、p0 validator / 测试按仓库惯例通过；基线既有 bun-offline harness flake 只作 pre-existing 记录，不冒充 PASS。
+
+## D9 逐文件决策（vs f8aa0d7→1d82494）
+
+> 决策在执行节「验证证据」补全实测结果；下表为决策与理由（reason 同时写入 map 条目）。
+
+硬锁（不在逐文件审清单或已锁定）：
+
+- `onboard/runtime/scripts/*.py`（33 个：32 新增 + `onboard.py` 修改）：全部 include（D9 硬锁）。
+- `onboard/runtime/requirements.txt`：include（D8 锁定随包发布；5 个钉版依赖 jsonschema/PyYAML/markdown-it-py/tomlkit/cryptography；不自动 pip install；fail-closed 预检接线为行 C 范围）。
+- `onboard/runtime/templates/skills/sbtd-task/`（8 文件：SKILL.md + references/7）：include，随模板树收录（D9 锁定）。
+
+逐文件审（`assets/` 9 个 + 2 个 schema json + stable 新增），reason 写入 map：
+
+| path | policy | reason |
+|---|---|---|
+| onboard/runtime/assets/graft-build-policy.json | include | 被收录脚本 `sbtd_migration.py` 运行时读取（上游 1d82494 实测引用），OMP 投影随包分发该脚本 |
+| onboard/runtime/assets/graft-hook-entry.mjs | include | 被收录脚本 `sbtd_graft_entry.py`/`sbtd_migration.py` 引用 |
+| onboard/runtime/assets/graft-instructions.txt | include | 被收录脚本 `sbtd_codex_wiring.py`/`sbtd_migration.py` 引用 |
+| onboard/runtime/assets/migration-legacy-ownership.json | include | 被收录脚本 `sbtd_migration.py`/`sbtd_upgrade_inventory.py` 引用 |
+| onboard/runtime/assets/migration-local-ignore.txt | include | 被收录脚本 `sbtd_migration.py` 引用 |
+| onboard/runtime/assets/migration-paused-agents.txt | include | 被收录脚本 `sbtd_migration.py` 引用 |
+| onboard/runtime/assets/routing-approval.pub | include | 被收录脚本 `sbtd_migration.py` 验签路径引用（D8 验签 fail-closed 资产） |
+| onboard/runtime/assets/runtime-lineage.json | include | 被收录脚本 `sbtd_migration.py`（`_LINEAGE_DOCUMENT`）运行时读取 |
+| onboard/runtime/assets/runtime-lineage.pub | include | 被收录脚本 `sbtd_migration.py`（`_LINEAGE_PUBLIC_KEY`）验签路径引用 |
+| onboard/runtime/onboard-contracts.schema.json | include | 被收录脚本 `onboard_contracts.py`/`sbtd_migration.py`/`sbtd_upgrade_inventory.py` 加载校验 |
+| onboard/runtime/upgrade.schema.json | include | 被收录脚本 `sbtd_migration.py` 加载校验 |
+| onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/{SKILL.md,agents/gemini.toml,agents/openai.yaml} | omit | Stable Skill tree is not retained in the OMP distribution（同 impeccable/shadcn 先例：OMP overlay catalog 不消费该 stable 树，非插件认证技能集） |
+| onboard/runtime/assets/external-skills/stable/licenses/i-have-adhd-LICENSE | omit | License for a non-retained stable repository |
+| onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/{VERSION,impeccable,impeccable.cmd,live-browser-ignores.js,data/font-index.json,data/font-index-failures.json} | omit | Stable Skill tree is not retained in the OMP distribution（impeccable 全树 omit 先例） |
+| onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_summary_line_endings.py 等 3 个新增测试 | include | ui-ux-pro-max stable 树已整体收录；legal inventory 要求 retained stable Skill 整树保留 |
+| onboard/runtime/templates/skills/lessons-record/references/identity-migration.md | include | lessons-record 模板树已收录，随模板树新增文件 |
+| onboard/runtime/templates/skills/project-validation/references/run-summary.zh-CN.md.template | include | project-validation 模板树已收录，随模板树新增文件 |
+
+删除文件（107 个，绝大多数为已 omit 的 impeccable scripts）：其 map 条目随同步移除（stale decision 会触发 `PROJECTION_POLICY_INVALID` fail-closed）。
+
+## Book Gate Plan
+
+| Reviewer | 触发事实 | 阶段 | 状态 |
+|---|---|---|---|
+| book-ddd-distilled-modeling | 完整 grill 后 DDD 已在任务 0 执行（draft，Reviewy R1 findings 已修复）；行 B 无领域模型变更（供应链身份不变量保持） | 行 B | not-required（沿用任务 0 DDD） |
+| book-ddia-data-design | 行 B 引入上游 `requirements.txt`/schema/assets 分发，但均为上游内容随包收录，无新数据设计；数据流（sync→projection→embed）在行 A 已固定 | 行 B | not-required |
+| book-legacy-change-safety | 修改投影 transform 代码（D14 门禁豁免/CANDIDATES）+ 生成输入（map/钉）影响嵌入产物；现有行为证据见「验证证据」4/5（两墙实测）；安全网为 upstream/test 既有门禁/audit 测试 + check-generated 确定性校验 + p0 validator + 全量测试 | 行 B | passed（characterized：两墙实测复现 + 既有门禁测试表征保留行为；安全网全绿，见「p0-v4 续作证据」） |
+| book-refactoring-pass | R7/D14 后行 B 修改既有生产代码（`omp-projection.ts` 豁免谓词、`agent-plugin-projection.ts` CANDIDATES）；编辑前需 emit Refactoring Review | 行 B | passed（Review 结论 proceed/no refactor needed：单点谓词扩集合 + 删一个候选条目，无结构变更；门禁语义在三处执行点保持一致） |
+| book-release-readiness | 本行不发布、不改 runtime 交付（行 E 才发布） | 行 B | not-required |
+
+## 进度
+
+- [x] 行 A 回填（PRD 行 A done：#104 / `f1bba41d168af04807914914ad8dce27dfc8688b` / 2026-10-19T17:13:57+08:00；行 A task.md 完结 + stale 措辞修正）— commit `9bce16e`（rebase 后 `e4bc0f7`）
+- [x] map 逐文件决策落地（新增 69 条 include/omit、删除 109 条 stale）+ agents-section-map 按 v2.0.2 新标题结构重写 — commit `23ca561`（rebase 后 `6431db3`）
+- [x] R7 回填 + 解除 blocked：PR #105 / merge SHA `c041b2c1aa2794e085ab442d763ce2876b4e50ed` / done 2026-10-19T21:07:19+08:00；R7/D14 授权 p0-v4；stale「transformVersion 须保持 p0-v3 / 行 B 只改钉」措辞修正；`ai/tasks/index.md` 接线
+- [x] p0-v4 transform 代码：`omp-projection.ts` 豁免扩为 D14 路径集（digest 绑定）+ `agent-plugin-projection.ts` CANDIDATES 删 `trellis-workflow` + `upstream.lock.json` transformVersion `p0-v4` + 对应测试 — commit `89cef09`
+- [x] overlay catalog：删 `skill:trellis-workflow`/`skill:trellis-channel`、增 `skill:sbtd-task`（对齐 D9 收录 `templates/skills/sbtd-task/` 模板树）；孤儿 overlay 清理；feature/测试同步 — commit `bf51120`
+- [x] sync plan → apply 到 `1d82494`，sourceTreeSha256 重算为 `c1fc3f679c375a22c6272de92c3377ac04ea8edb996acd314ea76f73257739b0` — commit `46763f8`（planDigest `78011d00…`）
+- [x] AGENTS 模板统一 `1d82494`（`omp-overlays/AGENTS.project-root.md` 首行 pin `4222b15`→`1d82494` + transform `p0-v4`，commit `0986c05`；`AGENTS.project-omp.md` 由 generate 带新钉）
+- [x] notices 再生成（apply embed 阶段 + generate 刷新，插件根 + kit/THIRD_PARTY_NOTICES.md）
+- [x] check-generated / build / p0 validator（check-package exit 0，packedFileCount 467）/ lint / smoke
+- [x] 测试钉更新（extension/python-runtime/transform/omp-projection；kit-embedding 超时随树规模升至 120s）
+- [x] 任务证据回填并记 done；PRD 任务表行 B 按 pre-merge 保持 in-progress，不标 merged（下一行首 commit 才回填 PR / merge SHA / done 时间）
+
+## 验证证据
+
+实测环境：`/workspace/sbtd-plugins` 分支 feat/omp-sbtd-0.2.0-rc.1-pr-b-sync-upstream，Node 22.20.0，pnpm 11.17.0；上游 `/workspace/640-skills`（HEAD bb52bf8 不影响——sync 用 `git archive <revision>` 取钉住对象，已实测 `cat-file -t 1d82494…` = commit）。
+
+1. `node scripts/kit-sync-upstream.mjs --source-root /workspace/640-skills --revision 1d82494d74f6df9bca7dccef2da409f87091883e --plan`（于 `packages/omp-sbtd`）首轮 → `SECTION_MAPPING_UNKNOWN`：v2.0.2 把 AGENTS 模板从「Codex 全局规则」（15+ 小节）整体重构为「SBTD 全局规则」（H1+5×H2）/「SBTD 项目规则」（H1+4×H2），旧 section key 全部失效；新模板实测零 `codex` token、无 Trellis 专节。
+2. 重写 `agents-section-map.yaml`（11 条：global 6 include→global，project 5 include→project-root；project-omp 维持「marker + overlay」拓扑不变）后复跑 → `PROJECTION_POLICY_INVALID` stale 109（103 impeccable scripts + trellis-channel/3 + trellis-workflow/3，上游已删；其中 trellis-channel LICENSE/NOTICE 经 R100 改名为 sbtd-task/LICENSE/NOTICE）。
+3. 删除 109 条 stale 后复跑 → `PROJECTION_ASSET_UNCLASSIFIED` unclassified 69（32 新脚本 + requirements.txt + 2 schema + assets/ 9 + sbtd-task 10 + 模板新增 2 + i-have-adhd 4 + impeccable 新增 6 + ui-ux-pro-max 测试 3）。按 D9/D8 决策补齐 69 条（reason 见「D9 逐文件决策」表与 map 条目）。
+4. 补齐后复跑 → **墙 1**：`PROJECTION_POLICY_INVALID: Agent Plugin audit contains blocked candidates`（phase `agent-plugin`）：`trellis-workflow` 候选 `checks.portable blocked — ENOENT`（上游已删模板树，`generated/` 里 `templates/skills/trellis-workflow` 不存在）；基线 f8aa0d7 该候选为 `fail`（非 blocked）故通过。candidateCount 13 / certifiedCount 12 不变。
+5. 墙 2 独立实证（scratch stage `/tmp/rowB-stage-*`，不改仓库：复制 map/overlays/lock + `git archive 1d82494` 到 vendor，tsx 直调真实 `generateKit`+`generateOmpProjection`）：`generateKit OK`（generatedSha256 `e535bb1a…`），`generateOmpProjection` → **`PROJECTION_FORBIDDEN_TOKEN`**：pathViolations `["onboard/runtime/scripts/sbtd_codex_wiring.py"]`，payloadViolations 19（`sbtd_codex_wiring.py`、`sbtd_graft_deployment.py`(69 处)、`sbtd_upgrade_hosts.py`(58)、`sbtd_omp_sources.py`(25)、`sbtd_migration_plan.py`(28)、`onboard_arguments.py`(11)、`migration-legacy-ownership.json`(12)、`sbtd_cleanup_targets.py`(8)、`sbtd_graft_entry.py`(7)、`onboard_contracts.py`(3)、`sbtd_upgrade_inventory.py`(3)、`sbtd_migration.py`(2)、`sbtd_omp_wiring.py`(2)、`graft-instructions.txt`(1)、`sbtd_migration_verify.py`(1)、`sbtd_upgrade.py`(1)、`onboard-contracts.schema.json`(4)，及派生 `manifest.json`/`projection-report.json`）；violationCount 20。scratch 已删除。
+6. 新 sourceTreeSha256 独立实测：`c1fc3f679c375a22c6272de92c3377ac04ea8edb996acd314ea76f73257739b0`（`sourceTreeSha256()` 真实函数对 `git archive 1d82494` 解出树计算；旧值 `a513e976…6400`）。
+
+## p0-v4 续作证据（R7/D14 解除 blocked 后，2026-10-19T21:40 +08:00 起）
+
+7. 续作前复现：tip `b8f98e5` 上 `kit-sync-upstream.mjs --plan` 仍 fail-closed（`PROJECTION_POLICY_INVALID` phase agent-plugin，trellis-workflow ENOENT）——墙 1 实锤未变。
+8. p0-v4 代码落地（commit `89cef09`）：`omp-projection.ts` 豁免扩为 D14 路径集（`isCanonicalOnboardRuntimePackagePath`：`onboard/runtime/scripts/*.py`、`onboard/runtime/assets/*` 单段 glob + 两个 schema json，逐路径 `canonicalManifest.assets[path]` digest 绑定；路径与载荷豁免同一绑定）；生成元数据（`manifest.json`/`projection-report.json`）载荷扫描只遮蔽「豁免且含 token 的路径字符串」精确出现，其余仍扫描（map reason 走私仍被抓）。`agent-plugin-projection.ts` CANDIDATES 删 trellis-workflow。`embed-kit.mjs` 与 `scripts/p0/release-validator.ts`（树扫描 + tarball 扫描两处）同步同一 D14 语义——三处门禁同一份路径集， tarball 侧改为成员 digest 延迟绑定（原设计注释本就如此描述）。新增 synthetic 测试覆盖：集合内 digest 绑定通过、overlay drift 失豁免（路径+载荷双报）、集合外（嵌套 `scripts/nested/`、templates 树）仍 fail-closed。
+9. 实测门禁足迹（对真实 `generated-omp` 扫描）：path 携带者恰 1 个（`onboard/runtime/scripts/sbtd_codex_wiring.py`）；payload 携带者 18 个内容文件（16× `scripts/*.py` + `assets/graft-instructions.txt` + `assets/migration-legacy-ownership.json` + `onboard/runtime/onboard-contracts.schema.json`）+ 2 个生成元数据——**全部 ∈ D14 路径集**（豁免路径 ⊆ D14 实测成立）；SBOM.spdx.json 仅 1 处 token（`./kit/…/sbtd_codex_wiring.py` fileName 字符串），同法遮蔽。
+10. sync 实跑：`--plan` → planned，planDigest `78011d001efede5db58fa9fd488cde70ffd135b0b4e8edd66141bc324a95389a`，stagedPluginValidated true，candidateCount 12 / certifiedCount 12；`--apply --plan-digest …` → applied（post-replace checkGenerated + checkOmpProjection + checkAgentPluginProjection + embed verify-only 全过）。lock：resolvedRevision `1d82494…`、sourceTreeSha256 `c1fc3f67…`、transformVersion `p0-v4`；`kit/manifest.json` 同值。apply 后补跑 `kit-generate.mjs` 刷新 upstream 包根 LICENSE/notices（apply 不提升这两项），`kit-check-generated.mjs` → "generated output is current"。
+11. 构建与 p0：`pnpm build` 绿（check-generated → embed-kit → embed-agent-skills → tsc → write-sbom；SBOM documentNamespace digest `b57906896d3f7081007cbfe093831014a027ba16b2655c89b79b0823a33e35a4`）；真实打包 + 解包 + `tsx scripts/p0/cli.ts check-package --packed /tmp/rowb-candidate/package` → exit 0，packedFileCount 467，sbomSha256 `129efbc9…`；`pnpm lint` 与 `pnpm smoke` 绿。
+12. 测试：upstream 包 51 passed / 0 failed / 2 skipped（env-gated KPI_PROMOTION_SOURCE_ROOT 两项未跑）；套件转绿过程中修复均为钉/结构跟随：transform.test.ts 稳定集 provenance 常数（stableSet `2026-09-14.6`、manifestSha256 `0dd20aac…`、mattpocock `3cca18b3…`）、section key 重写为 v2.0.2 标题、泄漏场景改写（v2.0.2 模板无 Trellis 节、无 H3，嵌套冲突改合成注入）、`sync-upstream.ts` probe 补 `sys.path`（v2.0.2 onboard.py 新增 sibling import `graft_runtime`，probe 修复前先实测 `ModuleNotFoundError` 复现）、python-runtime.test.ts 钉 `72ea5e6f…`（v2.0.2 原生 onboard.py digest）、extension.test.ts 钉、omp-projection.test.ts 豁免足迹断言。
+13. 事故记录：手工 python probe 未设 `PYTHONDONTWRITEBYTECODE`，在 `vendor/` 写入 `__pycache__` 导致 `SOURCE_DIGEST_MISMATCH`（21 项测试失败）；删除后 digest 复测回到 `c1fc3f67…`，零 archive 恢复需要。教训：对 vendored 树跑 python 必须 `PYTHONDONTWRITEBYTECODE=1`。
+14. 规模性超时：`kit-embedding.test.ts` 两场景（15s/30s）在 v2.0.2 更大树上超时，仅升超时到 120s（commit `db1d751`），断言未动，复跑 5/5 通过。
+15. 插件全量套件（tip `db1d751`，`packages/omp-sbtd` `pnpm test`，2026-10-20 01:11:10 +08 起，343.62s）：**1 failed | 836 passed | 3 skipped (840)**。日志被 `tail -5` 截断，失败名未留在该次输出。唯一失败经本会话聚焦复跑确认为既有 bun-offline harness flake，不是行 B 回归，不冒充 PASS。详见第 17 条。
+16. 已知越界观察（不属 D14，未改动）：overlay `omp-overlays/AGENTS.global.md`/`AGENTS.project-root.md` 的手工编排文案仍提及 trellis-workflow/trellis-channel 路由（overlay 内容属 KPi 策略文本，非 D14 三项）；`src/extension.ts` 的 trellis 能力映射与 profileCatalog optional `trellis` 项保持不动——插件对 v2.0.2 的适配属行 C。
+17. 聚焦复跑（2026-10-20T01:50:24+08:00，`pnpm exec vitest run test/p0-authorized-omp-rpc-harness.test.ts -t "smoke-only: exact local OMP 17.3.5 blocks a dependency-resolved packed host before RPC without a provider" --no-file-parallelism --maxWorkers=1 --testTimeout=90000`）：1 failed | 50 skipped (51)。失败用例即该 smoke-only 标题；`bun --offline` 无 `zod` 与 `@oh-my-pi/pi-coding-agent` cached manifest（`zod@4.1.12 failed to resolve`）。与行 A 同因（`ai/tasks/omp-sbtd-0-2-0-rc-1-pr-a-migrate-kit/task.md`：干净 `c735629` worktree 同失败）。未修 bun cache。豁免路径 ⊆ D14：`omp-projection.ts` / `embed-kit.mjs` / `release-validator.ts` 谓词同为 `scripts/*.py` 单段、`assets/*` 单段、两个 schema json；`kit/` 与 `generated-omp` 中 token 内容文件 18 个均在该集内；集外仅生成元数据对 `sbtd_codex_wiring.py` 的路径字符串（manifest.json、projection-report.json、SBOM fileName），不是豁免授予。PRD 任务表行 B 保持 in-progress，不标 merged。
+
+## CONTRACT-CHANGE-NEEDED（已裁决：R7/D14，option 2）
+
+> 裁决记录：用户 2026-10-19 ~20:31 +08:00 选定 option 2（团队投票 4× option 2）——先修 PRD，行 B transformVersion 升 `p0-v4`，catalog 跟随 row B。PRD R7 已 squash-merge：PR #105 / merge SHA `c041b2c1aa2794e085ab442d763ce2876b4e50ed` / done 2026-10-19T21:07:19+08:00；D14 锁定授权三项 transform 变更（见「非目标」节）。本分支已 rebase 到 main `c041b2c`（原 `9bce16e`/`23ca561`/`f420cc4` 现为 `e4bc0f7`/`6431db3`/`b8f98e5`），本任务 2026-10-19T21:40:32+08:00 解除 blocked 续作。以下为原始 blocked 记录，保留作证据。
+
+**What**：行 B sync 无法在不触碰行 B 边界的情况下完成，两处硬冲突均已实测：
+
+- **墙 1（agent-plugin CANDIDATES）**：`upstream/src/agent-plugin-projection.ts` L62 `CANDIDATES` 硬编码 `trellis-workflow`，其模板树在 v2.0.2 被上游删除（R100：trellis-channel LICENSE/NOTICE → sbtd-task）；audit 对 ENOENT fail-closed（blocked ≠ 基线的 fail）。修复需改 transform 代码（删候选）——projection 逻辑变更，而 transformVersion 锁 `p0-v3`。连带：`upstream/omp-overlays/onboard/runtime/catalog.json` 仍列 `skill:trellis-workflow`/`skill:trellis-channel`（指向已删路径），且上游 v2.0.2 catalog 新增 `skill:sbtd-task`——overlay catalog 是否同步增删是插件可见行为，须裁决归属行 B 还是行 C。
+- **墙 2（零泄漏门禁 vs D9 硬锁）**：`upstream/src/omp-projection.ts` 的 PROJECTION_FORBIDDEN_TOKEN（输出路径/载荷零 `codex`，仅 digest 绑定的 canonical `onboard.py` 豁免）拒绝 D9 硬锁 include 的文件：`sbtd_codex_wiring.py` 路径本身含 codex（overlay 机制无法改路径，且 overlay 分叉上游脚本会破坏字节同一性），另 17 个上游文件 payload 含 codex（v2.0.2 上游新增 Codex host 接线支持）。豁免/改门禁 = transform 逻辑变更；omit = 违反 D9 且 grill Q2 已明确拒绝部分收录（互相 import，运行时才 ImportError）。
+
+**Why**：行 B 硬边界「transformVersion 保持 p0-v3、只改 resolvedRevision + sourceTreeSha256 及再生成产物/map/notices」与「D9：33 脚本全 include」在 v2.0.2 实际上游内容下不可同时满足。
+
+**Options**：
+
+1. （推荐）最小放宽行 B 边界，两处都按「数据修正」处理并记录：(a) CANDIDATES 删除 trellis-workflow（上游实体已不存在，候选列表跟随上游清单），overlay catalog 同步删 trellis 两项（是否新增 sbtd-task 项单独裁决，可留行 C）；(b) 门禁豁免从单一 `onboard.py` 扩为「digest 绑定的 canonical onboard runtime 包路径集」（`onboard/runtime/scripts/*.py`、`onboard/runtime/assets/*`、两个 schema json——内容仍逐字节钉 canonical manifest digest，豁免仍 content-bound，overlay/drift 不能走私）。保持 p0-v3 需明确豁免属 bug 级跟随上游；否则应 bump transformVersion（选项 2）。
+2. bump transformVersion（如 `p0-v4`）做上述门禁/CANDIDATES 变更——违反行 B 硬边界「transformVersion 不变」，需 PRD 修订。
+3. 修 D9：omit/改名 codex 相关文件——不可行：路径违例无法 overlay；部分 omit 破坏 Python 包互相 import（grill Q2 已否决）；「同步后可用」失守。
+4. 请上游 640-skills 去掉 codex 字样——仓库外依赖，行 B 无限期阻塞。
+
+待用户选定后继续；map/section-map 决策（commit `23ca561`）在选项 1/2 下均保持有效。
+
+## B1 修复证据（Reviewy NOT CLEAN B1 + AGENTS soft，2026-10-20 批）
+
+- `src/extension.ts`：`optionalCapabilitySkills.trellis` 由 `["trellis-workflow"]` 改 `["sbtd-task"]`；capability key `trellis` 保留（soft：CLI probe 名不动）。
+- `src/kit/index.ts`：optional capability 探测路径 `onboard/runtime/templates/skills/trellis-workflow/SKILL.md` → `…/sbtd-task/SKILL.md`（模板树已随 D9 收录，探测由 false 变 true）。
+- `src/onboard/composite.ts`：两处 bootstrap handoff 提示「Follow the trellis-workflow Skill…」→「Follow the sbtd-task Skill…」（resume 与 schedule 各一处）。
+- AGENTS.global.md（overlay 源 `upstream/omp-overlays/AGENTS.global.md`）：「调用 `trellis-workflow` Skill」→「调用 `sbtd-task` Skill」；Skill 表 `trellis-workflow` 行 → `sbtd-task` 行（SBTD 任务执行/模式/记录/恢复/交接）。`node scripts/kit-generate.mjs` 再生成（projectionGeneratedSha256 `03d3bee1…`），`embed-kit.mjs` 重嵌 `kit/`；三份发货副本（overlay / `upstream/generated-omp/` / `kit/`）md5 一致。
+- 验证：`pnpm build` 绿（check-generated「generated output is current」→ embed-kit → embed-agent-skills → tsc → write-sbom，SBOM documentNamespace digest 随 kit 内容变化重算）；`pnpm lint`、`pnpm smoke` 绿；聚焦 `vitest run test/{composite-onboard,extension,kit-embedding,kit,certified-skill-ownership,agent-skills-embedding,workflow}.test.ts` = 7 files / 122 passed / 0 failed。
+- 无测试断言旧 skill 映射（grep 确认：test/ 下 `trellis-workflow` 仅余 agent-skills-embedding 负向断言与 workflow.test.ts 的 `.trellis/workflow.md` 观测 reason token，均非 skill 映射），故本修复无测试改动；D14 catalog/transform 拒绝类断言未触碰。
+- 越界观察（未改，报备）：overlay/kit AGENTS.global.md 仍含 `trellis-channel` 表行与 Trellis/Channel 章节文案——B1 批次仅授权 trellis-workflow→sbtd-task，trellis-channel 教学文案属另一决策。
+- 全量套件（`pnpm test`，840）：首次运行 2 failed / 835 passed / 3 skipped，其中可识别失败为既有 bun-offline harness flake（`smoke-only: exact local OMP 17.3.5 …`，`zod@4.1.12 failed to resolve`，无 cached manifest，与第 15/17 条同因）；第二个失败该次输出被 tail 截断未留名。原样复跑（同命令全量）= 1 failed / 836 passed / 3 skipped，与修复前基线（tip `db1d751`）完全一致，唯一失败即同一 bun-offline harness flake。不冒充 PASS，不修 bun cache。
+
+## 状态事件
+
+| at | from | to | reason | evidence |
+|---|---|---|---|---|
+| 2026-10-19T18:57:00+08:00 | planned | in-progress | 用户 2026-10-19 18:57 +08:00 指示「开始B行」（PRD 规则：每任务 strict、开工新建任务记录） | 用户指令；分支 feat/omp-sbtd-0.2.0-rc.1-pr-b-sync-upstream 基于 main `f1bba41d168af04807914914ad8dce27dfc8688b`（PR #104，merge 2026-10-19T17:13:57+08:00） |
+| 2026-10-19T19:43:22+08:00 | in-progress | blocked | 两处 p0-v3 投影不变量与 v2.0.2 + D9 硬锁冲突实测成立（PROJECTION_FORBIDDEN_TOKEN 20 处违例；agent-plugin CANDIDATES trellis-workflow blocked/ENOENT），修复均需 transform 代码或门禁/D9 语义变更，超出行 B 授权；按指令 STOP 并输出 CONTRACT-CHANGE-NEEDED | 本任务「验证证据」节第 4/5 条与「CONTRACT-CHANGE-NEEDED」节；scratch stage 实测输出；commit `23ca561`（rebase 后 `6431db3`） |
+| 2026-10-19T21:40:32+08:00 | blocked | in-progress | 用户裁决 option 2（2026-10-19 ~20:31 +08:00，团队投票 4× option 2）：PRD R7 授权行 B transformVersion 升 `p0-v4` 并锁定 D14 三项 transform 变更 + catalog 属行 B；R7 已 squash-merge（PR #105 / `c041b2c1aa2794e085ab442d763ce2876b4e50ed` / 2026-10-19T21:07:19+08:00），本分支 rebase 到 main `c041b2c` 后续作 | PRD `docs/prd/omp-sbtd-0.2.0-rc.1.md` D14 + 修订日志 R7；R7 任务记录 `ai/tasks/omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4/task.md`（done）；用户 2026-10-19 ~21:07 +08:00 续作指令（D14 / p0-v4） |
+| 2026-10-20T01:51:55+08:00 | in-progress | done | 行 B 实现与证据完成。omp-sbtd 全量套件 1 failed / 836 passed / 3 skipped (840)。唯一失败为既有 bun-offline harness flake，聚焦复跑同因，不冒充 PASS，不修 bun cache。PRD 行 B 保持 in-progress（未合并） | 本任务第 15/17 条；行 A task.md 同因记录；lock transformVersion `p0-v4` / resolvedRevision `1d82494d74f6df9bca7dccef2da409f87091883e` / sourceTreeSha256 `c1fc3f679c375a22c6272de92c3377ac04ea8edb996acd314ea76f73257739b0` |
+| 2026-10-20T03:14:01+08:00 | done | planned | Reviewy NOT CLEAN B1（+ AGENTS soft，Lord/Reviewy/Researchy 2026-10-20 同批裁决）：catalog 已收 `skill:sbtd-task` 且 trellis 模板树已删，但宿主仍接线 `trellis-workflow`——`src/extension.ts` optionalCapabilitySkills.trellis、`src/kit/index.ts` 探测路径、`src/onboard/composite.ts` bootstrap 提示、overlay/kit/generated-omp `AGENTS.global.md` 教学文案四处同修；保留旧完成证据于本表 | PR #106 review 批 B1；本任务「B1 修复证据」节 |
+| 2026-10-20T03:14:01+08:00 | planned | in-progress | 执行 B1 修复：capability key `trellis` 保留（CLI probe），skill 映射与探测改 `sbtd-task`；overlay 改后 `kit-generate.mjs` 再生成 + `embed-kit.mjs` 重嵌 | 用户 B1 修复指令（2026-10-20 批） |
+| 2026-10-20T03:14:01+08:00 | in-progress | done | B1+AGENTS 修复完成并推送 PR #106。`pnpm build` 绿（check-generated + embed + tsc + SBOM）；聚焦 7 文件 122 passed；全量复跑 1 failed / 836 passed / 3 skipped 与修复前基线一致，唯一失败为既有 bun-offline harness flake（首跑多一个未留名瞬态失败，复跑未重现，不冒充 PASS）。无测试断言旧映射，故无测试改动；CHANGELOG 归行 D，本修复属未发布行 B 范围内，不另加条目 | 本任务「B1 修复证据」节；`pnpm lint`/`pnpm smoke` 绿 |

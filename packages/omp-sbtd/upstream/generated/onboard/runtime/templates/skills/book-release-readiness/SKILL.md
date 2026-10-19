@@ -1,17 +1,17 @@
 ---
 name: book-release-readiness
-description: Reviews production readiness for services, APIs, jobs, queues, integrations, and deployment-sensitive changes. Mandatory after all applicable testing-tool gates and project validation, and before completion or release, when production-path runtime or deployment behavior changes; otherwise use on demand.
+description: Reviews production readiness for services, APIs, jobs, queues, integrations, and deployment-sensitive changes. In strict tasks, mandatory after all applicable testing-tool gates and project validation, and before completion or release, when production-path runtime or deployment behavior changes; in default/lite tasks, use on demand when those risks or explicit delivery requirements are present.
 ---
 
 # Book Release Readiness
 
 Use this Skill as a production-readiness pass before considering a service or integration change complete.
 
-It is derived from the `mini` rule style of `agent-rules-books` and complements project validation, Playwright, Maestro, Chrome DevTools diagnostics, Trellis check, and human release review.
+It is derived from the `mini` rule style of `agent-rules-books` and complements project validation, Playwright, Maestro, Chrome DevTools diagnostics, task check, and human release review.
 
-## Mandatory Development Gate
+## Strict Development Gate
 
-Run this Skill after all applicable testing-tool gates and project validation, and before the task is declared complete, the final release decision, or Channel preflight when a development task changes any production-path:
+In a strict task, run this Skill after all applicable testing-tool gates and project validation, and before the task is declared complete or the final release decision when the task changes any production-path:
 
 - Service, API, auth, billing, or notification behavior.
 - Background job, queue, scheduler, or data pipeline.
@@ -38,10 +38,10 @@ Optional checks, accountable owner acceptance, and residual risk: ...
 
 ## When To Use
 
-- Mandatory: every development task matching a production-path runtime or deployment trigger above.
+- Strict: every development task matching a production-path runtime or deployment trigger above. In default/lite, use this Skill when those risks, project rules, or explicit delivery requirements apply.
 - The change affects APIs, background jobs, queues, schedulers, external services, auth, billing, notifications, data pipelines, or deployment behavior.
 - Failure modes include timeouts, retries, overload, partial outage, data corruption, duplicate work, or user-visible degradation.
-- The task is ready for `$trellis-check` or release review.
+- The task is ready for strict check/finish-work or release review.
 
 When no mandatory trigger matches, do not use this Skill for docs-only changes, local-only scripts, simple UI polish, or code paths that are not production-facing unless the user requests it or another concrete release risk warrants it.
 
@@ -57,7 +57,7 @@ When no mandatory trigger matches, do not use this Skill for docs-only changes, 
 
 ## Output
 
-Always emit the visible `Release Readiness Review` for a mandatory gate. When used inside a Trellis task, also record:
+Always emit the visible `Release Readiness Review` for a strict gate. When used in a task-level record, also record:
 
 - Production risk summary.
 - Failure modes covered.
@@ -66,7 +66,7 @@ Always emit the visible `Release Readiness Review` for a mandatory gate. When us
 - Validation performed and skipped checks.
 - Residual risk.
 
-Only recurring release standards belong in `.trellis/spec`.
+Only recurring release standards belong in `docs/spec`.
 
 ## Guardrails
 

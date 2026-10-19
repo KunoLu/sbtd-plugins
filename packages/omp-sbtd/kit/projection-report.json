@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "runtime": "omp",
   "counts": {
-    "included": 207,
-    "omitted": 174,
-    "replaced": 11
+    "included": 262,
+    "omitted": 81,
+    "replaced": 9
   },
   "decisions": [
     {
@@ -36,6 +36,12 @@
       "owner": "kpi",
       "policy": "include",
       "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/licenses/i-have-adhd-LICENSE",
+      "owner": "third-party",
+      "policy": "omit",
+      "detail": "License for a non-retained stable repository"
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/licenses/impeccable-LICENSE",
@@ -192,6 +198,24 @@
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/agents/gemini.toml",
+      "owner": "third-party",
+      "policy": "omit",
+      "detail": "Stable Skill tree is not retained in the OMP distribution"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/agents/openai.yaml",
+      "owner": "third-party",
+      "policy": "omit",
+      "detail": "Stable Skill tree is not retained in the OMP distribution"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/i-have-adhd/SKILL.md",
+      "owner": "third-party",
+      "policy": "omit",
+      "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/reference/adapt.md",
@@ -434,313 +458,37 @@
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/concept-seed.mjs",
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/data/font-index-failures.json",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/context-signals.mjs",
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/data/font-index.json",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/context.mjs",
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/impeccable",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/critique-storage.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detect-csp.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detect.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/browser/injected/index.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/cli/main.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/design-system.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/detect-antipatterns-browser.js",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/detect-antipatterns.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/browser/detect-url.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/regex/detect-text.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/static-html/css-cascade.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/static-html/detect-html.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/engines/visual/screenshot-contrast.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/findings.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/node/file-system.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/profile/profiler.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/registry/antipatterns.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/rules/checks.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/color.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/constants.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/fonts.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/inline-ignores.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/detector/shared/page.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/doctor.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/embed-prompt.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/generate-image.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook-admin.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook-before-edit.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook-lib.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/hook.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/artifact-schema.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/composition-catalog.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/concept-catalog.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/design-parser.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/impeccable-config.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/impeccable-paths.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/is-generated.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/open-system-browser.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/provider.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/roll-selection.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/staleness-deep.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/staleness-notice.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/staleness.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/surface-briefs.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/target-args.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/target-slug.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/lib/template-extensions.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-accept.mjs",
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/impeccable.cmd",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-browser-dom.js",
+      "owner": "third-party",
+      "policy": "omit",
+      "detail": "Stable Skill tree is not retained in the OMP distribution"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-browser-ignores.js",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
@@ -758,319 +506,13 @@
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-commit-manual-edits.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-complete.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-copy-edit-agent.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-discard-manual-edits.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-inject.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-insert.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-manual-edit-evidence.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-poll.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-resume.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-server.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-status.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-target.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live-wrap.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/accept-css.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/accept-verify.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/browser-script-parts.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/completion.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/event-validation.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/astro.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/detect-utils.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/index.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/journal.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/nextjs.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/nuxt.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/script-src.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/static-html.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/sveltekit.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/tag-strategy.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/tanstack-start.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/frameworks/vite-generic.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/generation-preflight.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/insert-ui.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/instructions.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/manual-apply.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/manual-edit-routes.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/manual-edits-buffer.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/poll-lanes.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/roots.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/session-store.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/source-lock.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/source-search.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/svelte-ast.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/svelte-component.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/sveltekit-adapter.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/tanstack-adapter.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/ui-surfaces.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/live/vocabulary.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/modern-screenshot.umd.js",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
     },
     {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/palette.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/pin.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/serve-question.mjs",
-      "owner": "third-party",
-      "policy": "omit",
-      "detail": "Stable Skill tree is not retained in the OMP distribution"
-    },
-    {
-      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/surface-brief.mjs",
+      "path": "onboard/runtime/assets/external-skills/stable/skills/impeccable/scripts/VERSION",
       "owner": "third-party",
       "policy": "omit",
       "detail": "Stable Skill tree is not retained in the OMP distribution"
@@ -1598,6 +1040,12 @@
       "detail": "third-party"
     },
     {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_summary_line_endings.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_core_data_quality.py",
       "owner": "third-party",
       "policy": "include",
@@ -1622,6 +1070,12 @@
       "detail": "third-party"
     },
     {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_design_system_stack.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_native_desktop_stack_freshness.py",
       "owner": "third-party",
       "policy": "include",
@@ -1629,6 +1083,12 @@
     },
     {
       "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_relevance_evaluator.py",
+      "owner": "third-party",
+      "policy": "include",
+      "detail": "third-party"
+    },
+    {
+      "path": "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_skill_script_paths.py",
       "owner": "third-party",
       "policy": "include",
       "detail": "third-party"
@@ -1688,6 +1148,60 @@
       "detail": "OMP projection derives retained-only third-party notices"
     },
     {
+      "path": "onboard/runtime/assets/graft-build-policy.json",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/graft-hook-entry.mjs",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/graft-instructions.txt",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/migration-legacy-ownership.json",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/migration-local-ignore.txt",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/migration-paused-agents.txt",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/routing-approval.pub",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/runtime-lineage.json",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/assets/runtime-lineage.pub",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
       "path": "onboard/runtime/catalog.json",
       "owner": "kpi",
       "policy": "replace-with-overlay",
@@ -1718,13 +1232,217 @@
       "detail": "third-party"
     },
     {
+      "path": "onboard/runtime/onboard-contracts.schema.json",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
       "path": "onboard/runtime/REFERENCE.md",
       "owner": "kpi",
       "policy": "omit",
       "detail": "Python Onboard runtime is not part of the OMP distribution"
     },
     {
+      "path": "onboard/runtime/requirements.txt",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/graft_runtime.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/onboard_arguments.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/onboard_contracts.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
       "path": "onboard/runtime/scripts/onboard.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_backup_retention.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_cleanup_legacy.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_cleanup_targets.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_cleanup_upgrade.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_codex_wiring.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_graft_deployment.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_graft_entry.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_handoff.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_identity.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_migration_files.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_migration_legacy.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_migration_plan.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_migration_verify.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_migration.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_omp_sources.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_omp_wiring.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_probe_links.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_project.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_reconciliation.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_recovery.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_task_document.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_task_routing.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_task_state.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_trellis_uninstall.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_upgrade_cli.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_upgrade_hosts.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_upgrade_inventory.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_upgrade_paths.py",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/scripts/sbtd_upgrade.py",
       "owner": "kpi",
       "policy": "include",
       "detail": "kpi"
@@ -1982,6 +1700,12 @@
       "detail": "kpi"
     },
     {
+      "path": "onboard/runtime/templates/skills/lessons-record/references/identity-migration.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
       "path": "onboard/runtime/templates/skills/lessons-record/SKILL.md",
       "owner": "kpi",
       "policy": "include",
@@ -2030,6 +1754,12 @@
       "detail": "kpi"
     },
     {
+      "path": "onboard/runtime/templates/skills/project-validation/references/run-summary.zh-CN.md.template",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
       "path": "onboard/runtime/templates/skills/project-validation/references/validation-evidence-contract.md",
       "owner": "kpi",
       "policy": "include",
@@ -2061,6 +1791,66 @@
     },
     {
       "path": "onboard/runtime/templates/skills/project-validation/SKILL.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/LICENSE",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/NOTICE",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/handoff.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/methods.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/state.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/strict.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/task-data.schema.json",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/references/tooling.md",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
+      "path": "onboard/runtime/templates/skills/sbtd-task/SKILL.md",
       "owner": "kpi",
       "policy": "include",
       "detail": "kpi"
@@ -2186,42 +1976,6 @@
       "detail": "kpi"
     },
     {
-      "path": "onboard/runtime/templates/skills/trellis-channel/LICENSE",
-      "owner": "kpi",
-      "policy": "include",
-      "detail": "kpi"
-    },
-    {
-      "path": "onboard/runtime/templates/skills/trellis-channel/NOTICE",
-      "owner": "kpi",
-      "policy": "include",
-      "detail": "kpi"
-    },
-    {
-      "path": "onboard/runtime/templates/skills/trellis-channel/SKILL.md",
-      "owner": "kpi",
-      "policy": "replace-with-overlay",
-      "detail": "onboard/runtime/templates/skills/trellis-channel/SKILL.md"
-    },
-    {
-      "path": "onboard/runtime/templates/skills/trellis-workflow/LICENSE",
-      "owner": "kpi",
-      "policy": "include",
-      "detail": "kpi"
-    },
-    {
-      "path": "onboard/runtime/templates/skills/trellis-workflow/NOTICE",
-      "owner": "kpi",
-      "policy": "include",
-      "detail": "kpi"
-    },
-    {
-      "path": "onboard/runtime/templates/skills/trellis-workflow/SKILL.md",
-      "owner": "kpi",
-      "policy": "replace-with-overlay",
-      "detail": "onboard/runtime/templates/skills/trellis-workflow/SKILL.md"
-    },
-    {
       "path": "onboard/runtime/templates/skills/web-ui-autotest-generator/agents/openai.yaml",
       "owner": "kpi",
       "policy": "include",
@@ -2342,6 +2096,12 @@
       "detail": "kpi"
     },
     {
+      "path": "onboard/runtime/upgrade.schema.json",
+      "owner": "kpi",
+      "policy": "include",
+      "detail": "kpi"
+    },
+    {
       "path": "THIRD_PARTY_NOTICES.md",
       "owner": "kpi",
       "policy": "omit",
@@ -2360,15 +2120,15 @@
       "detail": "third-party"
     }
   ],
-  "policySha256": "cf46d12004f7520e767655945839aa470afd770f462f654102ddaf6e477804d3",
-  "decisionsSha256": "70a67af872fbc027fba728611a74de15df46ac197f59cefa3cab9822f10d5f43",
-  "canonicalManifestSha256": "daba6fe2c81dd0d65eafe5104b0b37f566587c108f1172eac20d10a9280791f3",
-  "retainedProvenanceManifestSha256": "e15db2d80ce4594fba639a561e218b84bdf9871c57a0292d9a893203fdf79fcd",
-  "generatedSha256": "bba692f4f186c39a3deef9def9a2dd5eb0710cb9ad3f72256d43bd0eed36cb32",
+  "policySha256": "607d9c19a6c3750d6f3f4ece8e1a2f9bc7675491ce512b5dde814b4776dc0e8d",
+  "decisionsSha256": "49d4df8c9b65caad67e730d8e26502af0d790202993441bd1f8b72c82f5de180",
+  "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+  "retainedProvenanceManifestSha256": "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257",
+  "generatedSha256": "03d3bee1e85b505843d4acee2ff2d040021d7986ff6112fd0959454061a0db23",
   "forbiddenTokenScan": {
-    "scannedPaths": 223,
-    "scannedFiles": 223,
+    "scannedPaths": 276,
+    "scannedFiles": 276,
     "matches": 0,
-    "canonicalRuntimeMatches": 37
+    "canonicalRuntimeMatches": 287
   }
 }

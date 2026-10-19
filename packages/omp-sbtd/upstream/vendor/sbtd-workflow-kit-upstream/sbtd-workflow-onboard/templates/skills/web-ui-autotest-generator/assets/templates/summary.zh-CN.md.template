@@ -1,8 +1,10 @@
-# Web UI 自动化测试报告
+# Web UI 覆盖率评估附录
 
-## 执行结论
+## 评估边界
 
-- 结论：{{resultStatus}}
+- 覆盖率评估结论：{{resultStatus}}
+- 测试执行状态：{{executionStatus}}（未执行时不得写通过；评分不代表运行结果）
+- 正式执行汇总：{{executionSummaryPath}}（已执行时指向按 project-validation 固定模板生成的同 stem 汇总）
 - 执行命令：`{{runCommand}}`
 - 执行时间：{{runTime}}
 - 基础地址：{{baseUrl}}

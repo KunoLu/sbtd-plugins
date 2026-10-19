@@ -1,4 +1,4 @@
-<!-- sbtd-plugins overlay: project-omp policy; version=p0-v3 -->
+<!-- sbtd-plugins overlay: project-omp policy; version=p0-v4 -->
 
 ## sbtd-plugins OMP Trellis Phase Routing
 

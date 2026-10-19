@@ -101,3 +101,30 @@
 - 根因：把“提交前本地验证状态”和“可发布的 PR revision attestation”视为同一生命周期阶段，没有把 Git commit 设为证据版本边界。
 - 修复：提交前只记录本地 evidence 状态和发布计划；创建最终提交后、发布或更新 PR Check 前，针对最终 PR head SHA 重新生成或复验，并更新 sidecar / envelope；旧 head 证据失效。CI evidence 同样要求 clean checkout、exact revision，并与 publication 状态分离。
 - 预防：凡证据声明精确 revision，工作流必须识别所有会改变 revision identity 的动作（commit、rebase、merge、amend），在这些动作之后设置 refresh / invalidation gate；执行成功不等于证据已发布。
+
+<!-- lessons:kuno:start -->
+## LESSON-20261014-kuno-fixed-execution-summary: Fixed Layout Preserves Evidence
+
+- 日期：2026-10-14
+- 标签：reports, markdown, evidence, templates, readability
+- 适用场景：Agent 编写正式执行汇总，或用户反馈升级后报告布局退化
+- 严重级别：medium
+- 来源：旧版分节报告与新版手写压缩汇总对比；原生结果保持不变
+- 问题：统计 JSON、源码与环境边界挤入长段落，关键范围/失败轮次只链接到另一私有文档，导致主报告难读且不自包含。
+- 根因：执行汇总只有内容清单，没有唯一固定布局；人工压缩改变了呈现，不是原生 reporter 的格式回归。覆盖率评估模板不能替代实际运行报告。
+- 修复：执行汇总统一采用 project-validation 的固定章节、统计及逐例结果表；覆盖率作附录，写前加载模板，生成后核对原生事实、占位符、同 stem 与隐私。
+- 预防：先区分原生报告、Agent 汇总和静态覆盖率，再定位真正生产者。不可把缺失统计填零、排版当测试通过或刷新旧证据身份；历史报告不改写，重新排版另存并明确未重跑。
+
+## LESSON-20261014-kuno-coverage-is-not-behavior: Coverage Overlap Is Not Behavioral Redundancy
+
+- 日期：2026-10-14
+- 标签：coverage, ci, deduplication, evidence, native
+- 适用场景：基于逐例覆盖缩减多平台CI，或将集合覆盖算法输出当作删除授权
+- 严重级别：high
+- 来源：原生Windows逐例覆盖诊断与独立消费者断言审查
+- 问题：覆盖重叠可筛出大量可从行/分支并集中去掉的用例，但其中绝大多数分别验证权限、路径、编码、状态或漂移边界。
+- 根因：执行相同代码行/分支不代表输入与断言相同；同进程覆盖还看不到子进程、复制的运行包和原生API内部行为。
+- 修复：先固定native必需项和覆盖盲区，再展开fixture、核对消费者断言、输入与平台语义；每个排除候选绑定仍须实际通过的更强见证。具体清单由用户审阅，收益不足时可以保留全部用例。
+- 预防：拒绝以算法的最小覆盖集替代行为验收；计时分别报告case总量与墙钟，按准确SHA、原生skip事件及实际attempt保留全部证据。工具可调用性应实际检查，不能因一次调用方式不对就把必需独立审查判为不可用。
+
+<!-- lessons:kuno:end -->

@@ -110,7 +110,7 @@ trellis init -u your-name
 - 项目级 `AGENTS.md` 明确说明使用 Trellis
 
 如果 Trellis 可用：
-- 调用 `trellis-workflow` Skill。
+- 调用 `sbtd-task` Skill。
 - 遵循 .trellis/workflow.md。
 - 不手动跳过 Trellis 阶段。
 - 不绕过项目级 Trellis 规则。
@@ -311,7 +311,7 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 
 | Skill | 使用场景 | 调用时机 |
 |---|---|---|
-| `trellis-workflow` | Trellis 生命周期、任务产物、阶段检查 | 发现项目使用 Trellis 后 |
+| `sbtd-task` | SBTD 任务执行与续接、default/lite/strict 模式选择、任务记录与状态流转、跨会话恢复与交接 | 需要任务执行、记录或恢复时 |
 | `trellis-channel` | Trellis Channel / 多 Agent / 多模型协作、代码 review / 验证 preflight | 用户明确要求 Channel、worker、forum、thread、并行评审，或项目级高风险 review / validation gate 需要 Channel preflight 时 |
 | `project-validation` | 判断代码修改后的验证策略 | 修改代码后、执行验证前 |
 | `gherkin-bdd` | 用户可见行为的 BDD / Gherkin 场景、`.feature`、Given/When/Then 验收规格 | 新增 / 修改 UI、API、CLI、导出文件、通知、权限、错误、状态变化或外部集成可观察行为前 |

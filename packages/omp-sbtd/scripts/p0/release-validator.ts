@@ -5301,10 +5301,10 @@ export async function verifyEmbeddedKitReleaseIntegrity(
       "Regenerate the embedded OMP Distribution Projection and rebuild the tarball.",
     );
   }
-  // The canonical runtime payload is the one asset permitted to retain the
-  // legacy non-OMP Runtime identifier, so its digest binding is mandatory:
-  // an omitted or malformed declaration fails closed even when every other
-  // manifest binding is internally consistent.
+  // The canonical runtime entrypoint is part of the D14 exempt set permitted
+  // to retain legacy non-OMP Runtime identifiers, so its digest binding is
+  // mandatory: an omitted or malformed declaration fails closed even when
+  // every other manifest binding is internally consistent.
   const canonicalRuntimeDigest =
     manifest.assets[kitManifestCanonicalRuntimeAsset];
   if (
@@ -5482,12 +5482,17 @@ export function verifyPackedPackageContents(
 }
 
 export const OMP_DISTRIBUTION_FORBIDDEN_TOKEN = "codex";
-const canonicalOnboardRuntimeRelativePath =
-  "kit/onboard/runtime/scripts/onboard.py";
-const packedCanonicalOnboardRuntimePath = `package/${canonicalOnboardRuntimeRelativePath}`;
 const embeddedKitManifestRelativePath = "kit/manifest.json";
 const packedEmbeddedKitManifestPath = `package/${embeddedKitManifestRelativePath}`;
-const kitManifestCanonicalRuntimeAsset = "onboard/runtime/scripts/onboard.py";
+// The generated metadata files embed exempt-set path strings as JSON
+// keys/values; their payload scans mask exactly those exempt, token-bearing
+// path strings and scan the remainder.
+const embeddedKitProjectionReportRelativePath = "kit/projection-report.json";
+const packedKitProjectionReportPath = `package/${embeddedKitProjectionReportRelativePath}`;
+// The SPDX SBOM embeds kit asset paths as "./kit/..." fileName entries; the
+// same exempt-set masking applies (substring masking covers the prefix).
+const sbomRelativePath = "SBOM.spdx.json";
+const packedSbomPath = `package/${sbomRelativePath}`;
 // M2 portable capability layer: the root skills/** tree is the
 // digest-verified copy of the M1-certified Agent Plugin projection. Its
 // payloads are audit-certified rather than OMP-distribution-clean, so the
@@ -5495,23 +5500,64 @@ const kitManifestCanonicalRuntimeAsset = "onboard/runtime/scripts/onboard.py";
 const portableSkillsRootDirectory = "skills";
 const packedPortableSkillsPrefix = `package/${portableSkillsRootDirectory}/`;
 
-function isCanonicalOnboardRuntime(path: string): boolean {
-  return (
-    path === canonicalOnboardRuntimeRelativePath ||
-    path === packedCanonicalOnboardRuntimePath
-  );
+// p0-v4 (PRD D14): zero-leakage exemption path set — the canonical onboard
+// runtime package (`onboard/runtime/scripts/*.py`, `onboard/runtime/assets/*`
+// and the two schema JSON files), digest-bound to the embedded Kit manifest.
+// Must stay in lockstep with upstream/src/omp-projection.ts and
+// scripts/embed-kit.mjs, and must not grow beyond D14.
+const embeddedKitPrefix = "kit/";
+const packedKitPrefix = `package/${embeddedKitPrefix}`;
+const canonicalOnboardRuntimeScriptsPrefix = "onboard/runtime/scripts/";
+const canonicalOnboardRuntimeAssetsPrefix = "onboard/runtime/assets/";
+const canonicalOnboardRuntimeSchemaPaths: Readonly<Record<string, true>> = {
+  "onboard/runtime/onboard-contracts.schema.json": true,
+  "onboard/runtime/upgrade.schema.json": true,
+};
+// The onboard runtime entrypoint keeps a mandatory manifest digest binding:
+// it is the one asset whose presence the embedded Kit release integrity
+// check requires even before any token exemption is considered.
+const kitManifestCanonicalRuntimeAsset = `${canonicalOnboardRuntimeScriptsPrefix}onboard.py`;
+
+function isCanonicalOnboardRuntimePackagePath(assetPath: string): boolean {
+  if (canonicalOnboardRuntimeSchemaPaths[assetPath] === true) return true;
+  if (assetPath.startsWith(canonicalOnboardRuntimeScriptsPrefix)) {
+    const rest = assetPath.slice(canonicalOnboardRuntimeScriptsPrefix.length);
+    return rest.endsWith(".py") && !rest.includes("/");
+  }
+  if (assetPath.startsWith(canonicalOnboardRuntimeAssetsPrefix)) {
+    const rest = assetPath.slice(canonicalOnboardRuntimeAssetsPrefix.length);
+    return rest.length > 0 && !rest.includes("/");
+  }
+  return false;
 }
 
 /**
- * Reads the embedded Kit manifest's approved digest for the canonical
- * Onboard runtime asset. The leakage exemption below is content-bound: only
- * bytes matching this exact digest may retain the legacy identifier. Any
- * unreadable, malformed, or unbound manifest yields no approved digest, so
- * the canonical path payload is then scanned like any other file.
+ * Maps a scanned distribution path (`kit/...` in the packed plugin tree or
+ * `package/kit/...` in the tarball) to its Kit manifest asset path when it
+ * belongs to the D14 canonical onboard runtime package set.
  */
-function approvedCanonicalRuntimeDigest(
+function canonicalOnboardRuntimeAssetPath(path: string): string | undefined {
+  const assetPath = path.startsWith(packedKitPrefix)
+    ? path.slice(packedKitPrefix.length)
+    : path.startsWith(embeddedKitPrefix)
+      ? path.slice(embeddedKitPrefix.length)
+      : undefined;
+  if (assetPath === undefined) return undefined;
+  return isCanonicalOnboardRuntimePackagePath(assetPath)
+    ? assetPath
+    : undefined;
+}
+
+/**
+ * Reads the embedded Kit manifest's declared asset digests. The leakage
+ * exemption below is content-bound: only bytes matching the manifest-declared
+ * digest for their exact path may retain the legacy identifier. Any
+ * unreadable or malformed manifest yields no approved digests, so exempt-set
+ * payloads are then scanned like any other file.
+ */
+function approvedCanonicalRuntimeAssets(
   manifestBytes: Uint8Array | undefined,
-): string | undefined {
+): Readonly<Record<string, unknown>> | undefined {
   if (manifestBytes === undefined) return undefined;
   try {
     const manifest: unknown = JSON.parse(
@@ -5524,19 +5570,41 @@ function approvedCanonicalRuntimeDigest(
     )
       return undefined;
     const assets = manifest.assets;
-    if (
-      typeof assets !== "object" ||
-      assets === null ||
-      !(kitManifestCanonicalRuntimeAsset in assets)
-    )
-      return undefined;
-    const declared = assets[kitManifestCanonicalRuntimeAsset];
-    if (typeof declared !== "string" || !/^[0-9a-f]{64}$/.test(declared))
-      return undefined;
-    return declared;
+    if (typeof assets !== "object" || assets === null) return undefined;
+    return assets as Readonly<Record<string, unknown>>;
   } catch {
     return undefined;
   }
+}
+
+function approvedCanonicalRuntimeDigest(
+  approvedAssets: Readonly<Record<string, unknown>> | undefined,
+  assetPath: string,
+): string | undefined {
+  const declared = approvedAssets?.[assetPath];
+  if (typeof declared !== "string" || !/^[0-9a-f]{64}$/.test(declared))
+    return undefined;
+  return declared;
+}
+
+/**
+ * Masks exact occurrences of exempt, token-bearing D14-set path strings in a
+ * generated metadata payload (Kit manifest / projection report), so the
+ * payload scan still catches any other occurrence. Mask paths derive from the
+ * manifest-declared asset keys only.
+ */
+function maskExemptPathStrings(
+  payload: Uint8Array,
+  approvedAssets: Readonly<Record<string, unknown>> | undefined,
+): Uint8Array {
+  let text = Buffer.from(payload).toString("utf8");
+  for (const assetPath of Object.keys(approvedAssets ?? {}))
+    if (
+      isCanonicalOnboardRuntimePackagePath(assetPath) &&
+      assetPath.toLowerCase().includes(OMP_DISTRIBUTION_FORBIDDEN_TOKEN)
+    )
+      text = text.split(assetPath).join("");
+  return new TextEncoder().encode(text);
 }
 
 async function readOptionalEmbeddedKitManifest(
@@ -5601,7 +5669,7 @@ async function scanOmpDistributionEntry(
   relativePath: string,
   files: P0FileSystem,
   leaks: OmpDistributionLeak[],
-  approvedRuntimeDigest: string | undefined,
+  approvedRuntimeAssets: Readonly<Record<string, unknown>> | undefined,
   portableSkillsLayer: boolean,
 ): Promise<void> {
   const absolutePath = relativePath === "" ? root : join(root, relativePath);
@@ -5636,7 +5704,7 @@ async function scanOmpDistributionEntry(
         entryRelative,
         files,
         leaks,
-        approvedRuntimeDigest,
+        approvedRuntimeAssets,
         entryPortableLayer,
       );
       continue;
@@ -5645,16 +5713,36 @@ async function scanOmpDistributionEntry(
       files.readBytes !== undefined
         ? await files.readBytes(entryAbsolute)
         : new TextEncoder().encode(await files.readText(entryAbsolute));
+    const runtimeAssetPath = canonicalOnboardRuntimeAssetPath(entryRelative);
+    const approvedRuntimeDigest =
+      runtimeAssetPath === undefined
+        ? undefined
+        : approvedCanonicalRuntimeDigest(
+            approvedRuntimeAssets,
+            runtimeAssetPath,
+          );
     const exemptApprovedCanonicalRuntime =
       approvedRuntimeDigest !== undefined &&
-      isCanonicalOnboardRuntime(entryRelative) &&
       digest(payload) === approvedRuntimeDigest;
+    const isKitMetadata =
+      entryRelative === embeddedKitManifestRelativePath ||
+      entryRelative === embeddedKitProjectionReportRelativePath ||
+      entryRelative === sbomRelativePath;
+    const scannedPayload = isKitMetadata
+      ? maskExemptPathStrings(payload, approvedRuntimeAssets)
+      : payload;
     const payloadMatches =
       exemptApprovedCanonicalRuntime || entryPortableLayer
         ? 0
-        : countCaseInsensitiveTokenOccurrences(payload);
-    if (pathMatches > 0 || payloadMatches > 0)
-      leaks.push({ path: entryRelative, pathMatches, payloadMatches });
+        : countCaseInsensitiveTokenOccurrences(scannedPayload);
+    const exemptPath =
+      pathMatches > 0 && exemptApprovedCanonicalRuntime ? 0 : pathMatches;
+    if (exemptPath > 0 || payloadMatches > 0)
+      leaks.push({
+        path: entryRelative,
+        pathMatches: exemptPath,
+        payloadMatches,
+      });
   }
 }
 
@@ -5663,7 +5751,7 @@ export async function scanOmpDistributionLeaks(
   options?: { readonly files?: P0FileSystem },
 ): Promise<readonly OmpDistributionLeak[]> {
   const files = options?.files ?? createNodeFileSystem();
-  const approvedRuntimeDigest = approvedCanonicalRuntimeDigest(
+  const approvedRuntimeAssets = approvedCanonicalRuntimeAssets(
     await readOptionalEmbeddedKitManifest(root, files),
   );
   const leaks: OmpDistributionLeak[] = [];
@@ -5672,7 +5760,7 @@ export async function scanOmpDistributionLeaks(
     "",
     files,
     leaks,
-    approvedRuntimeDigest,
+    approvedRuntimeAssets,
     false,
   );
   return leaks.sort((left, right) => left.path.localeCompare(right.path));
@@ -5819,10 +5907,10 @@ function parsePaxExtendedPath(payload: Uint8Array): string | undefined {
  * trusting extraction semantics. Every member name is validated, duplicate or
  * ambiguous names are rejected, non-regular members are refused, and every raw
  * regular payload is scanned for the forbidden non-OMP Runtime token. The
- * canonical Onboard runtime member is exempt from the payload scan only when
- * its bytes exactly match the digest the embedded Kit manifest declares for
- * it. The result exposes only relative paths, counts, and digests - never
- * payloads.
+ * canonical onboard runtime package members (D14 set) are exempt from the
+ * path/payload scan only when their bytes exactly match the digest the
+ * embedded Kit manifest declares for their path. The result exposes only
+ * relative paths, counts, and digests - never payloads.
  */
 export function inspectPackedPluginTarball(
   bytes: Uint8Array,
@@ -5839,7 +5927,21 @@ export function inspectPackedPluginTarball(
   const leaks: OmpDistributionLeak[] = [];
   const seen = new Set<string>();
   let kitManifestPayload: Buffer | undefined;
-  let canonicalRuntimePayload: Buffer | undefined;
+  let kitProjectionReportPayload: Buffer | undefined;
+  let sbomPayload: Buffer | undefined;
+  // Exempt-set members (D14 canonical onboard runtime package paths) whose
+  // path or payload carries the forbidden token: binding to the
+  // manifest-declared digest is resolved after every member is parsed,
+  // independent of member order.
+  const pendingRuntimeExemptions = new Map<
+    string,
+    {
+      readonly assetPath: string;
+      readonly pathMatches: number;
+      readonly payloadMatches: number;
+      readonly payloadDigest: string;
+    }
+  >();
   let pendingName: string | undefined;
   let offset = 0;
   while (true) {
@@ -5901,9 +6003,16 @@ export function inspectPackedPluginTarball(
       name,
       OMP_DISTRIBUTION_FORBIDDEN_TOKEN,
     );
-    const payloadMatches =
+    const runtimeAssetPath = isDirectory
+      ? undefined
+      : canonicalOnboardRuntimeAssetPath(name);
+    const isKitMetadataMember =
+      name === packedEmbeddedKitManifestPath ||
+      name === packedKitProjectionReportPath ||
+      name === packedSbomPath;
+    const countedPayloadMatches =
       isDirectory ||
-      isCanonicalOnboardRuntime(name) ||
+      isKitMetadataMember ||
       name.startsWith(packedPortableSkillsPrefix)
         ? 0
         : countCaseInsensitiveTokenOccurrences(payload);
@@ -5914,8 +6023,12 @@ export function inspectPackedPluginTarball(
       );
     seen.add(name);
     if (basename.startsWith("._")) {
-      if (pathMatches > 0 || payloadMatches > 0)
-        leaks.push({ path: name, pathMatches, payloadMatches });
+      if (pathMatches > 0 || countedPayloadMatches > 0)
+        leaks.push({
+          path: name,
+          pathMatches,
+          payloadMatches: countedPayloadMatches,
+        });
       continue;
     }
     if (name !== "package" && !name.startsWith("package/"))
@@ -5925,18 +6038,35 @@ export function inspectPackedPluginTarball(
       );
 
     if (!isDirectory) {
-      // Retain the raw manifest and canonical runtime payloads so the leak
-      // exemption can be bound to the manifest's declared digest after every
-      // member is parsed, independent of member order.
+      // Retain the raw metadata payloads so the leak scan can be bound to the
+      // manifest's declared digests after every member is parsed, independent
+      // of member order.
       if (name === packedEmbeddedKitManifestPath) kitManifestPayload = payload;
-      else if (name === packedCanonicalOnboardRuntimePath)
-        canonicalRuntimePayload = payload;
+      else if (name === packedKitProjectionReportPath)
+        kitProjectionReportPayload = payload;
+      else if (name === packedSbomPath) sbomPayload = payload;
     }
 
     const mode = parseTarOctal(header.subarray(100, 108), "mode");
     const sha256 = isDirectory ? undefined : digest(payload);
-    if (pathMatches > 0 || payloadMatches > 0)
-      leaks.push({ path: name, pathMatches, payloadMatches });
+    if (
+      runtimeAssetPath !== undefined &&
+      sha256 !== undefined &&
+      (pathMatches > 0 || countedPayloadMatches > 0)
+    ) {
+      pendingRuntimeExemptions.set(name, {
+        assetPath: runtimeAssetPath,
+        pathMatches,
+        payloadMatches: countedPayloadMatches,
+        payloadDigest: sha256,
+      });
+    } else if (pathMatches > 0 || countedPayloadMatches > 0) {
+      leaks.push({
+        path: name,
+        pathMatches,
+        payloadMatches: countedPayloadMatches,
+      });
+    }
     members.push({
       path: name,
       kind: isDirectory ? "directory" : "file",
@@ -5949,24 +6079,42 @@ export function inspectPackedPluginTarball(
       throw candidateTarballInvalid(
         "Candidate tarball contains trailing data after the archive end.",
       );
-  // The canonical runtime member keeps its exemption only while its bytes
-  // exactly match the digest the embedded Kit manifest declares; a missing,
-  // unbound, or drifted payload is scanned like any other member.
-  const approvedRuntimeDigest =
-    approvedCanonicalRuntimeDigest(kitManifestPayload);
-  if (
-    canonicalRuntimePayload !== undefined &&
-    (approvedRuntimeDigest === undefined ||
-      digest(canonicalRuntimePayload) !== approvedRuntimeDigest)
-  ) {
-    const payloadMatches = countCaseInsensitiveTokenOccurrences(
-      canonicalRuntimePayload,
+  // An exempt-set member keeps its exemption only while its bytes exactly
+  // match the digest the embedded Kit manifest declares for its path; a
+  // missing, unbound, or drifted payload is scanned like any other member.
+  const approvedRuntimeAssets =
+    approvedCanonicalRuntimeAssets(kitManifestPayload);
+  for (const [memberName, pending] of pendingRuntimeExemptions) {
+    const approvedDigest = approvedCanonicalRuntimeDigest(
+      approvedRuntimeAssets,
+      pending.assetPath,
     );
-    if (payloadMatches > 0)
+    if (
+      approvedDigest === undefined ||
+      pending.payloadDigest !== approvedDigest
+    )
       leaks.push({
-        path: packedCanonicalOnboardRuntimePath,
+        path: memberName,
+        pathMatches: pending.pathMatches,
+        payloadMatches: pending.payloadMatches,
+      });
+  }
+  // Deferred metadata members: mask exact exempt-set path strings derived
+  // from the manifest-declared asset keys, then scan the remainder.
+  for (const [memberName, metadataPayload] of [
+    [packedEmbeddedKitManifestPath, kitManifestPayload],
+    [packedKitProjectionReportPath, kitProjectionReportPayload],
+    [packedSbomPath, sbomPayload],
+  ] as const) {
+    if (metadataPayload === undefined) continue;
+    const metadataMatches = countCaseInsensitiveTokenOccurrences(
+      maskExemptPathStrings(metadataPayload, approvedRuntimeAssets),
+    );
+    if (metadataMatches > 0)
+      leaks.push({
+        path: memberName,
         pathMatches: 0,
-        payloadMatches,
+        payloadMatches: metadataMatches,
       });
   }
   return {

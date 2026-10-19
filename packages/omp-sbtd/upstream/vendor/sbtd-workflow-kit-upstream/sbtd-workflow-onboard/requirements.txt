@@ -1,0 +1,5 @@
+jsonschema>=4.20,<5
+PyYAML>=6.0.3,<7
+markdown-it-py>=4,<5
+tomlkit>=0.13.2,<1
+cryptography>=43,<50
