@@ -9,11 +9,18 @@ Feature: 严格 OMP Plugin 发布视图
     Scenario: 发布候选的路径和内容满足严格零 Codex
       Given 发布负责人已经构建新的 "@kunolu/omp-sbtd" tarball
       When 发布校验器以大小写不敏感方式检查 tarball 内每个路径和文件内容
-      Then 检查结果中 "codex" 匹配数为 0
+      Then 除 digest 绑定的 canonical onboard runtime 包路径集（p0-v4 / D14）外，检查结果中 "codex" 匹配数为 0
       And 通过检查的 tarball 才能成为发布候选
+
+    Scenario: 门禁豁免只覆盖 digest 绑定的 canonical runtime 包路径集
+      Given p0-v4 门禁豁免路径集为 "onboard/runtime/scripts/*.py"、"onboard/runtime/assets/*" 与两个 schema json
+      When 豁免路径的文件字节与 canonical manifest 声明的 digest 漂移，或集合外路径携带 "codex"
+      Then projection 与发布校验均失败关闭并定位违规路径
+      And digest 绑定的豁免路径内容保持与上游逐字节一致
 
     Scenario: 非 OMP 内容使发布候选失败关闭
       Given 一个 Plugin tarball 的任一路径或文件内容包含非 OMP Runtime 标识 "codex"
+      And 该路径不在 digest 绑定的 canonical onboard runtime 包路径集内
       When 发布校验器检查实际 tarball
       Then 包检查结果为 "failed"
       And 报告定位违规路径但不输出敏感文件内容

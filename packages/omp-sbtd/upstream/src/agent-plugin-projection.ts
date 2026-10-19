@@ -61,14 +61,6 @@ interface CandidateDefinition {
 
 const CANDIDATES = [
   {
-    name: "trellis-workflow",
-    category: "workflow",
-    allowedTools: "read grep glob bash",
-    compatibility:
-      "Requires Trellis CLI and a repository with .trellis workflow assets.",
-    runtimeDependencies: ["Trellis CLI", ".trellis workflow assets"],
-  },
-  {
     name: "project-validation",
     category: "validation",
     allowedTools: "read grep glob bash",

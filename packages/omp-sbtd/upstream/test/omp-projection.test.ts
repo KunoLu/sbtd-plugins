@@ -178,7 +178,7 @@ async function syntheticFixture(options: {
     canonicalSourceUri: "https://example.invalid/upstream.git",
     resolvedRevision: FIXTURE_REVISION,
     sourceTreeSha256: "b".repeat(64),
-    transformVersion: "p0-v3",
+    transformVersion: "p0-v4",
     overlayDigests: {},
     generatedSha256: "c".repeat(64),
     targets: {},
@@ -635,6 +635,116 @@ describe("OMP Distribution Projection", () => {
       join(bound.outputDirectory, "onboard/runtime/scripts/onboard.py"),
     );
     expect(projected.equals(Buffer.from(canonicalBytes, "utf8"))).toBe(true);
+  });
+
+  it("Scenario: 门禁豁免只覆盖 digest 绑定的 canonical runtime 包路径集", async () => {
+    // p0-v4 (PRD D14): set members carrying the forbidden token pass while
+    // their bytes match the canonical manifest digest for their exact path.
+    const wiringBytes = "# codex host wiring\n";
+    const assetBytes = "codex instructions\n";
+    const schemaBytes = '{"title":"codex schema"}\n';
+    const bound = await syntheticFixture({
+      extraAssets: {
+        "onboard/runtime/scripts/sbtd_codex_wiring.py": wiringBytes,
+        "onboard/runtime/assets/graft-instructions.txt": assetBytes,
+        "onboard/runtime/onboard-contracts.schema.json": schemaBytes,
+      },
+      extraDecisions: [
+        {
+          path: "onboard/runtime/scripts/sbtd_codex_wiring.py",
+          policy: "include",
+        },
+        {
+          path: "onboard/runtime/assets/graft-instructions.txt",
+          policy: "include",
+        },
+        {
+          path: "onboard/runtime/onboard-contracts.schema.json",
+          policy: "include",
+        },
+      ],
+    });
+    const { manifest, report } = await generateOmpProjection({
+      packageRoot: bound.kitRoot,
+      canonicalDirectory: bound.canonicalDirectory,
+      outputDirectory: bound.outputDirectory,
+    });
+    expect(report.forbiddenTokenScan.matches).toBe(0);
+    expect(report.forbiddenTokenScan.canonicalRuntimeMatches).toBeGreaterThan(
+      0,
+    );
+    expect(
+      manifest.assets["onboard/runtime/scripts/sbtd_codex_wiring.py"],
+    ).toBe(createHash("sha256").update(wiringBytes).digest("hex"));
+    const projected = await readFile(
+      join(
+        bound.outputDirectory,
+        "onboard/runtime/scripts/sbtd_codex_wiring.py",
+      ),
+    );
+    expect(projected.toString("utf8")).toBe(wiringBytes);
+
+    // An overlay whose bytes drift from the canonical binding loses the
+    // exemption on an exempt-set path — both path and payload are reported.
+    const drifted = await syntheticFixture({
+      extraAssets: { "onboard/runtime/scripts/sbtd_codex_wiring.py": wiringBytes },
+      extraDecisions: [
+        {
+          path: "onboard/runtime/scripts/sbtd_codex_wiring.py",
+          policy: "replace-with-overlay",
+          overlay: "onboard/runtime/scripts/sbtd_codex_wiring.py",
+          reason: "test exempt-set overlay drift",
+        },
+      ],
+      overlays: {
+        "onboard/runtime/scripts/sbtd_codex_wiring.py": `${wiringBytes}# drift\n`,
+      },
+    });
+    const driftError = await expectKitError(
+      () =>
+        generateOmpProjection({
+          packageRoot: drifted.kitRoot,
+          canonicalDirectory: drifted.canonicalDirectory,
+          outputDirectory: drifted.outputDirectory,
+        }),
+      "PROJECTION_FORBIDDEN_TOKEN",
+    );
+    expect(driftError.details).toMatchObject({
+      pathViolations: ["onboard/runtime/scripts/sbtd_codex_wiring.py"],
+      payloadViolations: ["onboard/runtime/scripts/sbtd_codex_wiring.py"],
+    });
+
+    // Paths outside the D14 set stay fail-closed: a nested script path is not
+    // covered by `scripts/*.py`, and template trees are never exempt.
+    const outside = await syntheticFixture({
+      extraAssets: {
+        "onboard/runtime/scripts/nested/inner.py": "# codex\n",
+        "onboard/runtime/templates/skills/x/SKILL.md": "codex\n",
+      },
+      extraDecisions: [
+        { path: "onboard/runtime/scripts/nested/inner.py", policy: "include" },
+        {
+          path: "onboard/runtime/templates/skills/x/SKILL.md",
+          policy: "include",
+        },
+      ],
+    });
+    const outsideError = await expectKitError(
+      () =>
+        generateOmpProjection({
+          packageRoot: outside.kitRoot,
+          canonicalDirectory: outside.canonicalDirectory,
+          outputDirectory: outside.outputDirectory,
+        }),
+      "PROJECTION_FORBIDDEN_TOKEN",
+    );
+    expect(outsideError.details).toMatchObject({
+      pathViolations: [],
+      payloadViolations: [
+        "onboard/runtime/scripts/nested/inner.py",
+        "onboard/runtime/templates/skills/x/SKILL.md",
+      ],
+    });
   });
 
   it("Scenario: derived retained provenance 只包含保留的 stable 仓库与 Skill", async () => {

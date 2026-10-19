@@ -274,11 +274,29 @@ function projectionError(
   return new KitError(code, message, details);
 }
 
-const canonicalOnboardRuntimeRelativePath =
-  "onboard/runtime/scripts/onboard.py";
+// p0-v4 (PRD D14): the zero-leakage exemption covers the canonical onboard
+// runtime package path set — `onboard/runtime/scripts/*.py`,
+// `onboard/runtime/assets/*`, and the two schema JSON files shipping with
+// that runtime. The set must not grow beyond D14. Membership follows glob
+// semantics: a single path segment below the listed prefix.
+const canonicalOnboardRuntimeScriptsPrefix = "onboard/runtime/scripts/";
+const canonicalOnboardRuntimeAssetsPrefix = "onboard/runtime/assets/";
+const canonicalOnboardRuntimeSchemaPaths: Readonly<Record<string, true>> = {
+  "onboard/runtime/onboard-contracts.schema.json": true,
+  "onboard/runtime/upgrade.schema.json": true,
+};
 
-function isCanonicalOnboardRuntime(path: string): boolean {
-  return path === canonicalOnboardRuntimeRelativePath;
+function isCanonicalOnboardRuntimePackagePath(path: string): boolean {
+  if (canonicalOnboardRuntimeSchemaPaths[path] === true) return true;
+  if (path.startsWith(canonicalOnboardRuntimeScriptsPrefix)) {
+    const rest = path.slice(canonicalOnboardRuntimeScriptsPrefix.length);
+    return rest.endsWith(".py") && !rest.includes("/");
+  }
+  if (path.startsWith(canonicalOnboardRuntimeAssetsPrefix)) {
+    const rest = path.slice(canonicalOnboardRuntimeAssetsPrefix.length);
+    return rest.length > 0 && !rest.includes("/");
+  }
+  return false;
 }
 
 function containsForbiddenToken(bytes: Uint8Array): boolean {
@@ -868,9 +886,12 @@ async function writeSnapshot(
     assets: assetDigests,
     retainedProvenance,
   });
-  const canonicalRuntimeMatches = countForbiddenTokenOccurrences(
-    retainedAssets.get(canonicalOnboardRuntimeRelativePath) ?? Buffer.alloc(0),
-  );
+  const canonicalRuntimeMatches = [...retainedAssets.entries()]
+    .filter(([path]) => isCanonicalOnboardRuntimePackagePath(path))
+    .reduce(
+      (total, [, content]) => total + countForbiddenTokenOccurrences(content),
+      0,
+    );
   const report: OmpProjectionReport = {
     schemaVersion: 1,
     runtime: "omp",
@@ -903,14 +924,13 @@ async function writeSnapshot(
   );
 
   // Strict zero-leakage gate over every emitted path and payload, except the
-  // canonical runtime whose counted legacy identifier is required for its
-  // constrained OMP adapter contract. The exemption is content-bound: it
-  // applies only when the retained bytes exactly match the digest the
-  // canonical manifest declares for that path, so an overlay or drifted
-  // payload cannot smuggle additional forbidden content under it. Diagnostics
-  // expose only relative paths and counts, never payload content.
-  const approvedCanonicalRuntimeDigest =
-    canonicalManifest.assets[canonicalOnboardRuntimeRelativePath];
+  // canonical onboard runtime package path set (p0-v4, PRD D14) whose counted
+  // legacy identifiers are required for its constrained OMP adapter contract.
+  // The exemption is content-bound: it applies only when the retained bytes
+  // exactly match the digest the canonical manifest declares for that path,
+  // so an overlay or drifted payload cannot smuggle additional forbidden
+  // content under it. Diagnostics expose only relative paths and counts,
+  // never payload content.
   const outputFiles: readonly (readonly [string, Buffer])[] = [
     ...[...retainedAssets.entries()].map(
       ([path, content]) => [path, content] as const,
@@ -918,18 +938,45 @@ async function writeSnapshot(
     ["manifest.json", manifestBytes] as const,
     [OMP_PROJECTION_REPORT_PATH, reportBytes] as const,
   ];
+  const isApprovedCanonicalRuntime = (path: string, content: Buffer) => {
+    if (!isCanonicalOnboardRuntimePackagePath(path)) return false;
+    const approvedDigest = canonicalManifest.assets[path];
+    return approvedDigest !== undefined && sha256(content) === approvedDigest;
+  };
+  // The generated metadata files embed exempt-set path strings as JSON
+  // keys/values (asset digests, decisions, overlay digests). Those
+  // occurrences are gated by the path scan above and by the content-bound
+  // exemption, so the payload scan masks exactly the exempt, token-bearing
+  // path strings and scans the remainder — any other occurrence (for example
+  // a token smuggled through a map-authored reason string) is still caught.
+  const exemptTokenPaths = [...retainedAssets.keys()].filter(
+    (path) =>
+      isCanonicalOnboardRuntimePackagePath(path) &&
+      containsForbiddenToken(Buffer.from(path, "utf8")),
+  );
+  const maskExemptPathStrings = (content: Buffer): Buffer => {
+    let text = content.toString("utf8");
+    for (const path of exemptTokenPaths) text = text.split(path).join("");
+    return Buffer.from(text, "utf8");
+  };
   const pathViolations = outputFiles
+    .filter(
+      ([path, content]) =>
+        containsForbiddenToken(Buffer.from(path, "utf8")) &&
+        !isApprovedCanonicalRuntime(path, content),
+    )
     .map(([path]) => path)
-    .filter((path) => containsForbiddenToken(Buffer.from(path, "utf8")))
     .sort();
   const payloadViolations = outputFiles
     .filter(([path, content]) => {
-      if (!containsForbiddenToken(content)) return false;
-      const approvedCanonicalRuntime =
-        isCanonicalOnboardRuntime(path) &&
-        approvedCanonicalRuntimeDigest !== undefined &&
-        sha256(content) === approvedCanonicalRuntimeDigest;
-      return !approvedCanonicalRuntime;
+      const scanned =
+        path === "manifest.json" || path === OMP_PROJECTION_REPORT_PATH
+          ? maskExemptPathStrings(content)
+          : content;
+      return (
+        containsForbiddenToken(scanned) &&
+        !isApprovedCanonicalRuntime(path, content)
+      );
     })
     .map(([path]) => path)
     .sort();

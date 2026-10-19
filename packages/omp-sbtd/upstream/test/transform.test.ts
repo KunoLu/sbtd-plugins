@@ -312,8 +312,8 @@ describe("Feature: Agent Plugin 可移植 Skill 投影", () => {
       outputDirectory,
     });
 
-    expect(result.audit.candidateCount).toBe(13);
-    expect(result.audit.results).toHaveLength(13);
+    expect(result.audit.candidateCount).toBe(12);
+    expect(result.audit.results).toHaveLength(12);
     expect(result.audit.results).toContainEqual(
       expect.objectContaining({
         name: "project-validation",
@@ -328,25 +328,10 @@ describe("Feature: Agent Plugin 可移植 Skill 投影", () => {
         }),
       }),
     );
-    expect(result.audit.results).toContainEqual(
-      expect.objectContaining({
-        name: "trellis-workflow",
-        disposition: "onboard-owned",
-      }),
-    );
-    expect(result.catalog.candidateCount).toBe(13);
+    expect(result.catalog.candidateCount).toBe(12);
     expect(result.catalog.certifiedCount).toBe(result.audit.certifiedCount);
-    expect(result.catalog.entries).toContainEqual(
-      expect.objectContaining({
-        name: "trellis-workflow",
-        certification: expect.objectContaining({
-          disposition: "onboard-owned",
-          projectionSha256: null,
-        }),
-      }),
-    );
   });
-  it("Scenario: 审计失败的 Skill 不进入投影", async () => {
+  it("Scenario: 上游已删除的 Skill 不进入候选集合", async () => {
     const root = await fixture();
     const canonicalDirectory = join(root, "generated");
     const outputDirectory = join(root, "generated-agent-plugin");
@@ -364,6 +349,11 @@ describe("Feature: Agent Plugin 可移植 Skill 投影", () => {
       ({ disposition }) => disposition === "certified",
     );
     expect(result.audit.certifiedCount).toBe(certified.length);
+    // p0-v4 (PRD D14): trellis-workflow was deleted upstream in v2.0.2 and is
+    // no longer an audit candidate.
+    expect(
+      result.audit.results.some(({ name }) => name === "trellis-workflow"),
+    ).toBe(false);
     expect(result.manifest.certified).not.toContain("trellis-workflow");
     await expect(
       readFile(join(outputDirectory, "skills", "trellis-workflow", "SKILL.md")),
@@ -1017,7 +1007,7 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       "vendor/sbtd-workflow-kit-upstream/CHANGELOG.md",
     );
     expect(plan.planDigest).toBe(repeatedPlan.planDigest);
-    expect(plan.agentPluginProjection.candidateCount).toBe(13);
+    expect(plan.agentPluginProjection.candidateCount).toBe(12);
     expect(plan.agentPluginProjection.certifiedCount).toBeGreaterThan(0);
     expect(
       plan.changedInputPaths.some((path) =>

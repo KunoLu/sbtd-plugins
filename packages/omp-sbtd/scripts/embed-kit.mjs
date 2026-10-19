@@ -43,8 +43,28 @@ async function listFiles(root, base = root) {
 const forbiddenToken = [0x63, 0x6f, 0x64, 0x65, 0x78];
 const canonicalOnboardRuntimePath = "onboard/runtime/scripts/onboard.py";
 
-function isCanonicalOnboardRuntime(path) {
-  return path === canonicalOnboardRuntimePath;
+// p0-v4 (PRD D14): zero-leakage exemption path set — the canonical onboard
+// runtime package. Must stay in lockstep with
+// upstream/src/omp-projection.ts and scripts/p0/release-validator.ts, and
+// must not grow beyond D14.
+const canonicalOnboardRuntimeScriptsPrefix = "onboard/runtime/scripts/";
+const canonicalOnboardRuntimeAssetsPrefix = "onboard/runtime/assets/";
+const canonicalOnboardRuntimeSchemaPaths = {
+  "onboard/runtime/onboard-contracts.schema.json": true,
+  "onboard/runtime/upgrade.schema.json": true,
+};
+
+function isCanonicalOnboardRuntimePackagePath(path) {
+  if (canonicalOnboardRuntimeSchemaPaths[path] === true) return true;
+  if (path.startsWith(canonicalOnboardRuntimeScriptsPrefix)) {
+    const rest = path.slice(canonicalOnboardRuntimeScriptsPrefix.length);
+    return rest.endsWith(".py") && !rest.includes("/");
+  }
+  if (path.startsWith(canonicalOnboardRuntimeAssetsPrefix)) {
+    const rest = path.slice(canonicalOnboardRuntimeAssetsPrefix.length);
+    return rest.length > 0 && !rest.includes("/");
+  }
+  return false;
 }
 
 function containsForbiddenToken(value) {
@@ -188,15 +208,29 @@ export async function validateEmbeddedKit({
     await readFile(`${destination}/manifest.json`, "utf8"),
   );
   assertManifest(manifest);
-  // The canonical runtime payload is the only file allowed to carry legacy
-  // non-OMP Runtime identifiers, so its manifest digest binding is mandatory
-  // and verified before any exemption is granted.
+  // The canonical onboard runtime package paths (D14 set) are the only files
+  // allowed to carry legacy non-OMP Runtime identifiers, so their manifest
+  // digest binding is mandatory and verified before any exemption is granted.
   const canonicalRuntimeDigest = manifest.assets[canonicalOnboardRuntimePath];
   if (!hexDigest(canonicalRuntimeDigest, 64)) {
     throw new Error(
       "generated Kit manifest does not bind the canonical Onboard runtime asset digest",
     );
   }
+
+  // The generated metadata files (manifest.json, projection-report.json)
+  // embed exempt-set path strings as JSON keys/values; the payload scan masks
+  // exactly those exempt, token-bearing path strings and scans the remainder.
+  const exemptTokenPaths = Object.keys(manifest.assets).filter(
+    (path) =>
+      isCanonicalOnboardRuntimePackagePath(path) &&
+      containsForbiddenToken(Buffer.from(path, "utf8")),
+  );
+  const maskExemptPathStrings = (content) => {
+    let text = content.toString("utf8");
+    for (const path of exemptTokenPaths) text = text.split(path).join("");
+    return Buffer.from(text, "utf8");
+  };
 
   const leakingPaths = [];
   for (const path of sourceFiles) {
@@ -207,14 +241,20 @@ export async function validateEmbeddedKit({
     if (!expected.equals(actual)) {
       throw new Error(`embedded Kit differs from generated Kit: ${path}`);
     }
-    const approvedCanonicalRuntime =
-      isCanonicalOnboardRuntime(path) &&
-      sha256(actual) === canonicalRuntimeDigest;
-    if (
-      !approvedCanonicalRuntime &&
-      (path.toLowerCase().includes("codex") || containsForbiddenToken(actual))
-    )
-      leakingPaths.push(path);
+    const scanned =
+      path === "manifest.json" || path === "projection-report.json"
+        ? maskExemptPathStrings(actual)
+        : actual;
+    if (path.toLowerCase().includes("codex") || containsForbiddenToken(scanned)) {
+      const approvedDigest = isCanonicalOnboardRuntimePackagePath(path)
+        ? manifest.assets[path]
+        : undefined;
+      const exempt =
+        typeof approvedDigest === "string" &&
+        hexDigest(approvedDigest, 64) &&
+        sha256(actual) === approvedDigest;
+      if (!exempt) leakingPaths.push(path);
+    }
   }
   assertOmpDistributionClean(leakingPaths);
 
