@@ -41,6 +41,15 @@ const WORKSPACE_TOOLING_ROOT = fileURLToPath(
 const execFileAsync = promisify(execFile);
 const SOURCE_ROOT = "vendor/sbtd-workflow-kit-upstream";
 
+/**
+ * Single default for the Plugin root: the CLI layout is
+ * `<plugin>/upstream` as packageRoot, so the Plugin root is its parent.
+ * Used by every entry point so preflight and staging cannot disagree.
+ */
+export function defaultPluginRoot(packageRoot: string): string {
+  return join(packageRoot, "..");
+}
+
 type SyncMode = "plan" | "apply";
 type ReplacePath = (source: string, destination: string) => Promise<void>;
 
@@ -422,7 +431,7 @@ export async function promotionDirtyPreflight(
 ): Promise<DirtyPreflight> {
   const packageRoot = await realpath(resolve(options.packageRoot));
   const pluginRoot = await realpath(
-    resolve(options.pluginRoot ?? join(packageRoot, "..")),
+    resolve(options.pluginRoot ?? defaultPluginRoot(packageRoot)),
   );
   const repositoryRoot = await gitRepositoryRoot(packageRoot);
   const pluginRepositoryRoot = await gitRepositoryRoot(pluginRoot);
@@ -630,7 +639,7 @@ async function stageCandidate(
 ): Promise<Candidate> {
   const packageRoot = resolve(options.packageRoot);
   const pluginRoot = resolve(
-    options.pluginRoot ?? join(packageRoot, "../../packages/omp-sbtd"),
+    options.pluginRoot ?? defaultPluginRoot(packageRoot),
   );
   const sourceRoot = resolve(options.sourceRoot);
   const source = await verifySource(packageRoot, sourceRoot, options.revision);

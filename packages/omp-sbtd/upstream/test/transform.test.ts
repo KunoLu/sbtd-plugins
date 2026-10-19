@@ -41,7 +41,7 @@ const HEAD_MATTPOCOCK_REVISION = "6654f6b60cd9d5be8b54c6fafe44346dabeb3b76";
 const STABLE_MANIFEST_PATH =
   "sbtd-workflow-onboard/assets/external-skills/stable/MANIFEST.json";
 
-async function promotionFixture(): Promise<{
+async function promotionFixture(options?: { cliLayout?: boolean }): Promise<{
   root: string;
   kitRoot: string;
   pluginRoot: string;
@@ -50,8 +50,12 @@ async function promotionFixture(): Promise<{
 }> {
   const root = await mkdtemp(join(tmpdir(), "kpi-promotion-"));
   temporaryRoots.push(root);
-  const kitRoot = join(root, "kit");
   const pluginRoot = join(root, "plugin");
+  // CLI layout: packageRoot is `<plugin>/upstream`, so the default
+  // Plugin root is the parent of packageRoot.
+  const kitRoot = options?.cliLayout
+    ? join(pluginRoot, "upstream")
+    : join(root, "kit");
   const sourceRoot = join(root, "upstream");
   await Promise.all([
     mkdir(kitRoot, { recursive: true }),
@@ -214,7 +218,12 @@ async function promotionFixture(): Promise<{
     "test@kpi.invalid",
   ]);
   await execFileAsync("git", ["-C", root, "config", "user.name", "KPi Test"]);
-  await execFileAsync("git", ["-C", root, "add", "kit", "plugin"]);
+  await execFileAsync("git", [
+    "-C",
+    root,
+    "add",
+    ...(options?.cliLayout ? ["plugin"] : ["kit", "plugin"]),
+  ]);
   await execFileAsync("git", [
     "-C",
     root,
@@ -1022,6 +1031,31 @@ describe("Feature: 三目标 AGENTS 转换", () => {
       await promotionState(promotion.kitRoot, promotion.pluginRoot),
     ).toEqual(before);
   }, 30_000);
+  it("Scenario: sync-upstream 默认 Plugin root 解析为 packageRoot 的父目录", async () => {
+    const promotion = await promotionFixture({ cliLayout: true });
+    const before = await promotionState(
+      promotion.kitRoot,
+      promotion.pluginRoot,
+    );
+
+    // CLI path: kit-sync-upstream.mjs runs from `<plugin>/upstream` and
+    // passes no pluginRoot; both preflight and staging must resolve the
+    // same default.
+    const plan = await syncUpstream({
+      mode: "plan",
+      packageRoot: promotion.kitRoot,
+      sourceRoot: promotion.sourceRoot,
+      revision: promotion.revision,
+    });
+
+    expect(plan.status).toBe("planned");
+    expect(plan.resolvedRevision).toBe(promotion.revision);
+    expect(plan.stagedPluginValidated).toBe(true);
+    expect(
+      await promotionState(promotion.kitRoot, promotion.pluginRoot),
+    ).toEqual(before);
+  }, 30_000);
+
   it("Scenario: 上游提升必须携带完整第三树", async () => {
     const promotion = await promotionFixture();
     const before = await promotionState(

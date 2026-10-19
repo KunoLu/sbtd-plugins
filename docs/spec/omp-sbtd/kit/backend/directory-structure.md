@@ -8,7 +8,7 @@
 
 ```
 packages/omp-sbtd/upstream/
-├── package.json                # moved supply-chain metadata (name/version consumed by the SBOM digest)
+├── package.json                # moved supply-chain metadata (name/version kept as migration-preserved metadata, NOT part of the SBOM digest)
 ├── tsconfig.json               # extends ../../../tsconfig.base.json; includes ONLY src/**/*.ts (noEmit)
 ├── upstream.lock.json          # pinned upstream commit + tree sha256 + transformVersion (p0-v3)
 ├── agents-section-map.yaml     # schemaVersion 2; section→target classification (49 entries)
@@ -55,8 +55,10 @@ vendored tree (`vendor/sbtd-workflow-kit-upstream/docs/assets/omp-sbtd-upstream-
    calls the thin wrappers `packages/omp-sbtd/scripts/kit-*.mjs`, and the embed scripts read the
    committed `generated-omp/` / `generated-agent-plugin/` manifests directly.
    `omp-projection.ts` / `agent-plugin-projection.ts` / `sync-upstream.ts` export symbols for tests
-   only. The retained `package.json` is supply-chain metadata (name/version feed the SBOM source
-   tree digest), not a publishable manifest.
+   only. The retained `package.json` is supply-chain metadata kept as migration-preserved metadata;
+   its name/version are NOT part of the SBOM source-tree digest (per PRD R6 the digest input is
+   exactly `{ plugin: { name, version }, kit: { generatedSha256 }, files }`), and it is not a
+   publishable manifest.
 5. **Generated trees are committed artifacts.** `generated/`, `generated-omp/`,
    `generated-agent-plugin/`, and the package-root `LICENSE` / `THIRD_PARTY_NOTICES.md` (copied out
    of `generated/` by `upstream/src/generate.ts`) are build outputs checked into git. They are covered by
