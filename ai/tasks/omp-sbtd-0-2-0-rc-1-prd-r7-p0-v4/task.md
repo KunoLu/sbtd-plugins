@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4
 workflow_mode: strict
 mode_source: user
 mode_note: 用户 2026-10-19 ~20:31 +08:00 选定 option 2（团队投票 4× option 2）：先修 PRD，transformVersion 升 p0-v4；strict 沿用 PRD 规则「每个任务都用 strict」
-status: "in-progress"
+status: "done"
 branch: docs/omp-sbtd-0.2.0-rc.1-prd-r7-p0-v4
 created_at: '2026-10-19T20:34:00+08:00'
-updated_at: '2026-10-19T20:34:00+08:00'
-completed_at: null
+updated_at: '2026-10-19T20:42:38+08:00'
+completed_at: '2026-10-19T20:42:38+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 PRD R7：p0-v4 授权（PRD-only 修订）
 
@@ -59,13 +59,14 @@ completed_at: null
 
 ## 进度
 
-- [x] 任务记录落地 + index/active 接线
-- [ ] PRD R7 修订（§0/§2/§2.1/§3/§4/§5/§6）
-- [ ] 任务 0 task.md 状态事件
-- [ ] 本任务转 done
+- [x] 任务记录落地 + index/active 接线 — commit `2e9a8db`
+- [x] PRD R7 修订（§0/§2/§2.1/§3/§4/§5/§6）— commit `00ba4b1`
+- [x] 任务 0 task.md 状态事件 — commit `00ba4b1`
+- [x] 本任务转 done
 
 ## 状态事件
 
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 | 2026-10-19T20:34:00+08:00 | planned | in-progress | 用户选定 option 2（团队投票 4× option 2）：先修 PRD，行 B transformVersion 升 p0-v4，catalog 跟随 row B | 用户 2026-10-19 ~20:31 +08:00 指令；行 B blocked 记录（feat/omp-sbtd-0.2.0-rc.1-pr-b-sync-upstream tip f420cc4）CONTRACT-CHANGE-NEEDED 两墙实测 |
+| 2026-10-19T20:42:38+08:00 | in-progress | done | PRD R7 落地：D14 锁定（p0-v4 升版、门禁豁免扩为 digest 绑定 canonical onboard runtime 包路径集、CANDIDATES 删 trellis-workflow、overlay catalog 删 trellis 两项/增 sbtd-task 属行 B）；行 A 回填 done（#104 / f1bba41 / 17:13:57+08:00）；行 B 状态 in-progress（待 PRD 合并后解除 blocked）；任务 0 状态事件同步；diff 仅 docs/prd + ai/tasks（.sbtd/active-task.json 为 gitignored 本地接线，未入库） | commits `2e9a8db`（任务记录 + index）、`00ba4b1`（PRD R7 + 任务 0 事件）；`git status` 干净（除 gitignored .sbtd）；PRD 修订日志 R7 |
