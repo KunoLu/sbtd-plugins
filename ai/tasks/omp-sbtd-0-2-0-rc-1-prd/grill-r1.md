@@ -101,11 +101,11 @@ Round 1 已全部锁定（Asia/Shanghai）：Q6 A（用户 2026-10-19 11:39）�
 
 ## DDD draft（Round 1 已锁定，待独立复审）
 
-> 状态：draft，已反映 Round 1 锁定（PRD D7–D13）。grill Round 1 已全部锁定（用户 2026-10-19 11:39/11:43/11:44，Asia/Shanghai）；待按 book-ddd-distilled-modeling 输出独立 Boundary Review（Reviewy），经用户确认后才转 confirmed。
+> 状态：draft，已反映 Round 1 锁定（PRD D7–D13）。grill Round 1 已全部锁定（用户 2026-10-19 11:39/11:43/11:44，Asia/Shanghai）；Reviewy Boundary Review R1 findings 已于 2026-10-19 全部修复（行 A 字节级 CLEAN 例外精确化、omp 18 升级归行 C、D9/行 B 移除 requirements.txt、omp 宿主措辞），经用户确认后才转 confirmed。
 
 ### 限界上下文
 
-1. **omp 宿主**：拥有扩展加载（`omp.extensions`/`pi.extensions`）、peer 解析、工具/hooks 注册；版本范围是本插件的对外声明，不是本 RC 的适配对象。本 RC 声明范围按 D11 升为 `>=18 <19`（17.x 放弃；唯一实测点 18.11.1，真实宿主 smoke 为无退路硬门）。
+1. **omp 宿主**：拥有扩展加载（`omp.extensions`/`pi.extensions`）、peer 解析、工具/hooks 注册；版本范围是本插件的对外声明，适配 18.x 是行 C 的工作（peer 升 `>=18 <19`、devDep 钉 `18.11.1`、`pnpm-lock.yaml` 更新、按 18.11.1 API 重跑 typecheck 与全部测试、18.11.1 真实宿主 smoke 无退路硬门，行 A/B 不触碰）。本 RC 声明范围按 D11 升为 `>=18 <19`（17.x 放弃；唯一实测点 18.11.1）。
 2. **omp-sbtd 插件**：拥有运行时 zod 校验（`src/kit/manifest.ts`、`src/environment/accepted-skip.ts`）、onboard Python runtime、p0 验证脚本、嵌入 `kit/` 与 `skills/` 的只读消费；随包发布 `requirements.txt`，Python 依赖按 D8 fail-closed 预检（缺依赖即拒跑，不自动 pip install；验签缺 cryptography 拒跑）。
 3. **kit 投影管线**（迁移后并入 omp-sbtd）：拥有 sync-upstream、omp/agent-plugin projection、check-generated；唯一 writer 是生成管线，`kit/` 产物只读嵌入。
 4. **640-skills 上游供应链**：上游仓库拥有内容；`upstream.lock.json`（sourceId / resolvedRevision / transformVersion）与 distribution map（include/omit/replace-with-overlay）是供应链契约。
@@ -120,7 +120,7 @@ Round 1 已全部锁定（Asia/Shanghai）：Q6 A（用户 2026-10-19 11:39）�
 | 同步（sync） | 任务 B：上游钉 f8aa0d7（v1.0.13）→ 1d82494（v2.0.2），逐文件决定收录 | 迁移 |
 | sourceId | `sbtd-workflow-kit-upstream`，供应链身份，迁移与同步均不变 | 包名 `@kunolu/sbtd-workflow-kit`（被删除） |
 | distribution map 决策 | 逐文件 include/omit/replace-with-overlay + reason | 目录级规则（本 RC 不引入） |
-| CLEAN 门 | 嵌入 `kit/`、`skills/`、manifest 哈希、pack 清单与逐文件 sha256 对 `4f7388c` 构建完全一致 | 「测试绿」子集 |
+| CLEAN 门 | 嵌入 `kit/`、`skills/`、manifest 哈希、pack 清单与逐文件 sha256 对 `4f7388c` 构建完全一致；唯一例外为 package.json 恰好两处编辑（删 devDep `@kunolu/sbtd-workflow-kit`；`scripts.build` 仅把 kit check-generated 调用替换为插件包内新入口，peerDependencies/devDep omp 钉、`files`、`version` 不变）与根 `pnpm-lock.yaml` 的 kit workspace 包移除 | 「测试绿」子集 |
 | fail-closed 预检（D8） | 需要 5 依赖的入口执行前隔离预检；缺依赖即结构化拒跑（缺失清单 + 手动安装命令）；验签缺 cryptography 一律拒跑；可降级 skipped 的普通入口当前为无 | 自动 pip install / 静默 skipped |
 | README 切换链接（D7） | 钉 release tag 的绝对链接（`blob/omp-sbtd-v0.2.0-rc.1/...`），打 tag 后、publish 前点击核验；`README_zh.md` 不进 npm 包，files 与 p0 清单不变 | `blob/main` 漂移链接 / 进包改 files 与 p0 清单 |
 | 宿主 smoke 硬门（D11） | omp 18.11.1 真实宿主 smoke（插件加载、工具/hooks 注册、onboard 冒烟）PASS 是任务 C 验收项、任务 E 前置；失败修到通过 | 退回旧 peer range 的退路（不存在） |
