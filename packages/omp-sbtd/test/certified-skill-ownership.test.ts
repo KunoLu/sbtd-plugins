@@ -58,8 +58,7 @@ describe("Feature: Certified Skill 所有权切交（M3）", () => {
     );
     expect(bundled).toEqual([
       "skill:sbtd-workflow-onboard",
-      "skill:trellis-workflow",
-      "skill:trellis-channel",
+      "skill:sbtd-task",
     ]);
     expect(external).toHaveLength(12);
     expect(bundled.join("\n")).not.toContain("skill:project-validation");
