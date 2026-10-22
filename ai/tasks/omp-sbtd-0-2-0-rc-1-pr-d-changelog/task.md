@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-pr-d-changelog
 workflow_mode: strict
 mode_source: user
 mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-22 ~13:25 +08:00 批准执行行 D（双语 CHANGELOG）
-status: "in-progress"
+status: "done"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-d-changelog
 created_at: '2026-10-22T13:26:05+08:00'
-updated_at: '2026-10-22T13:42:59+08:00'
-completed_at: null
+updated_at: '2026-10-22T13:58:39+08:00'
+completed_at: '2026-10-22T13:58:39+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 D：双语 CHANGELOG
 
@@ -30,6 +30,7 @@ completed_at: null
 | 2026-10-22T13:34:18+08:00 | in-progress | in-progress | 恢复同一 strict 任务并执行 orchestrator 两项裁决：撤销 SBOM，只提交 EN/ZH/task；用户约 13:29 +08:00 选择 D11 option 1，保留 2026-10-19 锁定时的 18.12.2 快照原文 | 本轮用户转达裁决；git checkout -- packages/omp-sbtd/SBOM.spdx.json 已执行；后续单列 stale-SBOM 验证 |
 | 2026-10-22T13:42:59+08:00 | in-progress | in-progress | 本地文档交付与所需验证执行完毕，两项独立复核 CLEAN；stale package/full-suite 失败如实保留；按裁决仅三份文档提交，不声称 release-ready 或 TaskStore lifecycle 完成 | fresh p0 PASS/28 focused passed；stale p0 SBOM_MISMATCH/27 focused passed+1 failed；最终全量 883 passed+2 failed+3 skipped；本提交与下方证据 |
 | 2026-10-22T13:48:00+08:00 | in-progress | in-progress | Reviewy 裁决（PR #108）：重生成的 SBOM 必须纳入（生成值跟随 CHANGELOG.md，#107 先例），不纳入为 blocker；Lord 13:48 +08:00 批准直接纳入；取代 orchestrator 13:32 的撤销指令 | 本 commit；验证证据「SBOM 纳入复核」 |
+| 2026-10-22T13:58:39+08:00 | in-progress | done | PR #108 squash-merge 到 main；由行 R 首 commit 回填（PRD 任务表行 D done） | merge SHA `9f1ba036c4d461315ba42ad02ece8cc0475e904a`；`git show -s --format=%cI 9f1ba03` = 2026-10-22T13:58:39+08:00 |
 
 ## 决策
 

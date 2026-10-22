@@ -1,16 +1,20 @@
+<p align="center">
+  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README.md">EN</a>
+  ·
+  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README_zh.md">中文</a>
+</p>
+
 # @kunolu/omp-sbtd
 
 OMP-hosted SBTD workflow plugin for KPi. It provides `/sbtd` commands and a fixed, read-only SBTD Kit snapshot; it does not silently install global tools or modify a project during plugin installation.
 
 ## Requirements
 
-- Published `@kunolu/omp-sbtd@0.1.0-rc.12` requires exact
-  `@oh-my-pi/pi-coding-agent` **17.3.5**.
-- Published `@kunolu/omp-sbtd@0.1.0-rc.13` (`next`) declares peer
-  `>=17.3.5 <18`; OMP 18 is out of range. Installability is not
-  certification.
-
+- The `0.2.0-rc.1` target declares peer `@oh-my-pi/pi-coding-agent`
+  `>=18 <19`; the development dependency is pinned to **18.11.1**.
 - An authenticated OMP provider profile for commands that need a provider.
+
+> No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2
 
 Peer range only decides *installable*. Installation and npm publication do
 not certify host compatibility: `published`, `installable`, and `certified`
@@ -25,23 +29,21 @@ omp --version
 
 ## Install
 
-Pin the release version for a reproducible installation. The latest
-published RC is `0.1.0-rc.12`:
+This README describes the `@kunolu/omp-sbtd@0.2.0-rc.1` target. The commands
+below apply **after release-plan row E publishes it to `next`**. Registry
+snapshot on 2026-10-22, before that publication: `next=0.1.0-rc.14`,
+`latest=0.1.0-rc.2`. Row E leaves `latest` unchanged.
+
+Pin the exact RC for a reproducible installation; never use `@latest`:
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.1.0-rc.12
-```
-
-RC 版本始终显式安装；RC 发布不会使用 npm 的 `latest` tag：
-
-```bash
-omp plugin install @kunolu/omp-sbtd@0.1.0-rc.12
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
 ```
 
 OMP installs to user scope by default. To install only for the current project:
 
 ```bash
-omp plugin install --scope project @kunolu/omp-sbtd@0.1.0-rc.12
+omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.1
 ```
 
 Open a new OMP session after installation, then verify the plugin and command registry:
@@ -54,6 +56,37 @@ omp plugin doctor
 ```text
 /sbtd help
 ```
+
+## Embedded workflow
+
+The kit is pinned to **640-skills v2.0.2**
+(`1d82494d74f6df9bca7dccef2da409f87091883e`), with transform version
+`p0-v4`. Sync, projection, and generation live in this package; the former
+private kit workspace package was removed. Supply-chain source ID
+`sbtd-workflow-kit-upstream` is unchanged.
+
+The bundle includes all 33 upstream Python scripts, nine runtime assets,
+two schemas, and the eight-file `sbtd-task` template tree. Recognized
+dependency-requiring SBTD Python commands, including upgrade and migration,
+use an isolated preflight for the five pinned dependencies in
+`kit/onboard/runtime/requirements.txt`: `jsonschema`, `PyYAML`,
+`markdown-it-py`, `tomlkit`, and `cryptography`. Missing dependencies fail
+closed; signature verification refuses to run without `cryptography`.
+There is no automatic installation or skipped fallback. Standard-library-only
+onboard commands remain usable; this host guard is not a general shell sandbox.
+
+The onboard Skill catalog uses `sbtd-task` instead of `trellis-workflow` and
+`trellis-channel`. Read-only task observation recognizes `in-progress` and
+`checking` under `ai/tasks/**` and `.sbtd/tasks/**`; legacy `.trellis`
+observation remains read-only. Task state writing stays with `sbtd-task`.
+
+**Known limitation:** handoff is not observable as `session_switch` on omp
+18.x. The p0 host-event live cell temporarily reports
+`HANDOFF_EVENT_UNOBSERVABLE` as a diagnostic rather than a hard failure.
+A registered follow-up will update the contract, implement `session_compact`
+observation, and restore the hard failure for missing handoff evidence.
+The omp 18.11.1 install-path smoke is not model end-to-end testing or full
+host-event certification.
 
 ## Platform support
 
