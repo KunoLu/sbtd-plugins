@@ -7,7 +7,7 @@ mode_note: 用户明确要求 strict，遵循 docs/prd/omp-sbtd-0.2.0-rc.1.md L5
 status: "done"
 branch: docs/omp-sbtd-0.2.0-rc.1-prd-d4-release-docs
 created_at: '2026-10-22T18:35:40+08:00'
-updated_at: '2026-10-22T18:47:33+08:00'
+updated_at: '2026-10-22T18:59:19+08:00'
 completed_at: '2026-10-22T18:47:33+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 PRD R10：D4 与行 E/F 发布文档范围
@@ -33,6 +33,7 @@ completed_at: '2026-10-22T18:47:33+08:00'
 | 2026-10-22T18:46:28+08:00 | planned | in-progress | 开始修正 §0 历史 registry 观测缺少 latest 主语的问题 | 仅授权 PRD 指定分句与本记录追加；不改索引或其他措辞 |
 | 2026-10-22T18:47:07+08:00 | in-progress | checking | 指定分句已修正，进入精确范围与证据核验 | §0 补回 latest 主语并明确为起草时 registry 观测；其余 PRD 不作修改 |
 | 2026-10-22T18:47:33+08:00 | checking | done | fix batch 1 文档验收完成，追加本轮提交前模型快照 | PRD 相对 df760c3 仅指定分句替换，其余字节不变；git diff --check 与范围核验通过；原事件及模型快照数字保留 |
+| 2026-10-22T18:59:19+08:00 | done | done | 行 E 回填 #113 合并（orchestrator 核验）；保留原本地完成时间 | merge SHA 007fb6c506e609050fedd1ed86db8696d8164e03；%cI 2026-10-22T18:59:19+08:00；GitHub mergedAt 2026-10-22T18:59:20+08:00；远程/本地分支及 worktree 已正常删除 |
 
 ## 决策
 
@@ -105,13 +106,15 @@ D4 原锁定的「latest 不动」由用户 2026-10-22 18:07 +08:00 明确修订
 
 ## 使用的模型
 
-> **提交前快照**：`TZ=Asia/Shanghai date -Is` = `2026-10-22T18:38:55+08:00`。只统计本主会话截至该次读取的 jsonl，包含进行中的 eval 调用；其后的编辑、检查、提交和最终回复不计入，不冒充全会话最终计数。
+> 会话已结束，下表由 orchestrator 回填 FINAL：run 1 18/34 + fix batch 1 10/22 = 同会话合计 28/56；title_change 合计 1（发生在 fix batch 1），job-widget 0。历史提交前快照仍保留：run 1 `2026-10-22T18:38:55+08:00` 为 12/27；fix batch 1 `2026-10-22T18:47:33+08:00` 为 6/17。fix batch 2 为独立 ping 与新主会话，见下表。
 
 | agent/session | provider/model | thinkingLevel | assistant messages / tool calls | purpose | resolvedModelIsFallback | title-generation count | job-widget entries |
 |---|---|---|---|---|---|---|---|
-| 主会话 `01a1632d-a586-76a4-a030-abc92cf300f5` | openai-codex / gpt-6-astra | high | 12 / 27（提交前快照） | #112 回填、PRD R10、唯一 writer/验证 controller、三次本地提交及记录 | false | 0（title_change） | 0（type=model_usage purpose=job-widget） |
+| run 1 主会话 `01a1632d-a586-76a4-a030-abc92cf300f5` | openai-codex / gpt-6-astra | high | FINAL 18 / 34（历史快照 12 / 27） | #112 回填、PRD R10、唯一 writer/验证 controller、三次本地提交及记录 | false | 0（title_change） | 0（type=model_usage purpose=job-widget） |
 | 自动标题模型（无生成事件） | 未记录 / unknown | 未记录 / unknown | 未记录 / unknown | title-generation | 未记录 / unknown | 0（同一快照，不另加总） | 不适用 |
-| fix batch 1，同会话 `01a1632d-a586-76a4-a030-abc92cf300f5` 续接 | openai-codex / gpt-6-astra | high | 6 / 17（2026-10-22T18:47:33+08:00 提交前快照，仅本次 resume） | §0 latest 主语修复、记录与本地提交 | false | 1（title_change；标题模型未记录 / unknown） | 0（type=model_usage purpose=job-widget） |
+| fix batch 1，同会话 `01a1632d-a586-76a4-a030-abc92cf300f5` 续接 | openai-codex / gpt-6-astra | high | FINAL 10 / 22（历史快照 6 / 17，仅本次 resume） | §0 latest 主语修复、记录与本地提交 | false | 1（title_change；标题模型未记录 / unknown） | 0（type=model_usage purpose=job-widget） |
+| fix batch 2 ping `01a1633f-4f60-737a-8dfe-875adfae8a72` | openai-codex / gpt-6-astra | high | FINAL 1 / 0 | ASTRA_OK；日志 `~/.omp/logs/sbtd-prd-d4/ping-fix2.log` | false | 0 | 0 |
+| fix batch 2 主会话 `01a1633f-9052-77b5-a5ef-187ada3c9aa8` | openai-codex / gpt-6-astra | high | FINAL 6 / 7（read 4、bash 2、edit 1） | commit `ceb5b85` 仅改本 task 原 L32 的 fix batch 1 触发归因；其余历史证据未重写 | false | 0 | 0 |
 
 来源：`~/.omp/agent/sessions/--workspace-sbtd-plugins-prd-d4--/2026-10-22T10-34-58-310Z_01a1632d-a586-76a4-a030-abc92cf300f5.jsonl`；session header 的 cwd 与授权 worktree 一致。provider/model 来自 model_change 与 assistant message，thinkingLevel 来自 thinking_level_change，resolvedModelIsFallback 来自 model_change；未推断 unknown 字段。
 

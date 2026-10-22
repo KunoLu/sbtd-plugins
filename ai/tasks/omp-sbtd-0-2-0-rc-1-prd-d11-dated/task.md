@@ -24,6 +24,11 @@ completed_at: '2026-10-22T17:23:30+08:00'
 - 本 strict 任务记录与 `ai/tasks/index.md` 中排序插入的一行。
 - D11 部分已由 orchestrator 提交为 `c846f32`，D9 与分支字段更新已提交为 `3d67256`（PR #110），均不 amend；本轮按 Lord 17:18 指令一次修正 Reviewy 的两项非阻断意见，仅修改 PRD 的 D9、D14、R8、R9 及本任务记录（含模型表）。`ai/tasks/index.md` 不再修改。
 
+### 合并回填（行 E；orchestrator 核验）
+
+- #110：head branch `docs/omp-sbtd-0.2.0-rc.1-d11-d9-wording`（gh headRefName 已核验，frontmatter 正确，保持不变）；merge SHA `91efc235f273c7d8370f92210dd723d2ff8154ce`，merge commit %cI `2026-10-22T17:19:16+08:00`，GitHub mergedAt `2026-10-22T17:19:17+08:00`。
+- Review-fix 单独合入 #111：head branch `docs/omp-sbtd-0.2.0-rc.1-d11-d9-wording-fix`；`9342f9f` cherry-pick 到 `91efc23` 后为 `7fabc5f`；merge SHA `ddcba1322f1f2ef43981870cc2bab96f2887f705`，merge commit %cI `2026-10-22T17:32:14+08:00`，GitHub mergedAt `2026-10-22T17:32:15+08:00`。两个远程分支均已删除；下方证据保留原历史时点，不改写。
+
 ## 非目标
 
 - R8 当时的 D9「八文件」不变是 Lord 的默认处理，非用户决定；17:01 新决定仅取代此措辞限制。本批仅修正 R8 的决定归因、R9 的措辞与直接决定说明，不改决定含义。L20 现状 baseline（observed snapshot）、标题状态行、D11 措辞、任务表状态/PR/SHA/done 时间列及其他行不改。

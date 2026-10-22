@@ -9,13 +9,13 @@
   "documentDescribes": [
     "SPDXRef-Package-kunolu-omp-sbtd"
   ],
-  "documentNamespace": "https://kpi.local/spdx/2d76b562920d56734ece887bbe916ba7d98501d018bf3ee968db3d96fdf7f128",
+  "documentNamespace": "https://kpi.local/spdx/06b01ba05f97e91ff979f11ae76664ab5375e80f84bfa33ab92d4c40f1014a06",
   "files": [
     {
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "747b7e7a1ef081c70dbc6bbc0289d06aed6e05bd96f47e4a3bf7ec33e384af81"
+          "checksumValue": "434c31b1af9d045ab2f7d2196f3ca1f3387a0dfc04401b3a3e7f4a48251e52f3"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5565,7 +5565,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8eee1312ccc6fd20915227caf5dce1abbdd2838630aaffbf58b87cc7b4e0d284"
+          "checksumValue": "3c3839c2fccf0c1ad63f86ac388cf7ed6e3c6ef73cb75d81187137b5e65c5ef6"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5580,7 +5580,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "82540930256b14a445efb85ce5e8a568c9f3c89670c0d944e9de46bb1500cd70"
+          "checksumValue": "761f261c62efcf588496b5b86c6020e91389f3e73e0ca314f450440c444dfd01"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -7047,7 +7047,7 @@
       "SPDXID": "SPDXRef-File-0469"
     }
   ],
-  "name": "@kunolu/omp-sbtd-0.1.0-rc.14",
+  "name": "@kunolu/omp-sbtd-0.2.0-rc.1",
   "packages": [
     {
       "copyrightText": "NOASSERTION",
@@ -7057,7 +7057,7 @@
       "licenseDeclared": "Apache-2.0",
       "name": "@kunolu/omp-sbtd",
       "SPDXID": "SPDXRef-Package-kunolu-omp-sbtd",
-      "versionInfo": "0.1.0-rc.14"
+      "versionInfo": "0.2.0-rc.1"
     }
   ],
   "relationships": [

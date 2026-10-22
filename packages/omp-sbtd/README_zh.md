@@ -10,7 +10,7 @@
 
 ## 环境要求
 
-- `0.2.0-rc.1` 目标版本声明宿主 peer `@oh-my-pi/pi-coding-agent`
+- `0.2.0-rc.1` 声明宿主 peer `@oh-my-pi/pi-coding-agent`
   为 `>=18 <19`；开发依赖精确钉为 **18.11.1**。
 - 需要 provider 的命令要求已认证的 OMP provider profile。
 
@@ -28,11 +28,11 @@ omp --version
 
 ## 安装
 
-本 README 描述 `@kunolu/omp-sbtd@0.2.0-rc.1` 目标版本。以下命令仅适用于
-**发布计划行 E 将其发布到 `next` 之后**。2026-10-22 发布前的 Registry
-快照：`next=0.1.0-rc.14`、`latest=0.1.0-rc.2`。行 E 保持 `latest` 不变。
+`@kunolu/omp-sbtd@0.2.0-rc.1` 已发布到 npm dist-tag `next` 与 `latest`。
+不带版本的安装（`omp plugin install @kunolu/omp-sbtd`）现在会取得
+0.2.0-rc.1，它要求 omp `>=18 <19`。omp 17.x 用户须显式钉旧的 0.1.x 版本。
 
-固定精确 RC 版本以便复现；不要使用 `@latest`：
+为便于复现，建议优先固定精确 RC 版本，而不是使用 `@latest` 等会移动的 dist-tag：
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
