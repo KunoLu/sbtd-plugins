@@ -7,7 +7,7 @@ mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-22 ~13:25 +08
 status: "in-progress"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-d-changelog
 created_at: '2026-10-22T13:26:05+08:00'
-updated_at: '2026-10-22T13:26:05+08:00'
+updated_at: '2026-10-22T13:42:59+08:00'
 completed_at: null
 ---
 # omp-sbtd 0.2.0-rc.1 行 D：双语 CHANGELOG
@@ -26,18 +26,91 @@ completed_at: null
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 | 2026-10-22T13:26:05+08:00 | in-progress | in-progress | 创建：用户 ~13:25 +08:00 批准行 D；worktree `/workspace/sbtd-plugins-row-d` 基于 origin/main `ada08c556608310c679bd7efd2328aa09d1b95f3`；首 commit 回填行 C（#107 / `ada08c5…` / 2026-10-22T13:20:55+08:00，`git show -s --format=%cI ada08c5` 实测与 GitHub 一致）并将行 C task.md 记 done | 本 commit |
+| 2026-10-22T13:32:05+08:00 | in-progress | in-progress | 双语条目、verbatim/历史/结构检查及 build/pack/p0 完成；测试与独立复核进行中；仅证据快照，不宣称 lifecycle transition | 验证证据；reports/row-d-structure.json、row-d-pack-comparison.json、row-d-check-package.txt |
+| 2026-10-22T13:34:18+08:00 | in-progress | in-progress | 恢复同一 strict 任务并执行 orchestrator 两项裁决：撤销 SBOM，只提交 EN/ZH/task；用户约 13:29 +08:00 选择 D11 option 1，保留 2026-10-19 锁定时的 18.12.2 快照原文 | 本轮用户转达裁决；git checkout -- packages/omp-sbtd/SBOM.spdx.json 已执行；后续单列 stale-SBOM 验证 |
+| 2026-10-22T13:42:59+08:00 | in-progress | in-progress | 本地文档交付与所需验证执行完毕，两项独立复核 CLEAN；stale package/full-suite 失败如实保留；按裁决仅三份文档提交，不声称 release-ready 或 TaskStore lifecycle 完成 | fresh p0 PASS/28 focused passed；stale p0 SBOM_MISMATCH/27 focused passed+1 failed；最终全量 883 passed+2 failed+3 skipped；本提交与下方证据 |
 
 ## 决策
 
-（待补）
+- 先例：`73f0ca5`（dsh 行 D / #98）同时新建两份 CHANGELOG，只有本 RC 的 `[Unreleased]`，没有补译旧版历史；`1fdf9e8`（行 E / #99）才把两份标题盖为 `[0.2.0-rc.1] - 2026-10-19`。ZH 使用 `Added（新增）`、`Changed（变更）`、`Removed（移除）`，顶部相对链接互指。
+- 本行采用 `## [Unreleased]`；ZH 仅镜像本次新条目，章节与 bullet 顺序一一对应，不补译旧版本。EN 在首个旧版本之前插入互链与新条目，既有历史保持逐字节不变；ZH 提供旧版英文历史链接。无根 CHANGELOG。
+- D11 Breaking bullet 逐字照抄，不加句号、不改措辞。初始策略为 `18.12.2 copied verbatim pending user decision`；现由用户 2026-10-22 约 13:29 +08:00 选择 option 1 关闭待决：18.12.2 是 2026-10-19 D11 锁定时的上游快照，实际上游此后已前进（例如行 C npm 安装证据曾解析到 18.12.6）。用户明确选择 verbatim；不在 CHANGELOG 添加快照或过时说明，不为本行查询/更新 upstream latest。
+- 仅据已合并事实撰写：#102/`1d9a5cd` 锁定需求；#103/`c735629` 固定 R6；#104/`f1bba41` 迁移；#105/`c041b2c` 授权 D14；#106/`02d93cc` 同步；#107/`ada08c5` 宿主适配。handoff 限制与后续只按 PRD L76、行 C 决策/后续节描述，不宣称已修复。
+- 与 dsh 的 files 变更不同，本行保持 `package.json`（含 files/version）、lockfile、p0 declared content list 不变；ZH 不进 npm 包。最终提交范围严格限定 EN CHANGELOG、新 ZH CHANGELOG、本 task 三个路径。
+- SBOM 最终裁决（取代初始纳入生成变化的决定）：按 orchestrator 指令执行 `git checkout -- packages/omp-sbtd/SBOM.spdx.json`，不提交任何 SBOM 变化。初次 build 曾仅改变 `./CHANGELOG.md` checksum 和 `documentNamespace`，该 fresh-built 候选验证结果保留但不代表最终提交树。最终 committed SBOM 的 `./CHANGELOG.md` hash 必然 stale；row E release bump 构建将重生成。明确风险：当前 stale 树不满足 p0 release package gate，不能发布；不改测试/validator 隐藏失败。如验证再生成 SBOM，提交前再次恢复。
+- strict；需求已由 PRD/用户锁定，未完整调用 grill-with-docs，不重开领域设计。无生产代码或测试编辑；不调用全局 omp、Graft 或其他 checkout，不 push、不操作 PR、不 tag/publish。
+- 沿用行 C 已知 TaskStore 全库 schema blocker，不重跑全库来确认既有失败；本行只更新授权 task 文档与验证当前记录，不改 active pointer，不声称 TaskStore lifecycle/自动恢复可靠。状态保持 `in-progress`，待 orchestrator 按合并流程回填。
+
+## Book Gate Plan
+
+| Reviewer | 触发事实 | 阶段 | 状态 |
+|---|---|---|---|
+| book-ddd-distilled-modeling | 本行未完整 grill，无新领域规则或模型歧义 | before-dev | not-required |
+| book-ddia-data-design | 无 schema、持久化数据、缓存或跨服务流设计；只叙述已合并行为 | before-dev | not-required |
+| book-legacy-change-safety | 不修既有行为 bug，不改变运行时；EN 历史以字节比对保护 | before-dev | not-required |
+| book-refactoring-pass | 无既有生产代码编辑，最终仅三份文档 | before-dev | not-required |
+| book-release-readiness | 无部署/runtime 变更且不发布；用户要求保留 stale SBOM，release package gate 明确未过 | finish | not-required（行 D 文档交付不声明 release-ready；行 E 须 rebuild/验证） |
+
+## 进度
+
+- [x] 核对 strict、根/分支、PRD、0/A/B/C 记录、#102–#107 合并历史与 dsh D/E 先例。
+- [x] 确定 `[Unreleased]`、ZH 仅新条目、EN 历史不变及 D11 verbatim 策略。
+- [x] 双语条目与源码事实复核。
+- [x] D11、结构、历史、build/SBOM、pack 清单与 package 检查。
+- [x] 所需 lint/typecheck/测试全部执行并区分 fresh/stale 结果；两项只读独立复核 CLEAN；提交范围固定为 EN/ZH/task 三路径（随本提交），不 push/PR。
 
 ## 验证证据
 
-（待补）
+- 起点：`git status --short --branch` 为 clean；根 `/workspace/sbtd-plugins-row-d`、分支 `feat/omp-sbtd-0.2.0-rc.1-pr-d-changelog`、HEAD `29289ddfa277180fb30d249182a58af0bc00be28`。
+- 报告只写本任务 `reports/`（已实测 git check-ignore 命中 `/ai/tasks/**/reports` 且无 tracked 内容；task 及父路径无 symlink）；不暂存报告。命令环境统一 `export COREPACK_HOME=$HOME/.cache/node/corepack PYTHONDONTWRITEBYTECODE=1`。
+- `git worktree add --detach /tmp/rowd-main ada08c5` 成功；仅授权的临时基线，不访问主 checkout。
+- 两树 `pnpm install --frozen-lockfile` 均 exit 0（pnpm 11.17.0，738 packages，无下载）；基线包目录 `pnpm build` exit 0 / `generated output is current`；`npm pack --dry-run --json` exit 0 / `entryCount: 471` / 无 `CHANGELOG.zh.md`。原生输出在 `reports/row-d-{install,baseline-install,baseline-build,baseline-pack-list}.txt`。
+- D11 实际命令（cwd 仓库根；完整行与 counts 保留于 `reports/row-d-verbatim-{en,zh}.txt`、`row-d-verbatim-count-{en,zh}.txt`）：
+
+  ```sh
+  grep -nF 'No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2' docs/prd/omp-sbtd-0.2.0-rc.1.md packages/omp-sbtd/CHANGELOG.md
+  grep -cF 'No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2' docs/prd/omp-sbtd-0.2.0-rc.1.md packages/omp-sbtd/CHANGELOG.md
+  grep -nF '不再支持 omp 17.x；只在 18.11.1 上实测过，上游最新是 18.12.2' docs/prd/omp-sbtd-0.2.0-rc.1.md packages/omp-sbtd/CHANGELOG.zh.md
+  grep -cF '不再支持 omp 17.x；只在 18.11.1 上实测过，上游最新是 18.12.2' docs/prd/omp-sbtd-0.2.0-rc.1.md packages/omp-sbtd/CHANGELOG.zh.md
+  ```
+
+  均 exit 0；PRD EN/ZH 均命中 L42/L70/L84（各 3），EN CHANGELOG L12（1），ZH L10（1）。额外 Python 对首个 Breaking section 的完整 bullet 列表断言为 `[exact_D11_string]`，两份均 PASS（不只 substring 命中）。
+- `git diff ada08c5 -- packages/omp-sbtd/CHANGELOG.md`：仅首部新增 64 行，无删除或修改旧行（`reports/row-d-history-diff.txt`）。Python 字节比对原前言及从 `## [0.1.0-rc.14]` 开始的整段旧历史均相等；历史 SHA-256 `53b88f1011434fbcdde99fb93a58a7ad34477d70b8c8231bc8ff9d1746670329`。
+- 双语一一对应：Python 提取 `[Unreleased]`，归一化 ZH 小标题中文括号后比较 heading 顺序与各 section 的 `^- ` bullet 数：`Breaking=1 / Added=3 / Changed=7 / Known limitations=1`，EN/ZH 均相同。`reports/row-d-structure.json` 保存结果；全文语义另做只读独立 review。
+- 候选包目录 `pnpm build`：exit 0 / `generated output is current`。sourceTreeSha256 `5b8de2904642dacc1065a89448bf35b1367fcc367d1af71b283e2b3dfff914f8`；sbomSha256 `85c504a1bcef663b60ed7ac01fe2e29027aaaf74777d947c397deb04fc79adff`（`reports/row-d-build.txt`）。SBOM 的 CHANGELOG SHA-256 实测等于文档字节 hash `51efaf8d73b0c70bd4194ce5c5d47b79fd4ff8595c26a22d9b4831c14e2db223`；JSON 递归 diff 恰两值（`reports/row-d-sbom-diff.json`）。
+- 候选包 `npm pack --dry-run --json`：exit 0 / `entryCount: 471`。对两次真实构建的 `files[].path` 排序比较完全相同，added/removed 均 0，`CHANGELOG.zh.md` 不在清单。逐个比较两树 471 个打包文件字节，仅 `CHANGELOG.md`、`SBOM.spdx.json` 不同；`reports/row-d-pack-list.txt`、`row-d-pack-comparison.json` 保留完整清单和结果。
+- 包目录 `pnpm lint`：exit 0 / `Checked 99 files … No fixes applied.`；`pnpm typecheck`：exit 0。原生输出 `reports/row-d-lint.txt`、`row-d-typecheck.txt`。使用包级现有命令，未重跑无关 dsh 检查。
+- 真实包 smoke（均 exit 0）：
+
+  ```sh
+  # cwd: packages/omp-sbtd
+  pnpm pack --pack-destination /tmp/row-d-package-7cv3_xcj
+  tar -xzf /tmp/row-d-package-7cv3_xcj/kunolu-omp-sbtd-0.1.0-rc.14.tgz -C /tmp/row-d-package-7cv3_xcj/unpacked
+  pnpm exec tsx scripts/p0/cli.ts check-package --packed /tmp/row-d-package-7cv3_xcj/unpacked/package
+  ```
+
+  unpack 目录预先创建。p0 输出 `packedFileCount:471`，sourceTreeSha256 / sbomSha256 与 build 相同；原生 `reports/row-d-{pack,unpack,check-package}.txt`。版本仍 `0.1.0-rc.14`，不等于发布或宿主认证。
+- 保护边界：直接与 `ada08c5` blob 比较根/插件 package.json、lockfile、plugin.json、p0 release-validator、根/插件 README 字节均未变；PRD 与起点 `29289dd` 未变。当前证据为 Node `v22.20.0` / pnpm `11.17.0` / developer-local / dirty / local-only，不冒充 CI 或最终 PR-head 认证。
+- focused：包目录 `pnpm exec vitest run test/p0-dist-hygiene.test.ts test/p0-package-release.test.ts test/publish-package.test.ts test/agent-plugin-pack.test.ts --no-file-parallelism --maxWorkers=1 --testTimeout=30000`，exit 0，**4 files / 28 passed**，15.27s（`reports/row-d-focused-tests.txt`）。`p0-package-release` 读取 CHANGELOG 并断言旧 `P3-01`，因此按用户条件继续执行完整包 `pnpm test`。
+- **新裁决前 fresh-built 证据边界**：上列 build/SBOM、pack/p0 exit 0 和 focused 28/28 均使用重生成的 SBOM。初次完整 `pnpm test` 被本次用户中断；`reports/row-d-full-tests.txt` 仅有部分输出，没有退出码/最终统计，不能算 full-suite PASS，亦不覆盖最终 stale 树。
+- **最终 stale-SBOM 验证**（恢复后，不再 build）：实测 SBOM 与 HEAD blob 完全相同，声明 CHANGELOG hash `f1d34bd5c91566544942d5dfa30d7d1b7d6e2357261d9b3a6ed76e5f2e1ea2fd`，实际为 `51efaf8d73b0c70bd4194ce5c5d47b79fd4ff8595c26a22d9b4831c14e2db223`。
+- stale 包命令：`pnpm pack --pack-destination /tmp/row-d-stale-package-jdx6d6vq`、`tar -xzf /tmp/row-d-stale-package-jdx6d6vq/kunolu-omp-sbtd-0.1.0-rc.14.tgz -C /tmp/row-d-stale-package-jdx6d6vq/unpacked` 均 exit 0；`pnpm exec tsx scripts/p0/cli.ts check-package --packed /tmp/row-d-stale-package-jdx6d6vq/unpacked/package` **exit 1**：`SBOM_MISMATCH` / `The committed Plugin SPDX SBOM is not byte-identical to the current release inventory.` / recovery `Regenerate SBOM.spdx.json after building and embedding the exact Kit.`。raw：`reports/row-d-stale-{pack,unpack,check-package}.txt`。
+- stale focused 使用上列同一四文件命令，**exit 1，27 passed / 1 failed，3 files passed / 1 failed，13.41s**。唯一失败：`test/p0-package-release.test.ts:871` → `Scenario: 受控 CLI 只从当前验证结果记录精确 RC 候选证据`，actual exit 1 / expected 0，原因为 `SBOM_MISMATCH`。`reports/row-d-stale-focused-tests.txt` 保留完整 stdout/stderr；运行后 SBOM 仍等于 HEAD。这是新裁决接受的真实失败，不作为测试通过或既有环境失败。
+- 最终 stale tarball 用 Python tarfile 枚举实际 regular files，并与前述 baseline `files[].path` 比较：**471 路径完全相同**，无 `CHANGELOG.zh.md`；解包 SBOM 与 committed blob 相同，解包 EN 与编辑后文件相同。`reports/row-d-stale-pack-comparison.json` 保留结果，不把文件清单一致误报成 hash 一致。
+- `TaskDocument.parse`（仓内 canonical runtime helper，`python3 -B`）对本任务 schema/时间/事件解析通过；不执行已知受历史 schema 阻断的 TaskStore 全库 inspect，不写 active/身份或其他任务。模型节保持原样。
+- 验证工具边界：`rtk=skipped-for-report`（native 保存完整输出）；BDD=skipped（docs-only，无行为/.feature 变更）；Cross-repo context/API Contract=not-needed；生产代码可读性/ponytail-review=not-required（无手写代码 diff）。Web/Mobile/Graft/全局 omp 均未调用；本行包 smoke 不冒充重跑行 C install-path 宿主 smoke。
+- 临时基线 `/tmp/rowd-main` 已经 `git worktree remove /tmp/rowd-main` 正常移除（exit 0，无 force）；保留 ignored reports 内原始清单、结果与同 stem 中文测试汇总。无 throwaway 测试或脚本进入提交。
+- **最终完整包测试**：包目录 `pnpm test`（`tsc -p tsconfig.json && vitest run --no-file-parallelism --maxWorkers=1 --testTimeout=30000`），2026-10-22T13:35:37+08:00 开始，300.57s，**exit 1；46 files：44 passed / 2 failed；888 tests：883 passed / 2 failed / 3 skipped**。完整 stdout/stderr 与中文汇总：`reports/row-d-stale-full-tests.txt` / `.md`。
+  - 失败 1：`test/p0-package-release.test.ts:871` → `Scenario: 受控 CLI 只从当前验证结果记录精确 RC 候选证据`，`SBOM_MISMATCH`，与 stale focused 相同，是本次明确接受的 hash 不一致。
+  - 失败 2：`test/p0-authorized-omp-rpc-harness.test.ts:173` → `smoke-only: exact local OMP 18.11.1 blocks a dependency-resolved packed host before RPC without a provider`，`bun --offline` 缺 `zod` 与 `@oh-my-pi/pi-coding-agent` cached manifest，`zod@4.1.12 failed to resolve`；与行 C 记录的既有环境失败同因，不补缓存、不改测试、不冒充 PASS。
+  - 3 skipped 来自 upstream transform（2）和 env-gated host-event live cell（1）；未单独重跑行 C 真宿主 smoke。最终 suite 后确认 SBOM 仍逐字节等于 HEAD。此轮是用户要求的最终范围执行，不是为了重复确认已知环境失败。
+- 独立只读 `ChangelogReviewFinal`：CLEAN，无需修复的事实/翻译/结构/历史/D11 缺陷；接受 stale SBOM 为用户已裁决风险，不认作待修实现项。review 中引用初始 SBOM 决策的旧 task 快照已由上方最终裁决取代，不保留互相冲突的现行决定。
+- 独立只读 `PackageDocsReviewFinal`：CLEAN/正确；核对 dsh D/E 先例、files/p0 未改、471 文件清单、ZH 不打包、fresh 与 stale 证据分离及最终两项失败。确认 stale checksum 是用户接受的交付风险；npm tarball 内 EN→ZH 相对链接不可用亦是 ZH 不打包的已知边界，仓库内双向链接正常。两项 review 均未代替本会话实际运行测试。
+- 最终交付：仅 `packages/omp-sbtd/CHANGELOG.md`、`packages/omp-sbtd/CHANGELOG.zh.md`、本 task 显式暂存/提交；SBOM 不提交，起点 `29289dd` 的行 C 回填不重写。证据覆盖本地已验证文档/包字节，不冒充 CI/发布认证；记录保持 `in-progress` 供 orchestrator 后续合并回填。
 
 ## CONTRACT-CHANGE-NEEDED
 
-（待补）
+CONTRACT-CHANGE-NEEDED：无。行 D 未请求变更 PRD 判据；SBOM 不提交和 D11 快照原文均按本次明确裁决执行。行 C 已接受的临时 handoff 降级及登记后续原样记载，不在行 D 重新裁决；这不代表 stale 包可发布。
 
 ## 使用的模型
 
