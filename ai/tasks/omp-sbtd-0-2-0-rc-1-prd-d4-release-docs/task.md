@@ -29,7 +29,7 @@ completed_at: '2026-10-22T18:47:33+08:00'
 | 2026-10-22T18:35:40+08:00 | planned | in-progress | 创建用户授权的 strict PRD-only 后继记录并开始 #112 回填 | 根与分支匹配；初始 git status --short 无输出；origin/main 为 194dfa653f5e4f3d1bb34f2721af58c8200dba4f；merge %cI 已核验 |
 | 2026-10-22T18:37:59+08:00 | in-progress | checking | 两个指定提交已完成，进入文档一致性与最终记录核验 | 928f596 创建记录并回填 #112；4209d2d 仅修改 PRD；两次提交前 git diff --check 均 exit 0 |
 | 2026-10-22T18:38:55+08:00 | checking | done | PRD-only 验收成立，记录本地完成及提交前模型快照 | PRD 仅六行替换与 R10 追加；索引仅一行且排序正确；latest 全文核对无本版旧通道要求；git diff --check origin/main..HEAD 与 git diff --check 均 exit 0；本次 done 不代表合并或发布 |
-| 2026-10-22T18:46:28+08:00 | done | planned | 用户明确要求 fix batch 1，重开同一 strict 任务 | 入口 df760c3，分支匹配且工作区干净；保留原完成事件与模型快照 |
+| 2026-10-22T18:46:28+08:00 | done | planned | OMP/operator 复查发现 §0 缺少 latest 主语（OMP 自查提出），触发 fix batch 1，重开同一 strict 任务 | 入口 df760c3，分支匹配且工作区干净；保留原完成事件与模型快照 |
 | 2026-10-22T18:46:28+08:00 | planned | in-progress | 开始修正 §0 历史 registry 观测缺少 latest 主语的问题 | 仅授权 PRD 指定分句与本记录追加；不改索引或其他措辞 |
 | 2026-10-22T18:47:07+08:00 | in-progress | checking | 指定分句已修正，进入精确范围与证据核验 | §0 补回 latest 主语并明确为起草时 registry 观测；其余 PRD 不作修改 |
 | 2026-10-22T18:47:33+08:00 | checking | done | fix batch 1 文档验收完成，追加本轮提交前模型快照 | PRD 相对 df760c3 仅指定分句替换，其余字节不变；git diff --check 与范围核验通过；原事件及模型快照数字保留 |
