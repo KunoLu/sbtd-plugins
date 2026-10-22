@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-pr-e-release
 workflow_mode: strict
 mode_source: user
 mode_note: 用户明确选择 strict，按 PRD L59 与行 E；唯一 writer，仅显式路径提交，不 push/PR/tag/release/publish/dist-tag。
-status: "checking"
+status: "done"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-e-release
 created_at: '2026-10-22T19:06:33+08:00'
-updated_at: '2026-10-22T19:39:38+08:00'
-completed_at: null
+updated_at: '2026-10-22T21:23:25+08:00'
+completed_at: '2026-10-22T20:27:22+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 E：pre-tag release PR
 
@@ -26,6 +26,7 @@ completed_at: null
 | 2026-10-22T19:06:33+08:00 | planned | in-progress | 用户授权 strict 行 E 与前序回填 | 分支匹配、起点 clean；基线 007fb6c506e609050fedd1ed86db8696d8164e03；PRD L59–L62 |
 | 2026-10-22T19:27:33+08:00 | in-progress | checking | pre-tag 内容、本地验收及两项独立复核完成；保留唯一已知环境失败，不标 done 或 release-ready | 2634fd1 / 5d5b7e7 / a7721bb / 18e4bee；实际 check-package exit 0；focused 38 passed；full 884 passed / 1 failed / 3 skipped；下方证据 |
 | 2026-10-22T19:39:38+08:00 | checking | checking | fix batch 1：纠正既有环境失败的授权归因；orchestrator prompt 的 allowed 不等于用户决定，行 E 验收待 Reviewy/Lord 决定，full suite 非 PASS | PRD D11 / L57–L62 / §4 无保留该失败的授权；行 A–D/R 仅为同因历史先例；仅修订指定两份 task 记录，不重建、打包或重跑测试 |
+| 2026-10-22T20:27:22+08:00 | checking | done | 行 F 按 PRD L60 回填 #114 合并；tag/发布证据与两项流程偏差、smoke 未通过见行 F task.md | merge SHA f4ea2ac729a6fda86cd41425563d65c68afb3aa3；merge commit %cI 2026-10-22T20:27:22+08:00；GitHub mergedAt 2026-10-22T20:27:23+08:00（12:27:23Z）；review tip fa669e6 |
 
 ## 决策
 
