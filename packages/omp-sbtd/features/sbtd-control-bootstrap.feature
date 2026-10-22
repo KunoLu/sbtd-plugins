@@ -433,3 +433,35 @@ Feature: SBTD 控制引导
       When Plugin 处理后续事件
       Then compaction 只保留允许的 Session 状态摘要
       And 一个 Session 的瞬态状态、approval 与 result 不泄漏到另一个 Session
+
+    Scenario: 18.11.1 分支原因通过真实 hook 边界
+      Given 宿主发送 session_branch 且 reason 为 "branch"、"fork" 或 "btw"
+      When Plugin 验证并处理事件
+      Then 三种原因均触发 Session 重新观测
+      And 缺少或未知 reason 的分支事件被拒绝
+
+    Scenario: handoff 不冒充 Session 切换覆盖
+      Given 18.11.1 session_switch 仅允许 "new"、"resume" 与 "fork"
+      When live-cell 的 handoff RPC 成功但 session_compact 不在订阅清单
+      Then validator 报告 "HANDOFF_EVENT_UNOBSERVABLE" diagnostic
+      And 不要求或伪造 reason 为 "handoff" 的 session_switch
+
+  Rule: v2.0.2 任务记录用于只读路由观测
+
+    Scenario: 原生任务记录使工作进入 managed task 路由
+      Given 项目 ai/tasks 或 .sbtd/tasks 中有 in-progress 或 checking 的 task.md
+      When Plugin 分类普通任务请求
+      Then 使用既有 "trellis-managed-task" 兼容路由
+      And index、已完成任务、归档任务与正文中的状态文字不被解释为活动任务
+      And 旧 .trellis/tasks 的 in_progress 记录仍可作为只读兼容观测
+      And 缺少冒号后分隔符的 "status:in-progress" 不提供活动任务证据
+
+  Rule: Python 依赖预检绑定 bash 的工作目录
+
+    Scenario: bash cwd 中的相对 Python 使用实际解释器
+      Given bash 请求以绝对、项目相对或 tilde cwd 选择工作目录
+      And Python 路径相对于该目录
+      When Plugin 在依赖型入口执行前预检
+      Then 预检在该目录运行所选 Python 的隔离 import
+      And 缺失依赖拒跑且不自动安装
+      And "~/nested"、"~//nested"、"~\nested" 与 "~nested" 保持宿主的 home 前缀语义

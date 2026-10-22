@@ -16,7 +16,12 @@ afterEach(async () => {
 });
 
 function host(
-  preflight: (command: string, args: string[]) => Promise<unknown>,
+  preflight: (
+    command: string,
+    args: string[],
+    options: { cwd?: string },
+  ) => Promise<unknown>,
+  projectRoot = tmpdir(),
 ) {
   const hooks = new Map<
     string,
@@ -37,16 +42,16 @@ function host(
   } as never);
   const toolCall = hooks.get("tool_call");
   if (toolCall === undefined) throw new Error("tool_call was not registered");
-  return (command: string) =>
+  return (command: string, cwd?: string) =>
     toolCall(
       {
         type: "tool_call",
         toolName: "bash",
         toolCallId: "dependency-check",
-        input: { command },
+        input: { command, ...(cwd === undefined ? {} : { cwd }) },
       },
       {
-        cwd: tmpdir(),
+        cwd: projectRoot,
         sessionManager: {
           getBranch() {
             return [];
@@ -111,6 +116,75 @@ describe("Feature: 依赖型 Python 入口在执行前隔离预检", () => {
     expect(detail.installCommand).toMatch(
       /^python3 -m pip install -r .*requirements\.txt/,
     );
+  });
+
+  it.each([
+    "relative",
+    "absolute",
+  ])("Scenario: bash cwd 中的相对 Python 使用实际解释器: %s", async (kind) => {
+    const root = await mkdtemp(join(tmpdir(), "sbtd-probe-cwd-"));
+    roots.push(root);
+    const work = join(root, "nested");
+    await exec("python3", [
+      "-B",
+      "-m",
+      "venv",
+      "--without-pip",
+      join(work, "venv"),
+    ]);
+    const check = host(async (command, args, options) => {
+      const result = await exec(command, args, {
+        cwd: options.cwd,
+        env: { PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: "1" },
+      });
+      return { ...result, code: 0, killed: false };
+    }, root);
+    const refusal = (await check(
+      "./venv/bin/python3 onboard.py migration verify",
+      kind === "absolute" ? work : "nested",
+    )) as { block: boolean; reason: string };
+    expect(refusal.block).toBe(true);
+    expect(JSON.parse(refusal.reason).missingPackages).toEqual(missingAll);
+  });
+
+  it.each([
+    "~/nested",
+    "~//nested",
+    "~\\nested",
+    "~nested",
+  ])("Scenario: bash tilde cwd 保留宿主 home 前缀: %s", async (cwd) => {
+    const root = await mkdtemp(join(tmpdir(), "sbtd-probe-home-"));
+    roots.push(root);
+    const home = join(root, "home");
+    // Pinned host expandTilde concatenates the home prefix for ~\ as well.
+    const work = cwd === "~\\nested" ? `${home}\\nested` : join(home, "nested");
+    await exec("python3", [
+      "-B",
+      "-m",
+      "venv",
+      "--without-pip",
+      join(work, "venv"),
+    ]);
+    const previousHome = process.env.HOME;
+    try {
+      process.env.HOME = home;
+      const check = host(async (command, args, options) => {
+        const result = await exec(command, args, {
+          cwd: options.cwd,
+          env: { PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: "1" },
+        });
+        return { ...result, code: 0, killed: false };
+      }, root);
+      const refusal = (await check(
+        "./venv/bin/python3 onboard.py migration verify",
+        cwd,
+      )) as { block: boolean; reason: string };
+      expect(refusal.block).toBe(true);
+      expect(JSON.parse(refusal.reason).missingPackages).toEqual(missingAll);
+    } finally {
+      if (previousHome === undefined) delete process.env.HOME;
+      else process.env.HOME = previousHome;
+    }
   });
 
   it("Scenario: 验签入口缺 cryptography 时拒绝执行", async () => {

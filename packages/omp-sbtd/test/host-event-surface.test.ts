@@ -50,7 +50,6 @@ const d = (label: string) => createHash("sha256").update(label).digest("hex");
 const RUN_ID = "test-run";
 const SESS_A = d("session-a");
 const SESS_B = d("session-b");
-const SESS_C = d("session-c");
 const T_PLAIN = d("call-plain");
 const T_APPROVED = d("call-approved");
 const T_DENIED = d("call-denied");
@@ -121,7 +120,7 @@ const ev = (
 
 /** A complete passing run: all 12 required events + credential_disabled,
  * approved + denied approvals, session A/B/A isolation with restore,
- * session-bound compaction, tree navigation, and a handoff switch. */
+ * session-bound compaction, tree navigation, and a same-session handoff. */
 function baseRecords(): FixtureRecord[] {
   return [
     {
@@ -220,11 +219,7 @@ function baseRecords(): FixtureRecord[] {
     ev(33, "turn_start", { ctxSessionDigest: SESS_A, turnIndex: 3 }),
     ev(34, "turn_end", { ctxSessionDigest: SESS_A }),
     ev(35, "session_stop", { ctxSessionDigest: SESS_A }),
-    ev(36, "session_switch", {
-      hostReason: "handoff",
-      ctxSessionDigest: SESS_C,
-    }),
-    ev(37, "credential_disabled", { ctxSessionDigest: SESS_C }),
+    ev(37, "credential_disabled", { ctxSessionDigest: SESS_A }),
   ];
 }
 
@@ -297,7 +292,8 @@ describe("Feature: Host Event Surface — inventory is the single event list", (
 describe("Feature: Host Event Surface — validator fail-closed contract", () => {
   it("a complete well-formed run passes with no certified vocabulary", () => {
     const verdict = validateBase(baseRecords());
-    expect(verdict.outcome).toBe("passed");
+    expect(verdict.outcome).toBe("passed-with-diagnostics");
+    expect(verdict.diagnostics).toContain("HANDOFF_EVENT_UNOBSERVABLE");
     expect(verdict.reasonCodes).toEqual([]);
     expect(verdict.schemaValid).toBe(true);
     expect(verdict.identityValid).toBe(true);
@@ -556,7 +552,7 @@ describe("Feature: Host Event Surface — validator fail-closed contract", () =>
   it("a refused handoff trigger is a blocked diagnostic, not a failure", () => {
     const scenario = baseScenario();
     scenario.scenario.handoff = { attempted: true, ok: false };
-    const records = baseRecords().filter((r) => r.hostReason !== "handoff");
+    const records = baseRecords();
     const verdict = validateBase(records, scenario);
     expect(verdict.outcome).toBe("passed-with-diagnostics");
     expect(verdict.diagnostics).toContain("HANDOFF_TRIGGER_BLOCKED");
@@ -772,7 +768,6 @@ describe("Feature: Host Event Surface — failed driver cannot score leftover re
   };
 
   it("leftover records that would pass stay blocked on a nonzero driver", async () => {
-    expect(validateBase(baseRecords()).outcome).toBe("passed");
     const runDir = await mkdtemp(join(tmpdir(), "host-event-driver-exit-"));
     await writePassingLeftovers(runDir);
     const result = await completeLiveCellAfterDriver({

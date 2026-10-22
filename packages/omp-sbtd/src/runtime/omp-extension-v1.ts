@@ -11,7 +11,9 @@
 //
 // The event schemas mirror the pinned @oh-my-pi/pi-coding-agent 18.11.1 public
 // event types (extensibility/shared-events.ts, extensibility/extensions/
-// types.ts). Every schema is `.strict()` with a required `type` literal
+// types.ts), including required session_branch reason (branch/fork/btw) and
+// session_switch reason (new/resume/fork). Handoff compacts the same session;
+// it is not a switch reason. Every schema is `.strict()` with a required `type` literal
 // matching the event name: an unknown event name, a missing/wrong
 // discriminator, a missing required field, or an unknown key is malformed and
 // never reaches a handler. Fields that are optional in the OMP public types
@@ -182,7 +184,7 @@ export interface OmpExtensionV1EventPayloadMap {
 
 export type OmpExtensionV1EventName = keyof OmpExtensionV1EventPayloadMap;
 
-const sessionSwitchReasons = ["new", "resume", "fork", "handoff"] as const;
+const sessionSwitchReasons = ["new", "resume", "fork"] as const;
 
 /**
  * Adapter-edge schemas for the pinned omp-extension-v1 event shapes. Complex
@@ -204,6 +206,7 @@ const ompExtensionV1EventSchemas: Readonly<
   session_branch: z
     .object({
       type: z.literal("session_branch"),
+      reason: z.enum(["branch", "fork", "btw"]),
       previousSessionFile: z.string().optional(),
     })
     .strict(),

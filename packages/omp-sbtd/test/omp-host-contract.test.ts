@@ -175,6 +175,69 @@ describe("Feature: SBTD 控制引导 — Host Contract capability boundary", () 
     expect(tools).toEqual(["sbtd_workflow"]);
   });
 
+  it.each([
+    "branch",
+    "fork",
+    "btw",
+  ])("Scenario: 18.11.1 session_branch reason %s reaches the live handler", async (reason) => {
+    const events = new Map<string, (event: unknown, ctx: unknown) => unknown>();
+    const observed: unknown[] = [];
+    registerRuntimeController(
+      {
+        ...fullHost,
+        zod: z,
+        on(name: string, handler: (event: unknown, ctx: unknown) => unknown) {
+          events.set(name, handler);
+        },
+      } as never,
+      {
+        ...stubHandlers(),
+        reobserve: async (event) => {
+          observed.push(event);
+        },
+      },
+    );
+    await events.get("session_branch")?.(
+      { type: "session_branch", reason, previousSessionFile: undefined },
+      { sessionManager: {} },
+    );
+    expect(observed).toEqual([
+      { type: "session_branch", reason, previousSessionFile: undefined },
+    ]);
+  });
+
+  it.each([
+    undefined,
+    "unknown",
+  ])("Scenario: session_branch rejects absent or unknown reason %s", (reason) => {
+    expect(() =>
+      runtimeSeam.validateOmpExtensionV1Event("session_branch", {
+        type: "session_branch",
+        ...(reason === undefined ? {} : { reason }),
+      }),
+    ).toThrow();
+  });
+
+  it.each([
+    "new",
+    "resume",
+    "fork",
+  ])("Scenario: session_switch accepts host reason %s", (reason) => {
+    const event = { type: "session_switch", reason };
+    expect(
+      runtimeSeam.validateOmpExtensionV1Event("session_switch", event),
+    ).toEqual(event);
+  });
+
+  it("Scenario: session_switch rejects obsolete handoff reason", () => {
+    expect(() =>
+      runtimeSeam.validateOmpExtensionV1Event("session_switch", {
+        type: "session_switch",
+        reason: "handoff",
+      }),
+    ).toThrow();
+  });
+
   it("Scenario: malformed event 不得被解释成批准或完成", async () => {
     const validateEvent = seam.validateOmpExtensionV1Event;
     expect(

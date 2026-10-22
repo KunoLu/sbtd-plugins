@@ -30,7 +30,7 @@ function fillHostEvent(
   const defaults: Record<string, Record<string, unknown>> = {
     session_start: { type: "session_start" },
     session_switch: { type: "session_switch" },
-    session_branch: { type: "session_branch" },
+    session_branch: { type: "session_branch", reason: "branch" },
     session_tree: { type: "session_tree", newLeafId: null, oldLeafId: null },
     before_agent_start: { type: "before_agent_start", systemPrompt: [] },
     "session.compacting": {
@@ -777,6 +777,7 @@ describe("Feature: SBTD 控制引导", () => {
       },
     } as never);
     const ctx = {
+      cwd: tmpdir(),
       sessionManager: { getBranch: () => entries },
     };
 
@@ -1084,6 +1085,167 @@ describe("Feature: SBTD 控制引导", () => {
           },
         },
       });
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it.each([
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\n---\n",
+      true,
+    ],
+    [
+      ".sbtd/tasks/group/current/task.md",
+      "---\nschema_version: 1\nstatus: 'checking'\n---\n",
+      true,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "\uFEFF---\r\nschema_version: 1\r\nid: current\r\nstatus: \"in-progress\"\r\nworkflow_mode: strict\r\nmode_note: '保留 don''t'\r\ncreated_at: 2026-10-22T11:18:35+08:00\r\ncompleted_at: null\r\n---\r\n",
+      true,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus:in-progress\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: '1'\nstatus: in-progress\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\nnote: [unterminated\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\nnote: nested: value\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      '---\nschema_version: 1\nstatus: "in-progress\n---\n',
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: &active in-progress\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\nnote: |\n  text\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: done\n---\nstatus: in-progress\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: cancelled\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: blocked\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: planned\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\nstatus: done\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/current/task.md",
+      "---\nschema_version: 2\nstatus: in-progress\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/index.md",
+      "---\nschema_version: 1\nstatus: in-progress\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/archive/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\n---\n",
+      false,
+    ],
+    [
+      "ai/tasks/reports/current/task.md",
+      "---\nschema_version: 1\nstatus: in-progress\n---\n",
+      false,
+    ],
+    [".trellis/tasks/current/task.json", '{"status":"in_progress"}', true],
+  ])("Scenario: 原生和 legacy 任务记录只读分类: %s %s", async (path, content, active) => {
+    const root = await mkdtemp(resolve(tmpdir(), "kpi-task-route-"));
+    const entries: unknown[] = [
+      {
+        customType: SBTD_STATE_CUSTOM_TYPE,
+        data: {
+          ...defaultSessionState(),
+          runtimeMode: "enforced",
+          environmentObservation: {
+            observedAt: "2026-10-22T00:00:00.000Z",
+            mode: "managed",
+            evidence: ["managed"],
+            repairPath: "/sbtd doctor",
+          },
+        },
+      },
+    ];
+    const events = new Map<
+      string,
+      (event: unknown, ctx: unknown) => Promise<unknown>
+    >();
+    try {
+      await mkdir(resolve(root, path, ".."), { recursive: true });
+      await writeFile(resolve(root, path), content);
+      extension({
+        ...hostContract,
+        registerCommand() {},
+        on(
+          name: string,
+          handler: (event: unknown, ctx: unknown) => Promise<unknown>,
+        ) {
+          events.set(name, handler);
+        },
+        appendEntry(customType: string, data: unknown) {
+          entries.push({ customType, data });
+        },
+        async exec() {
+          return { code: 0, killed: false, stderr: "", stdout: "" };
+        },
+      } as never);
+      await events.get("before_agent_start")?.(
+        fillHostEvent("before_agent_start", {
+          prompt: "Update module behavior.",
+        }),
+        { cwd: root, sessionManager: { getBranch: () => entries } },
+      );
+      expect(entries.at(-1)).toMatchObject({
+        data: {
+          classification: {
+            route: active ? "trellis-managed-task" : "small-direct-change",
+          },
+        },
+      });
+      expect(await readFile(resolve(root, path), "utf8")).toBe(content);
     } finally {
       await rm(root, { force: true, recursive: true });
     }

@@ -14,9 +14,9 @@
 //   validator (validate.ts); this driver only drives and records.
 // - Every run is bound to HOST_EVENT_RUN_ID; a run dir that already contains a
 //   completed scenario.json is refused so logs are never shared across runs.
-// - The scenario additionally attempts the public RPC `handoff` command to
-//   cover session_switch reason "handoff"; a refused/unsupported attempt is
-//   recorded as a blocked cell, never faked.
+// - The scenario additionally attempts the public RPC `handoff` command.
+//   18.11.1 emits session_compact (outside this inventory), not session_switch;
+//   RPC success alone never counts as observed handoff event coverage.
 //
 // Required env: SPIKE_OMP_BIN, SPIKE_PLUGIN_EXT, SPIKE_RUN_DIR,
 //   HOST_EVENT_RUN_ID, HOST_EVENT_OBSERVE_EVENTS (JSON string array).
@@ -674,10 +674,9 @@ try {
   await promptAndWait("SPIKE_PLAIN four");
   scenario.postCompactTurn = true;
 
-  // session_switch reason "handoff": the RPC union exposes `handoff`; it
-  // generates the handoff document through the same deterministic stub model
-  // and starts a new Session inside this same Host process. If the public
-  // command refuses the attempt, record a blocked cell — never fake it.
+  // 18.11.1 handoff compacts the current Session through session_compact,
+  // outside the subscribed inventory. Record RPC outcome only; the validator
+  // must diagnose the missing event coverage even when this command succeeds.
   try {
     const handoffResult = await command(
       "handoff",

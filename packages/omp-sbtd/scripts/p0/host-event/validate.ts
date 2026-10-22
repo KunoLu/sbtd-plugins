@@ -520,8 +520,9 @@ export function validateHostEventRun(
 
   if (scenario?.scenario.handoff !== undefined) {
     if (scenario.scenario.handoff.ok === true) {
-      if (!switchReasons.includes("handoff"))
-        isolationFailure("SESSION_SWITCH_REASON_MISSING:handoff");
+      // 18.11.1 handoff commits same-session compaction and emits
+      // session_compact, outside this inventory. RPC success is not event proof.
+      diagnostics.push("HANDOFF_EVENT_UNOBSERVABLE");
     } else {
       diagnostics.push("HANDOFF_TRIGGER_BLOCKED");
     }

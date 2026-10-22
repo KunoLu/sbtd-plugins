@@ -844,7 +844,9 @@ function renderRuntimeMarker(
 const bashToolCallSchema = z
   .object({
     toolName: z.literal("bash"),
-    input: z.object({ command: z.string() }).passthrough(),
+    input: z
+      .object({ command: z.string(), cwd: z.string().optional() })
+      .passthrough(),
   })
   .passthrough();
 
@@ -1138,6 +1140,90 @@ async function directoryExists(path: string): Promise<boolean> {
   }
 }
 
+// Deliberately a flat-scalar subset, not a YAML parser. Canonical task writers
+// emit these fields; unsupported YAML is not positive routing evidence. Full
+// task validation stays in sbtd-task, and yaml remains build-time-only.
+function hasActiveTaskFrontmatter(text: string): boolean {
+  const header = /^\uFEFF?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(
+    text,
+  )?.[1];
+  if (header === undefined) return false;
+  const keys = new Set<string>();
+  let schemaVersionOne = false;
+  let status: string | undefined;
+  for (const line of header.split(/\r?\n/)) {
+    if (line.trim() === "" || line.startsWith("#")) continue;
+    const field = /^([A-Za-z_][A-Za-z0-9_-]*):(?=[ \t]|$)[ \t]*(.*)$/.exec(
+      line,
+    );
+    if (field === null) return false;
+    const key = field[1] as string;
+    const raw = (field[2] as string).trim();
+    if (keys.has(key)) return false;
+    for (const character of raw) {
+      const code = character.charCodeAt(0);
+      if (code < 32 || code === 127) return false;
+    }
+    keys.add(key);
+    let value = raw;
+    if (raw.startsWith('"')) {
+      try {
+        value = JSON.parse(raw);
+      } catch {
+        return false;
+      }
+    } else if (raw.startsWith("'")) {
+      if (!/^'(?:[^']|'')*'$/.test(raw)) return false;
+      value = raw.slice(1, -1).replaceAll("''", "'");
+    } else if (
+      /["'{}[\]#&*!|>%@`,]/.test(raw) ||
+      /^(?:[-?:](?:\s|$))|:\s/.test(raw)
+    ) {
+      return false;
+    }
+    if (key === "schema_version") schemaVersionOne = raw === "1";
+    if (key === "status") status = value;
+  }
+  return (
+    schemaVersionOne && (status === "in-progress" || status === "checking")
+  );
+}
+
+// Routing evidence only: task ownership, full schema/history validation and
+// recovery remain canonical sbtd-task responsibilities. Never read index as state.
+async function hasActiveSbtdTask(projectRoot: string): Promise<boolean> {
+  const visit = async (directory: string): Promise<boolean> => {
+    const entries = await readdir(directory, { withFileTypes: true }).catch(
+      () => [],
+    );
+    for (const entry of entries) {
+      const path = resolve(directory, entry.name);
+      if (entry.isDirectory() && !["archive", "reports"].includes(entry.name)) {
+        if (await visit(path)) return true;
+      } else if (entry.isFile() && entry.name === "task.md") {
+        try {
+          const text = await readFile(path, "utf8");
+          if (hasActiveTaskFrontmatter(text)) return true;
+        } catch {
+          // Unreadable/malformed records are not positive routing evidence.
+        }
+      }
+    }
+    return false;
+  };
+  for (const parent of ["ai", ".sbtd"]) {
+    const parentPath = resolve(projectRoot, parent);
+    const tasksRoot = resolve(parentPath, "tasks");
+    // Do not follow linked containers, records or nested directories.
+    if (!(await lstat(parentPath).catch(() => undefined))?.isDirectory())
+      continue;
+    if (!(await lstat(tasksRoot).catch(() => undefined))?.isDirectory())
+      continue;
+    if (await visit(tasksRoot)) return true;
+  }
+  return false;
+}
+
 async function hasActiveTrellisTask(projectRoot: string): Promise<boolean> {
   const tasksRoot = `${projectRoot}/.trellis/tasks`;
   const directories = await readdir(tasksRoot, { withFileTypes: true }).catch(
@@ -1214,7 +1300,10 @@ async function observeObjectiveTaskEvidence(
       () => true,
       () => false,
     ),
-    hasActiveTrellisTask(projectRoot),
+    Promise.all([
+      hasActiveSbtdTask(projectRoot),
+      hasActiveTrellisTask(projectRoot),
+    ]).then((active) => active.some(Boolean)),
     hasPersistedBddCoverage(projectRoot),
     directoryExists(`${projectRoot}/test`),
     directoryExists(`${projectRoot}/tests`),
@@ -2737,11 +2826,22 @@ export default function extension(
             reason:
               "Verified SBTD Python runtime is unavailable; the entry was not run.",
           };
+        let commandCwd = bashToolCallSchema.parse(event).input.cwd;
+        // Match pinned host expandTilde: concatenate separator-prefixed tails
+        // so ~//path cannot discard HOME, and retain its ~\ behavior on POSIX.
+        if (commandCwd?.startsWith("~")) {
+          commandCwd =
+            commandCwd.startsWith("~/") || commandCwd.startsWith("~\\")
+              ? homedir() + commandCwd.slice(1)
+              : resolve(homedir(), commandCwd.slice(1));
+        }
+        const probeCwd =
+          commandCwd === undefined ? ctx.cwd : resolve(ctx.cwd, commandCwd);
         const refusal = await dependencyPreflightRefusal(
           toolCommand,
           embedded.onboardRuntime.root,
           evidenceProcess,
-          ctx.cwd,
+          probeCwd,
         );
         if (refusal !== undefined) return refusal;
       }
