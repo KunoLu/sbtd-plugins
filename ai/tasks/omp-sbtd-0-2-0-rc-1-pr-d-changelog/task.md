@@ -114,4 +114,19 @@ CONTRACT-CHANGE-NEEDED：无。行 D 未请求变更 PRD 判据；SBOM 不提交
 
 ## 使用的模型
 
-（待补：orchestrator 按 session jsonl 填写）
+> 计数取自 session jsonl（`/workspace/scripts/omp/runs/sess-stats.py`：assistant 消息按 provider/model、工具调用按 assistant `toolCall`、辅助用量按 `type:model_usage` 的 purpose）；thinking 级别取自各会话 `thinking_level_change`；jsonl 不写 `resolvedModel` 字段。omp runtime 均为全局 18.12.5（编码引擎）。时间 +08:00。
+> `--resume` 续跑时 omp 18.12.5 新建了 fork 会话文件 `01a1621a…`，其中复制了原会话前 21 条 assistant / 53 次工具调用及 4 个首段 subagent 的截断副本；下表首段 subagent 计数取原会话目录，续跑段计数为 fork 总数减去复制部分。
+
+| # | 会话 | 用途 | provider/model | thinkingLevel | resolvedModelIsFallback | 计数 | 备注 |
+|---|---|---|---|---|---|---|---|
+| 1 | astra 连通性测试 `01a16213-a1f8-70c3-94bc-c331a88e9a9a`（`~/.omp/agent/sessions/-tmp-rowd-astra-ping/2026-10-22T05-26-56-248Z_01a16213-a1f8-70c3-94bc-c331a88e9a9a.jsonl`，13:26:57–13:26:59） | 行 D 开工前连通性检查，输出 PONG，无 403 | openai-codex / gpt-6-astra | high | false | 1 user / 1 assistant；工具 0 | OK → 用 astra:high |
+| 2 | omp 主会话首段 `01a16214-3822-7403-9a4d-24f082b87fdd`（`~/.omp/agent/sessions/--workspace-sbtd-plugins-row-d--/2026-10-22T05-27-34-691Z_01a16214-3822-7403-9a4d-24f082b87fdd.jsonl`，13:27:35–13:34:18；prompt `prompt-pr-d.md`） | 行 D 调研、EN/ZH CHANGELOG 起草；13:34 orchestrator 中断以转达 SBOM 撤销与 18.12.2 逐字裁决 | openai-codex / gpt-6-astra | high | false | 1 user / 21 assistant / 53 toolResult；工具 53（read 21、bash 7、todo 6、eval 6、edit 4、grep 3、glob 2、task 2、write 2）；error 0 | subagent 行 4–7 |
+| 3 | omp 主会话续跑段（fork 文件 `01a1621a-271b-70ae-879a-27ab021f9a7f`，`~/.omp/agent/sessions/--workspace-sbtd-plugins-row-d--/2026-10-22T05-34-03-547Z_01a1621a-271b-70ae-879a-27ab021f9a7f.jsonl`，13:34–13:43:59；prompt `prompt-pr-d-resume.md`） | SBOM 撤销、裁决记录、验证、commit `51d8464` | openai-codex / gpt-6-astra | high | false | 续跑段 1 user / 25 assistant / 42 次工具调用（fork 总计 2 user / 46 assistant / 95：read 29、bash 13、todo 11、eval 11、write 9、edit 8、grep 4、wait 4、glob 3、task 3）；error 0 | subagent 行 8–9；辅助用量行 10 |
+| 4 | subagent `HostAdaptFacts`（`01a16214-fc55-735e-ba7b-d0cb44772dce`，13:28:25–13:29:34） | 只读调研：行 C 宿主适配已合并事实 | cursor / composer-2.5（omp 配置分配） | low | false | 1 user / 1 assistant / 53 toolResult；工具 53（read 26、grep 25、bash 2） | — |
+| 5 | subagent `MigrationSyncFacts`（`01a16214-fbde-729e-a723-dc01e0fd3426`，13:28:24–13:29:48） | 只读调研：行 A/B 迁移与同步已合并事实 | cursor / composer-2.5 | low | false | 1 user / 1 assistant / 66 toolResult；工具 66（grep 44、read 19、bash 3） | — |
+| 6 | subagent `ChangelogReview`（`01a16218-3ae3-7520-95e2-78bc5af8d781`，13:31:57–13:34:18） | 只读独立评审 CHANGELOG 内容 | kimi-code / k3 | high | false | 1 user / 8 assistant / 38 toolResult；工具 38（read 22、grep 9、glob 5、bash 2） | 随中断截断 |
+| 7 | subagent `PackageDocsReview`（`01a16218-3ae3-7521-9331-31cff7082779`，13:31:57–13:34:18） | 只读独立评审包/清单影响 | kimi-code / k3 | high | false | 1 user / 8 assistant / 15 toolResult；工具 15（bash 14、read 1） | 随中断截断 |
+| 8 | subagent `ChangelogReviewFinal`（`01a1621a-e5ef-713d-bb9d-cccc548072e7`，13:34:52–13:42:38） | 续跑后重做 CHANGELOG 评审，结论 CLEAN | kimi-code / k3 | high | false | 2 user / 25 assistant / 36 toolResult；工具 36（bash 26、read 4、grep 3、write 2 → 回报主会话、glob 1） | — |
+| 9 | subagent `PackageDocsReviewFinal`（`01a1621a-e682-76d7-bb0f-4f4c1c415829`，13:34:52–13:42:42） | 续跑后重做包/清单评审，结论 CLEAN | kimi-code / k3 | high | false | 3 user / 32 assistant / 48 toolResult；工具 48（bash 36、read 11、grep 1）；error 1 | — |
+| 10 | 续跑会话辅助用量（`type:model_usage`） | purpose `job-widget`（omp 后台任务 widget 摘要，smol 角色辅助，非主会话） | cursor / composer-2.5 | — | — | model_usage 1 条 | — |
+| 11 | orchestrator（Grok Bot，非 omp 会话） | worktree、首 commit `29289dd`（行 C 回填 + 行 C task done + 本 skeleton）、prompt、监控、中断纠正、复核、本节、push 与开 PR | Grok Bot | — | — | 不适用 | 不写 CHANGELOG 正文 |
