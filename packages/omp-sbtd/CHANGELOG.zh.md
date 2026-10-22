@@ -7,13 +7,13 @@
 
 ### Breaking（破坏性变更）
 
-- 不再支持 omp 17.x；只在 18.11.1 上实测过，上游最新是 18.12.2
+- 不再支持 omp 17.x；只在 18.11.1 上实测过；截至 2026-10-19 D11 锁定时，上游最新是 18.12.2
 
 ### Added（新增）
 
 - **扩展 onboard runtime 随包内容。** 收录全部 33 个上游 Python 脚本、
   9 个 runtime assets、`onboard-contracts.schema.json`、
-  `upgrade.schema.json`，以及 8 文件的 `sbtd-task` 模板树。
+  `upgrade.schema.json`，以及 `sbtd-task` 模板树（八个模板文件，另含 LICENSE、NOTICE）。
 - **Python 依赖预检。** 随包提供 `kit/onboard/runtime/requirements.txt`，
   含 5 个钉版依赖：`jsonschema`、`PyYAML`、`markdown-it-py`、`tomlkit`
   和 `cryptography`。对可识别且需要依赖的 SBTD Python 命令（含 upgrade

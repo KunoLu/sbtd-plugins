@@ -9,13 +9,13 @@ Chinese mirror of the new entry: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
 ### Breaking
 
-- No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2
+- No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
 
 ### Added
 
 - **Expanded onboard runtime bundle.** Includes all 33 upstream Python
   scripts, nine runtime assets, `onboard-contracts.schema.json`,
-  `upgrade.schema.json`, and the eight-file `sbtd-task` template tree.
+  `upgrade.schema.json`, and the `sbtd-task` template tree (eight template files, plus LICENSE and NOTICE).
 - **Python dependency preflight.** Ships `kit/onboard/runtime/requirements.txt`
   with five pinned dependencies: `jsonschema`, `PyYAML`, `markdown-it-py`,
   `tomlkit`, and `cryptography`. Recognized dependency-requiring SBTD
