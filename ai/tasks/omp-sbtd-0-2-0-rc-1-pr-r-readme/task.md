@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-pr-r-readme
 workflow_mode: strict
 mode_source: user
 mode_note: 用户明确要求 strict；按 PRD 行 R、D6/D7/D11/D13 执行，仅本 worktree 编辑与提交，不 push/PR/tag/publish。
-status: "in-progress"
+status: "done"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-r-readme
 created_at: '2026-10-22T15:40:20+08:00'
-updated_at: '2026-10-22T15:56:46+08:00'
-completed_at: null
+updated_at: '2026-10-22T16:22:52+08:00'
+completed_at: '2026-10-22T16:22:52+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 R：双语 README
 
@@ -28,6 +28,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-22T15:40:20+08:00 | in-progress | in-progress | 创建当前 strict 任务快照；无可证明前态，不捏造 lifecycle transition；首 commit 已单独回填 D 并启动 R | 92113b5；基线 9f1ba036c4d461315ba42ad02ece8cc0475e904a |
 | 2026-10-22T15:56:46+08:00 | in-progress | in-progress | README 与派生 SBOM 已提交，实际包检查通过，完整 suite 与 root lint 的既有/越界失败保留；独立文档复核 CLEAN，仍不声明发布或合并完成 | 604ee35；下方验证证据；本记录继续 in-progress，合并回填归 orchestrator |
+| 2026-10-22T16:22:52+08:00 | in-progress | done | 行 E 按 PRD L60 回填 #109 合并；来源为 orchestrator 核验 | merge SHA 4f8ed3ccdebee7a6f762520be26fbeac3eea6c37；merge commit %cI 2026-10-22T16:22:52+08:00；GitHub mergedAt 2026-10-22T16:22:53+08:00 |
 
 ## 决策
 
@@ -36,7 +37,7 @@ completed_at: null
 - npm 实测快照与发布目标分开：2026-10-22 dsh latest=0.1.0-rc.1、next=0.2.0-rc.1；omp latest=0.1.0-rc.2、next=0.1.0-rc.14。文档面向 omp 0.2.0-rc.1，安装命令明确以行 E 发布到 next 为前提；latest 不动，不假称目标已发布。
 - 包内两份 README 顶部沿用根 README 的 EN/中文切换形式，但两个地址均使用 omp-sbtd-v0.2.0-rc.1 绝对 tag 链接：对称固定版本，避免 npm 页面相对链接指向未打包的 ZH 文件；根 README 继续仓库内相对互链。tag 存在后的点击验证由行 E 执行，本行不冒充已验证在线可达。
 - D11 原文中的 18.12.2 是锁定时快照，遵从用户 verbatim 裁决，不查询或改写为现在的 upstream latest。
-- 沿用行 C/D 已知 TaskStore 全库历史 schema blocker，不重跑确认，不改 active pointer；仅维护明确授权的共享文档并验证当前 TaskDocument，不声称 TaskStore lifecycle 或自动恢复可靠。状态保持 in-progress，合并后由 orchestrator 回填。
+- 沿用行 C/D 已知 TaskStore 全库历史 schema blocker，不重跑确认，不改 active pointer；仅维护明确授权的共享文档并验证当前 TaskDocument，不声称 TaskStore lifecycle 或自动恢复可靠。当时状态保持 in-progress；现已由行 E 按 #109 合并证据回填 done。
 - 主会话为唯一 writer / validation controller；独立 reviewer 只读、不运行 build/lint/tests/formatters，使用配置模型，不 override。
 
 ## Book Gate Plan
@@ -94,13 +95,14 @@ completed_at: null
 
 ## 使用的模型
 
-> 数据取自本任务 session jsonl，快照时间 **2026-10-22T15:56:46+08:00**；不含此后最终记录/提交/回复调用，orchestrator 可在会话结束后精化。assistant 消息按实际 provider/model；工具按 assistant toolCall；thinking 取 thinking_level_change。原生快照保留 `reports/row-r-model-usage.json`。没有 model override；runtime model_change 记录版本为 18.12.5；resolvedModel 字段未写入。
+> 会话已结束；以下为 orchestrator 提供的 FINAL 计数。历史快照时间 **2026-10-22T15:56:46+08:00**：主会话 36/67 → 最终 43/75，BilingualReadmeReview 15/24 → 最终 15/24，ReadmeContractReview 22/32 → 最终 25/34（assistant/tool calls）。原生快照 `reports/row-r-model-usage.json` 仅作历史保留。assistant 消息按实际 provider/model；工具按 assistant toolCall；thinking 取 thinking_level_change。没有 model override；runtime model_change 记录版本为 18.12.5；resolvedModel 字段未写入。
 
-| # | 会话 / 用途 | provider/model | thinkingLevel | resolvedModelIsFallback | 快照计数 |
+| # | 会话 / 用途 | provider/model | thinkingLevel | resolvedModelIsFallback | 最终计数 |
 |---|---|---|---|---|---|
-| 1 | 主会话 `01a1628c-873c-715d-a38e-4e946f8f6127`；唯一 writer、验证与 commits | openai-codex / gpt-6-astra | high | false | 1 user / 36 assistant / 66 toolResult；67 toolCall（read 26、eval 10、bash 7、todo 5、edit 5、write 5、glob 3、wait 3、grep 2、task 1）；error 1（行 D TaskDocument schema 拒绝） |
-| 2 | `BilingualReadmeReview` / `01a16291-7588-71e0-b952-bf593d29202f`；只读双语/事实复核 CLEAN | kimi-code / k3 | max | false | 3 user / 15 assistant / 24 toolResult；24 toolCall（read 12、bash 10、grep 2）；error 0 |
-| 3 | `ReadmeContractReview` / `01a16291-762a-7638-8531-5984410a8315`；只读链接/发布与打包契约复核 CLEAN；首 commit 归属更正在快照后 | kimi-code / k3 | max | false | 3 user / 22 assistant / 32 toolResult；32 toolCall（bash 19、read 8、grep 4、wait 1）；error 1 |
+| 1 | 主会话 `01a1628c-873c-715d-a38e-4e946f8f6127`；唯一 writer、验证与 commits | openai-codex / gpt-6-astra | high | false | FINAL 43 assistant / 75 toolResult / 75 toolCall（read 27、eval 11、bash 9、todo 7、edit 7、write 5、glob 3、wait 3、grep 2、task 1）；title_change=1 |
+| 2 | `BilingualReadmeReview` / `01a16291-7588-71e0-b952-bf593d29202f`；只读双语/事实复核 CLEAN | kimi-code / k3 | max | false | FINAL 15 assistant / 24 toolCall（read 12、bash 10、grep 2），与快照相同 |
+| 3 | `ReadmeContractReview` / `01a16291-762a-7638-8531-5984410a8315`；只读链接/发布与打包契约复核 CLEAN；含首 commit 归属更正 | kimi-code / k3 | max | false | FINAL 25 assistant / 34 toolCall（bash 20、read 8、grep 4、wait 1、write 1）；write 为给 agent://Main 的归属更正消息，非仓库文件写入 |
 | 4 | 主会话辅助 `type:model_usage`，purpose=`job-widget`，非主实现或独立 reviewer | cursor / composer-2.5 | 未记录 | 不适用 | 1 条辅助用量 |
+| 5 | astra connectivity ping `01a1628b-795c-732b-8cb4-77bb75de3897` | openai-codex / gpt-6-astra | high | false | FINAL 1 assistant / 0 tools；回复 `ok`，connectivity OK → 使用 astra:high；日志 `~/.omp/logs/sbtd-row-r/astra-ping.log` |
 
 主 jsonl：`~/.omp/agent/sessions/--workspace-sbtd-plugins-row-r--/2026-10-22T07-38-59-260Z_01a1628c-873c-715d-a38e-4e946f8f6127.jsonl`；两名 reviewer 位于同 stem 目录的 `BilingualReadmeReview.jsonl` / `ReadmeContractReview.jsonl`。快照时主会话最后一条 eval 仍在执行，因此 toolCall 比 toolResult 多 1；不是丢失验证结果。所有文件编辑与提交由主会话完成，subagent 未写仓库文件或执行 build/lint/tests/formatters。

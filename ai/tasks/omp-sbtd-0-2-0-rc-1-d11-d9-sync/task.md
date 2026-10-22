@@ -52,7 +52,7 @@ completed_at: '2026-10-22T17:53:26+08:00'
 - [x] 完成六处 D11 与四处 D9、排序索引。
 - [x] 精确计数、一次 build、SBOM JSON 路径比较、实际 pack/check-package。
 - [x] run 1 保存模型快照与完整证据，当时保持 in-progress；随后由 orchestrator 提交为 PR #112 tip `10734e3a2b58e10c4a15855b0eda9c4fa4254904`。
-- [x] 本轮按 Reviewy「artifacts OK, task.md blocker batch」完成 strict/done 与模型记录修正；仅 task.md 未提交，提交仍由 orchestrator 执行。
+- [x] 本轮按 Reviewy「artifacts OK, task.md blocker batch」完成 strict/done 与模型记录修正；已由 orchestrator 提交为 `f264bcd` 并合入 #112，merge SHA `194dfa653f5e4f3d1bb34f2721af58c8200dba4f`；%cI 与 GitHub mergedAt 均为 `2026-10-22T18:08:58+08:00`。
 
 ## 验证证据
 
@@ -120,7 +120,7 @@ build / check-package 两个 hash 完全一致，SBOM 文件实际 SHA-256 也�
 - rtk: skipped-for-report，按用户要求保存原生命令输出。全量测试、lint-fix、formatter：按范围不运行；独立 lint、BDD、宿主 smoke：skipped，纯文档同步，无代码或 .feature 变化，实际 tarball 检查覆盖本次派生一致性。
 - Graft、Web/Mobile：skipped，不涉及结构/界面变更；Cross-repo context / API Contract: not-needed；Mock Strategy: none。无生产代码、schema、迁移或部署行为变更，Book gates 不触发；未声明 release-ready。
 - 原生输出及中文报告在 ignored reports/，不会随共享 task 自动提交；临时包保留在上列 /tmp 路径，未创建 throwaway 脚本或永久测试。
-- run 1 的文档与产物已由 orchestrator 提交为 PR #112 tip `10734e3a2b58e10c4a15855b0eda9c4fa4254904`；用户转达 Reviewy review「artifacts OK, task.md blocker batch」。本轮仅修正 task.md 并记 done，修正仍未暂存、未提交，不代表 PR 已合并、CI、宿主重新认证或发布；不改 PRD 或历史任务。未验证全库 TaskStore 恢复。
+- run 1 的文档与产物已由 orchestrator 提交为 PR #112 tip `10734e3a2b58e10c4a15855b0eda9c4fa4254904`；用户转达 Reviewy review「artifacts OK, task.md blocker batch」。task.md 修正随后提交为 `f264bcd` 并合入 #112（merge SHA `194dfa653f5e4f3d1bb34f2721af58c8200dba4f`，%cI / GitHub mergedAt 均为 `2026-10-22T18:08:58+08:00`；orchestrator 核验），不代表宿主重新认证或发布。下方历史证据保留，未验证全库 TaskStore 恢复。
 - 本轮未运行 build、pack、write-sbom、formatter、全量测试或运行时 smoke：仅任务元数据与证据记录修正，且用户明确禁止重建产物。BDD、Graft、独立生产代码复核、Cross-repo context / API Contract：not-needed；Mock Strategy：none；rtk：not-needed，使用只读原生命令与内存校验，不生成新报告文件。
 
 ## CONTRACT-CHANGE-NEEDED
@@ -129,16 +129,16 @@ build / check-package 两个 hash 完全一致，SBOM 文件实际 SHA-256 也�
 
 ## 使用的模型
 
-> run 1 已结束，以下为全会话最终计数（orchestrator 提供，本轮从原 jsonl 复算一致），不再使用旧快照的 11 / 24。`reports/sync-model-usage.json` 仅保留为 run 1 历史快照，本轮未改写。fix run 1 的 jsonl 快照时间为 **2026-10-22T17:53:26+08:00**（`TZ=Asia/Shanghai date -Is`）；此后编辑、验证与回复不计入，不冒充全会话最终计数。两轮均无 subagent。
+> run 1 与 fix run 1 均已结束，下表为 FINAL 计数（orchestrator 提供）；run 1 旧 11/24 与 `reports/sync-model-usage.json` 仅保留为历史快照。fix run 1 的 **2026-10-22T17:53:26+08:00** 历史快照为 4/17 → 最终 9/25；快照不含此后的编辑、验证与回复。两轮均无 subagent。
 
 | agent/session | provider/model | thinkingLevel | assistant messages / tool calls | purpose | resolvedModelIsFallback | title-generation count | job-widget entries |
 |---|---|---|---|---|---|---|---|
 | run 1 主会话 `01a162f6-5626-7665-973d-79c645e05e31` | openai-codex / gpt-6-astra | high | 16 / 28（全会话最终计数） | 文档同步、唯一 writer、构建/包检查与证据记录 | false | 1（auto title_change） | 0（type:model_usage purpose=job-widget） |
 | run 1 自动标题（同会话事件） | 未记录 / unknown | 未记录 / unknown | 未记录 / unknown | title-generation | 未记录 / unknown | 1（同一事件，不另加总） | 不适用 |
-| fix run 1 主会话 `01a16306-a700-75e6-9959-afc1152ace79` | openai-codex / gpt-6-astra | high | 4 / 17（2026-10-22T17:53:26+08:00 快照） | Reviewy blocker fix，仅 task.md | false | 0（title_change） | 0（type:model_usage purpose=job-widget） |
+| fix run 1 主会话 `01a16306-a700-75e6-9959-afc1152ace79` | openai-codex / gpt-6-astra | high | FINAL 9 / 25（历史快照 4 / 17） | Reviewy blocker fix，仅 task.md；独立 astra ping 见下方 | false | 1（title_change） | 0（type:model_usage purpose=job-widget） |
 
 run 1 jsonl：`~/.omp/agent/sessions/--workspace-sbtd-plugins-d11-d9-sync--/2026-10-22T09-34-33-510Z_01a162f6-5626-7665-973d-79c645e05e31.jsonl`。fix run 1 jsonl：`~/.omp/agent/sessions/--workspace-sbtd-plugins-d11-d9-sync--/2026-10-22T09-52-22-784Z_01a16306-a700-75e6-9959-afc1152ace79.jsonl`（同目录除 run 1 外最新文件）。两个 session header 的 cwd 均与授权 worktree 匹配；本轮发现上述两份 jsonl，无子代理会话。
 
-统计定义：assistant 消息取 `type=message` 且 `message.role=assistant`；tool calls 取其 content 内 `type=toolCall`，包括快照时仍在执行的 eval，不把 eval 内调用重复算作 assistant toolCall。run 1 最终工具分布：read 12、bash 1、todo 1、grep 1、eval 8、glob 2、write 1、edit 2。fix run 1 快照工具分布：read 9、bash 1、todo 2、grep 2、glob 1、eval 2。thinkingLevel 来自各自 `thinking_level_change`；provider/model 与 fallback 来自各自 `model_change`（`resolvedModelIsFallback=false`）。`title` 头部不是生成事件；run 1 的 `title_change source=auto` 为 1 条，fix run 1 快照为 0 条。两轮均未发现 `type=model_usage purpose=job-widget` 条目；标题模型未记录，不推断。
+统计定义：assistant 消息取 `type=message` 且 `message.role=assistant`；tool calls 取其 content 内 `type=toolCall`，不把 eval 内调用重复算作 assistant toolCall。run 1 最终工具分布：read 12、bash 1、todo 1、grep 1、eval 8、glob 2、write 1、edit 2。fix run 1 FINAL 工具分布：read 9、todo 6、bash 3、eval 3、grep 2、glob 1、edit 1，共 25（历史快照：read 9、bash 1、todo 2、grep 2、glob 1、eval 2，共 17）。thinkingLevel 来自各自 `thinking_level_change`；provider/model 与 fallback 来自各自 `model_change`（astra:high，`resolvedModelIsFallback=false`）。`title` 头部不是生成事件；run 1 与 fix run 1 最终 title_change 各 1（fix 快照为 0）。两轮均无 `type=model_usage purpose=job-widget`；标题模型未记录，不推断。
 
 每轮开始前均由 orchestrator 执行 astra 连通性 ping：`omp -p --no-session --model openai-codex/gpt-6-astra:high`，临时调用、无 session jsonl，均回复 `ASTRA_OK`；日志分别为 `~/.omp/logs/sbtd-d11-d9-sync/ping.log`（run 1）及 `~/.omp/logs/sbtd-d11-d9-sync/ping-fix1.log`（fix run 1）。调用方式与归属据本轮用户提供，本轮只读确认两份日志均含 `ASTRA_OK`，未重新执行 ping；不计入上述 session 计数。
