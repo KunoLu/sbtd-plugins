@@ -425,7 +425,7 @@ export function validateHostEventRun(
     if (sessions.size > 1) bindingFailure("TOOL_CALL_REUSED_ACROSS_SESSIONS");
 
   // Cross-target and cross-turn binding: one toolCall identity must stay
-  // bound to a single target and a single enclosing turn. Host 17.3.5 tool
+  // bound to a single target and a single enclosing turn. Host 18.11.1 tool
   // events carry no risk-class field, so target = hashed toolName is the
   // observable isolation key; the enclosing turn is derived as the nearest
   // preceding same-Session turn_start by seq (fingerprinted by its
@@ -473,7 +473,7 @@ export function validateHostEventRun(
 
   // Suite-owned risk classification: the driver records a stable map of
   // hashed toolName → risk class for exactly the tools this suite
-  // registers (Host 17.3.5 events carry no risk-class field, so the
+  // registers (Host 18.11.1 events carry no risk-class field, so the
   // classification source is the suite, never a Host payload). Every tool
   // event must resolve through that map; an unknown or unrecorded
   // toolName fails closed, and one toolCall identity spanning two classes

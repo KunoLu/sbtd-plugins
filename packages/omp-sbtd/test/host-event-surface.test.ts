@@ -58,10 +58,10 @@ const TOOL_BASH = d("tool-bash");
 
 const EXPECTED: HostEventRunExpectation = {
   runId: RUN_ID,
-  targetOmpVersion: "17.3.5",
+  targetOmpVersion: "18.11.1",
   hostEntrypointSha256: d("host-entrypoint"),
   hostPackageJsonSha256: d("host-package-json"),
-  hostPackageVersion: "17.3.5",
+  hostPackageVersion: "18.11.1",
   pluginValidatorModuleSha256: d("validator-module"),
   pluginTarballSha256: d("plugin-tarball"),
 };
@@ -138,7 +138,7 @@ function baseRecords(): FixtureRecord[] {
       kind: "host_identity",
       hostPackageFound: true,
       hostPackageName: "@oh-my-pi/pi-coding-agent",
-      hostPackageVersion: "17.3.5",
+      hostPackageVersion: "18.11.1",
       hostEntrypointSha256: EXPECTED.hostEntrypointSha256,
       hostPackageJsonSha256: EXPECTED.hostPackageJsonSha256,
       validatorLoaded: true,
@@ -712,10 +712,10 @@ describe("Feature: Host Event Surface — driver-side Host identity recomputatio
     const distDir = join(pkgDir, "dist");
     await mkdir(distDir, { recursive: true });
     await writeFile(join(distDir, "cli.js"), "// fake omp cli\n", "utf8");
-    const manifest = `${JSON.stringify({ name: "@oh-my-pi/pi-coding-agent", version: "17.3.5" })}\n`;
+    const manifest = `${JSON.stringify({ name: "@oh-my-pi/pi-coding-agent", version: "18.11.1" })}\n`;
     await writeFile(join(pkgDir, "package.json"), manifest, "utf8");
     const identity = recomputeHostIdentity(join(distDir, "cli.js"));
-    expect(identity.packageVersion).toBe("17.3.5");
+    expect(identity.packageVersion).toBe("18.11.1");
     expect(identity.entrypointSha256).toBe(d("// fake omp cli\n"));
     expect(identity.packageJsonSha256).toBe(d(manifest));
   });
@@ -924,7 +924,7 @@ describe("Feature: Host Event Surface — setup blockedReason stays a stable cod
       );
       await writeFile(
         join(pkgDir, "package.json"),
-        `${JSON.stringify({ name: "@oh-my-pi/pi-coding-agent", version: "17.3.5" })}\n`,
+        `${JSON.stringify({ name: "@oh-my-pi/pi-coding-agent", version: "18.11.1" })}\n`,
         "utf8",
       );
       const result = await runLiveCell({

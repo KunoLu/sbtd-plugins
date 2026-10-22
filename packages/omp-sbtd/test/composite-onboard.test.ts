@@ -142,7 +142,7 @@ describe("Feature: SBTD 控制引导", () => {
             label: "Oh My Pi",
             command: "omp",
             path: "/bin/omp",
-            version: "17.3.5",
+            version: "18.11.1",
             installed: true,
             npmPackage: "@oh-my-pi/pi-coding-agent",
             installCommand: "npm install -g @oh-my-pi/pi-coding-agent",
@@ -202,7 +202,7 @@ describe("Feature: SBTD 控制引导", () => {
               JSON.stringify({ status: "planning" }),
             );
           }
-          return { stdout: "17.3.5\n", stderr: "", code: 0, killed: false };
+          return { stdout: "18.11.1\n", stderr: "", code: 0, killed: false };
         },
       },
     };

@@ -138,8 +138,8 @@ function dependencySpec(
 // the exact development pin decides the build/acceptance floor.
 const policyV2 = {
   schemaVersion: 2,
-  peerRange: ">=17.3.5 <18",
-  developmentRuntimeVersion: "17.3.5",
+  peerRange: ">=18 <19",
+  developmentRuntimeVersion: "18.11.1",
   pluginPackage: "@kunolu/omp-sbtd",
   commands: ["help", "status", "report", "onboard plan"],
 } as const;
@@ -478,9 +478,9 @@ describe("Feature: P0 一致性研究与不可变证据 — publication/certific
       input: unknown,
       expectedDevelopmentRuntime?: string,
     ) => { peerRange: string; developmentRuntimeVersion: string };
-    const policy = validatePolicy(policyV2, "17.3.5");
-    expect(policy.peerRange).toBe(">=17.3.5 <18");
-    expect(policy.developmentRuntimeVersion).toBe("17.3.5");
+    const policy = validatePolicy(policyV2, "18.11.1");
+    expect(policy.peerRange).toBe(">=18 <19");
+    expect(policy.developmentRuntimeVersion).toBe("18.11.1");
   });
 
   it("Scenario: 精确 dev pin 必须位于 peer range 内", () => {
@@ -498,8 +498,8 @@ describe("Feature: P0 一致性研究与不可变证据 — publication/certific
     ) => unknown;
     try {
       validatePolicy(
-        { ...policyV2, developmentRuntimeVersion: "18.1.0" },
-        "17.3.5",
+        { ...policyV2, developmentRuntimeVersion: "17.3.5" },
+        "18.11.1",
       );
       throw new Error("Expected an out-of-range dev pin to fail closed.");
     } catch (error) {
@@ -509,7 +509,7 @@ describe("Feature: P0 一致性研究与不可变证据 — publication/certific
     }
   });
 
-  it("Scenario: OMP 18 被 tarball-bound peer range 拒绝", async () => {
+  it("Scenario: OMP 17 被当前 tarball-bound peer range 拒绝", async () => {
     // Old assumption replaced by the Slice 2 cutover: runtime identity was
     // exact equality with one declared current version
     // (CURRENT_RUNTIME_MISMATCH); the new contract rejects out-of-range
@@ -520,7 +520,7 @@ describe("Feature: P0 一致性研究与不可变证据 — publication/certific
     // in the packed package.json and the packaged Policy v2 file
     // (validation/p0/compatibility.v2.json is in the package files
     // whitelist). The in-memory policyV2 constant must not decide this
-    // scenario — a packed peer range that admits 18, or a tarball that
+    // scenario — a packed peer range that admits 17, or a tarball that
     // omits the packaged policy, fails this test.
     const packageRoot = await packCurrentCandidate();
     const [packedPackageText, sourcePackageText, packedPolicyText] =
@@ -565,11 +565,11 @@ describe("Feature: P0 一致性研究与不可变证据 — publication/certific
     // Unchecked cast: presence asserted immediately above; the call shape
     // is the Slice 2 contract documented in the file header.
     const check = assertInRange as (policy: unknown, runtime: string) => void;
-    // The exact development pin is in range; OMP 18.0.0 is rejected.
-    expect(() => check(packedPolicy, "17.3.5")).not.toThrow();
+    // The exact development pin is in range; OMP 17.3.5 is rejected.
+    expect(() => check(packedPolicy, "18.11.1")).not.toThrow();
     try {
-      check(packedPolicy, "18.0.0");
-      throw new Error("Expected OMP 18 to be rejected as out-of-range.");
+      check(packedPolicy, "17.3.5");
+      throw new Error("Expected OMP 17 to be rejected as out-of-range.");
     } catch (error) {
       expect(error).toMatchObject({
         code: "COMPATIBILITY_RUNTIME_OUT_OF_RANGE",

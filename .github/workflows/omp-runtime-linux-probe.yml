@@ -1,4 +1,4 @@
-# Linux-hosted probe of the lockfile-pinned OMP 17.3.5 Host Event path.
+# Linux-hosted probe of the lockfile-pinned OMP 18.11.1 Host Event path.
 #
 # Uses the existing frozen-tarball live cell (drive.mjs loopback + packed
 # Plugin). Not certification: no ledger write, no bot PR, no `certified`.
@@ -71,5 +71,5 @@ jobs:
           SPIKE_OMP_BIN: ${{ github.workspace }}/packages/omp-sbtd/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js
           HOST_EVENT_PLUGIN_TARBALL: ${{ steps.pack.outputs.tarball }}
           HOST_EVENT_RUNS_ROOT: ${{ runner.temp }}/host-event-runs
-          HOST_EVENT_TARGET_VERSION: "17.3.5"
+          HOST_EVENT_TARGET_VERSION: "18.11.1"
         run: pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/host-event/run-live-cell.ts

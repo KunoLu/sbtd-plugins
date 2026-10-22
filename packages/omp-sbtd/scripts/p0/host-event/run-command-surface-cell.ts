@@ -877,7 +877,7 @@ if (isMain) {
     pluginTarball,
     runDir,
     runId,
-    targetOmpVersion: process.env.COMMAND_SURFACE_TARGET_VERSION ?? "17.3.5",
+    targetOmpVersion: process.env.COMMAND_SURFACE_TARGET_VERSION ?? "18.11.1",
     ...(process.env.INSTALLER_LOCK_FILE === undefined
       ? {}
       : { installerLockFile: process.env.INSTALLER_LOCK_FILE }),

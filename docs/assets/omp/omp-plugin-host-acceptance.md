@@ -3,8 +3,10 @@
 ## 1. 目的与适用范围
 
 本手册是 `@kunolu/omp-sbtd` 从精确 tarball 到 npm Registry、再到消费者安装的唯一发布路径。
+行 C（0.2.0-rc.1 准备）将当前源码候选改为 peer `>=18 <19`、开发/宿主 smoke 精确 `18.11.1`。旧版发布事实如下保留，不代表新候选的支持范围。D11 本地无凭据加载/注册/onboard smoke 不替代本手册的受信精确 tarball 发布 Gate；行 E 仍需对最终发布字节执行该 Gate。
 
-当前 RC 的精确 OMP 目标是 **`17.3.5`**。`@kunolu/omp-sbtd@0.1.0-rc.12` 已完成第 4 节全收（TUI 前 SHA-256 基线 + `section-4-write-check=passed`，2026-08-20）并发布到 `next`。可将 `17.3.5` 标为公开 `supported`（精确 peer + 本 RC 四命令）。不得写成 exact-host certified：该四命令结果只保留为 Command Surface 基线，rc.12 的兼容认证状态从 `eligible` 开始，不会被既有四命令结果自动提升为 `certified`。真实 `~/.omp` 不是第 4 节验收项。`17.2.9` 及更早结果是历史证据。
+
+历史 rc.12 的精确 OMP 目标是 **`17.3.5`**。`@kunolu/omp-sbtd@0.1.0-rc.12` 已完成第 4 节全收（TUI 前 SHA-256 基线 + `section-4-write-check=passed`，2026-08-20）并发布到 `next`。可将 `17.3.5` 标为公开 `supported`（精确 peer + 本 RC 四命令）。不得写成 exact-host certified：该四命令结果只保留为 Command Surface 基线，rc.12 的兼容认证状态从 `eligible` 开始，不会被既有四命令结果自动提升为 `certified`。真实 `~/.omp` 不是第 4 节验收项。`17.2.9` 及更早结果是历史证据。
 
 `@kunolu/omp-sbtd@0.1.0-rc.13` 已由受信 `omp-section4-publish-gate`（run `33052112414`，digest `b0e1f1332c3d9d5799423ab23ae1936b05efeb492cfb3ff65131c146b3028185`）通过第 4 节并 HITL 发布到 `next`。tarball-bound peer 为 `>=17.3.5 <18`，dev/lock 保持精确 `17.3.5`。可将 `17.3.5` 标为对该 RC 的公开 `supported`。不得标 `certified`；catalog 准入后无受信 profile 通过，公开兼容状态从 `eligible` 开始。候选 envelope tarball `61610988…f9c7` 不是 Registry 身份，不得当作已发布物。更早退役 tarball 的本地 §4 结果不能转移。
 
@@ -92,14 +94,14 @@ shasum -a 256 "$TARBALL"
 
 ## 4. 精确 tarball 四命令验收（受信 Gate）
 
-这是 RC 和 stable 的唯一运行时发布验收。它验证包可由钉死的 OMP `17.3.5` 加载并注册四个只读命令；不宣称 Windows、其他 OMP 版本、Provider、模型或写入操作已经验证。四命令通过前不得把 `17.3.5` 标为公开 `supported`。
+这是 RC 和 stable 的唯一运行时发布验收。它验证当前候选包可由钉死的 OMP `18.11.1` 加载并注册四个只读命令；不宣称 Windows、其他 OMP 版本、Provider、模型或写入操作已经验证。四命令通过前不得把 `18.11.1` 标为该候选的公开 `supported`。
 
 唯一有效的第 4 节证据是受信 `omp-section4-publish-gate` GitHub Actions workflow 对**该精确 tarball SHA-256 digest** 的通过：
 
 - 仅 `workflow_dispatch`，仅 `KunoLu/KPi` + `refs/heads/main`；其他仓库、ref 或事件 fail closed。
 - workflow 从不可变 main commit **恰好 pack 一次**，全部后续 job 只消费这一份 artifact 并复核 digest；本机 `.tmp` 包不是云端输入。
 - `lock-and-cache` job 用 npm 生成诊断 `package-lock.json`（`integrity` 为 npm 写入的 SRI，禁止手写内容 SHA-256）并物化 content-addressed cache；`pluginTarballSha256` 独立于 lock SRI 记录。
-- `section4` job 只用共享 npm-offline-v1 安装器（`npm ci --offline --ignore-scripts --no-audit`）安装 subject——禁止 bun、禁止无 lock 的 `npm install --offline`——随后通过共享 command-surface cell driver 对钉死的 OMP `17.3.5` `dist/cli.js` 非交互执行四命令，并以 Host 前后 SHA-256 清单做诊断写入对照（`section-4-write-check=passed`）。
+- `section4` job 只用共享 npm-offline-v1 安装器（`npm ci --offline --ignore-scripts --no-audit`）安装 subject——禁止 bun、禁止无 lock 的 `npm install --offline`——随后通过共享 command-surface cell driver 对钉死的 OMP `18.11.1` `dist/cli.js` 非交互执行四命令，并以 Host 前后 SHA-256 清单做诊断写入对照（`section-4-write-check=passed`）。
 - Host 无法 provision 或四命令未通过时，workflow 以明确 blockedReason fail closed；任何 job 都不许伪造通过。
 - commit status `omp-section4-publish-gate` 绑定 commit SHA + tarball digest + 钉死 OMP + `installerGeneration`。
 - 该 workflow **没有** publish job；发布仍是第 5 节的人工 HITL 流程，且只能发布 digest 通过的同一份 tarball 字节。

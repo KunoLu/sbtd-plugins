@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "pluginPackage": "@kunolu/omp-sbtd",
-  "peerRange": ">=17.3.5 <18",
-  "developmentRuntimeVersion": "17.3.5",
+  "peerRange": ">=18 <19",
+  "developmentRuntimeVersion": "18.11.1",
   "contractProfile": "omp-extension-v1",
   "requiredEvidenceProfiles": [
     "omp-runtime-capabilities-v1",

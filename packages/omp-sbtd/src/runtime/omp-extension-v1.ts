@@ -9,7 +9,7 @@
 //   Rule: Host Contract 决定 /sbtd 注册的完整性与降级边界
 //   Rule: 宿主事件不被伪造解释且跨边界不复用
 //
-// The event schemas mirror the pinned @oh-my-pi/pi-coding-agent 17.3.5 public
+// The event schemas mirror the pinned @oh-my-pi/pi-coding-agent 18.11.1 public
 // event types (extensibility/shared-events.ts, extensibility/extensions/
 // types.ts). Every schema is `.strict()` with a required `type` literal
 // matching the event name: an unknown event name, a missing/wrong
@@ -293,7 +293,7 @@ const ompExtensionV1EventSchemas: Readonly<
 };
 
 /**
- * Keys the pinned 17.3.5 Host types declare as required but whose schema type
+ * Keys the pinned 18.11.1 Host types declare as required but whose schema type
  * is `z.unknown()` — which accepts `undefined`, so the schema alone cannot
  * require the key's *presence* (tool_result.details may hold `undefined`,
  * but the key itself must exist on the payload). `validateOmpExtensionV1Event`

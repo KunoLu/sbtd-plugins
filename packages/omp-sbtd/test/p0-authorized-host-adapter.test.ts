@@ -534,7 +534,7 @@ describe("Feature: P0 发布一致性与证据", () => {
 
     expect(result.exitCode).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({
-      testedRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "18.11.1",
       result: {
         status: "blocked",
         blocker: { code: "OMP_HOST_UNAVAILABLE" },
@@ -594,7 +594,7 @@ describe("Feature: P0 发布一致性与证据", () => {
       testedRuntimeVersion: "17.1.8",
       compatibility: {
         scope: "experimental",
-        declaredRuntimeVersion: "17.3.5",
+        declaredRuntimeVersion: "18.11.1",
         testedRuntimeVersion: "17.1.8",
         pluginInput: "packed",
       },
@@ -655,7 +655,7 @@ describe("Feature: P0 发布一致性与证据", () => {
     expect(JSON.parse(result.stdout)).toMatchObject({
       compatibility: {
         scope: "experimental",
-        declaredRuntimeVersion: "17.3.5",
+        declaredRuntimeVersion: "18.11.1",
         testedRuntimeVersion: "17.1.8",
         pluginInput: "packed",
       },
@@ -1301,7 +1301,7 @@ describe("Feature: P0 发布一致性与证据", () => {
     );
     expect(compatibility.exitCode).toBe(0);
     expect(JSON.parse(compatibility.stdout)).toMatchObject({
-      testedRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "18.11.1",
       result: { status: "passed" },
     });
 
@@ -1315,7 +1315,7 @@ describe("Feature: P0 发布一致性与证据", () => {
         "--judge-model",
         "judge-model",
         "--runtime-version",
-        "17.3.5",
+        "18.11.1",
         "--packed",
         packedRoot,
         "--tarball",
@@ -1327,8 +1327,8 @@ describe("Feature: P0 发布一致性与证据", () => {
     expect(JSON.parse(all.stdout)).toMatchObject({
       compatibility: {
         scope: "declared",
-        declaredRuntimeVersion: "17.3.5",
-        testedRuntimeVersion: "17.3.5",
+        declaredRuntimeVersion: "18.11.1",
+        testedRuntimeVersion: "18.11.1",
         result: { status: "passed" },
       },
       valueStudy: {

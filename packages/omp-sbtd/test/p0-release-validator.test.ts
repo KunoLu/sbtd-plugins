@@ -515,9 +515,9 @@ describe("Feature: P0 发布一致性与证据", () => {
     const raw = JSON.parse(
       await readFile(join(validationRoot, "compatibility.v2.json"), "utf8"),
     );
-    const policy = validateCompatibilityManifest(raw, "17.3.5");
-    expect(policy.peerRange).toBe(">=17.3.5 <18");
-    expect(policy.developmentRuntimeVersion).toBe("17.3.5");
+    const policy = validateCompatibilityManifest(raw, "18.11.1");
+    expect(policy.peerRange).toBe(">=18 <19");
+    expect(policy.developmentRuntimeVersion).toBe("18.11.1");
     expect(policy.commands).toEqual([
       "help",
       "status",
@@ -528,7 +528,7 @@ describe("Feature: P0 发布一致性与证据", () => {
       resolveDevelopmentRuntimeVersionFromLockfile(
         await readFile(join(workspaceRoot, "pnpm-lock.yaml"), "utf8"),
       ),
-    ).toBe("17.3.5");
+    ).toBe("18.11.1");
   });
 
   it("Scenario: peer range 与精确 dev pin 分离 — 兼容性策略拒绝重复、遗漏或重排的只读命令", async () => {
@@ -541,7 +541,7 @@ describe("Feature: P0 发布一致性与证据", () => {
       ["status", "help", "report", "onboard plan"],
     ]) {
       expect(() =>
-        validateCompatibilityManifest({ ...raw, commands }, "17.3.5"),
+        validateCompatibilityManifest({ ...raw, commands }, "18.11.1"),
       ).toThrow(/required read-only commands/u);
     }
   });
@@ -1405,7 +1405,7 @@ describe("Feature: P0 发布一致性与证据 — Policy v2 contract", () => {
       expect(error).toMatchObject({
         code: "DEVELOPMENT_RUNTIME_MISMATCH",
         details: {
-          policyDevelopmentRuntimeVersion: "17.3.5",
+          policyDevelopmentRuntimeVersion: "18.11.1",
           expectedDevelopmentRuntimeVersion: "17.3.6",
         },
       });
@@ -1430,8 +1430,8 @@ describe("Feature: P0 发布一致性与证据 — Policy v2 contract", () => {
     );
     try {
       validateCompatibilityManifest(
-        { ...raw, currentRuntimeVersion: "17.3.5" },
-        "17.3.5",
+        { ...raw, currentRuntimeVersion: "18.11.1" },
+        "18.11.1",
       );
       throw new Error("Expected a strict-schema policy to fail closed.");
     } catch (error) {
@@ -1486,12 +1486,12 @@ describe("Feature: P0 发布一致性与证据 — Policy v2 contract", () => {
         pluginPackagePath: "/tmp/kpi-char-plugin",
         pluginTarballPath: "/tmp/kpi-char-plugin.tgz",
         sandboxRoot: "/tmp/kpi-char-sandbox",
-        testedRuntimeVersion: "17.3.5",
+        testedRuntimeVersion: "18.11.1",
       }),
     ).rejects.toMatchObject({
       code: "TESTED_RUNTIME_MISMATCH",
       details: {
-        expectedTestedRuntimeVersion: "17.3.5",
+        expectedTestedRuntimeVersion: "18.11.1",
         actualTestedRuntimeVersion: "17.3.6",
       },
     });
