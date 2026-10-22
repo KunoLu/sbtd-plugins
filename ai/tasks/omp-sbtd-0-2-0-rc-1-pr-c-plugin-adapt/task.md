@@ -93,6 +93,8 @@ completed_at: null
 15. BDD：traceable，沿用中文场景 + 英文 Gherkin；sbtd-control-bootstrap 新增 readiness/D8 场景，p0-conformance-release 当前候选的范围拒绝从 18 改为 17。最终全量中 D8 11/11 与 extension 34/34 PASS。Cross-repo context/API Contract：not-needed（只用已 vendored canonical 内容与安装的精确 host API）；测试 fake host 为 contract-backed，独立 D11 为真实宿主 smoke-only。rtk：skipped-for-report（原生命令保证完整 raw）。
 16. Release Readiness Review：blocked。已落实超时、有界 JSON、无缓存/自动安装、拒跑先于入口；无数据格式、部署或迁移 rollout。本地 smoke 通过不等于发布支持认证；已知全量环境失败与禁止 subagent 下的独立 review 缺口不能改写为通过。主会话已完成可达交付；后续由 orchestrator/人工 review，并在具备所需离线缓存的环境复跑原样套件。普通 revert 可回滚本行源码与 lock；无真实用户环境迁移需要恢复。
 
+17. orchestrator 独立复核（2026-10-22T11:52+08:00，tip `d3b7669`）：`HOME=/tmp/rowc-ver-home /workspace/sbtd-plugins-row-c/packages/omp-sbtd/node_modules/.bin/omp --version` → `omp/18.11.1`（shim exec bun → `node_modules/.pnpm/@oh-my-pi+pi-coding-agent@18.11.1/.../dist/cli.js`；全局 `omp --version` 仍 `omp/18.12.5`，未使用、未改动）；`node scripts/p0/host-event/row-c-smoke.mjs` exit 0，scratch `/tmp/row-c-omp-18.11.1-7kBBki`，`status=passed`、`model=null`、commands `["sbtd"]`、tools `["sbtd_workflow"]`、13 hooks、artifacts `AGENTS.md`/`.omp/AGENTS.md`；`pnpm typecheck` PASS；`pnpm lint` PASS（98 files）。注意：smoke 经 `--extension row-c-smoke-extension.mjs`（Proxy 包装并转发真实 `dist/extension.js` 的注册）加载插件，未走包 `omp.extensions` 的安装发现路径。
+
 ## 修改文件与交付范围
 
 - Host/打包：`packages/omp-sbtd/package.json`、根 `pnpm-lock.yaml`、`validation/p0/compatibility.v2.json`、生成的 `SBOM.spdx.json`。
@@ -106,4 +108,9 @@ completed_at: null
 
 ## 使用的模型
 
-（待补：按 session jsonl 记录 provider/model、resolvedModel、是否 fallback、消息/工具计数、subagent）
+| 会话 | 用途 | provider/model | resolvedModel | resolvedModelIsFallback | 计数 | subagent |
+|---|---|---|---|---|---|---|
+| omp 主会话 `01a161a0-41ce-70a1-875b-090fda897233`（`~/.omp/agent/sessions/--workspace-sbtd-plugins-row-c--/2026-10-22T03-20-54-990Z_01a161a0-41ce-70a1-875b-090fda897233.jsonl`；runtime 18.12.5，2026-10-22T11:20:56–11:50:45+08:00） | 行 C 全部实现、测试、smoke、task 证据（prompt `/workspace/scripts/omp/runs/prompt-pr-c.md`，`--model openai-codex/gpt-6-astra:high --auto-approve --tools=read,bash,grep,glob,edit,write,todo`） | `openai-codex/gpt-6-astra`（thinking high） | jsonl 未写 `resolvedModel` 字段；model_change 1 条 `openai-codex/gpt-6-astra`，77 条 assistant 消息全部 provider `openai-codex` / model `gpt-6-astra` | false | 1 user / 77 assistant / 192 toolResult；工具 192 次（read 94、bash 33、grep 26、edit 21、todo 9、write 7、glob 2）；`stopReason:error` 0；无 403 | 无（会话目录内 0 个 subagent jsonl；`task` 工具未启用） |
+| orchestrator（Grok Bot） | 分支/worktree、首个 docs commit、prompt、监控、独立复核（typecheck/lint/18.11.1 smoke 复跑）、本节与 push | — | — | — | — | — |
+
+18.11.1 宿主 smoke 进程本身无 provider 凭据、`model=null`，不调用任何模型。
