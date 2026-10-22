@@ -40,6 +40,7 @@
 - [omp-sbtd-0-2-0-rc-1-pr-b-sync-upstream](omp-sbtd-0-2-0-rc-1-pr-b-sync-upstream/task.md)
 - [omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt](omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt/task.md)
 - [omp-sbtd-0-2-0-rc-1-pr-d-changelog](omp-sbtd-0-2-0-rc-1-pr-d-changelog/task.md)
+- [omp-sbtd-0-2-0-rc-1-pr-r-readme](omp-sbtd-0-2-0-rc-1-pr-r-readme/task.md)
 - [omp-sbtd-0-2-0-rc-1-prd](omp-sbtd-0-2-0-rc-1-prd/task.md)
 - [omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4](omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4/task.md)
 <!-- sbtd-task-index:end -->
