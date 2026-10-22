@@ -7,7 +7,7 @@ mode_note: 用户明确选择 strict，按 PRD L59 与行 E；唯一 writer，�
 status: "checking"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-e-release
 created_at: '2026-10-22T19:06:33+08:00'
-updated_at: '2026-10-22T19:27:33+08:00'
+updated_at: '2026-10-22T19:39:38+08:00'
 completed_at: null
 ---
 # omp-sbtd 0.2.0-rc.1 行 E：pre-tag release PR
@@ -25,6 +25,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-22T19:06:33+08:00 | planned | in-progress | 用户授权 strict 行 E 与前序回填 | 分支匹配、起点 clean；基线 007fb6c506e609050fedd1ed86db8696d8164e03；PRD L59–L62 |
 | 2026-10-22T19:27:33+08:00 | in-progress | checking | pre-tag 内容、本地验收及两项独立复核完成；保留唯一已知环境失败，不标 done 或 release-ready | 2634fd1 / 5d5b7e7 / a7721bb / 18e4bee；实际 check-package exit 0；focused 38 passed；full 884 passed / 1 failed / 3 skipped；下方证据 |
+| 2026-10-22T19:39:38+08:00 | checking | checking | fix batch 1：纠正既有环境失败的授权归因；orchestrator prompt 的 allowed 不等于用户决定，行 E 验收待 Reviewy/Lord 决定，full suite 非 PASS | PRD D11 / L57–L62 / §4 无保留该失败的授权；行 A–D/R 仅为同因历史先例；仅修订指定两份 task 记录，不重建、打包或重跑测试 |
 
 ## 决策
 
@@ -74,7 +75,7 @@ completed_at: null
 | `pnpm exec vitest run test/agent-plugin-manifest.test.ts test/agent-plugin-pack.test.ts test/p0-dist-hygiene.test.ts test/p0-package-release.test.ts test/publish-package.test.ts --no-file-parallelism --maxWorkers=1 --testTimeout=30000` | 0 | **5 files / 38 passed**；runner 14.73s |
 | `pnpm test` | 1 | **46 files：45 passed / 1 failed；888 tests：884 passed / 1 failed / 3 skipped**；19:12:07+08:00 开始，runner 296.74s |
 
-完整 suite 唯一失败：`test/p0-authorized-omp-rpc-harness.test.ts > authorized OMP public-RPC harness > smoke-only: exact local OMP 18.11.1 blocks a dependency-resolved packed host before RPC without a provider`；Bun `--offline` 缺 `zod` / `@oh-my-pi/pi-coding-agent` cached manifest，`zod@4.1.12 failed to resolve`，未到 RPC。与用户允许保留的既有环境失败一致；未修全局缓存、未改测试、未重跑确认，不标 full PASS。3 skipped 为 upstream transform 两项与 env-gated host-event live cell 一项。
+完整 suite 唯一失败：`test/p0-authorized-omp-rpc-harness.test.ts > authorized OMP public-RPC harness > smoke-only: exact local OMP 18.11.1 blocks a dependency-resolved packed host before RPC without a provider`；Bun `--offline` 缺 `zod` / `@oh-my-pi/pi-coding-agent` cached manifest，`zod@4.1.12 failed to resolve`，未到 RPC。这是与行 A–D/R 同因的已知既有环境失败，不代表行 E 获准保留；行 E 验收待 Reviewy/Lord 决定。未修全局缓存、未改测试、未重跑确认，不标 full PASS。3 skipped 为 upstream transform 两项与 env-gated host-event live cell 一项。
 
 ### SBOM 与实际包
 
@@ -117,14 +118,14 @@ build / check-package 的两 hashes 相同；SBOM 文件实际 SHA-256 等于 sb
 
 ## Release Readiness Review
 
-- **Status: blocked（实际发布）**；用户指定 pre-tag 本地交付已完成，行 E 保持 checking、completed_at null，合并与 publish 后由行 F 回填 done。不把允许保留的环境失败改称 required-check PASS。
+- **Status: blocked（实际发布）**；用户指定 pre-tag 本地工作已执行，行 E 验收待 Reviewy/Lord 决定，保持 checking、completed_at null，合并与 publish 后由行 F 回填 done。不把已知既有环境失败改称获准保留或 required-check PASS；full suite 非 PASS。
 - Production path / affected users: npm `@kunolu/omp-sbtd@0.2.0-rc.1`；D4 promotion 后无版本安装切到 omp `>=18 <19`，17.x 需显式钉旧 0.1.x。六份双语文档已说明。
 - Failure modes / safeguards: 版本/包漂移由 manifest/pack focused tests 与真实 check-package 防护；SBOM hashes 与文件 checksum 已核对；D11 原句、D7 链接和发布顺序保留。不得因本地包检查通过绕过 CI、链接或 OTP。
 - Capacity / backpressure / limits: not-applicable，无 runtime 逻辑变更。
 - Observability / alerts / runbook: 不新增运行监控；本记录保存命令退出码、hashes、失败、后续发布核验步骤。
 - Rollout / migration / rollback / cleanup: 按下方六步，tag 只在 main merge commit；发布前可按 scoped commits revert，未执行回滚；发布后 npm tarball 不可变，不能覆盖重发。无数据/全局配置迁移，无清理授权扩张。
 - Required validation / result: build、实际 pack/check-package、typecheck、包 lint、focused 全通过；full suite 已执行但保留唯一 Bun offline 环境失败；D11 已合并前置 PASS。实际发布仍缺本 PR CI green、最终 Reviewy PR-tip CLEAN、tag 后 D7 在线点击，必须由后续责任方闭环。
-- Owner acceptance / residual risk: 用户明确允许本轮保留上述既有环境失败，仅用于 pre-tag 范围验收；未豁免真实发布门禁。Lord 负责合并/tag/publish，Reviewy 负责最终评审与链接验证，行 F 负责 registry/主页/证据回填。
+- Owner acceptance / residual risk: 本任务无用户允许保留上述失败的决定；allowed 来自 orchestrator prompt，不是用户授权，PRD（含 D11、L57–L62、§4）也无此豁免。行 A `task.md:74`（基线 4f7388c 同因复现）、行 B `task.md:41`（既有失败，未称 PASS）、行 C `task.md:47`（bun-offline 失败）及行 R `task.md:86`（仅行 R 的用户许可）是记录先例，不是行 E 规则。D11 硬门为行 C 已记录 PASS 的 omp 18.11.1 真实 install-path host smoke，与本 harness 测试不同。行 E 验收待 Reviewy/Lord 决定，未豁免真实发布门禁。Lord 负责合并/tag/publish，Reviewy 负责最终评审与链接验证，行 F 负责 registry/主页/证据回填。
 
 ## 使用的模型
 
@@ -133,11 +134,15 @@ build / check-package 的两 hashes 相同；SBOM 文件实际 SHA-256 等于 sb
 | agent/session | provider/model | thinkingLevel | assistant messages / tool calls | purpose | resolvedModelIsFallback | title-generation count | job-widget entries |
 |---|---|---|---|---|---|---|---|
 | astra ping `01a16348-31ee-719e-b613-a83d815a66db` | openai-codex / gpt-6-astra | high | FINAL 1 / 0（orchestrator 提供） | ASTRA_OK，connectivity OK → astra:high；`~/.omp/logs/sbtd-pr-e/ping.log` | false | 未提供 | 未提供 |
-| 主会话 `01a16349-f750-71d0-9d74-7fa45d5c5736` | openai-codex / gpt-6-astra | high | SNAPSHOT 20 / 51 | 唯一 writer、验证 controller、回填/发布内容/本地 commits | false | 0（快照） | 0（快照） |
+| run-1 主会话 `01a16349-f750-71d0-9d74-7fa45d5c5736` | openai-codex / gpt-6-astra | high | SNAPSHOT 20 / 51（最终数由 orchestrator 报告） | 唯一 writer、验证 controller、回填/发布内容/本地 commits | false | 0（快照） | 0（快照） |
 | ReleaseDocsReview `01a1634e-6d95-7647-81da-281c5cf73ed1` | kimi-code / k3 | high | FINAL 10 / 16 | 只读双语发布文档复核 CLEAN | false | 0 | 0 |
 | ReleaseRecordReview `01a1634e-6e24-765e-a0ea-0e22c5626511` | kimi-code / k3 | high | FINAL 23 / 24 | 只读历史回填与版本 slice 复核 CLEAN | false | 0 | 0 |
+| fix batch 1 astra ping `01a16368-0dc2-74c1-93d2-3dc6dce5fa34` | openai-codex / gpt-6-astra | high | FINAL 1 / 0 | ASTRA_OK；`~/.omp/logs/sbtd-pr-e/ping-fix1.log` | false | 0 | 0 |
+| fix batch 1 主会话 `01a16368-2f6f-7084-be4e-a0fe9657748e` | openai-codex / gpt-6-astra | high | SNAPSHOT 3 / 12（2026-10-22T19:39:38+08:00；最终数由 orchestrator 报告） | 行 E 失败归因纠正、#113 ping 计数与本地提交 | false | 0（快照） | 0（快照） |
 
 主会话工具快照分布：read 26、bash 5、todo 2、eval 7、write 1、edit 3、grep 4、task 1、glob 2 = 51；ReleaseDocsReview：read 5、bash 6、grep 5 = 16；ReleaseRecordReview：read 4、bash 19、grep 1 = 24。未 override 子代理模型。主 jsonl：`~/.omp/agent/sessions/--workspace-sbtd-plugins-pr-e--/2026-10-22T11-05-54-256Z_01a16349-f750-71d0-9d74-7fa45d5c5736.jsonl`，两个 reviewer 在同 stem 目录内。仅抽取计数/模型元数据，不打印完整会话或秘密。
+
+fix batch 1 计数仅抽取 jsonl 元数据：ping 来源为 `~/.omp/agent/sessions/-tmp-pr-e-astra-ping/2026-10-22T11-38-46-082Z_01a16368-0dc2-74c1-93d2-3dc6dce5fa34.jsonl`（该目录最新 jsonl）；主会话来源为 `~/.omp/agent/sessions/--workspace-sbtd-plugins-pr-e--/2026-10-22T11-38-54-703Z_01a16368-2f6f-7084-be4e-a0fe9657748e.jsonl`。主会话工具快照：read 6、bash 2、todo 1、grep 1、glob 1、eval 1 = 12；不含此后编辑、检查、提交与回复。
 
 ## 合并后步骤（尚未执行）/ post-merge steps (not yet done)
 

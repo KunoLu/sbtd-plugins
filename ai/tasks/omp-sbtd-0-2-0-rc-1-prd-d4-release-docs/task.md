@@ -113,7 +113,7 @@ D4 原锁定的「latest 不动」由用户 2026-10-22 18:07 +08:00 明确修订
 | run 1 主会话 `01a1632d-a586-76a4-a030-abc92cf300f5` | openai-codex / gpt-6-astra | high | FINAL 18 / 34（历史快照 12 / 27） | #112 回填、PRD R10、唯一 writer/验证 controller、三次本地提交及记录 | false | 0（title_change） | 0（type=model_usage purpose=job-widget） |
 | 自动标题模型（无生成事件） | 未记录 / unknown | 未记录 / unknown | 未记录 / unknown | title-generation | 未记录 / unknown | 0（同一快照，不另加总） | 不适用 |
 | fix batch 1，同会话 `01a1632d-a586-76a4-a030-abc92cf300f5` 续接 | openai-codex / gpt-6-astra | high | FINAL 10 / 22（历史快照 6 / 17，仅本次 resume） | §0 latest 主语修复、记录与本地提交 | false | 1（title_change；标题模型未记录 / unknown） | 0（type=model_usage purpose=job-widget） |
-| fix batch 2 ping `01a1633f-4f60-737a-8dfe-875adfae8a72` | openai-codex / gpt-6-astra | high | FINAL 1 / 0 | ASTRA_OK；日志 `~/.omp/logs/sbtd-prd-d4/ping-fix2.log` | false | 未记录 | 未记录 |
+| fix batch 2 ping `01a1633f-4f60-737a-8dfe-875adfae8a72` | openai-codex / gpt-6-astra | high | FINAL 1 / 0 | ASTRA_OK；日志 `~/.omp/logs/sbtd-prd-d4/ping-fix2.log` | false | 0 | 0 |
 | fix batch 2 主会话 `01a1633f-9052-77b5-a5ef-187ada3c9aa8` | openai-codex / gpt-6-astra | high | FINAL 6 / 7（read 4、bash 2、edit 1） | commit `ceb5b85` 仅改本 task 原 L32 的 fix batch 1 触发归因；其余历史证据未重写 | false | 0 | 0 |
 
 来源：`~/.omp/agent/sessions/--workspace-sbtd-plugins-prd-d4--/2026-10-22T10-34-58-310Z_01a1632d-a586-76a4-a030-abc92cf300f5.jsonl`；session header 的 cwd 与授权 worktree 一致。provider/model 来自 model_change 与 assistant message，thinkingLevel 来自 thinking_level_change，resolvedModelIsFallback 来自 model_change；未推断 unknown 字段。
