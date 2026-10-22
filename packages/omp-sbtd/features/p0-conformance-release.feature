@@ -39,22 +39,22 @@ Feature: P0 一致性研究与不可变证据
   Rule: 显式实验 Runtime 检查不扩展已声明支持
 
     Scenario: 发布负责人验证未声明 Runtime 的已打包 Plugin
-      Given 兼容性清单仍声明 OMP Runtime "17.3.5"
+      Given 兼容性清单声明 OMP Runtime "18.11.1"
       And 发布负责人提供一个已解压的 Plugin 包目录和匹配的精确候选 tarball
       When 发布负责人以相同的实验 Runtime 和检查 Runtime "17.1.8" 运行兼容性命令
       Then 受控宿主接收 Runtime "17.1.8"、该已打包 Plugin 目录和该精确候选 tarball
       And 机器可读结果标记该检查为 "experimental"
-      And 结果同时保留声明 Runtime "17.3.5" 与检查 Runtime "17.1.8"
+      And 结果同时保留声明 Runtime "18.11.1" 与检查 Runtime "17.1.8"
       And 兼容性清单和公开支持声明保持不变
 
     Scenario: 未声明 Runtime 需要显式实验授权
-      Given 兼容性清单仍声明 OMP Runtime "17.3.5"
+      Given 兼容性清单声明 OMP Runtime "18.11.1"
       When 发布负责人仅以检查 Runtime "17.1.8" 运行兼容性命令
       Then 命令以非零状态和结构化 "COMPATIBILITY_RUNTIME_OUT_OF_RANGE" 错误失败
       And 受控宿主不会收到兼容性请求
 
     Scenario Outline: 实验 Runtime 参数错误时兼容性命令失败关闭
-      Given 兼容性清单仍声明 OMP Runtime "17.3.5"
+      Given 兼容性清单声明 OMP Runtime "18.11.1"
       When 发布负责人以 <错误参数> 运行实验兼容性命令
       Then 命令以非零状态和结构化参数错误失败
       And 受控宿主不会收到兼容性请求
@@ -346,7 +346,7 @@ Feature: P0 一致性研究与不可变证据
   Rule: 兼容认证身份由不可变 target 与 tarball-bound peer range 决定
 
     Scenario: peer range 与精确 dev pin 分离
-      Given 一个声明 peer range ">=17.3.5 <18" 与精确开发依赖 "17.3.5" 的候选兼容性策略
+      Given 一个声明 peer range ">=18 <19" 与精确开发依赖 "18.11.1" 的候选兼容性策略
       When 发布校验器验证该兼容性策略
       Then peer range 只决定 installable 资格
       And 精确 dev pin 只决定开发与验收基线
@@ -358,11 +358,11 @@ Feature: P0 一致性研究与不可变证据
       Then 校验 fail closed
       And 报告指出 dev pin 与 peer range 的不一致
 
-    Scenario: OMP 18 被 tarball-bound peer range 拒绝
-      Given 已发布 rc.12 的 peer 精确为 "17.3.5"
-      And 未来首个 widened-peer 候选 tarball 的 peer range 为 ">=17.3.5 <18"
-      When 目标 Runtime 为 OMP "18.0.0"
-      Then 两个 tarball 对该 Runtime 的派生状态都为 "out-of-range"
+    Scenario: OMP 17 被当前 tarball-bound peer range 拒绝
+      Given 当前候选 tarball 的 peer range 为 ">=18 <19"
+      And 精确开发依赖为 "18.11.1"
+      When 目标 Runtime 为 OMP "17.3.5"
+      Then 当前候选 tarball 对该 Runtime 的派生状态为 "out-of-range"
       And 不运行任何兼容认证 profile
       And "out-of-range" 由该精确 tarball 绑定的历史 peer range 派生，而不是由当前 Compatibility Policy 重新解释
 

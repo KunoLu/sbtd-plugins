@@ -19,7 +19,7 @@ function fillHostEvent(
   const defaults: Record<string, Record<string, unknown>> = {
     session_start: { type: "session_start" },
     session_switch: { type: "session_switch" },
-    session_branch: { type: "session_branch" },
+    session_branch: { type: "session_branch", reason: "branch" },
     session_tree: { type: "session_tree", newLeafId: null, oldLeafId: null },
     before_agent_start: { type: "before_agent_start", systemPrompt: [] },
     "session.compacting": {

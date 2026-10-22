@@ -95,3 +95,36 @@ require the same test discipline as `src/`.
 `pnpm --filter @kunolu/omp-sbtd smoke` runs `scripts/smoke-extension.mjs`: loads
 `dist/extension.js` against a hand-rolled host and snapshots a tmp HOME. Use it after touching the
 registration seam or command dispatch.
+
+`node scripts/p0/host-event/row-c-install-smoke.mjs <packed.tgz>` is the D11
+install/discovery gate. Build and `pnpm pack` first. It uses only the worktree's
+18.11.1 `.bin/omp`, verifies `--version`, installs the tarball via
+`omp plugin install @kunolu/omp-sbtd@file:<absolute-tarball>`, and starts the host
+with isolated HOME/XDG/agent directories and no credentials. Discovery must come
+from the installed package's own `omp.extensions`: no wrapper or `--extension`.
+Native debugger inspection checks loader errors, the installed instance's `sbtd`
+command, `sbtd_workflow` tool and 13 hooks. Real PTY input exercises `/tools`,
+`/sbtd onboard plan` and project-only `init-projects`; only two managed project
+AGENTS targets are approved. Raw results remain in the printed scratch directory.
+The older `row-c-smoke.mjs` wrapper is supplementary, not this gate.
+
+18.11.1 event regressions cover `session_branch` reasons `branch|fork|btw`
+and `session_switch` reasons `new|resume|fork`, including rejection of missing/
+unknown branch reasons and obsolete switch `handoff`. Handoff now commits
+same-session compaction and emits `session_compact`, outside the plugin's
+inventory. A successful handoff RPC therefore yields `HANDOFF_EVENT_UNOBSERVABLE`,
+not a false event-coverage pass. The live cell stays env-gated in default tests;
+the frozen-tarball CI job supplies the event-delivery evidence.
+
+Route tests exercise real `ai/tasks/**/task.md` and `.sbtd/tasks/**/task.md`
+frontmatter. `in-progress`/`checking` feed the existing `trellis-managed-task`
+compatibility route; index, archive, reports, inactive/malformed records and
+linked containers are not active-task evidence. The dependency-free reader accepts
+only flat scalar frontmatter; ambiguous or unsupported YAML (including nested
+values, aliases and block scalars) is not positive evidence. `yaml` remains
+build-time-only. This observation is not canonical task validation, selection or
+recovery. Legacy `.trellis` observations remain read-only. D8 tests run real
+isolated Python virtualenv probes using bash's
+absolute, project-relative or tilde cwd (including repeated slash and backslash
+forms); they do not install dependencies. Missing whitespace after a frontmatter
+key colon is rejected rather than interpreted as an active status.

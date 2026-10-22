@@ -61,9 +61,9 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
     // Candidate identity: the widened tarball-bound peer range with the exact
     // development pin retained (Slice 3 contract; rc.12 stays exact-peer).
     expect(dependencySpec(packageManifest, "peerDependencies")).toBe(
-      ">=17.3.5 <18",
+      ">=18 <19",
     );
-    expect(dependencySpec(packageManifest, "devDependencies")).toBe("17.3.5");
+    expect(dependencySpec(packageManifest, "devDependencies")).toBe("18.11.1");
     expect(() =>
       validatePluginManifest(manifest, {
         expectedVersion: packageVersion as string,

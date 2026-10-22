@@ -304,7 +304,7 @@ export async function runLiveCell(
   options: LiveCellOptions,
 ): Promise<LiveCellResult> {
   const runsRoot = options.runsRoot ?? ".tmp/host-event";
-  const targetOmpVersion = options.targetOmpVersion ?? "17.3.5";
+  const targetOmpVersion = options.targetOmpVersion ?? "18.11.1";
   const timeoutMs = options.timeoutMs ?? 240_000;
   const runId = `run-${Date.now()}-${randomUUID().slice(0, 8)}`;
   const runDir = join(runsRoot, runId);

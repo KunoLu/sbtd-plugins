@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Slice 5 Host Event Surface suite — deterministic Host driver (promoted from
 // the Gate 0.2 spike driver).
-// Drives a real OMP 17.3.5 Host (spawned in --mode rpc-ui) through its public
+// Drives a real OMP 18.11.1 Host (spawned in --mode rpc-ui) through its public
 // RPC surface plus one public ExtensionCommandContext API (navigateTree, via
 // the companion /spike command). A loopback-only stub implements the OpenAI
 // chat-completions endpoint so no real Provider credential is needed.
@@ -14,9 +14,9 @@
 //   validator (validate.ts); this driver only drives and records.
 // - Every run is bound to HOST_EVENT_RUN_ID; a run dir that already contains a
 //   completed scenario.json is refused so logs are never shared across runs.
-// - The scenario additionally attempts the public RPC `handoff` command to
-//   cover session_switch reason "handoff"; a refused/unsupported attempt is
-//   recorded as a blocked cell, never faked.
+// - The scenario additionally attempts the public RPC `handoff` command.
+//   18.11.1 emits session_compact (outside this inventory), not session_switch;
+//   RPC success alone never counts as observed handoff event coverage.
 //
 // Required env: SPIKE_OMP_BIN, SPIKE_PLUGIN_EXT, SPIKE_RUN_DIR,
 //   HOST_EVENT_RUN_ID, HOST_EVENT_OBSERVE_EVENTS (JSON string array).
@@ -94,7 +94,7 @@ writeFileSync(DRIVER_EXT_LOG, "");
 const TOOL_PLAIN = "spike_echo";
 const TOOL_GUARDED = "spike_guarded";
 // Suite-owned risk classification for exactly the tools this suite registers,
-// keyed by hashed toolName. Host 17.3.5 tool events carry no risk-class
+// keyed by hashed toolName. Host 18.11.1 tool events carry no risk-class
 // field, so the binding evidence derives the class from this driver-owned
 // map, never from a Host payload field.
 const TOOL_RISK_CLASSES = {
@@ -674,10 +674,9 @@ try {
   await promptAndWait("SPIKE_PLAIN four");
   scenario.postCompactTurn = true;
 
-  // session_switch reason "handoff": the RPC union exposes `handoff`; it
-  // generates the handoff document through the same deterministic stub model
-  // and starts a new Session inside this same Host process. If the public
-  // command refuses the attempt, record a blocked cell — never fake it.
+  // 18.11.1 handoff compacts the current Session through session_compact,
+  // outside the subscribed inventory. Record RPC outcome only; the validator
+  // must diagnose the missing event coverage even when this command succeeds.
   try {
     const handoffResult = await command(
       "handoff",

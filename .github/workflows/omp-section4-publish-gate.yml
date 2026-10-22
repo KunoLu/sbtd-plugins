@@ -16,10 +16,10 @@
 #   installer (npm ci --offline --ignore-scripts --no-audit) — never bun,
 #   never bare npm install --offline — then runs the non-interactive
 #   four-command surface through the shared command-surface cell driver
-#   against the pinned OMP 17.3.5 dist/cli.js (never the .bin/omp shim),
+#   against the pinned OMP 18.11.1 dist/cli.js (never the .bin/omp shim),
 #   bracketed by the pre/post SHA-256 diagnostic write-check. A Host that
 #   cannot be provisioned fails closed with a blockedReason; no step fakes a
-#   pass. This gate never claims OMP 18 compatibility.
+#   pass. This gate claims no compatibility beyond the exercised host.
 # - This workflow NEVER publishes npm, never moves dist-tags and never
 #   certifies. Publication stays the manual HITL handbook flow against the
 #   exact digest this gate passed.
@@ -220,22 +220,22 @@ jobs:
           test "$(sha256sum "${tarball}" | cut -d' ' -f1)" = "${EXPECTED_DIGEST}"
           test "$(jq -r .pluginTarballSha256 "${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/installer.json")" = "${EXPECTED_DIGEST}"
 
-      - name: Provision the pinned OMP 17.3.5 Host
+      - name: Provision the pinned OMP 18.11.1 Host
         id: host
         run: |
           set -euo pipefail
           runtime="${RUNNER_TEMP}/omp-section4-runtime"
           mkdir -p "${runtime}"
-          printf '%s\n' '{"name":"omp-section4-host","private":true,"dependencies":{"@oh-my-pi/pi-coding-agent":"17.3.5"}}' \
+          printf '%s\n' '{"name":"omp-section4-host","private":true,"dependencies":{"@oh-my-pi/pi-coding-agent":"18.11.1"}}' \
             > "${runtime}/package.json"
           # Host provisioning only; the subject Plugin install below is offline.
           if ! (cd "${runtime}" && npm install --ignore-scripts --no-audit --no-fund); then
-            echo "blocked: pinned OMP 17.3.5 could not be provisioned (blockedReason=OMP_RUNTIME_UNAVAILABLE); the four-command surface did not run and nothing is authorized" >&2
+            echo "blocked: pinned OMP 18.11.1 could not be provisioned (blockedReason=OMP_RUNTIME_UNAVAILABLE); the four-command surface did not run and nothing is authorized" >&2
             exit 1
           fi
           omp_bin="${runtime}/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
           if [ ! -f "${omp_bin}" ]; then
-            echo "blocked: pinned OMP 17.3.5 dist/cli.js is missing (blockedReason=OMP_RUNTIME_UNAVAILABLE); the four-command surface did not run and nothing is authorized" >&2
+            echo "blocked: pinned OMP 18.11.1 dist/cli.js is missing (blockedReason=OMP_RUNTIME_UNAVAILABLE); the four-command surface did not run and nothing is authorized" >&2
             exit 1
           fi
           echo "ompBin=${omp_bin}" >> "${GITHUB_OUTPUT}"
@@ -296,7 +296,7 @@ jobs:
           status=0
           COMMAND_SURFACE_PLUGIN_TARBALL="${tarball}" \
           COMMAND_SURFACE_RUNS_ROOT="${diag}/host-run" \
-          COMMAND_SURFACE_TARGET_VERSION="17.3.5" \
+          COMMAND_SURFACE_TARGET_VERSION="18.11.1" \
           INSTALLER_LOCK_FILE="${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/package-lock.json" \
           INSTALLER_CACHE_DIR="${GITHUB_WORKSPACE}/.omp-section4/omp-section4-installer/cache" \
             pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/host-event/run-command-surface-cell.ts \
@@ -415,5 +415,5 @@ jobs:
             -f state="${state}" \
             -f context="omp-section4-publish-gate" \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            -f description="section4 ${state}: tarball ${short} omp 17.3.5 installer npm-offline-v1" \
+            -f description="section4 ${state}: tarball ${short} omp 18.11.1 installer npm-offline-v1" \
             > /dev/null

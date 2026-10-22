@@ -97,10 +97,8 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
     expect(packedVersion).toBe("0.1.0-rc.14");
     // Tarball-bound identity: the packed manifest must carry the widened
     // peer range and the exact development pin (Slice 3 candidate contract).
-    expect(dependencySpec(packedPackage, "peerDependencies")).toBe(
-      ">=17.3.5 <18",
-    );
-    expect(dependencySpec(packedPackage, "devDependencies")).toBe("17.3.5");
+    expect(dependencySpec(packedPackage, "peerDependencies")).toBe(">=18 <19");
+    expect(dependencySpec(packedPackage, "devDependencies")).toBe("18.11.1");
     expect(() =>
       validatePluginManifest(manifest, {
         expectedVersion: packedVersion as string,
@@ -131,8 +129,8 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
     const policy: unknown = JSON.parse(policyText);
     expect(policy).toMatchObject({
       schemaVersion: 2,
-      peerRange: ">=17.3.5 <18",
-      developmentRuntimeVersion: "17.3.5",
+      peerRange: ">=18 <19",
+      developmentRuntimeVersion: "18.11.1",
     });
     expect(policy).not.toHaveProperty("currentRuntimeVersion");
     expect(policy).not.toHaveProperty("latestRuntimeVersion");

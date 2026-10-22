@@ -62,7 +62,7 @@ Package surface notes:
 - **No `exports` map.** Host discovery is via `"omp": { "extensions": ["./dist/extension.js"] }`
   (and an identical `"pi"` block). One entry point only — do not add secondary entry points.
 - Runtime dependencies: **only `zod: 4.1.12`**. peerDependencies declare the host range
-  `@oh-my-pi/pi-coding-agent >=17.3.5 <18`; devDependencies pin the same host exactly at `17.3.5`.
+  `@oh-my-pi/pi-coding-agent >=18 <19`; devDependencies pin the host exactly at `18.11.1`.
   That split (range for consumers, exact pin for development) is intentional.
 - Publish surface is the `files` whitelist: `dist`, `kit`, `plugin.json`, `skills`, two explicit
   `gitignore.template` paths, legal/docs files, `validation/p0/compatibility.v2.json`.

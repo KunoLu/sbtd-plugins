@@ -145,12 +145,7 @@ const isObject = (v) => typeof v === "object" && v !== null && !isArray(v);
 // Only the pinned session_switch vocabulary may persist verbatim; every
 // other reason (notably tool_approval_resolved) is recorded as an
 // irreversible digest, never raw text.
-const SESSION_SWITCH_HOST_REASONS = new Set([
-  "new",
-  "resume",
-  "fork",
-  "handoff",
-]);
+const SESSION_SWITCH_HOST_REASONS = new Set(["new", "resume", "fork"]);
 
 const messagesDigest = (messages) =>
   isArray(messages)

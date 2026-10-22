@@ -2,7 +2,7 @@ Feature: SBTD 控制引导
   OMP 用户需要先了解并安全准备 SBTD 环境，再决定是否启用自动工作流控制。
 
   Background:
-    Given OMP 17.3.5 已加载与当前 SBTD Kit 匹配的 KPi Plugin
+    Given OMP 18.11.1 已加载与当前 SBTD Kit 匹配的 KPi Plugin
 
   Rule: 帮助和诊断不改变用户状态
 
@@ -59,7 +59,7 @@ Feature: SBTD 控制引导
       And 自动分类 Route 只有在当前分类存在时才出现
 
     Scenario: OMP 宿主认证未分类的公开报告
-      Given OMP 17.3.5 已从隔离环境加载当前候选的精确 tarball
+      Given OMP 18.11.1 已从隔离环境加载当前候选的精确 tarball
       And 当前 Session 尚未分类为具名工作流 Route
       When 授权宿主依次执行 "/sbtd help"、"/sbtd status"、"/sbtd report" 与 "/sbtd onboard plan"
       Then 宿主从 "/sbtd report" 获得与公开报告一致的脱敏结构化状态
@@ -87,6 +87,35 @@ Feature: SBTD 控制引导
       Then 原有 KPi 状态记录仍是当前有效状态
       And Session 不追加候选状态记录
       And 用户看到阻断原因与 repair path
+
+  Rule: SBTD 任务 Skill 不依赖已删除的 Trellis Skill
+
+    Scenario: sbtd-task 已安装时不要求 Trellis workflow 文件
+      Given 全局 sbtd-task Skill 已安装且配置有效
+      And 项目没有 ".trellis/workflow.md"
+      When 用户执行 "/sbtd doctor"
+      Then 兼容 capability key "trellis" 的任务 Skill 项目条件为 "not-needed"
+      And Trellis CLI 的独立探测与安装授权保持不变
+
+  Rule: 依赖型 Python 入口在执行前隔离预检
+
+    Scenario: upgrade 或 migration 缺任一依赖时拒绝执行
+      Given 用户通过宿主 bash 工具调用 SBTD upgrade、migration、recovery 或 cleanup-legacy 入口
+      And 所选 Python 的隔离环境缺少声明的依赖
+      When 插件检查该工具调用
+      Then 工具被阻断并返回缺失包清单与 requirements.txt 手动安装命令
+      And 不执行入口、不自动安装、不降级为 skipped
+
+    Scenario: 验签入口缺 cryptography 时拒绝执行
+      Given 用户调用 SBTD migration 验签入口
+      And 所选 Python 的隔离环境只有 cryptography 不可用
+      When 插件检查该工具调用
+      Then 工具被阻断并明确报告 cryptography
+
+    Scenario: 普通 onboard stdlib 入口不要求五个依赖
+      Given 用户调用 onboard.py check-agent-cli 或 install-external-skills
+      When 插件检查该工具调用
+      Then 不执行五依赖预检且原有授权规则仍生效
 
   Rule: Onboard 始终 Plan-first 并保护用户内容
 
@@ -404,3 +433,35 @@ Feature: SBTD 控制引导
       When Plugin 处理后续事件
       Then compaction 只保留允许的 Session 状态摘要
       And 一个 Session 的瞬态状态、approval 与 result 不泄漏到另一个 Session
+
+    Scenario: 18.11.1 分支原因通过真实 hook 边界
+      Given 宿主发送 session_branch 且 reason 为 "branch"、"fork" 或 "btw"
+      When Plugin 验证并处理事件
+      Then 三种原因均触发 Session 重新观测
+      And 缺少或未知 reason 的分支事件被拒绝
+
+    Scenario: handoff 不冒充 Session 切换覆盖
+      Given 18.11.1 session_switch 仅允许 "new"、"resume" 与 "fork"
+      When live-cell 的 handoff RPC 成功但 session_compact 不在订阅清单
+      Then validator 报告 "HANDOFF_EVENT_UNOBSERVABLE" diagnostic
+      And 不要求或伪造 reason 为 "handoff" 的 session_switch
+
+  Rule: v2.0.2 任务记录用于只读路由观测
+
+    Scenario: 原生任务记录使工作进入 managed task 路由
+      Given 项目 ai/tasks 或 .sbtd/tasks 中有 in-progress 或 checking 的 task.md
+      When Plugin 分类普通任务请求
+      Then 使用既有 "trellis-managed-task" 兼容路由
+      And index、已完成任务、归档任务与正文中的状态文字不被解释为活动任务
+      And 旧 .trellis/tasks 的 in_progress 记录仍可作为只读兼容观测
+      And 缺少冒号后分隔符的 "status:in-progress" 不提供活动任务证据
+
+  Rule: Python 依赖预检绑定 bash 的工作目录
+
+    Scenario: bash cwd 中的相对 Python 使用实际解释器
+      Given bash 请求以绝对、项目相对或 tilde cwd 选择工作目录
+      And Python 路径相对于该目录
+      When Plugin 在依赖型入口执行前预检
+      Then 预检在该目录运行所选 Python 的隔离 import
+      And 缺失依赖拒跑且不自动安装
+      And "~/nested"、"~//nested"、"~\nested" 与 "~nested" 保持宿主的 home 前缀语义

@@ -8,7 +8,7 @@ import { z } from "zod";
  * typed one-shot approvals. `beforeToolCall` consumes only
  * {@link observeToolRisk} output; OMP event types stay at the adapter edge.
  *
- * Host contract limitation (OMP 17.3.5): the extension event carries only
+ * Host contract limitation (OMP 18.11.1): the extension event carries only
  * `toolCallId`/`toolName`/`input`; the host's internal ToolTier and shell
  * tokenizer are not exposed. Shell text cannot prove alias/function/wrapper or
  * dynamic-variable behavior, so command parsing here is conservative: it can
@@ -52,7 +52,7 @@ const pathReadToolCallSchema = z
   .passthrough();
 
 /**
- * Plugin-local capability registry for the OMP 17.3.5 built-in tool set.
+ * Plugin-local capability registry for the OMP 18.11.1 built-in tool set.
  * Mirrors the host's declared read tier where it exists; everything not
  * listed (including `mcp__*` tools) stays `unknown` and fails closed.
  */

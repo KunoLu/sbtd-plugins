@@ -38,13 +38,13 @@
     "validation/p0/compatibility.v2.json"
   ],
   "peerDependencies": {
-    "@oh-my-pi/pi-coding-agent": ">=17.3.5 <18"
+    "@oh-my-pi/pi-coding-agent": ">=18 <19"
   },
   "dependencies": {
     "zod": "4.1.12"
   },
   "devDependencies": {
-    "@oh-my-pi/pi-coding-agent": "17.3.5",
+    "@oh-my-pi/pi-coding-agent": "18.11.1",
     "tsx": "4.20.6",
     "yaml": "2.8.2"
   },

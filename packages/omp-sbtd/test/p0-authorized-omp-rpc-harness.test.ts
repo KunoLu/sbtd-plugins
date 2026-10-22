@@ -134,7 +134,7 @@ function environment(root: string): Record<string, string> {
   return {
     PATH: `${join(root, "bin")}:${process.env.PATH ?? ""}`,
     KPI_OMP_RUNTIME_ROOT: join(root, "runtime"),
-    KPI_OMP_RUNTIME_VERSION: "17.3.5",
+    KPI_OMP_RUNTIME_VERSION: "18.11.1",
     KPI_OMP_EXECUTION_MODEL_ID: "execution/model",
     KPI_OMP_JUDGE_MODEL_ID: "judge/model",
     KPI_OMP_EXECUTION_PROCESS_ID: "execution-process",
@@ -233,7 +233,7 @@ async function localOmpExecutable(): Promise<string> {
   );
   const metadata = z
     .object({
-      version: z.literal("17.3.5"),
+      version: z.literal("18.11.1"),
       bin: z.object({ omp: z.literal("dist/cli.js") }),
     })
     .parse(
@@ -442,11 +442,11 @@ async function createFakeRuntime(
   publicReportText = smallDirectRoutePublicSbtdReport(),
   secondaryConfirmationTitle = "Install Shared CLI Dependencies",
 ): Promise<string> {
-  const executable = join(root, "runtime", "17.3.5", "bin", "omp");
+  const executable = join(root, "runtime", "18.11.1", "bin", "omp");
   const capturePath = join(root, "runtime-cwds.jsonl");
   await Promise.all([
     mkdir(join(root, "plugin", "dist"), { recursive: true }),
-    mkdir(join(root, "runtime", "17.3.5", "bin"), { recursive: true }),
+    mkdir(join(root, "runtime", "18.11.1", "bin"), { recursive: true }),
   ]);
   await writeFile(
     join(root, "plugin", "dist", "extension.js"),
@@ -475,7 +475,7 @@ if (behavior === "fatal-before-tool")
 const args = process.argv.slice(2);
 if (args.includes("--version")) {
   appendFileSync(capturePath, JSON.stringify(process.cwd()) + "\\n");
-  process.stdout.write("17.3.5\\n");
+  process.stdout.write("18.11.1\\n");
   process.exit(0);
 }
 appendFileSync(capturePath, JSON.stringify(process.cwd()) + "\\n");
@@ -846,7 +846,7 @@ function compatibilityRequest(root: string): unknown {
     schemaVersion: 1,
     operation: "compatibility",
     input: {
-      testedRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "18.11.1",
       pluginPackagePath: join(root, "plugin"),
       pluginTarballPath: join(root, "plugin.tgz"),
       sandboxRoot: join(root, "compatibility"),
@@ -866,7 +866,7 @@ function parsed(result: HarnessResult): HarnessResponse {
     // tested Runtime identity as testedRuntimeVersion, and the retired
     // exact-current alias currentRuntimeVersion must never return.
     expect(response.result).toMatchObject({
-      testedRuntimeVersion: "17.3.5",
+      testedRuntimeVersion: "18.11.1",
     });
     expect(response.result).not.toHaveProperty("currentRuntimeVersion");
   }
@@ -1165,7 +1165,7 @@ describe("authorized OMP public-RPC harness", () => {
           schemaVersion: 1,
           operation: "compatibility",
           input: {
-            testedRuntimeVersion: "17.3.5",
+            testedRuntimeVersion: "18.11.1",
             pluginPackagePath: join(root, "plugin"),
             pluginTarballPath: tarballPath,
             sandboxRoot: join(root, "compatibility"),
@@ -1388,7 +1388,7 @@ describe("authorized OMP public-RPC harness", () => {
           input: {
             executionModelId: "execution/model",
             judgeModelId: "judge/model",
-            runtimeVersion: "17.3.5",
+            runtimeVersion: "18.11.1",
           },
         },
         { KPI_OMP_RUNTIME_ROOT: undefined },
@@ -1620,7 +1620,7 @@ describe("authorized OMP public-RPC harness", () => {
       blocker: { code: "OMP_HARNESS_TOOL_POLICY_VIOLATION" },
     });
   });
-  it("smoke-only: exact local OMP 17.3.5 blocks a dependency-resolved packed host before RPC without a provider", async () => {
+  it("smoke-only: exact local OMP 18.11.1 blocks a dependency-resolved packed host before RPC without a provider", async () => {
     const root = await temporaryRoot();
     const candidate = await extractPackedPlugin(root);
     const packedPlugin = await installPackedPlugin(root, candidate.tarball);

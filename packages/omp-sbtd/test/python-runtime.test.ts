@@ -43,7 +43,7 @@ const agentCliJson = JSON.stringify({
   label: "Oh My Pi",
   command: "omp",
   path: "/bin/omp",
-  version: "omp/17.3.5",
+  version: "omp/18.11.1",
   installed: true,
   npmPackage: "@oh-my-pi/pi-coding-agent",
   installCommand: "npm install -g @oh-my-pi/pi-coding-agent@latest",

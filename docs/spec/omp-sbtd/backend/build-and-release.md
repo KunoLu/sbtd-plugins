@@ -45,8 +45,8 @@ the inputs in `packages/omp-sbtd/upstream/` and rebuild instead.
 - `src/version.ts` `getPluginVersion()` reads `../package.json` via `new URL(...,
   import.meta.url)` — one relative path serves both `src/` (dev/tests) and `dist/` (packed)
   layouts. It falls back to `"unknown"` and never throws. Preserve both properties when editing.
-- Peer range vs dev pin split is intentional: peer `>=17.3.5 <18` (OMP 18 out of range),
-  devDependency + lockfile exactly `17.3.5`.
+- Peer range vs dev pin split is intentional: peer `>=18 <19` (OMP 17.x unsupported),
+  devDependency + lockfile exactly `18.11.1`; only that host version is smoke-tested.
 
 ## published / installable / certified Are Distinct
 
