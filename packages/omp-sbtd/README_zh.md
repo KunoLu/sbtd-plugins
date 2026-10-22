@@ -14,7 +14,7 @@
   为 `>=18 <19`；开发依赖精确钉为 **18.11.1**。
 - 需要 provider 的命令要求已认证的 OMP provider profile。
 
-> 不再支持 omp 17.x；只在 18.11.1 上实测过，上游最新是 18.12.2
+> 不再支持 omp 17.x；只在 18.11.1 上实测过；截至 2026-10-19 D11 锁定时，上游最新是 18.12.2
 
 Peer 范围只决定 *installable*。安装和 npm 发布都不代表宿主兼容性认证：
 `published`、`installable` 与 `certified` 是不同状态。认证状态由仓库兼容性
@@ -63,7 +63,7 @@ Kit 钉为 **640-skills v2.0.2**
 供应链 source ID `sbtd-workflow-kit-upstream` 保持不变。
 
 随包内容包括全部 33 个上游 Python 脚本、九个 runtime assets、两个 schema，
-以及八文件的 `sbtd-task` 模板树。可识别且需要依赖的 SBTD Python 命令
+以及 `sbtd-task` 模板树（八个模板文件，另含 LICENSE、NOTICE）。可识别且需要依赖的 SBTD Python 命令
 （包括 upgrade 和 migration）会隔离预检 `kit/onboard/runtime/requirements.txt`
 中五个钉版依赖：`jsonschema`、`PyYAML`、`markdown-it-py`、`tomlkit` 与
 `cryptography`。缺少依赖即 fail-closed；缺少 `cryptography` 时验签拒绝运行。

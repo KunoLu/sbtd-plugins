@@ -35,7 +35,7 @@ Pin the exact RC for reproducibility; never recommend `@latest`. **published** i
 
 For the 0.2.0-rc.1 target, the host peer is `@oh-my-pi/pi-coding-agent` `>=18 <19`; the development pin is `18.11.1`.
 
-> No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2
+> No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
 
 DSH host pin: @deepseek-ai/dsh@0.2.0-rc.2.
 

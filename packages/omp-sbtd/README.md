@@ -14,7 +14,7 @@ OMP-hosted SBTD workflow plugin for KPi. It provides `/sbtd` commands and a fixe
   `>=18 <19`; the development dependency is pinned to **18.11.1**.
 - An authenticated OMP provider profile for commands that need a provider.
 
-> No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2
+> No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
 
 Peer range only decides *installable*. Installation and npm publication do
 not certify host compatibility: `published`, `installable`, and `certified`
@@ -66,7 +66,7 @@ private kit workspace package was removed. Supply-chain source ID
 `sbtd-workflow-kit-upstream` is unchanged.
 
 The bundle includes all 33 upstream Python scripts, nine runtime assets,
-two schemas, and the eight-file `sbtd-task` template tree. Recognized
+two schemas, and the `sbtd-task` template tree (eight template files, plus LICENSE and NOTICE). Recognized
 dependency-requiring SBTD Python commands, including upgrade and migration,
 use an isolated preflight for the five pinned dependencies in
 `kit/onboard/runtime/requirements.txt`: `jsonschema`, `PyYAML`,

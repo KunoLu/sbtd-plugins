@@ -35,7 +35,7 @@ omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
 
 对于 0.2.0-rc.1 目标版本，宿主 peer 为 `@oh-my-pi/pi-coding-agent` `>=18 <19`；开发依赖钉为 `18.11.1`。
 
-> 不再支持 omp 17.x；只在 18.11.1 上实测过，上游最新是 18.12.2
+> 不再支持 omp 17.x；只在 18.11.1 上实测过；截至 2026-10-19 D11 锁定时，上游最新是 18.12.2
 
 DSH 宿主固定 @deepseek-ai/dsh@0.2.0-rc.2。
 

@@ -36,6 +36,7 @@
 - [dsh-sbtd-t8-sbtd-spec-tickets-grill](archive/2026-Q3/dsh-sbtd-t8-sbtd-spec-tickets-grill/task.md)
 - [dsh-sbtd-t9-gitnexus-backend-ddd](archive/2026-Q3/dsh-sbtd-t9-gitnexus-backend-ddd/task.md)
 - [dsh-sbtd-t9-gitnexus-backend-grill](archive/2026-Q3/dsh-sbtd-t9-gitnexus-backend-grill/task.md)
+- [omp-sbtd-0-2-0-rc-1-d11-d9-sync](omp-sbtd-0-2-0-rc-1-d11-d9-sync/task.md)
 - [omp-sbtd-0-2-0-rc-1-pr-a-migrate-kit](omp-sbtd-0-2-0-rc-1-pr-a-migrate-kit/task.md)
 - [omp-sbtd-0-2-0-rc-1-pr-b-sync-upstream](omp-sbtd-0-2-0-rc-1-pr-b-sync-upstream/task.md)
 - [omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt](omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt/task.md)
