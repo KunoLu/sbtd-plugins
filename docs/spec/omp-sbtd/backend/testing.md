@@ -95,3 +95,15 @@ require the same test discipline as `src/`.
 `pnpm --filter @kunolu/omp-sbtd smoke` runs `scripts/smoke-extension.mjs`: loads
 `dist/extension.js` against a hand-rolled host and snapshots a tmp HOME. Use it after touching the
 registration seam or command dispatch.
+
+`node scripts/p0/host-event/row-c-smoke.mjs` is the D11 real-host smoke. It resolves
+only the worktree's exact 18.11.1 dependency, checks `--version`, and runs its CLI
+in a fresh `/tmp` HOME/project with an allowlisted credential-free environment.
+Linux `script` supplies a PTY because credential-free RPC startup refuses a
+missing model. The companion forwards registrations to the real host, checks
+`getCommands()` / `getAllTools()`, and runs project-only onboard through the
+registered command handler at `session_start`. Only managed project-file consent
+is granted; no model turn, dependency installation, MCP change, or global Skill
+installation is approved. `result.json` and `host-output.txt` remain in the
+printed scratch directory. This proves load/registration/project onboard, not
+provider execution, all event delivery, or publication certification.
