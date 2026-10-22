@@ -7,8 +7,8 @@ mode_note: 用户明确要求 strict，遵循 docs/prd/omp-sbtd-0.2.0-rc.1.md L5
 status: "done"
 branch: docs/omp-sbtd-0.2.0-rc.1-prd-d4-release-docs
 created_at: '2026-10-22T18:35:40+08:00'
-updated_at: '2026-10-22T18:38:55+08:00'
-completed_at: '2026-10-22T18:38:55+08:00'
+updated_at: '2026-10-22T18:47:33+08:00'
+completed_at: '2026-10-22T18:47:33+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 PRD R10：D4 与行 E/F 发布文档范围
 
@@ -29,6 +29,10 @@ completed_at: '2026-10-22T18:38:55+08:00'
 | 2026-10-22T18:35:40+08:00 | planned | in-progress | 创建用户授权的 strict PRD-only 后继记录并开始 #112 回填 | 根与分支匹配；初始 git status --short 无输出；origin/main 为 194dfa653f5e4f3d1bb34f2721af58c8200dba4f；merge %cI 已核验 |
 | 2026-10-22T18:37:59+08:00 | in-progress | checking | 两个指定提交已完成，进入文档一致性与最终记录核验 | 928f596 创建记录并回填 #112；4209d2d 仅修改 PRD；两次提交前 git diff --check 均 exit 0 |
 | 2026-10-22T18:38:55+08:00 | checking | done | PRD-only 验收成立，记录本地完成及提交前模型快照 | PRD 仅六行替换与 R10 追加；索引仅一行且排序正确；latest 全文核对无本版旧通道要求；git diff --check origin/main..HEAD 与 git diff --check 均 exit 0；本次 done 不代表合并或发布 |
+| 2026-10-22T18:46:28+08:00 | done | planned | 用户明确要求 fix batch 1，重开同一 strict 任务 | 入口 df760c3，分支匹配且工作区干净；保留原完成事件与模型快照 |
+| 2026-10-22T18:46:28+08:00 | planned | in-progress | 开始修正 §0 历史 registry 观测缺少 latest 主语的问题 | 仅授权 PRD 指定分句与本记录追加；不改索引或其他措辞 |
+| 2026-10-22T18:47:07+08:00 | in-progress | checking | 指定分句已修正，进入精确范围与证据核验 | §0 补回 latest 主语并明确为起草时 registry 观测；其余 PRD 不作修改 |
+| 2026-10-22T18:47:33+08:00 | checking | done | fix batch 1 文档验收完成，追加本轮提交前模型快照 | PRD 相对 df760c3 仅指定分句替换，其余字节不变；git diff --check 与范围核验通过；原事件及模型快照数字保留 |
 
 ## 决策
 
@@ -87,6 +91,14 @@ Evidence Source：developer-local；PRD 已提交为 `4209d2d`，本记录的完
 - Cross-repo context / API Contract：not-needed；Mock Strategy：none；Environment Alignment：not-needed。正式测试报告/中文伴本、Targeted Rerun、Final Full Rerun：not-needed，仅文档检查，原生输出在会话中，本节记录中文证据；未新增报告或脚本。
 - 本次仅文档完成；README/CHANGELOG/SBOM/版本及旧任务修正明确归行 E，实际 npm 页面与 tags、发布链接尚未核验。未 push、开 PR、tag、publish 或改其他 checkout。三个本地提交可按明确授权后单独 revert；本次未执行回滚，不承诺自动恢复或全库 TaskStore 校验。
 
+### Fix batch 1：§0 registry 观测主语修复
+
+- 用户对 `df760c3` 的 review 指出旧分句缺少主语；本轮仅替换为「2026-10-19 PRD 起草时 registry 观测：`latest` 实测仍 `0.1.0-rc.2`，`next=0.1.0-rc.14`」。内存精确比较确认 PRD 其余字节全部保留，无重排。
+- 提交前 `git diff --check`、`git diff --check origin/main..HEAD` 均 exit 0、无输出；`git diff --name-only origin/main`（含本轮 working tree）仍恰为原三个授权文件；`git diff --name-only` 仅 PRD 与本 task.md；`git diff --quiet -- ai/tasks/index.md` exit 0，索引本轮未改。
+- 沿用 strict；未完整 grill（精确措辞修复，无需求歧义）。原 Book Gate Plan 的 not-required 结论仍适用；build/pack/测试、lint/formatter、BDD 与运行时 smoke 均 skipped，纯文档且用户禁止构建/打包/测试；rtk not-needed，使用 native Git。无新增 CONTRACT-CHANGE-NEEDED。
+- 追加 done → planned → in-progress → checking → done，旧完成证据与事件保留；继续沿用本任务 edit 保存共享记录方式，不声明 TaskStore 校验。仅将两个路径提交为一个 fix commit；提交后最终检查在回复报告，不预填结果。Evidence Source：developer-local；Source Revision：dirty（本轮提交前）；Evidence Publication：local-only，不代表 CI、合并或发布。
+
+
 ## CONTRACT-CHANGE-NEEDED
 
 D4 原锁定的「latest 不动」由用户 2026-10-22 18:07 +08:00 明确修订；本 PRD-only 提交记录授权与影响，不自行实现发布。17.x 用户须钉旧版本，README/CHANGELOG/SBOM/版本修改归行 E；D11 支持范围与硬门不变。
@@ -99,9 +111,12 @@ D4 原锁定的「latest 不动」由用户 2026-10-22 18:07 +08:00 明确修订
 |---|---|---|---|---|---|---|---|
 | 主会话 `01a1632d-a586-76a4-a030-abc92cf300f5` | openai-codex / gpt-6-astra | high | 12 / 27（提交前快照） | #112 回填、PRD R10、唯一 writer/验证 controller、三次本地提交及记录 | false | 0（title_change） | 0（type=model_usage purpose=job-widget） |
 | 自动标题模型（无生成事件） | 未记录 / unknown | 未记录 / unknown | 未记录 / unknown | title-generation | 未记录 / unknown | 0（同一快照，不另加总） | 不适用 |
+| fix batch 1，同会话 `01a1632d-a586-76a4-a030-abc92cf300f5` 续接 | openai-codex / gpt-6-astra | high | 6 / 17（2026-10-22T18:47:33+08:00 提交前快照，仅本次 resume） | §0 latest 主语修复、记录与本地提交 | false | 1（title_change；标题模型未记录 / unknown） | 0（type=model_usage purpose=job-widget） |
 
 来源：`~/.omp/agent/sessions/--workspace-sbtd-plugins-prd-d4--/2026-10-22T10-34-58-310Z_01a1632d-a586-76a4-a030-abc92cf300f5.jsonl`；session header 的 cwd 与授权 worktree 一致。provider/model 来自 model_change 与 assistant message，thinkingLevel 来自 thinking_level_change，resolvedModelIsFallback 来自 model_change；未推断 unknown 字段。
 
 统计定义：assistant messages 为 `type=message` 且 `message.role=assistant`；tool calls 为其 content 中的 `type=toolCall`，不重复计 eval 内操作或 custom tool_execution_start。工具分布：read 9、bash 5、todo 3、grep 2、glob 1、eval 3、write 1、edit 3，共 27。`title` 头部不算 title-generation；本快照无 title_change、无 job-widget model_usage；无 subagent。
 
 orchestrator 在本轮前另执行 astra connectivity ping，日志 `~/.omp/logs/sbtd-prd-d4/ping.log` 含 `ASTRA_OK`（本轮只读确认）。独立 ping session `2026-10-22T10-34-06-283Z_01a1632c-da4b-77ba-8ae9-8e7fc191de31.jsonl` 为 1 assistant / 0 tools，回复 ASTRA_OK；用途仅 connectivity ping，不计入上表主会话统计，未再次执行 ping。
+
+Fix batch 1 快照时间来自 `TZ=Asia/Shanghai date -Is`：`2026-10-22T18:47:33+08:00`。来源仍为上列主会话 jsonl，本轮未创建新 session；从本次 fix 用户消息 `id=2ba667a8`（JSONL 第 96 行）之后统计至快照，包含进行中的 eval，排除原轮及 ping。计数口径同上；工具分布 read 6、bash 3、todo 2、glob 1、eval 3、edit 2，共 17。provider/model 由本轮 assistant messages 核验；thinkingLevel=high、resolvedModelIsFallback=false 来自同会话 thinking_level_change/model_change。此后编辑、验证、提交和回复不计入；原 12 / 27 快照不改。续接期间 title_change 为 1、job-widget model_usage 为 0；标题模型未记录，不推断。无 subagent。

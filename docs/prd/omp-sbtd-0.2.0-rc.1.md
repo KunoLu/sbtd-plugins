@@ -11,7 +11,7 @@
 | 项 | 值 |
 |---|---|
 | 版本 | `@kunolu/omp-sbtd@0.2.0-rc.1`（当前 `0.1.0-rc.14`） |
-| 发布通道 | 按 D4/R10 先发 npm dist-tag `next`，再将 `latest` 指向 `0.2.0-rc.1`（两者均为 `0.2.0-rc.1`）；2026-10-19 PRD 发布前观测：实测仍 `0.1.0-rc.2`，`next=0.1.0-rc.14` |
+| 发布通道 | 按 D4/R10 先发 npm dist-tag `next`，再将 `latest` 指向 `0.2.0-rc.1`（两者均为 `0.2.0-rc.1`）；2026-10-19 PRD 起草时 registry 观测：`latest` 实测仍 `0.1.0-rc.2`，`next=0.1.0-rc.14` |
 | 基线 | 分支 `docs/omp-sbtd-0.2.0-rc.1-prd`，基于 main `4f7388c` |
 | 上游钉（目标） | 640-skills `v2.0.2` / `1d82494d74f6df9bca7dccef2da409f87091883e` |
 | 上游钉（现状） | `upstream.lock.json` resolvedRevision `f8aa0d7225a26c5e00b81d2f1b05121108e63630`（v1.0.13），transformVersion `p0-v3`，sourceId `sbtd-workflow-kit-upstream` |
