@@ -7,33 +7,33 @@ mode_note: 用户明确要求 strict（PRD 规则：每个任务都用 strict）
 status: "done"
 branch: docs/omp-sbtd-0.2.0-rc.1-d11-d9-wording
 created_at: '2026-10-22T17:00:26+08:00'
-updated_at: '2026-10-22T17:11:09+08:00'
-completed_at: '2026-10-22T17:11:09+08:00'
+updated_at: '2026-10-22T17:23:30+08:00'
+completed_at: '2026-10-22T17:23:30+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 PRD R8/R9：D11 日期措辞与 D9 文件数注释
 
 ## 目标
 
-按用户 2026-10-22 16:57 Asia/Shanghai（+08:00）决定（采纳 Reviewy 建议，由 Lord 在 SBTD Plugins room 转达），将 D11 的上游 latest 陈述限定为 2026-10-19 D11 锁定时的历史事实；实测版本 18.11.1、peer `>=18 <19`、devDep 精确钉与全部支持结论不变。
+按用户 2026-10-22 16:57 Asia/Shanghai（+08:00）决定（用户在 SBTD Plugins room 直接回复「同意 reviewy 的建议」），将 D11 的上游 latest 陈述限定为 2026-10-19 D11 锁定时的历史事实；实测版本 18.11.1、peer `>=18 <19`、devDep 精确钉与全部支持结论不变。
 
-追加用户 2026-10-22 17:01 Asia/Shanghai（+08:00）决定：在同一 PRD PR 中将 D9 文件数澄清为「八个模板文件（另含 LICENSE、NOTICE）」/ "eight template files (plus LICENSE and NOTICE)"；仅注释计数口径，模板内容不变（SKILL.md + 7 个 references 文件 + LICENSE + NOTICE = 10 个文件）。
+追加用户 2026-10-22 17:01 Asia/Shanghai（+08:00）直接决定（在 SBTD Plugins room 回答 Lord 的卡片）：在同一 PRD PR 中澄清 D9 为「模板树（八个模板文件，另含 LICENSE、NOTICE）」/ "template tree (eight template files, plus LICENSE and NOTICE)"；仅注释计数口径，模板内容不变（SKILL.md + 7 个 references 文件 + LICENSE + NOTICE = 10 个文件）。措辞按 Reviewy 非阻断意见去重复与嵌套括号（Lord 2026-10-22 17:18 指令），含义不变。
 
 ## 范围
 
 - `docs/prd/omp-sbtd-0.2.0-rc.1.md`：D11 行（含决定时间）、行 D、行 R 兼容说明、§4 任务 D 条目及 §6 R8 修订日志。
 - 本 strict 任务记录与 `ai/tasks/index.md` 中排序插入的一行。
-- D11 部分已由 orchestrator 提交为 `c846f32`，不 amend；本轮仅修改 PRD 的 D9 行、D14 交叉引用、追加 R9，以及本任务记录。`ai/tasks/index.md` 不再修改。
+- D11 部分已由 orchestrator 提交为 `c846f32`，D9 与分支字段更新已提交为 `3d67256`（PR #110），均不 amend；本轮按 Lord 17:18 指令一次修正 Reviewy 的两项非阻断意见，仅修改 PRD 的 D9、D14、R8、R9 及本任务记录（含模型表）。`ai/tasks/index.md` 不再修改。
 
 ## 非目标
 
-- R8 当时的 D9「八文件」不变是 Lord 的默认处理，非用户决定；17:01 新决定仅取代此措辞限制，R8 日志原文保留。L20 现状 baseline（observed snapshot）、标题状态行、D11 措辞、任务表状态/PR/SHA/done 时间列及其他行不改。
+- R8 当时的 D9「八文件」不变是 Lord 的默认处理，非用户决定；17:01 新决定仅取代此措辞限制。本批仅修正 R8 的决定归因、R9 的措辞与直接决定说明，不改决定含义。L20 现状 baseline（observed snapshot）、标题状态行、D11 措辞、任务表状态/PR/SHA/done 时间列及其他行不改。
 - 除本 PR 自己的任务记录外，既有 task.md、grill 与任务历史不改；不创建或编辑 `.omp-r12b-addendum.txt`、`ai/tasks/codex-verify/`。
 - 不改 README、CHANGELOG、SBOM、package.json/lockfiles、packages 代码或 workflows；CHANGELOG/README/SBOM 同步留给单独的后续 step-2 PR。
 - 不 commit、push、开 PR、tag、publish；不触碰其他 checkout、全局配置或工作区外文件；不改 `.sbtd/active-task.json`。
 
 ## 证据
 
-- 用户决定：2026-10-22 16:57 Asia/Shanghai（+08:00），Reviewy 建议、Lord 转达；精确 EN/ZH 文本以本次指令为准。
+- 用户决定：2026-10-22 16:57 Asia/Shanghai（+08:00），用户在 SBTD Plugins room 直接回复「同意 reviewy 的建议」；17:01 用户在同一 room 直接回答 Lord 的卡片，决定追加 D9 注释。精确 EN/ZH 文本与归因更正以本次指令为准。
 - 已先读 `ai/tasks/omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4/task.md`，执行 `git show --stat c041b2c` 核对 PRD-only 先例；本次不沿用其修改历史任务的范围。
 - 入口 `git rev-parse --show-toplevel --abbrev-ref HEAD`：根与授权分支匹配；`git status --short` 初始无输出；HEAD 与 origin/main 均为 `4f8ed3ccdebee7a6f762520be26fbeac3eea6c37`（基线而非本次完成证据）。
 - 已检查目标父目录为正常目录、现有文件为普通文件，新任务路径不存在且未被 ignore；索引为 tracked 普通文件。本次仅写明确授权的共享记录，不写本地接线。
@@ -64,9 +64,9 @@ completed_at: '2026-10-22T17:11:09+08:00'
 - Cross-repo context、API Contract：not-needed；Mock Strategy：none；Evidence Source：developer-local；Source Revision：dirty；Evidence Publication：local-only；正式测试报告与中文报告伴本：not-needed（本次为文档检查，证据直接记录在此）。
 - 剩余边界：CHANGELOG/README/SBOM 尚未同步，明确属于后续 step-2 PR；本任务不代表实现、部署或发布完成。所有修改保留在这三个未提交文件中，无其他 checkout 或全局恢复操作。
 
-### R9 磁盘清单与验证结果（working-tree diffs，developer-local）
+### R9 磁盘清单与验证结果（当时的 working-tree diffs，developer-local）
 
-本轮入口 HEAD 为 `c846f32d469a76e4332cfd95b18d2b014cbb57fe`，同一授权分支，初始 `git status --short` 无输出。D11 提交不 amend；以下证据对应其后的 D9 未提交修改，不使用 R8 的旧结果代替本轮验证。
+以下保留 D9 阶段原始验收证据：当时入口 HEAD 为 `c846f32d469a76e4332cfd95b18d2b014cbb57fe`，同一授权分支，初始 `git status --short` 无输出；其后的 D9 与分支字段更新已由 orchestrator 提交为 `3d67256`。旧措辞的计数是当时结果，不代替本轮 review-fix 验证；历史状态事件不改写。
 
 修改前先通过文件 glob 定位并列出四份模板；内存 Python 使用 `Path.rglob`、`lstat` 与 SHA-256 核验，未创建脚本文件。四份目录均为 10 个正常文件（SKILL.md + 7 个 references 文件 + LICENSE + NOTICE），相对路径清单完全相同；修改后再次比较 40 个文件的 SHA-256，全部不变。
 
@@ -109,6 +109,28 @@ references/tooling.md
 
 rtk：not-needed（指定 native 验证）；BDD、代码测试、build/typecheck、运行时 smoke、Biome：skipped（docs-only 注释，无代码或模板内容变更；沿用 R8 已核实的 Markdown lint 范围限制）。本轮未完整 grill：用户已给出精确措辞和边界；Book Gates 仍全部 not-required。Evidence Source：developer-local；Source Revision：dirty；Evidence Publication：local-only。未 commit/push/开 PR/tag/publish；剩余同步仅属于独立 step-2 PR，不将本文档完成视为发布完成。
 
+### Review-fix 批次验证（working-tree diffs，developer-local）
+
+本批入口为 `3d6725645e05e06ad071d8dda9c6e19726e28bdc`（PR #110），分支匹配、工作区干净。Reviewy 在该 tip 给出 CLEAN 与两项非阻断意见、Lord 17:18 要求同批修正，均以本次指令为来源；本批不将原 CLEAN 冒充修改后的独立复审。D11 完成提交为 `c846f32`，D9 完成提交为 `3d67256`。
+
+| 命令 / 检查 | 本批实际结果 |
+|---|---|
+| `grep -c '模板八个' docs/prd/omp-sbtd-0.2.0-rc.1.md` | 0，exit 1 为预期无匹配 |
+| `grep -cF '（另含 LICENSE、NOTICE）' docs/prd/omp-sbtd-0.2.0-rc.1.md` | 0，exit 1 为预期无匹配 |
+| `grep -cF '八个模板文件，另含 LICENSE、NOTICE' docs/prd/omp-sbtd-0.2.0-rc.1.md` | 3，exit 0：D9、D14、R9 |
+| 用户指定的转述归因正则，以 `grep -c` 分别检查 PRD 与本 task.md（不复制模式以免本表自匹配） | 两文件均为 0，exit 1 为预期无匹配；既有状态事件原文无此错误描述且保持不变 |
+| `grep -cF 'upstream latest is 18.12.2' docs/prd/omp-sbtd-0.2.0-rc.1.md` | 0，exit 1 为预期无匹配 |
+| `grep -cF '实测过，上游最新是 18.12.2' docs/prd/omp-sbtd-0.2.0-rc.1.md` | 0，exit 1 为预期无匹配 |
+| 完整新 EN/ZH 分别执行 `grep -cF`（同 R8 表中的两条完整命令，本批重新执行） | 各 3，均 exit 0 |
+| `git diff --check` | 无输出，exit 0 |
+| `git status --short` | 仅 PRD 与本 task.md 两个 modified 文件 |
+| `git diff --quiet 3d67256 -- ai/tasks/index.md ai/tasks/omp-sbtd-0-2-0-rc-1-prd ai/tasks/omp-sbtd-0-2-0-rc-1-pr-d-changelog ai/tasks/omp-sbtd-0-2-0-rc-1-pr-r-readme` | 无输出，exit 0 |
+| 内存 Python 与 `git show 3d67256:<path>` 精确比较 | PASS：PRD 仅 L40、L45、L111、L112 改变；D9/D14 仅指定替换（状态单元格不变），R8 仅决定归因替换；其他 PRD 字节与已有 task 状态事件全部保留 |
+
+模型表沿用行 D 的八列表头，六条会话数据按 orchestrator 提供值记录；本轮最终计数不伪造，由 orchestrator 在 PR comment 报告。未用 subagent、advisor、job-widget 或 `--config` override；自动标题模型未记录，保持 unknown。
+
+本批仍为 docs-only，Book Gates 全部 not-required；未完整 grill（措辞、归因与范围明确）。BDD、代码测试、运行时 smoke、Biome：skipped（无代码变化，Markdown lint 范围限制同前）；rtk：not-needed（指定 native 检查）。Evidence Source：developer-local；Source Revision：dirty；Evidence Publication：local-only。无新增正式测试报告；未 commit/push/amend/tag/publish，step-2 同步范围不变。
+
 ## Book Gate Plan
 
 | Reviewer | 触发事实 | 阶段 | 状态 |
@@ -127,6 +149,7 @@ rtk：not-needed（指定 native 验证）；BDD、代码测试、build/typechec
 - `git diff --check` 无错误；指定历史目录 `git diff --quiet` 返回 0；记录 `git diff --stat` 与未跟踪新任务的区别。
 - R9：四份 sbtd-task 模板目录各 10 个文件；新中文计数注释在 PRD 恰有 3 处（D9、D14、R9），旧 `8 文件` 无匹配；D11 旧 EN/ZH 各 0，新 EN/ZH 各 3。
 - R9：仅 PRD 与本任务记录有 working-tree diff；索引、指定历史目录及模板/代码/README/CHANGELOG/SBOM 不变，R8 原文保留；R9 明确 step-2 同步四处包内文档计数，根 README 无此计数。
+- Review-fix：D9/D14 去重复与嵌套括号，R9 引用新措辞并注明 Lord 17:18 指令；16:57/17:01 均明确为用户直接决定，Lord 的 R8 默认处理说明保留；新计数分句 3 处，D11 完整新 EN/ZH 各 3，旧措辞 0；只改授权两文件。
 
 ## 进度
 
@@ -135,6 +158,24 @@ rtk：not-needed（指定 native 验证）；BDD、代码测试、build/typechec
 - [x] 执行指定验证并记录 working-tree diff 证据。
 - [x] 本任务转 done。
 - [x] R9：核对四份模板清单、更新 D9/D14 并追加 R9，验证范围与 D11 不变量。
+- [x] Review-fix：一次完成两项非阻断意见、补模型表并验证。
+
+## 模型
+
+> 下表数据由 orchestrator 从 session jsonl 实测后随本次指令提供；本轮未自行重读或重新统计 jsonl。沿用行 D 任务记录的表结构；本轮最终计数由 orchestrator 在 PR comment 报告，不预填未知值。
+
+| # | 会话 | 用途 | provider/model | thinkingLevel | resolvedModelIsFallback | 计数 | 备注 |
+|---|---|---|---|---|---|---|---|
+| 1 | astra ping 1 `01a162d6-1564-7085-811b-5c53ffa2036f` | connectivity | openai-codex/gpt-6-astra | high | false | 1 assistant / 0 tools | orchestrator 提供 |
+| 2 | main session `01a162d6-bb97-75b2-8bc5-df9260c18252` run 1 | D11 edits | openai-codex/gpt-6-astra | high | false | 12 assistant / 35 tools | orchestrator 提供 |
+| 3 | same session -r run 2 | D9/D14 + R9 | openai-codex/gpt-6-astra | high (session-level entry) | false (session-level entry) | 11 assistant / 27 tools | 同一主会话；orchestrator 提供 |
+| 4 | same session -r run 3 | branch field | openai-codex/gpt-6-astra | high | false | 4 assistant / 4 tools | 同一主会话；orchestrator 提供 |
+| 5 | astra ping 2 `01a162e8-97b8-72dc-82a2-789a69db9c1a` | connectivity before this batch | openai-codex/gpt-6-astra | high | false | 1 assistant / 0 tools | orchestrator 提供 |
+| 6 | same session -r run 4 (this run) | review-fix batch | openai-codex/gpt-6-astra | high | false | final counts reported in PR comment by orchestrator | 同一主会话；不伪造最终计数 |
+
+- subagents：none；advisor：none；无 `--config` overrides。
+- title generation：auto `title_change` entries；model unknown（not recorded）。
+- job-widget：none。
 
 ## 状态事件
 
@@ -144,3 +185,5 @@ rtk：not-needed（指定 native 验证）；BDD、代码测试、build/typechec
 | 2026-10-22T17:04:38+08:00 | in-progress | done | D11 双语 Breaking 与行 R 兼容说明加日期，追加 R8；支持结论、D9、L20、标题状态及任务表状态列不变；仅完成 PRD-only step 1 | working-tree diffs：旧 EN/ZH 计数 0/0，新 EN/ZH 3/3；git diff --check exit 0；指定历史目录 git diff --quiet exit 0；git diff --stat 为两个 tracked 文件 +6/-4，另有本 untracked task.md；精确比较通过；未 commit/push/开 PR/tag/publish |
 | 2026-10-22T17:07:41+08:00 | done | in-progress | 按用户本次明确要求重开同一任务，纳入 2026-10-22 17:01 Asia/Shanghai（+08:00）的 D9 文件数注释决定；保留 D11 完成历史 | D11 已由 orchestrator 提交 c846f32；入口分支匹配、HEAD 为 c846f32、工作区干净；四份模板目录各 10 个正常文件，内容不改；本轮仅授权 PRD 与本 task.md |
 | 2026-10-22T17:11:09+08:00 | in-progress | done | D9 文件数注释与 D14 交叉引用完成，追加 R9；仅措辞取代 R8 的 D9 不变说明，模板内容与 D11 均不改 | 四份模板各 10 个文件、40 个文件 SHA-256 不变；新注释计数 3，旧 8 文件 0；D11 旧 EN/ZH 0/0、新 EN/ZH 3/3；git diff --check exit 0；相对 c846f32 的索引/指定历史 git diff --quiet exit 0；working-tree diff 仅 PRD 与本 task.md，精确范围比较 PASS |
+| 2026-10-22T17:20:38+08:00 | done | in-progress | 根据本次提供的 Reviewy 在 3d67256 的 CLEAN 结论及两项非阻断意见，执行 Lord 2026-10-22 17:18 +08:00 指令，一批修正措辞与决定归因；既有状态事件不改写 | D11 提交 c846f32，D9 提交 3d67256（PR #110）；入口 HEAD 为 3d67256、分支匹配、工作区干净；归因更正：16:57 用户在 SBTD Plugins room 直接同意 Reviewy 建议，17:01 用户直接回答 Lord 卡片；决定含义不变 |
+| 2026-10-22T17:23:30+08:00 | in-progress | done | 完成 Reviewy 在 3d67256 的两项非阻断意见与 Lord 17:18 指令：D9/D14/R9 去重复及嵌套括号，R8/R9 与任务正文更正为用户直接决定；新增模型表，决定含义不变 | working-tree diffs 仅 PRD 与本 task.md；重复/嵌套旧式计数 0/0、新计数分句 3；两文件错误转述归因均 0；D11 旧 EN/ZH 0/0、新 EN/ZH 3/3；git diff --check 与相对 3d67256 的索引/指定历史 git diff --quiet 均 exit 0；精确比较确认 PRD 仅四行变化、历史状态事件不变；D11 c846f32、D9 3d67256 均未 amend |
