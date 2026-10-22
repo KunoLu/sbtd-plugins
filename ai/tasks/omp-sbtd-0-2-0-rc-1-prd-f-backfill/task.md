@@ -7,7 +7,7 @@ mode_note: 用户明确选择 strict；docs-only、主会话唯一 writer，仅�
 status: "checking"
 branch: docs/omp-sbtd-0.2.0-rc.1-pr-f-backfill
 created_at: '2026-10-22T21:20:46+08:00'
-updated_at: '2026-10-22T21:29:12+08:00'
+updated_at: '2026-10-22T21:46:45+08:00'
 completed_at: null
 ---
 # omp-sbtd 0.2.0-rc.1 行 F：发布证据回填
@@ -18,6 +18,7 @@ completed_at: null
 - 仅修改 `docs/prd/omp-sbtd-0.2.0-rc.1.md`、`ai/tasks/omp-sbtd-0-2-0-rc-1-pr-e-release/task.md`、本文件及 `ai/tasks/index.md`。记录发布证据、两项流程偏差与 smoke 未通过；不将发布事实等同于测试通过。
 - 不修改 README/CHANGELOG/package/SBOM/代码/测试，不修验收文档 §4；不复制外部日志或截图，不读取 `.env`，不写本 worktree 外文件，不 push、开 PR、tag、发布或 dist-tag。行 F 仅在 Reviewy PR-tip CLEAN + merge 后可 done，本次不预填自身 PR/merge SHA/done 时间。
 - 未完整调用 grill-with-docs：范围、先例与验收已由用户明确，无领域歧义。沿用行 R/E 已记录的 TaskStore 全库历史 schema blocker，不重跑确认；仅维护明确授权的共享文档，不写 active pointer，不声称 TaskStore lifecycle 或自动恢复已通过。父路径/文件无 symlink，四个文档路径未被 ignore，既有三文件已 tracked。
+- fix batch 1：用户明确继续 strict，基线 `0eb921664029856aac0558a7c18b1d938b268afe`；仅修订 PRD、行 E task.md 与本文件，单一 writer、一个新 commit（不 amend、不改 index）。行 E 仅按本次明确授权纠正文档，不重绑定其历史分支；沿用下方 docs-only Book Gate Plan。
 
 ## 状态事件
 
@@ -25,6 +26,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-22T21:20:46+08:00 | planned | in-progress | 用户授权 strict 行 F docs-only 回填；分支匹配、起点 clean | 基线 origin/main = f4ea2ac729a6fda86cd41425563d65c68afb3aa3；PRD L59–L62；用户指定两次提交 |
 | 2026-10-22T21:29:12+08:00 | in-progress | checking | 两个本地提交及文档范围验证完成；本状态回填 amend 第二提交，保持两提交，不预报 Reviewy CLEAN/merge | 首提交 af84ae7；第二提交初版 a2af6d6；git diff --check origin/main..HEAD exit 0，diff stat 仅指定四路径，packages/ 零变化；PR 尚未打开 |
+| 2026-10-22T21:46:45+08:00 | checking | checking | fix batch 1：修正 Reviewy @0eb9216 两个 blocker（20:44/20:45 授权措辞、最终模型计数）；按 Lord 裁决将行 E done 改为 20:59:34；按用户 20:27 决定统一 smoke 措辞 | docs/prd/omp-sbtd-0.2.0-rc.1.md；ai/tasks/omp-sbtd-0-2-0-rc-1-pr-e-release/task.md；ai/tasks/omp-sbtd-0-2-0-rc-1-prd-f-backfill/task.md |
 
 ## Book Gate Plan
 
@@ -39,7 +41,7 @@ completed_at: null
 ## 验证证据
 
 - 2026-10-22T21:19:34+08:00 入口：实际分支匹配、HEAD 为 `f4ea2ac729a6fda86cd41425563d65c68afb3aa3`，`git status --short` 为空。
-- 本会话只读 `git show -s --format=%cI f4ea2ac`：`2026-10-22T20:27:22+08:00`。`gh pr view 114`：MERGED，GitHub mergedAt `2026-10-22T12:27:23Z`，headRefOid `fa669e64d83bfa06602669ef89c02bb70f84d085`，reviews 为空。done 时间以 %cI 为准，不能用晚 1 秒的 mergedAt 替代。
+- 本会话只读 `git show -s --format=%cI f4ea2ac`：#114 merge %cI `2026-10-22T20:27:22+08:00`。`gh pr view 114`：MERGED，GitHub mergedAt `2026-10-22T12:27:23Z`（20:27:23+08:00），headRefOid `fa669e64d83bfa06602669ef89c02bb70f84d085`，reviews 为空。按 Lord 裁决，行 E done 时间为 `2026-10-22T20:59:34+08:00`（latest dist-tag add 完成），不取 #114 merge %cI 或 mergedAt。
 
 ### 来源边界
 
@@ -49,7 +51,7 @@ completed_at: null
 
 ### 1. #114 合并、tag、D7 与 prerelease
 
-- `gh pr view 114 --json state,mergeCommit,mergedAt,headRefOid,reviews` 与 `git show -s --format='%H %cI' f4ea2ac729a6fda86cd41425563d65c68afb3aa3`（本会话复查）：MERGED；merge SHA `f4ea2ac729a6fda86cd41425563d65c68afb3aa3`；%cI **20:27:22+08:00**，GitHub mergedAt **20:27:23+08:00（12:27:23Z）**。PRD L60 done 时间取前者。review tip `fa669e64d83bfa06602669ef89c02bb70f84d085`（`fa669e6`）；该 tip 的 **Reviewy CLEAN 来源为 orchestrator/Reviewy 陈述**，不是 GitHub review；API `reviews=[]`。
+- `gh pr view 114 --json state,mergeCommit,mergedAt,headRefOid,reviews` 与 `git show -s --format='%H %cI' f4ea2ac729a6fda86cd41425563d65c68afb3aa3`（本会话复查）：MERGED；merge SHA `f4ea2ac729a6fda86cd41425563d65c68afb3aa3`；#114 merge %cI **20:27:22+08:00**，GitHub mergedAt **20:27:23+08:00（12:27:23Z）**。行 E done 按 Lord 裁决取 **20:59:34+08:00**（latest dist-tag add 完成），本次纠正原按 PRD L60 取 merge 时间的回填。review tip `fa669e64d83bfa06602669ef89c02bb70f84d085`（`fa669e6`）；该 tip 的 **Reviewy CLEAN 来源为 orchestrator/Reviewy 陈述**，不是 GitHub review；API `reviews=[]`。
 - `git for-each-ref --format='%(objecttype) %(objectname) %(*objectname) %(taggername) %(taggerdate:iso-strict)' refs/tags/omp-sbtd-v0.2.0-rc.1`、`git ls-remote origin refs/tags/omp-sbtd-v0.2.0-rc.1 'refs/tags/omp-sbtd-v0.2.0-rc.1^{}'`（本会话复查）：annotated/type `tag`；object `942fca1322fe6b3fc8441fe3a83d0e0198b850ab`；peeled `f4ea2ac729a6fda86cd41425563d65c68afb3aa3`；tagger `640`，tagger time **20:28:47+08:00**；远端 object/peeled 相同。
 - D7：orchestrator 陈述 Reviewy 于 **20:29** 在 tag 上点击核验双语切换链接通过；orchestrator 21:15 `curl -L` 均 200。本会话 **21:21:56+08:00** 使用 `curl -L -sS -o /dev/null -w '%{http_code}'` 复查下列两个完整 URL，均 **HTTP 200**（不是再次浏览器点击）：
   - EN：<https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README.md>
@@ -112,12 +114,12 @@ completed_at: null
 ## 流程偏差
 
 1. **受信 gate 顺序遗漏后补齐。** 行 E 原顺序先跳过受信 gate，先执行本地 exact-tarball 四命令验收；本地 4/4 PASS / write-check passed **仅交叉检查**，不能授权发布。随后在 **20:43:40–20:48:48** 补跑并通过 trusted GitHub gate，早于 **20:54:55** publish start。来源：orchestrator 顺序陈述、本地 SUMMARY NOTE、GitHub run、publish.log；不能倒写成原流程无遗漏。
-2. **latest 写入在 helper 外。** `packages/omp-sbtd/README.md` L97 “the only approved Registry writer” 与 PRD 的唯一 helper 边界仍有效；**20:59:33** 的直接 `npm dist-tag add … latest` 不经 helper 执行，是流程偏差，不因成功或授权而改称合规。orchestrator 陈述：用户 **20:44** 授权 helper 通过 `load_dotenv_npm_token` 从 `.env` 加载 NPM_TOKEN；用户 **20:45** 授权 latest，Lord 批准，未使用 OTP；latest 使用同一加载函数得到的 token 写入临时 **0600 userconfig**，事后删除。以上为历史授权/凭据处理陈述，本会话未读取 token/`.env`，未重做或验证凭据生命周期。orchestrator 初扫未发现泄漏，**21:17** 对 `/workspace/sbtd-rel-publish/*.log` 与 `/workspace/sbtd-rel-accept/*.log` 的 npm token patterns / `_authToken` 重扫 **0 hits**；本会话 **21:22:30** 对 **17 个 .log** 做相同方向的只计数扫描（`npm_[A-Za-z0-9]{20,}` / `_authToken`），亦 **0 hits**，不打印匹配内容、不声称穷尽所有秘密形式。
+2. **latest 写入在 helper 外。** `packages/omp-sbtd/README.md` L97 “the only approved Registry writer” 与 PRD 的唯一 helper 边界仍有效；**20:59:33** 的直接 `npm dist-tag add @kunolu/omp-sbtd@0.2.0-rc.1 latest` 经 Lord 批准，但不经 helper 执行，是流程偏差，不因成功或批准而改称合规。用户 20:44（编排方转述）：「我确定token在.env里，直接读环境变量即可。」用户 20:45（编排方转述）：「如果这次发布成功，后续本仓内都允许直接使用仓内的.env中的token」——这是以本次发布成功为条件、后续本仓内直接使用 `.env` token 的持续许可，不是对 latest 步骤的专项授权。编排方转述：latest 使用 `load_dotenv_npm_token` 加载 token，写入临时 **0600 userconfig**，事后删除，未使用 OTP。以上为历史授权/凭据处理陈述，本会话未读取 token/`.env`，未重做或验证凭据生命周期。orchestrator 初扫未发现泄漏，**21:17** 对 `/workspace/sbtd-rel-publish/*.log` 与 `/workspace/sbtd-rel-accept/*.log` 的 npm token patterns / `_authToken` 重扫 **0 hits**；本会话 **21:22:30** 对 **17 个 .log** 做相同方向的只计数扫描（`npm_[A-Za-z0-9]{20,}` / `_authToken`），亦 **0 hits**，不打印匹配内容、不声称穷尽所有秘密形式。
 
 ## 已知失败
 
-- **`p0-authorized-omp-rpc-harness`：not passed — environment cause（未通过—环境原因）**。`test/p0-authorized-omp-rpc-harness.test.ts` 的 smoke-only / exact-local-OMP **18.11.1** cell 因 Bun `--offline` cache 缺 **zod / @oh-my-pi/pi-coding-agent** manifests 而 FAILED，未到 RPC。来源：行 E task.md 的既有失败记录；用户 **20:27** 决定由 orchestrator 转述，本次按明确要求如实回填。
-- **不是 PASS，不是豁免，不是 accepted skip**；发布成功、独立受信 gate success、本地四命令通过均不改变此 cell 的失败。行 E done 仅按用户指定的 #114 合并回填，不把历史失败抹掉；其旧 “post-merge steps (not yet done)” 与 release-readiness 文本保留为历史。
+- **`p0-authorized-omp-rpc-harness`**：`test/p0-authorized-omp-rpc-harness.test.ts` 的 smoke-only / exact-local-OMP **18.11.1** cell 因 Bun `--offline` cache 缺 **zod / @oh-my-pi/pi-coding-agent** manifests 而 FAILED，未到 RPC。来源：行 E task.md 的既有失败记录；用户 **20:27** 决定由 orchestrator 转述，本次按明确要求如实回填。
+- **未通过（环境原因），非 PASS；按用户 20:27 决定保留并继续发版，不阻塞 done（不是 accepted-skip cell）**；发布成功、独立受信 gate success、本地四命令通过均不改变此 cell 的失败。行 E done 时间按 Lord 裁决取 **20:59:34+08:00**（latest dist-tag add 完成），失败接受来自用户 20:27 决定而非 Lord；不把历史失败抹掉，其旧 “post-merge steps (not yet done)” 与 release-readiness 文本保留为历史。
 - 本会话不重跑该失败、不修 Bun cache、不改测试。下一次发布前的修复另见后续；未来条件 skip 不追溯改变本次结果。
 
 ## 后续
@@ -127,15 +129,20 @@ completed_at: null
 
 ## 使用的模型
 
-> 仅从 session jsonl 抽取元数据与计数；provider/model 来自 assistant messages，thinkingLevel 来自 `thinking_level_change`，resolvedModelIsFallback 来自 `model_change`。assistant 为 `type=message` 且 role assistant，tool calls 为这些消息中的 `toolCall`。主会话为 **2026-10-22T21:25:18+08:00 SNAPSHOT**，不是最终计数；最终数由 orchestrator 在 PR body 报告。
+> 仅从 session jsonl 抽取元数据与计数；provider/model 来自 assistant messages，thinkingLevel 来自 `thinking_level_change`，resolvedModelIsFallback 来自 `model_change`。assistant 为 `type=message` 且 role assistant，tool calls 为这些消息中的 `toolCall`。run-1 计数为 **FINAL**；fix1 主会话为 **2026-10-22T21:46:45+08:00 SNAPSHOT**，不含此后编辑、验证、提交与回复，不是最终计数。
 
 | agent/session id | provider/model | thinkingLevel | purpose | assistant messages / tool calls | resolvedModelIsFallback |
 |---|---|---|---|---|---|
 | pre-run ping / `01a163c2-b155-7113-994c-eac5da1aed28` | openai-codex / gpt-6-astra | high | orchestrator 连通性 ping（ASTRA_OK）；本会话从 jsonl 核对元数据/计数 | FINAL **1 / 0** | false |
-| main / `01a163c4-29c3-701f-b28a-a060d9acb1a7` | openai-codex / gpt-6-astra | high | 唯一 writer、证据复查、文档验证与两个本地 commits | SNAPSHOT **14 / 37** | false |
+| main / `01a163c4-29c3-701f-b28a-a060d9acb1a7` | openai-codex / gpt-6-astra | high | 唯一 writer、证据复查、文档验证与两个本地 commits | FINAL **22 / 48** | false |
+| fix1 ping / `01a163db-8290-75a4-b8ba-514d7fb3862a` | openai-codex / gpt-6-astra | high | connectivity ping ASTRA_OK | FINAL **1 / 0** | false |
+| fix1 main / `01a163dc-46e1-716e-95a6-e9230a0ad167` | openai-codex / gpt-6-astra | high | fix batch 1 single writer | SNAPSHOT **4 / 15**（2026-10-22T21:46:45+08:00） | false |
 
 - main jsonl：`~/.omp/logs/sbtd-pr-f/sessions/run1/2026-10-22T13-19-22-563Z_01a163c4-29c3-701f-b28a-a060d9acb1a7.jsonl`。
 - ping jsonl：`~/.omp/logs/sbtd-pr-f/sessions/ping/2026-10-22T13-17-46-197Z_01a163c2-b155-7113-994c-eac5da1aed28.jsonl`。
+- run-1 FINAL 工具分布：read 14、bash 9、eval 9、todo 8、edit 3、grep 2、glob 2、write 1 = 48；末条 session entry **21:30:25+08:00**，`session_exit normal`（编排方提供；本次核对末条时间与计数）。
+- fix1 ping jsonl：`~/.omp/logs/sbtd-pr-f/fix1/sessions/ping/2026-10-22T13-44-52-624Z_01a163db-8290-75a4-b8ba-514d7fb3862a.jsonl`。
+- fix1 main jsonl：`~/.omp/logs/sbtd-pr-f/fix1/sessions/run/2026-10-22T13-45-42-881Z_01a163dc-46e1-716e-95a6-e9230a0ad167.jsonl`；快照工具分布：read 9、bash 2、todo 2、eval 2 = 15。
 - 未调用子代理、未 override 模型；不把 reviewer/scout/task 的预期配置当作本次实测，也不声称已完成行 F 独立 Reviewy CLEAN。
 
 ## 本次文档验证与提交
@@ -147,3 +154,4 @@ completed_at: null
 - **21:29:12+08:00 提交后检查**：`git diff --check origin/main..HEAD` exit 0；`git diff --stat origin/main..HEAD` 恰四个指定路径；`git diff --exit-code origin/main..HEAD -- packages/` exit 0、无输出；`git status --short` 为空。索引恰增加一行，位于 prd-d4-release-docs 后、prd-r7-p0-v4 前；YAML frontmatter、实际分支、+08:00 时间与所需章节检查通过。PRD 不在包内且 package 文件不变，pack/SBOM 不受本次文档变更影响。
 - `project-validation` 已加载；full suite / focused tests / build / pack / SBOM 重生成 / lint / typecheck **skipped**：docs-only，用户禁止改代码/测试/包，PRD 位于 package 外，没有新运行时行为。本次无永久测试或 throwaway 文件；不是新 smoke PASS。
 - `rtk`: not-needed（原生命令用于用户指定 git/只读证据核验）；BDD: skipped（无行为或 .feature 改动）；Cross-repo context / API Contract: not-needed；Mock Strategy: none；Graft / Web / Mobile: skipped（不改结构/UI，npmjs 页面来源明确为既有 Lord 观测）。无新正式测试报告，Final Test Report / Run Summary MD: not-needed；历史 CI/日志保留原来源，不重新包装为当前 PR-head 认证。
+- fix batch 1：仅上述三个授权文件，一个新 commit，使用用户指定提交标题与显式 `git add` 路径；不 amend、不改已推送历史、不 push。本轮执行用户指定的文档检查，结果由交付回复记录；未调用子代理，不声称本轮取得独立 Reviewy CLEAN。历史 smoke/full suite 不重跑；无代码或运行时变更，生产代码审阅与独立授权机制审阅不适用。
