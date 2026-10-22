@@ -57,6 +57,18 @@
 - **All process execution behind injected adapters**: `EvidenceProcess` (`src/evidence/index.ts`),
   `CanonicalOnboardProcess` (`src/onboard/python-runtime.ts:29-37`), or the host's `pi.exec` —
   always with a timeout. No bare `child_process` in `src/`.
+- **D8 dependency entry guard**: the `tool_call` hook preflights recognized Python
+  upgrade/migration/recovery/cleanup commands, migration-context init, and direct
+  migration/signature modules using the selected interpreter with `-I -B`.
+  All five requirements must import; missing packages, a killed/nonzero probe,
+  malformed output, or ambiguous shell interpreter selection block the call.
+  Refusals include `missingPackages` and a manual `python3 -m pip install -r`
+  command for the verified embedded requirements. No auto-install or skipped result.
+  Plain `onboard.py` stdlib operations remain unchanged. The plugin exposes no
+  typed upgrade/migration command; this guard covers their host bash entry.
+  Like the existing tool-risk guard, this is not complete mediation of arbitrary
+  programs, aliases, computed imports, or execution outside the host. Canonical
+  upstream signature verification remains fail-closed and is not modified.
 - **Report transport sanitization**: bounded `safeIdentifierSchema` / `safeCodeSchema` and
   `MAX_RENDERED_SBTD_REPORT_BYTES` (32 KiB) on assembled output (`src/report/index.ts:4-30`).
 

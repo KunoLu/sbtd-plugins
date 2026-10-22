@@ -2059,6 +2059,57 @@ describe("Feature: SBTD 控制引导", () => {
     }
   });
 
+  it("Scenario: sbtd-task 已安装时不要求 Trellis workflow 文件", async () => {
+    const root = await mkdtemp(resolve(tmpdir(), "kpi-sbtd-task-"));
+    const agentDirectory = resolve(root, "agent");
+    const skillsDirectory = resolve(root, "skills");
+    const previousAgentDirectory = process.env.PI_CODING_AGENT_DIR;
+    const previousSkillsDirectory = process.env.AGENT_SKILLS_DIR;
+    const notices: string[] = [];
+    let command: (args: string, ctx: unknown) => Promise<void>;
+    try {
+      await mkdir(resolve(skillsDirectory, "sbtd-task"), { recursive: true });
+      await writeFile(
+        resolve(skillsDirectory, "sbtd-task/SKILL.md"),
+        "# SBTD task\n",
+      );
+      process.env.PI_CODING_AGENT_DIR = agentDirectory;
+      process.env.AGENT_SKILLS_DIR = skillsDirectory;
+      extension({
+        ...hostContract,
+        registerCommand(_name: string, options: { handler: typeof command }) {
+          command = options.handler;
+        },
+        on() {},
+        appendEntry() {},
+      } as never);
+      await command("doctor", {
+        cwd: root,
+        ui: {
+          notify(message: string) {
+            notices.push(message);
+          },
+        },
+        sessionManager: {
+          getBranch() {
+            return [];
+          },
+        },
+      });
+      expect(notices.join("\n")).toMatch(
+        /Tool Evidence trellis: installation=installed configuration=configured callability=not-needed project-readiness=not-needed/,
+      );
+    } finally {
+      if (previousAgentDirectory === undefined)
+        delete process.env.PI_CODING_AGENT_DIR;
+      else process.env.PI_CODING_AGENT_DIR = previousAgentDirectory;
+      if (previousSkillsDirectory === undefined)
+        delete process.env.AGENT_SKILLS_DIR;
+      else process.env.AGENT_SKILLS_DIR = previousSkillsDirectory;
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("Scenario: 缺失选定 Profile 基线时启用进入 Onboard Preflight", async () => {
     const commands: Array<{
       options: { handler: (args: string, ctx: unknown) => Promise<void> };

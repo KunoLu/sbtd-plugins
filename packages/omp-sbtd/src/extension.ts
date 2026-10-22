@@ -61,6 +61,10 @@ import {
   createCompositeOnboardService,
   emptyApprovalSet,
 } from "./onboard/composite.js";
+import {
+  dependencyPreflightRefusal,
+  needsIsolatedDependencies,
+} from "./onboard/dependency-preflight.js";
 import type {
   FileAdapter,
   OnboardPlan,
@@ -287,9 +291,6 @@ async function observeCapabilityToolEvidence(
   );
   const optionalSkillContents: Readonly<Record<string, string | undefined>> =
     Object.fromEntries(optionalSkillEntries);
-  const trellisWorkflow = await files.readText(
-    `${projectRoot}/.trellis/workflow.md`,
-  );
   const observer = createToolEvidenceObserver({
     files,
     storePath: `${agentDirectory}/kpi/tool-evidence-v1.json`,
@@ -342,10 +343,6 @@ async function observeCapabilityToolEvidence(
                 ? "absent"
                 : createHash("sha256").update(content).digest("hex"),
             ]),
-          trellisWorkflow:
-            trellisWorkflow === undefined
-              ? "absent"
-              : createHash("sha256").update(trellisWorkflow).digest("hex"),
         }),
       )
       .digest("hex");
@@ -589,17 +586,10 @@ async function observeCapabilityToolEvidence(
             );
           },
           async observeProjectReadiness() {
-            return capability !== "trellis"
-              ? skillFacet(
-                  "not-needed",
-                  `${capability} Skills have no project predicate`,
-                )
-              : trellisWorkflow?.trim().length !== 0
-                ? skillFacet("ready", "Trellis workflow file is present")
-                : skillFacet(
-                    "not-ready",
-                    "Trellis workflow file is absent or empty",
-                  );
+            return skillFacet(
+              "not-needed",
+              `${capability} Skills have no project predicate`,
+            );
           },
           async observeFreshness() {
             return skillFacet(
@@ -1413,7 +1403,7 @@ export default function extension(
           stdout: result.stdout,
           stderr: result.stderr,
           code: result.code,
-          killed: false,
+          killed: result.killed,
         };
       } catch {
         return { stdout: "", stderr: "", code: null, killed: true };
@@ -2739,6 +2729,22 @@ export default function extension(
           reason: `SBTD is ${effective}. Run /sbtd doctor to inspect the current environment and use only recovery actions until it is managed.`,
         };
       const toolCommand = commandFromToolEvent(event);
+      if (toolCommand !== undefined && needsIsolatedDependencies(toolCommand)) {
+        const embedded = await loadEmbeddedKit(kitCacheKeyFor(ctx));
+        if (embedded.onboardRuntime === undefined)
+          return {
+            block: true,
+            reason:
+              "Verified SBTD Python runtime is unavailable; the entry was not run.",
+          };
+        const refusal = await dependencyPreflightRefusal(
+          toolCommand,
+          embedded.onboardRuntime.root,
+          evidenceProcess,
+          ctx.cwd,
+        );
+        if (refusal !== undefined) return refusal;
+      }
       const gatesPassed =
         effective === "active" &&
         transientFor(ctx).activeClassification !== undefined &&
