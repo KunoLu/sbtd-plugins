@@ -3,11 +3,14 @@
 `@kunolu/omp-sbtd` 本次重要变更的中文对照，最新在前。
 英文对照及旧版历史：[CHANGELOG.md](CHANGELOG.md)。
 
-## [Unreleased]
+## [0.2.0-rc.1] - 2026-10-22
 
 ### Breaking（破坏性变更）
 
 - 不再支持 omp 17.x；只在 18.11.1 上实测过；截至 2026-10-19 D11 锁定时，上游最新是 18.12.2
+- 不带版本的安装（`omp plugin install @kunolu/omp-sbtd`）现在会取得
+  0.2.0-rc.1，因为 npm dist-tag `latest` 与 `next` 均指向该版本；
+  它要求 omp `>=18 <19`。omp 17.x 用户须显式钉旧的 0.1.x 版本。
 
 ### Added（新增）
 

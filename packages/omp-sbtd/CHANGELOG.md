@@ -5,11 +5,15 @@ follows Keep a Changelog; versions are release candidates until promotion.
 
 Chinese mirror of the new entry: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
-## [Unreleased]
+## [0.2.0-rc.1] - 2026-10-22
 
 ### Breaking
 
 - No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
+- Unversioned installs (`omp plugin install @kunolu/omp-sbtd`) now resolve to
+  0.2.0-rc.1, because npm dist-tags `latest` and `next` both point to it;
+  it requires omp `>=18 <19`. omp 17.x users must explicitly pin an older
+  0.1.x version.
 
 ### Added
 

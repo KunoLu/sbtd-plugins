@@ -20,20 +20,20 @@ SBTD 宿主插件 monorepo：OMP / DSH 宿主适配器，OMP workflow kit 内嵌
 
 | 包 | 路径 | 说明 |
 | --- | --- | --- |
-| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README_zh.md) | OMP SBTD workflow 插件。提供 `/sbtd`、内嵌 kit、`doctor` 与 `onboard`。目标版本 **0.2.0-rc.1**，发布到 `next`；发布属于[发布计划](docs/prd/omp-sbtd-0.2.0-rc.1.md)行 E。 |
+| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README_zh.md) | OMP SBTD workflow 插件。提供 `/sbtd`、内嵌 kit、`doctor` 与 `onboard`。已发布 **0.2.0-rc.1** 到 npm dist-tag `next` 与 `latest`。 |
 | `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。已发布 **0.2.0-rc.1** 到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。宿主钉 `@deepseek-ai/dsh@0.2.0-rc.2`。 |
 
 ## 安装
 
-OMP 目标版本：`@kunolu/omp-sbtd@0.2.0-rc.1`。以下命令仅适用于**行 E 将其发布到 `next` 之后**。2026-10-22 发布前的 Registry 快照：`next=0.1.0-rc.14`、`latest=0.1.0-rc.2`。行 E 保持 `latest` 不变。
+`@kunolu/omp-sbtd@0.2.0-rc.1` 已发布到 npm dist-tag `next` 与 `latest`。不带版本的安装（`omp plugin install @kunolu/omp-sbtd`）现在会取得 0.2.0-rc.1，它要求 omp `>=18 <19`。omp 17.x 用户须显式钉旧的 0.1.x 版本。
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
 ```
 
-固定精确 RC 版本以便复现；不要推荐 `@latest`。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
+为便于复现，建议优先固定精确 RC 版本，而不是使用 `@latest` 等会移动的 dist-tag。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
 
-对于 0.2.0-rc.1 目标版本，宿主 peer 为 `@oh-my-pi/pi-coding-agent` `>=18 <19`；开发依赖钉为 `18.11.1`。
+对于 0.2.0-rc.1，宿主 peer 为 `@oh-my-pi/pi-coding-agent` `>=18 <19`；开发依赖钉为 `18.11.1`。
 
 > 不再支持 omp 17.x；只在 18.11.1 上实测过；截至 2026-10-19 D11 锁定时，上游最新是 18.12.2
 
@@ -64,7 +64,7 @@ dsh web --no-open
 
 本仓库只交付 **两个宿主插件**：`omp-sbtd` 与 `dsh-sbtd`。
 
-- **omp-sbtd** 目标版本为 `0.2.0-rc.1`，发布到 `next`。内嵌 kit 锁定 **640-skills v2.0.2**。同步、投影与生成现位于 `packages/omp-sbtd`，原私有 kit workspace 包已删除。兼容性认证与发布解耦。
+- **omp-sbtd** `0.2.0-rc.1` 已发布到 `next` 与 `latest`。内嵌 kit 锁定 **640-skills v2.0.2**。同步、投影与生成现位于 `packages/omp-sbtd`，原私有 kit workspace 包已删除。兼容性认证与发布解耦。
 - **dsh-sbtd** 采用 shell plugin scheme **2a**。**T0–T5** 已在 `main` 完成（section、state、`sbtd_plan`、`sbtd_review`、hooks、manuals）。后续任务仍待做。细节见 [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md)。
 
 ## 开发

@@ -10,7 +10,7 @@ OMP-hosted SBTD workflow plugin for KPi. It provides `/sbtd` commands and a fixe
 
 ## Requirements
 
-- The `0.2.0-rc.1` target declares peer `@oh-my-pi/pi-coding-agent`
+- `0.2.0-rc.1` declares peer `@oh-my-pi/pi-coding-agent`
   `>=18 <19`; the development dependency is pinned to **18.11.1**.
 - An authenticated OMP provider profile for commands that need a provider.
 
@@ -29,12 +29,12 @@ omp --version
 
 ## Install
 
-This README describes the `@kunolu/omp-sbtd@0.2.0-rc.1` target. The commands
-below apply **after release-plan row E publishes it to `next`**. Registry
-snapshot on 2026-10-22, before that publication: `next=0.1.0-rc.14`,
-`latest=0.1.0-rc.2`. Row E leaves `latest` unchanged.
+`@kunolu/omp-sbtd@0.2.0-rc.1` is published to npm dist-tags `next` and `latest`.
+An unversioned install (`omp plugin install @kunolu/omp-sbtd`) now gets
+0.2.0-rc.1, which requires omp `>=18 <19`. omp 17.x users must explicitly pin
+an older 0.1.x version.
 
-Pin the exact RC for a reproducible installation; never use `@latest`:
+Prefer the exact RC over a moving dist-tag such as `@latest` for a reproducible installation:
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
