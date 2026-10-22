@@ -73,6 +73,7 @@
 | F | 回填 PRD 行（行 E 的 PR、merge SHA、done 时间与 publish/tag 证据） | 8 | planned | — | — | — | `ai/tasks/omp-sbtd-0-2-0-rc-1-prd-f-backfill/task.md` |
 
 > 独立 chore（不在主序列）：`git mv docs/prd/ROADMAP.md docs/legacy-archive/`（文件名按 D12 锁定：`kpi-roadmap-0.7-draft-2026-07-21.md`）并同步更新 `packages/omp-sbtd/validation/p0/conformance-matrix.v1.json` 的 53 条 `source.path`；p0 validator 与测试全绿。ROADMAP.md 头部实测为「文档版本 0.7-draft／文档日期 2026-07-21」。
+> 后续（不在主序列，已登记）：handoff 证据改由 `session_compact` 观测——先 PRD-only PR 写入新判据，再代码 PR；代码 PR 合并后 `HANDOFF_EVENT_UNOBSERVABLE` 恢复为硬失败（用户 2026-10-22 13:13 +08:00 裁决，见[行 C task.md](../../ai/tasks/omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt/task.md)）。
 
 ## 4. 验收要点
 
