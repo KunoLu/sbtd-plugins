@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt
 workflow_mode: strict
 mode_source: user
 mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-22 指示执行行 C（插件适配 sbtd v2.0.2 + omp 18）
-status: "in-progress"
+status: "done"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-c-plugin-adapt
 created_at: '2026-10-22T11:18:35+08:00'
-updated_at: '2026-10-22T12:44:43+08:00'
-completed_at: null
+updated_at: '2026-10-22T13:20:55+08:00'
+completed_at: '2026-10-22T13:20:55+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 C：插件适配 v2.0.2 与 omp 18
 
@@ -46,6 +46,7 @@ completed_at: null
 | 2026-10-22T12:41:03+08:00 | in-progress | in-progress | 独立 review 的两个 P2 已修复并复核关闭；最终包重建/安装通过，不捏造 done | EventReviewFinal 无发现；RouteReviewFinal 两项 closed；验证 34–36 |
 | 2026-10-22T12:44:43+08:00 | in-progress | in-progress | 本轮本地修复与验证闭环；完整套件保留允许报告的 bun-offline 失败，CI 待运行；不标 done | 验证 35–38；884 passed / 1 failed / 3 skipped |
 | 2026-10-22T13:13:00+08:00 | in-progress | in-progress | 用户裁决（Lord 在 SBTD Plugins room 转达）：行 C 接受 handoff 降级，后续契约 PR 已登记；不宣称任务完成 | 用户 2026-10-22 13:13 +08:00 裁决；CI run 39725141533（tip aa8605b）live cell outcome: passed-with-diagnostics（本轮用户提供） |
+| 2026-10-22T13:20:55+08:00 | in-progress | done | PR #107 squash-merge 到 main；由行 D 首 commit 回填（PRD 任务表行 C done） | merge SHA `ada08c556608310c679bd7efd2328aa09d1b95f3`；`git show -s --format=%cI ada08c5` = 2026-10-22T13:20:55+08:00 |
 
 创建行是原始状态快照而非可证明的 lifecycle transition。canonical `task-data.schema.json` 使用 `in-progress`，不允许 `in_progress`、`—` 或 unknown→in-progress；因此 from/to 保持合法的同阶段值，缺失前态明确写在 reason。git commit 时间不冒充 push/review 时间；历史提交行也是同阶段证据事件。沿用既有 TaskStore 全库 schema blocker，不重新跑全库来确认已知失败；本轮仅验证当前 TaskDocument，不宣称全库恢复可靠或 strict done。
 

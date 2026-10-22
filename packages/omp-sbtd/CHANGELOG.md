@@ -3,6 +3,70 @@
 All notable changes to `@kunolu/omp-sbtd` are documented here. The format
 follows Keep a Changelog; versions are release candidates until promotion.
 
+Chinese mirror of the new entry: [CHANGELOG.zh.md](CHANGELOG.zh.md).
+
+## [Unreleased]
+
+### Breaking
+
+- No longer supports omp 17.x; tested only on 18.11.1; upstream latest is 18.12.2
+
+### Added
+
+- **Expanded onboard runtime bundle.** Includes all 33 upstream Python
+  scripts, nine runtime assets, `onboard-contracts.schema.json`,
+  `upgrade.schema.json`, and the eight-file `sbtd-task` template tree.
+- **Python dependency preflight.** Ships `kit/onboard/runtime/requirements.txt`
+  with five pinned dependencies: `jsonschema`, `PyYAML`, `markdown-it-py`,
+  `tomlkit`, and `cryptography`. Recognized dependency-requiring SBTD
+  Python commands, including upgrade and migration, are checked in isolation
+  before execution and fail closed if any dependency is missing; signature
+  verification refuses to run without `cryptography`. No automatic
+  installation or skipped fallback. Standard-library-only onboard commands
+  remain usable; this host guard is not a general shell sandbox.
+- **Install-path host smoke.** Verified the packed plugin on omp `18.11.1`
+  through installation and discovery via `omp.extensions`, real command,
+  tool and hook registration, and project onboard. This is smoke evidence,
+  not model end-to-end testing or full host-event certification.
+
+### Changed
+
+- **Kit ownership.** Moved sync, projection and generation into
+  `packages/omp-sbtd/scripts/` and `packages/omp-sbtd/upstream/`, then
+  deleted the private `packages/sbtd-workflow-kit` workspace package.
+  Supply-chain `sourceId` remains `sbtd-workflow-kit-upstream`.
+- **Upstream sync.** Updated to `640-skills` `v2.0.2`
+  (`1d82494d74f6df9bca7dccef2da409f87091883e`) with
+  `transformVersion: p0-v4`. Both embedded AGENTS templates now use that
+  revision; third-party notices were regenerated.
+- **Canonical runtime projection.** Expanded the `PROJECTION_FORBIDDEN_TOKEN`
+  exemption from `onboard.py` to the canonical onboard runtime Python
+  scripts, assets and two schemas. Content remains digest-bound to the
+  canonical manifest; overlays cannot use the exemption for non-canonical
+  content.
+- **Portable Skill candidates.** Removed the deleted upstream
+  `trellis-workflow` candidate; missing candidates still fail closed.
+- **Onboard Skill catalog.** Replaced `skill:trellis-workflow` and
+  `skill:trellis-channel` with `skill:sbtd-task`.
+- **omp 18 host contract.** The peer range is `>=18 <19`, with the development
+  dependency pinned to `18.11.1`. Event schemas accept `session_branch`
+  reasons `branch`, `fork`, `btw` and `session_switch` reasons `new`,
+  `resume`, `fork`.
+- **v2.0.2 task routing.** The optional `trellis` capability now maps to
+  `sbtd-task`, without requiring `.trellis/workflow.md` for Skill readiness.
+  Read-only task observation recognizes `in-progress` and `checking` records
+  under `ai/tasks/**` and `.sbtd/tasks/**`; legacy `.trellis` observation
+  remains read-only. Task state writing stays with sbtd-task.
+
+### Known limitations
+
+- **Handoff evidence on omp 18.x.** Handoff is not observable as
+  `session_switch`. The p0 host-event live cell temporarily records
+  `HANDOFF_EVENT_UNOBSERVABLE` as a diagnostic rather than a hard failure.
+  A registered follow-up will first update the PRD, then implement
+  `session_compact` observation in a separate code PR and restore the hard
+  failure for missing handoff evidence after that code PR merges.
+
 ## [0.1.0-rc.14] - 2026-09-01
 
 ### Changed
