@@ -7,7 +7,7 @@ mode_note: PRD 规则为每个任务都用 strict；用户 2026-10-22 指示执�
 status: "in-progress"
 branch: feat/omp-sbtd-0.2.0-rc.1-pr-c-plugin-adapt
 created_at: '2026-10-22T11:18:35+08:00'
-updated_at: '2026-10-22T11:47:47+08:00'
+updated_at: '2026-10-22T12:09:16+08:00'
 completed_at: null
 ---
 # omp-sbtd 0.2.0-rc.1 行 C：插件适配 v2.0.2 与 omp 18
@@ -33,6 +33,7 @@ completed_at: null
 
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
+| 2026-10-22T12:09:16+08:00 | in-progress | in-progress | D11 evidence-only 补充：安装路径 smoke 通过并取代 wrapper gate；保留原 lifecycle / release blockers，不宣称 strict done | 验证证据 18–26；row-c-install-smoke.mjs；本事件为同阶段证据更新，未执行 TaskStore lifecycle transition |
 
 原 skeleton 的创建事实（不是可证明的 planned→in-progress transition）：2026-10-22T11:18:35+08:00 创建记录时 status 已为 in-progress；worktree 基于 origin/main `02d93ccc9f263b0733d41ef86fab1496aba28977`；首 commit `c9df45d` 已回填行 B #106、merge SHA 与 2026-10-20T04:14:20+08:00。原文未记录前态，本次不补造。TaskStore 全库校验受阻，因此本次未持久化 lifecycle transition；当前会话的 strict 完成状态见 Book Gate Plan。
 
@@ -54,6 +55,11 @@ completed_at: null
 - Code Readability Review / ponytail-review：无额外依赖、无新持久状态、无新 CLI/公共升级命令、无重试框架；沿用 process adapter、Zod、现有 host seam。仅删除已无意义的 readiness 读取，保留既有授权 seam。
 - strict 状态限制：TaskDocument 已单独解析当前记录成功，但 TaskStore 全库 inspect 被其他历史记录 schema 阻断。未绕过 helper 改 active pointer 或伪称可靠恢复；task frontmatter 暂留 in-progress，完成/阻塞 transition 未通过 TaskStore 持久化。独立 review 等待 orchestrator/人工，不启动 subagent。
 
+- D11 补充任务（strict）：安装 tarball 后由包自身 `omp.extensions` 发现的 `row-c-install-smoke.mjs` 才是 D11 gate；`row-c-smoke.mjs` 保留为 supplementary，前述第 10–11、17 条 wrapper smoke 不再作为 D11 gate 证据。需求明确，未重新完整调用 grill-with-docs；不改「使用的模型」。
+- 安装入口实测：18.11.1 将裸绝对 `.tgz` 路径分类为 local directory/link，读取 `<tgz>/package.json` 导致 ENOTDIR；使用正常 npm named spec `@kunolu/omp-sbtd@file:<absolute-tarball>` 经同一 `omp plugin install` 成功。不是包 manifest/files/dist 缺陷，不修改 host 或包契约。
+- 观察方案：`plugin list/doctor --json` 只证明安装/manifest；extension dashboard 的 capability 列表不枚举已注册 handlers。使用 pinned host 的 Bun loopback debugger，在 startup `formatExtensionLoadNotifications` 读取真实 loader errors 参数，在 `InteractiveMode.getUserInput` 调用帧读取 `this.session.extensionRunner.getLoadedExtensions()` 的 handlers/commands/tools Maps、`session.getAllToolInfos()`、`session.model` 与 `Bun.main`。另外真实键盘 `/tools` 验证 TUI 工具列表。不 import、wrap、proxy 插件，不改宿主源码，不注入 extension，不调用模型。
+- PTY 继续适用：18.11.1 非交互 RPC 在未配置 model 时于进入 RPC 前退出；interactive 允许 no-model。真实键盘输入 `/sbtd onboard plan`、`/sbtd onboard init-projects`，仅批准 “Apply SBTD Onboard Plan” 的两个 project AGENTS targets，不替换 UI API。
+
 ## Book Gate Plan
 
 | Reviewer | 触发事实 | 阶段 | 状态 |
@@ -63,6 +69,8 @@ completed_at: null
 | book-legacy-change-safety | 宿主 API 升级与既有 capability readiness 改动 | before-dev | passed（characterized：45/45 既有安全网；新 readiness 与 D8 regression 先 red 后 green） |
 | book-refactoring-pass | 首次既有生产代码编辑前 | before-dev | passed（proceed / normal：现有 process adapter 与 tool_call seam 足够，无需重构） |
 | book-release-readiness | 宿主集成与 runtime 行为变化；本行不发布 | finish | blocked（D11/D8 已通过；全量仍有既有 bun-offline 前置失败，独立 review 未执行，不标 strict done/release-ready） |
+
+本次 D11 evidence-only 补充的 Book Gate Plan：仅新增非打包 smoke 与更新本 task；DDD（无新领域歧义）、DDIA（无生产数据/所有权变更）、legacy（无生产行为修改）、refactoring（无既有生产代码编辑）均 not-required。Release readiness 沿用上表 blocked，不借新 smoke 改写全量环境失败或发布就绪状态；若需生产/打包修复则重新路由适用门禁。验证范围为真实 install/discovery/onboard、packed p0、项目 lint/typecheck；不重复运行已知 bun-offline 全量失败以确认用户事实。
 
 ## 进度
 
@@ -95,6 +103,51 @@ completed_at: null
 
 17. orchestrator 独立复核（2026-10-22T11:52+08:00，tip `d3b7669`）：`HOME=/tmp/rowc-ver-home /workspace/sbtd-plugins-row-c/packages/omp-sbtd/node_modules/.bin/omp --version` → `omp/18.11.1`（shim exec bun → `node_modules/.pnpm/@oh-my-pi+pi-coding-agent@18.11.1/.../dist/cli.js`；全局 `omp --version` 仍 `omp/18.12.5`，未使用、未改动）；`node scripts/p0/host-event/row-c-smoke.mjs` exit 0，scratch `/tmp/row-c-omp-18.11.1-7kBBki`，`status=passed`、`model=null`、commands `["sbtd"]`、tools `["sbtd_workflow"]`、13 hooks、artifacts `AGENTS.md`/`.omp/AGENTS.md`；`pnpm typecheck` PASS；`pnpm lint` PASS（98 files）。注意：smoke 经 `--extension row-c-smoke-extension.mjs`（Proxy 包装并转发真实 `dist/extension.js` 的注册）加载插件，未走包 `omp.extensions` 的安装发现路径。
 
+18. **D11 install-path gate PASS**（本次起点 `45e0278053b533a1a5b07adf3421eb8aeecfe2fd`；developer-local / dirty / local-only）。所有宿主调用均为 `/workspace/sbtd-plugins-row-c/packages/omp-sbtd/node_modules/.bin/omp`；隔离环境中 `--version` 输出精确 `omp/18.11.1`。最终运行 2026-10-22T04:08:34.368Z–04:08:46.004Z，scratch `/tmp/row-c-install-smoke-3I3R84`，exit 0。没有使用全局 omp、修改全局配置、访问其他 checkout、push、PR 操作或发布。
+19. build / pack / unpack / packed p0 的实际命令（cwd `packages/omp-sbtd`）：
+
+    ```sh
+    export COREPACK_HOME=$HOME/.cache/node/corepack PYTHONDONTWRITEBYTECODE=1
+    pnpm build
+    pnpm pack --pack-destination /tmp/row-c-install-smoke-fT4VDb
+    mkdir /tmp/row-c-install-smoke-fT4VDb/unpacked
+    tar -xzf /tmp/row-c-install-smoke-fT4VDb/kunolu-omp-sbtd-0.1.0-rc.14.tgz -C /tmp/row-c-install-smoke-fT4VDb/unpacked
+    pnpm exec tsx scripts/p0/cli.ts check-package --packed /tmp/row-c-install-smoke-fT4VDb/unpacked/package
+    node scripts/p0/host-event/row-c-install-smoke.mjs /tmp/row-c-install-smoke-fT4VDb/kunolu-omp-sbtd-0.1.0-rc.14.tgz
+    ```
+
+    `unpacked` 目录实际由 harness `fs.mkdir` 创建（上列 mkdir 为等价复现）。build / pack / packed p0 全部 exit 0；packedFileCount **471**，sourceTreeSha256 `c66992a8d60a5e78c9f04140583a20dd613142e5831576a7cf86966d648e1ea8`，sbomSha256 `6f1db49eb09af563b1195e55c321441f245fd64c5f6edb3694f904b1a57a7a30`。包仍为 `0.1.0-rc.14`，按本任务禁止 version bump；新 smoke 不在 packed files 中。
+20. 每次 smoke 新建 `/tmp/row-c-install-smoke-*`；HOME、XDG_CACHE_HOME / CONFIG_HOME / DATA_HOME / STATE_HOME / RUNTIME_DIR、PI_CODING_AGENT_DIR、AGENT_SKILLS_DIR、TMPDIR 均在该 root。宿主 env 为脚本 allowlist，不继承 provider credentials、model、NODE_OPTIONS 或全局配置；仅关闭 isolated setup wizard / splash 与三个本地 provider 自动探测。PATH 优先授权 worktree 的 `.bin`，无 `/home/box/.bun/bin`。安装允许联网，非 offline 模拟。
+21. 原生安装命令由脚本在隔离 env / scratch project 下执行：
+
+    ```text
+    /workspace/sbtd-plugins-row-c/packages/omp-sbtd/node_modules/.bin/omp plugin --help
+    /workspace/sbtd-plugins-row-c/packages/omp-sbtd/node_modules/.bin/omp plugin install @kunolu/omp-sbtd@file:/tmp/row-c-install-smoke-fT4VDb/kunolu-omp-sbtd-0.1.0-rc.14.tgz
+    ✔ Installed @kunolu/omp-sbtd@0.1.0-rc.14
+    ```
+
+    默认 user scope，实际安装到 `$HOME/.omp/plugins/node_modules/@kunolu/omp-sbtd`，realpath 断言不是源目录 symlink。宿主 `PluginManager.install` 内部运行 `bun install --no-cache <named-spec>`；stdout 不透传 Bun 的下载日志，因此不捏造请求数。真实 package.json 保存 tarball `file:` dependency；隔离 node_modules 中 zod 为 **4.1.12**。Bun 也自动解析 broad peer `>=18 <19` 为 **18.12.6** 并写入隔离 `bun.lock`，该依赖的 CLI **未执行**；debugger 另断言运行中 `Bun.main` realpath 正是 worktree `.pnpm/@oh-my-pi+pi-coding-agent@18.11.1/.../dist/cli.js`，不是 installer peer 或全局 binary。
+22. `/workspace/sbtd-plugins-row-c/packages/omp-sbtd/node_modules/.bin/omp plugin list --json`，exit 0：
+
+    ```json
+    {"npm":[{"name":"@kunolu/omp-sbtd","version":"0.1.0-rc.14","path":"/tmp/row-c-install-smoke-3I3R84/home/.omp/plugins/node_modules/@kunolu/omp-sbtd","manifest":{"extensions":["./dist/extension.js"],"version":"0.1.0-rc.14"},"enabledFeatures":null,"enabled":true}],"marketplace":[]}
+    ```
+
+    同 binary `plugin doctor --json`，exit 0：`plugins_directory=ok`（Found at `/tmp/row-c-install-smoke-3I3R84/home/.omp/plugins`）、`package_manifest=ok`（Found）、`node_modules=ok`（Found）、`plugin:@kunolu/omp-sbtd=ok`（v0.1.0-rc.14；完整 description 见 raw）。四项均 assert `ok`，未运行 doctor --fix。
+23. 宿主启动参数：`/usr/bin/script --quiet --return --command '<absolute-bin> --no-session --no-tools --no-skills --no-rules --no-lsp --no-pty --no-title' /dev/null`，子进程仅额外设置 `BUN_OPTIONS=--inspect-wait=127.0.0.1:0/rowc`。没有 `--extension` / `-e` / `--hook` / `--no-extensions`；没有 observer extension 或 preload。外部 Node WebSocket 通过 Bun 原生 `Debugger.setBreakpointByUrl` / `evaluateOnCallFrame` 只读宿主对象；两个断点由已钉住 bundle 的唯一 source anchors 定位，变更会 fail closed。依据：host `main.ts` 调用 `formatExtensionLoadNotifications(extensionsResult.errors)`；`extensions/runner.ts` 的 `getLoadedExtensions` 返回真实 registry；`InteractiveMode.getUserInput` 在启动完成后进入输入循环。`plugin doctor` 检查文件/manifest，dashboard `state-manager.ts` 读 capabilities，均不枚举 runtime handlers。
+24. 四项断言与 onboard 输出：
+
+    ```text
+    status=passed; model=null; extensionErrors=[]
+    installed extension path=.../home/.omp/plugins/node_modules/@kunolu/omp-sbtd/dist/extension.js
+    commands=["sbtd"]; tools=["sbtd_workflow"]
+    hooks=["session_start","session_switch","session_branch","session_tree","before_agent_start","session.compacting","tool_call","tool_approval_resolved","tool_result","turn_start","turn_end","session_stop","credential_disabled"]
+    ```
+
+    精确 13 hooks，只统计安装包实例，不把宿主 `<inline-0>` / `<inline-1>` 内建 hooks 混入。宿主 tool metadata 的 sourceInfo.path 也须匹配安装路径。真实键盘 `/tools` 显示 `sbtd_workflow`；`/sbtd onboard plan` 输出 per-class confirmation；`/sbtd onboard init-projects` 弹出 “Apply SBTD Onboard Plan” / “2 managed AGENTS targets” / global Skills 不检查、不修改；仅此框输入 Enter。结果 `Composite Onboard applied (agents: applied, ... skills: not-required ... mcp: not-required ...)`，实际读回 `project/AGENTS.md`、`project/.omp/AGENTS.md` 含 managed sbtd 内容。最后 `/exit`，exit 0；无模型调用。
+25. 失败保留与修复：裸 tgz 安装 ENOTDIR（host 把 local path 当 directory link）改用 named npm spec，未改生产包。初版脚本 `/tmp/row-c-install-smoke-16wRII` 在输入循环 ready 前输入 `/tools`，断点等待超时、exit 1；改为在唯一 `getUserInput` 入口观察。第二轮 `/tmp/row-c-install-smoke-E9n97B` 遇 Bun inspector `Object has too long reference chain (must not be longer than 1000)`、exit 1；改为 debugger 内 `JSON.stringify` 后返回字符串，外部 JSON.parse。第三轮 `/tmp/row-c-install-smoke-AyeO2W` PASS；增强记录 installer peer 和实际 Bun.main 后最终 `/tmp/row-c-install-smoke-3I3R84` PASS。最终新增长路径触发一次 Biome format error，`pnpm exec biome check --write scripts/p0/host-event/row-c-install-smoke.mjs` 修正后 `pnpm lint` PASS（99 files）。
+26. 其他验证：`pnpm typecheck` PASS；`pnpm exec vitest run test/agent-plugin-manifest.test.ts test/agent-plugin-pack.test.ts --no-file-parallelism --maxWorkers=1 --testTimeout=30000` **2 files / 11 passed**；packed p0 PASS。Code Readability Review：单个非打包脚本、Node stdlib + 原生 WebSocket、无依赖/observer extension/生产 seam 改动；所有安装与宿主命令 bounded timeout，失败保留 result/terminal 输出并非零退出。BDD：traceable 到既有 manifest/pack 场景及 D11；不新增生产行为或 `.feature`。rtk：skipped-for-report；Mock Strategy：none；E2E Mode：smoke-only；Graft：skipped（源码证据足够）。正式本地 raw / 同 stem 中文汇总：`reports/install-smoke-validation-20261022.json` / `.md`（相对此 task 目录，ignored，未提交）；包含 install/list/doctor 全文、失败记录、验证与最终结果。未重跑已知 bun-offline 全量失败，未把局部通过写成全量/release-ready；原 TaskStore / 独立 review blockers 保留，未重复全库检查。CONTRACT-CHANGE-NEEDED：**无**。风险：debugger anchors 与 Bun inspector 绑定 18.11.1；npm peer/transitive resolution 随 registry 变化；仅验证注册与 onboard，不证明每个 hook 的运行行为或 provider/model E2E。仅新增本 smoke 与更新本 task，可按提交回滚；scratch 为隔离测试产物，无用户环境迁移。
+
 ## 修改文件与交付范围
 
 - Host/打包：`packages/omp-sbtd/package.json`、根 `pnpm-lock.yaml`、`validation/p0/compatibility.v2.json`、生成的 `SBOM.spdx.json`。
@@ -105,6 +158,7 @@ completed_at: null
 - CI：`.github/workflows/{omp-runtime-linux-probe,omp-section4-publish-gate}.yml`（仅本地改 pin，未运行/触发 GitHub）。
 - 文档：`docs/assets/omp/omp-plugin-host-acceptance.md`、`docs/spec/omp-sbtd/backend/{build-and-release,directory-structure,security-invariants,testing}.md` 与本 task。
 - 未改：README、CHANGELOG、package/plugin version、D14 transform、upstream.lock、distribution map、overlay catalog、历史 ledger/evidence；未提交 reports、`.omp-r12b-addendum.txt` 或 `ai/tasks/codex-verify/**`。无 subagent；「使用的模型」留给 orchestrator。
+- 本次 D11 evidence-only 补充仅修改本 task，新增 `packages/omp-sbtd/scripts/p0/host-event/row-c-install-smoke.mjs`；其余上述历史范围均未再次修改。
 
 ## 使用的模型
 
