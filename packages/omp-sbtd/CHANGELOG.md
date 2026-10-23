@@ -3,7 +3,7 @@
 All notable changes to `@kunolu/omp-sbtd` are documented here. The format
 follows Keep a Changelog; versions are release candidates until promotion.
 
-Chinese mirror of the new entry: [CHANGELOG.zh.md](CHANGELOG.zh.md).
+Full Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
 ## [0.2.0-rc.1] - 2026-10-22
 
@@ -102,7 +102,7 @@ different pre-publication pack and is not the Registry identity.
   overall compatibility state from trusted profile evidence only, and that
   state never authorizes or blocks publication.
 
-## [0.1.0-rc.12] - 2026-08-18
+## [0.1.0-rc.12] - 2026-08-20
 
 Hybrid Plugin M2 package assembly candidate. Published to npm under the
 `next` dist-tag on 2026-08-20 after the handbook §4 isolated exact-tarball
@@ -138,7 +138,7 @@ result is retained only as a Command Surface baseline.
 - No `mcp.json` and no `commands/`, `hooks/`, `tools/`, or `runtime/` root
   directories are added.
 
-## [0.1.0-rc.11] - 2026-08-17
+## [0.1.0-rc.11] - 2026-08-18
 
 Next RC candidate. Includes the eight confirmed RC6 findings, the
 reviewer follow-up fixes, Workflow Kit `4222b15`, and exact OMP `17.3.5`.
@@ -197,7 +197,7 @@ reviewer follow-up fixes, Workflow Kit `4222b15`, and exact OMP `17.3.5`.
 - Staged promotion copies `SECURITY.md` and `CHANGELOG.md` so SBOM
   inventory matches the declared package files.
 
-## [0.1.0-rc.10] - 2026-08
+## [0.1.0-rc.10] - 2026-08-14
 
 - Prior RC. Workflow Kit was later rebound from `078267f` to `4222b15` in
   0.1.0-rc.11.
@@ -215,3 +215,28 @@ reviewer follow-up fixes, Workflow Kit `4222b15`, and exact OMP `17.3.5`.
   re-observe current evidence before advancing.
 - Validator hosts need `jsonschema` (`python3 -m pip install -r
   requirements.txt` from the installed `project-validation` Skill root).
+
+## [0.1.0-rc.6] - 2026-08-06
+
+### Changed
+
+- Pinned the OMP peer to `17.2.9` (from `17.1.3` in rc.2).
+- Published the 253-file candidate whose tarball matches the archived
+  isolated OMP `17.2.9` four-command acceptance record.
+- Other changes: Published; change details not recoverable.
+
+## [0.1.0-rc.2] - 2026-07-28
+
+### Added
+
+- Package README with installation and compatibility guidance. Compared
+  with rc.1, the published tarball adds only `README.md` and changes only
+  `package.json` and `SBOM.spdx.json`; runtime files are unchanged.
+
+## [0.1.0-rc.1] - 2026-07-28
+
+### Added
+
+- Initial npm release of the OMP SBTD plugin, including `dist/extension.js`,
+  the embedded workflow Kit, and SPDX SBOM (356 files).
+- Exact peer dependency on `@oh-my-pi/pi-coding-agent@17.1.3`.

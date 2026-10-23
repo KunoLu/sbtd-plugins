@@ -96,3 +96,47 @@ first. Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
   Prefer installing via pnpm or the dsh plugin manager path; npm users on
   `@deepseek-ai/dsh@0.2.1-rc.2` may need a dependency override (e.g.
   `overrides` in `package.json`) to resolve the peer.
+
+## [0.1.0-rc.3] - 2026-09-19
+
+### Changed
+
+- Synced manuals to `640-skills` `v1.0.15`
+  (`bc8eec1549928fb0966254751b96b611b6334183`).
+- Lesson writes resolve the author's split name from `.trellis/.developer`
+  or the main worktree, append within that author's markers, and use
+  `LESSON-YYYYMMDD-<name>-<slug>` IDs.
+
+### Fixed
+
+- Lesson lookup matches exact headings rather than longer-ID prefixes;
+  topic fallback uses the enclosing author marker. Sanitization neutralizes
+  forged lesson markers so content cannot escape its author's block.
+
+## [0.1.0-rc.2] - 2026-09-13
+
+### Added
+
+- `sbtd_clarify`, `sbtd_spec`, `sbtd_tickets`, `sbtd_validate`, `sbtd_bdd`,
+  `sbtd_e2e`, and `sbtd_lessons`, plus the human-facing `/sbtd` command.
+- Trellis filesystem primitives, optional GitNexus analysis, and Maestro
+  preflight support.
+
+### Fixed
+
+- Permit remediation writes while legacy/refactor gates require a safety
+  seam or refactoring; enforce legacy review before refactoring.
+- Preserve gate facts across replans and bind them to the matching set.
+- Omit null `output.schema` values from clarify/spec/tickets results for
+  host compatibility.
+
+## [0.1.0-rc.1] - 2026-09-04
+
+### Added
+
+- Initial npm release for `@deepseek-ai/dsh@0.1.1-rc.2`, with a Chinese
+  `sbtd` section, session state and handoff restoration.
+- `sbtd_plan` and `sbtd_review`, plus `tools/pre-execute` and
+  `agent/pre-step` hooks enforcing the Book Gate Plan.
+- Read-only manuals synced from `640-skills` `v1.0.13`
+  (`f8aa0d7225a26c5e00b81d2f1b05121108e63630`).

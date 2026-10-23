@@ -79,3 +79,43 @@
 - **支持范围保持 `>=0.2.0-rc.2 <0.3.0-0`，不退回。** 推荐经 pnpm 或 dsh
   插件管理器路径安装；使用 `@deepseek-ai/dsh@0.2.1-rc.2` 的 npm 用户可能
   需要依赖 override（如 `package.json` 的 `overrides`）才能解析 peer。
+
+## [0.1.0-rc.3] - 2026-09-19
+
+### Changed（变更）
+
+- 将手册同步至 `640-skills` `v1.0.15`
+  （`bc8eec1549928fb0966254751b96b611b6334183`）。
+- Lesson 写入从 `.trellis/.developer` 或主 worktree 解析作者 split name，
+  仅在该作者的 marker 内追加，并使用 `LESSON-YYYYMMDD-<name>-<slug>` ID。
+
+### Fixed（修复）
+
+- Lesson 查找精确匹配 heading，不再误匹配更长 ID 的前缀；topic fallback
+  使用外层作者 marker。清洗伪造的 lesson marker，防止内容逃逸作者块。
+
+## [0.1.0-rc.2] - 2026-09-13
+
+### Added（新增）
+
+- 新增 `sbtd_clarify`、`sbtd_spec`、`sbtd_tickets`、`sbtd_validate`、
+  `sbtd_bdd`、`sbtd_e2e`、`sbtd_lessons`，以及面向人的 `/sbtd` 命令。
+- 新增 Trellis 文件系统原语、可选 GitNexus 分析及 Maestro preflight 支持。
+
+### Fixed（修复）
+
+- 当 legacy/refactor gate 要求安全 seam 或先重构时，允许 remediation
+  写入；强制先完成 legacy review 再进行 refactor review。
+- 跨 replan 保留 gate facts，并绑定 matching set。
+- clarify/spec/tickets 结果省略值为 null 的 `output.schema`，以兼容宿主。
+
+## [0.1.0-rc.1] - 2026-09-04
+
+### Added（新增）
+
+- 首次通过 npm 发布，面向 `@deepseek-ai/dsh@0.1.1-rc.2`，包含中文
+  `sbtd` section、会话状态及 handoff 恢复。
+- 提供 `sbtd_plan`、`sbtd_review`，以及执行 Book Gate Plan 门禁的
+  `tools/pre-execute` 和 `agent/pre-step` hooks。
+- 从 `640-skills` `v1.0.13`
+  （`f8aa0d7225a26c5e00b81d2f1b05121108e63630`）同步只读手册。
