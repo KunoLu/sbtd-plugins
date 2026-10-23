@@ -20,9 +20,16 @@ const dshPkgPath = require.resolve("@deepseek-ai/dsh/package.json");
 const dshPkg = readJson(dshPkgPath);
 assert.equal(dshPkg.version, process.env.DSH_VERSION);
 if (process.env.DSH_PIN_SMOKE === "1") {
-  assert.equal(pluginPkg.version, "0.1.0-rc.3");
-  assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], ">=0.2.0-rc.2 <0.3.0-0");
-  assert.equal(pluginPkg.engines.dsh, ">=0.2.0-rc.2 <0.3.0-0");
+  assert.ok(process.env.GITHUB_WORKSPACE, "GITHUB_WORKSPACE is required for pin smoke");
+  const sourcePkg = readJson(
+    join(process.env.GITHUB_WORKSPACE, "packages/dsh-sbtd/package.json"),
+  );
+  // Locked peer/engines range: docs/prd/dsh-sbtd-0.2.0-rc.1.md:17.
+  const DSH_HOST_RANGE = ">=0.2.0-rc.2 <0.3.0-0";
+  assert.equal(pluginPkg.version, sourcePkg.version);
+  assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], DSH_HOST_RANGE);
+  assert.equal(pluginPkg.engines.dsh, DSH_HOST_RANGE);
+  assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], pluginPkg.engines.dsh);
 }
 const fromDsh = createRequire(dshPkgPath);
 if (process.env.DSH_PIN_SMOKE === "1") {
