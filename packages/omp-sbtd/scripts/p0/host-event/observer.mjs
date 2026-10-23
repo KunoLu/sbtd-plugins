@@ -10,11 +10,11 @@
 //
 // Slice 5 changes vs the spike:
 // - The subscribed event list comes from HOST_EVENT_OBSERVE_EVENTS, which the
-//   suite runner builds from `ompExtensionV1Inventory` — the inventory is the
+//   suite runner builds from `ompExtensionV2Inventory` — the inventory is the
 //   single event list; this file declares none.
 // - Payloads are validated with the Slice 4 adapter-edge schemas by importing
-//   `validateOmpExtensionV1Event` from the *subject tarball's* own
-//   dist/runtime/omp-extension-v1.js (HOST_EVENT_VALIDATOR_MODULE). A missing
+//   `validateOmpExtensionV2Event` from the *subject tarball's* own
+//   dist/runtime/omp-extension-v2.js (HOST_EVENT_VALIDATOR_MODULE). A missing
 //   module/export or a rejection is recorded fail-closed, never tolerated.
 // - Every record carries HOST_EVENT_RUN_ID so a shared/stale log from another
 //   run is detectable by the evidence validator.
@@ -57,7 +57,7 @@ const record = (entry) => {
 // --- Subject adapter-edge validator (from the frozen tarball under test) ----
 // The observer validates each payload with the exact code the Plugin ships at
 // its adapter edge. This doubles as proof that the frozen tarball contains
-// dist/runtime/omp-extension-v1.js with the Slice 4 contract surface.
+// dist/runtime/omp-extension-v2.js with the Slice 4 contract surface.
 let validateHostEvent;
 let validatorModuleSha256;
 let validatorInventoryVersion;
@@ -66,12 +66,12 @@ try {
   const modulePath = realpathSync(validatorModulePath);
   validatorModuleSha256 = sha256File(modulePath);
   const mod = await import(pathToFileURL(modulePath).href);
-  if (typeof mod.validateOmpExtensionV1Event !== "function")
-    throw new Error("validateOmpExtensionV1Event export missing");
-  validateHostEvent = mod.validateOmpExtensionV1Event;
+  if (typeof mod.validateOmpExtensionV2Event !== "function")
+    throw new Error("validateOmpExtensionV2Event export missing");
+  validateHostEvent = mod.validateOmpExtensionV2Event;
   validatorInventoryVersion =
-    typeof mod.ompExtensionV1Inventory?.version === "string"
-      ? mod.ompExtensionV1Inventory.version
+    typeof mod.ompExtensionV2Inventory?.version === "string"
+      ? mod.ompExtensionV2Inventory.version
       : undefined;
 } catch (error) {
   validatorLoadFailure = `VALIDATOR_MODULE_LOAD_FAILED:${error instanceof Error ? error.name : "unknown"}`;
@@ -172,11 +172,11 @@ const summarize = (name, event, ctx) => {
       validateHostEvent(name, event);
       schemaValid = true;
     } catch (error) {
-      // OmpExtensionV1EventRejection carries a stable, content-free reason
+      // OmpExtensionV2EventRejection carries a stable, content-free reason
       // code; anything else is an observer-side validator fault. Neither
       // path echoes payload content.
       if (
-        error?.name === "OmpExtensionV1EventRejection" &&
+        error?.name === "OmpExtensionV2EventRejection" &&
         isString(error.reasonCode)
       )
         reason = `EVENT_REJECTED:${error.reasonCode}`;
@@ -193,6 +193,41 @@ const summarize = (name, event, ctx) => {
   if (reason !== undefined) out.reason = reason;
   // Irreversible identity digests only.
   if (isString(event?.sessionId)) out.sessionDigest = sha256(event.sessionId);
+  if (name === "session_compact") {
+    const entry = event?.compactionEntry;
+    if (isBoolean(event?.fromExtension))
+      out.fromExtension = event.fromExtension;
+    if (isObject(entry)) {
+      out.compactionEntryFields = Object.keys(entry)
+        .filter((key) =>
+          [
+            "type",
+            "id",
+            "parentId",
+            "timestamp",
+            "runtime",
+            "summary",
+            "shortSummary",
+            "firstKeptEntryId",
+            "tokensBefore",
+            "tokensAfter",
+            "method",
+            "providerReplayThroughEntryId",
+            "details",
+            "preserveData",
+            "fromExtension",
+            "warning",
+          ].includes(key),
+        )
+        .sort();
+      if (isString(entry.id)) out.compactionEntryDigest = sha256(entry.id);
+      if (isStringOrNull(entry.parentId))
+        out.compactionParentDigest =
+          entry.parentId === null ? null : sha256(entry.parentId);
+      if (isString(entry.method))
+        out.compactionMethod = entry.method === "handoff" ? "handoff" : "other";
+    }
+  }
   if (isString(event?.toolCallId))
     out.toolCallDigest = sha256(event.toolCallId);
   if (isString(event?.previousSessionFile))
@@ -237,6 +272,40 @@ const summarize = (name, event, ctx) => {
 };
 
 export default function hostEventObserver(pi) {
+  let windowState;
+  // Read-only Host command: both boundaries share the event writer's sequence.
+  // The driver awaits the handoff RPC (18.11.1 awaits emit), then this idle
+  // barrier. Synchronous appends make the completed boundary drain-visible.
+  pi.registerCommand("host-event-window", {
+    description: "Capture a read-only host-event observation boundary",
+    handler: async (args, ctx) => {
+      const match = /^(baseline|complete) ([a-f0-9]{64})$/.exec(args.trim());
+      if (!match) throw new Error("INVALID_HANDOFF_WINDOW_COMMAND");
+      const [, phase, windowDigest] = match;
+      if (
+        (phase === "baseline" && windowState !== undefined) ||
+        (phase === "complete" && windowState !== windowDigest)
+      )
+        throw new Error("HANDOFF_WINDOW_NOT_SERIAL");
+      await ctx.waitForIdle();
+      const sessionId = ctx.sessionManager.getSessionId();
+      if (!isString(sessionId) || sessionId.length === 0)
+        throw new Error("HANDOFF_WINDOW_SESSION_MISSING");
+      const entries = ctx.sessionManager
+        .getEntries()
+        .filter((entry) => entry.type === "compaction");
+      if (entries.some((entry) => !isString(entry.id) || entry.id.length === 0))
+        throw new Error("HANDOFF_WINDOW_ENTRY_INVALID");
+      record({
+        kind: "handoff_boundary",
+        phase,
+        windowDigest,
+        ctxSessionDigest: sha256(sessionId),
+        compactionEntryDigests: entries.map((entry) => sha256(entry.id)),
+      });
+      windowState = phase === "baseline" ? windowDigest : "completed";
+    },
+  });
   for (const name of observeEvents)
     pi.on(name, (event, ctx) => {
       try {

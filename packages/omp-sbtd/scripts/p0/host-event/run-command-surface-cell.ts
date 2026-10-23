@@ -29,7 +29,7 @@ import {
   MAX_RENDERED_SBTD_REPORT_BYTES,
   parseRenderedSbtdReport,
 } from "../../../src/report/index.ts";
-import { ompExtensionV1Inventory } from "../../../src/runtime/omp-extension-v1.ts";
+import { ompExtensionV2Inventory } from "../../../src/runtime/omp-extension-v2.ts";
 import { P0ValidationError } from "../release-validator.ts";
 import { hasSensitiveText } from "../sanitization.ts";
 import {
@@ -141,7 +141,7 @@ const probeCapabilitiesSchema = z
   .object({
     kind: z.literal("capabilities"),
     runId: z.string().min(1),
-    inventoryVersion: z.literal("omp-extension-v1"),
+    inventoryVersion: z.literal("omp-extension-v2"),
     present: z.record(z.string(), z.boolean()),
   })
   .strict();
@@ -236,7 +236,7 @@ function assertObservedHost(
 }
 
 /**
- * Scores the in-Host capability probe against the single omp-extension-v1
+ * Scores the in-Host capability probe against the single omp-extension-v2
  * inventory: any missing required capability or an unregistered subject
  * Plugin is failed; optional-only loss degrades to passed-with-diagnostics.
  * The in-Host identity must equal the driver-side recomputation of the exact
@@ -256,16 +256,16 @@ export function scoreCapabilityProbe(input: {
     input.expectedHost,
   );
   const present = input.log.capabilities.present;
-  const missingRequired = ompExtensionV1Inventory.requiredCapabilities.filter(
+  const missingRequired = ompExtensionV2Inventory.requiredCapabilities.filter(
     (name) => present[name] !== true,
   );
-  const missingOptional = ompExtensionV1Inventory.optionalCapabilities.filter(
+  const missingOptional = ompExtensionV2Inventory.optionalCapabilities.filter(
     (name) => present[name] !== true,
   );
   const capabilities = Object.fromEntries(
     [
-      ...ompExtensionV1Inventory.requiredCapabilities,
-      ...ompExtensionV1Inventory.optionalCapabilities,
+      ...ompExtensionV2Inventory.requiredCapabilities,
+      ...ompExtensionV2Inventory.optionalCapabilities,
     ].map(
       (name) =>
         [
@@ -570,8 +570,8 @@ export async function runCommandSurfaceCell(
         NO_COLOR: "1",
         CAPABILITY_PROBE_LOG: probeLogPath,
         CAPABILITY_PROBE_NAMES: JSON.stringify({
-          required: [...ompExtensionV1Inventory.requiredCapabilities],
-          optional: [...ompExtensionV1Inventory.optionalCapabilities],
+          required: [...ompExtensionV2Inventory.requiredCapabilities],
+          optional: [...ompExtensionV2Inventory.optionalCapabilities],
         }),
         HOST_EVENT_RUN_ID: runId,
       },

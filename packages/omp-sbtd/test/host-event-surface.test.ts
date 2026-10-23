@@ -1,7 +1,7 @@
 // Slice 5 contract tests for 08-20-omp-plugin-compatibility-decoupling.
 //
 // Always-on (inside the 30s default budget): sanitizer, evidence schema and
-// content addressing, inventory alignment with `ompExtensionV1Inventory`,
+// content addressing, inventory alignment with `ompExtensionV2Inventory`,
 // fail-closed validator negatives over fixture records, packaging exclusion
 // of the observer/driver, and driver-side Host identity recomputation. The
 // real-Host cell is env-gated (SPIKE_OMP_BIN + HOST_EVENT_PLUGIN_TARBALL) and
@@ -28,7 +28,6 @@ import { sanitizeStderrText } from "../scripts/p0/host-event/lib.mjs";
 import {
   assertPackedControllerFailClosed,
   completeLiveCellAfterDriver,
-  hostEventObserveEvents,
   runLiveCell,
   subjectStaleBlockedReason,
 } from "../scripts/p0/host-event/run-live-cell.ts";
@@ -40,7 +39,7 @@ import {
   validateHostEventRun,
   writeLocalObservationEvidence,
 } from "../scripts/p0/host-event/validate.ts";
-import { ompExtensionV1Inventory } from "../src/runtime/index.ts";
+import { ompExtensionV2Inventory } from "../src/runtime/index.ts";
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(TEST_DIR, "..");
@@ -118,7 +117,7 @@ const ev = (
   ...overrides,
 });
 
-/** A complete passing run: all 12 required events + credential_disabled,
+/** A complete passing run: all 13 required events + credential_disabled,
  * approved + denied approvals, session A/B/A isolation with restore,
  * session-bound compaction, tree navigation, and a same-session handoff. */
 function baseRecords(): FixtureRecord[] {
@@ -128,7 +127,7 @@ function baseRecords(): FixtureRecord[] {
       atMs: 0,
       runId: RUN_ID,
       kind: "observer_ready",
-      subscriptions: 13,
+      subscriptions: 14,
     },
     {
       seq: 2,
@@ -142,7 +141,7 @@ function baseRecords(): FixtureRecord[] {
       hostPackageJsonSha256: EXPECTED.hostPackageJsonSha256,
       validatorLoaded: true,
       validatorModuleSha256: EXPECTED.pluginValidatorModuleSha256,
-      validatorInventoryVersion: "omp-extension-v1",
+      validatorInventoryVersion: "omp-extension-v2",
     },
     ev(3, "session_start", { ctxSessionDigest: SESS_A }),
     ev(4, "before_agent_start", { ctxSessionDigest: SESS_A }),
@@ -220,13 +219,39 @@ function baseRecords(): FixtureRecord[] {
     ev(34, "turn_end", { ctxSessionDigest: SESS_A }),
     ev(35, "session_stop", { ctxSessionDigest: SESS_A }),
     ev(37, "credential_disabled", { ctxSessionDigest: SESS_A }),
+    {
+      seq: 38,
+      atMs: 38,
+      runId: RUN_ID,
+      kind: "handoff_boundary",
+      phase: "baseline",
+      windowDigest: d("window"),
+      ctxSessionDigest: SESS_A,
+      compactionEntryDigests: [d("earlier-compact")],
+    },
+    {
+      ...ev(39, "session_compact", { ctxSessionDigest: SESS_A }),
+      compactionEntryDigest: d("handoff-entry"),
+      compactionMethod: "handoff",
+      fromExtension: false,
+    },
+    {
+      seq: 40,
+      atMs: 40,
+      runId: RUN_ID,
+      kind: "handoff_boundary",
+      phase: "complete",
+      windowDigest: d("window"),
+      ctxSessionDigest: SESS_A,
+      compactionEntryDigests: [d("earlier-compact"), d("handoff-entry")],
+    },
   ];
 }
 
 interface FixtureScenario {
   runId: string;
   scenario: {
-    handoff?: { attempted: boolean; ok: boolean };
+    handoff?: { attempted: boolean; ok: boolean; [key: string]: unknown };
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -257,7 +282,13 @@ function baseScenario(): FixtureScenario {
       branch: { cancelled: false },
       postBranchTurn: true,
       postCompactTurn: true,
-      handoff: { attempted: true, ok: true },
+      handoff: {
+        attempted: true,
+        ok: true,
+        attempts: 1,
+        windowDigest: d("window"),
+        window: { baselineSeq: 38, completedSeq: 40, sessionDigest: SESS_A },
+      },
     },
     uiRequestsSeen: 2,
     hostToolCalls: [],
@@ -271,16 +302,20 @@ const validateBase = (
 ) => validateHostEventRun({ records, scenario }, EXPECTED);
 
 describe("Feature: Host Event Surface — inventory is the single event list", () => {
-  it("the suite observe list is exactly the omp-extension-v1 inventory", () => {
-    expect(hostEventObserveEvents()).toEqual([
-      ...ompExtensionV1Inventory.requiredEvents,
-      ...ompExtensionV1Inventory.optionalEvents,
-    ]);
-    expect(ompExtensionV1Inventory.requiredEvents).toHaveLength(12);
+  it.each([13, 15])("observer 订阅数 %s 不满足 14 项契约", (subscriptions) => {
+    const verdict = validateBase(
+      baseRecords().map((record) =>
+        record.kind === "observer_ready"
+          ? { ...record, subscriptions }
+          : record,
+      ),
+    );
+    expect(verdict.reasonCodes).toContain("OBSERVER_SUBSCRIPTION_MISMATCH");
+    expect(verdict.outcome).toBe("failed");
   });
 
   it("every inventory required event is enforced by the validator", () => {
-    for (const name of ompExtensionV1Inventory.requiredEvents) {
+    for (const name of ompExtensionV2Inventory.requiredEvents) {
       const records = baseRecords().filter((r) => r.event !== name);
       const verdict = validateBase(records);
       expect(verdict.outcome).toBe("failed");
@@ -290,19 +325,19 @@ describe("Feature: Host Event Surface — inventory is the single event list", (
 });
 
 describe("Feature: Host Event Surface — validator fail-closed contract", () => {
-  it("a complete well-formed run passes with no certified vocabulary", () => {
+  it("Scenario: 同一窗口中的真实 handoff 事件证明覆盖", () => {
     const verdict = validateBase(baseRecords());
-    expect(verdict.outcome).toBe("passed-with-diagnostics");
-    expect(verdict.diagnostics).toContain("HANDOFF_EVENT_UNOBSERVABLE");
+    expect(verdict.outcome).toBe("passed");
+    expect(verdict.handoffObserved).toBe(true);
+    expect(verdict.diagnostics).toEqual([]);
     expect(verdict.reasonCodes).toEqual([]);
     expect(verdict.schemaValid).toBe(true);
     expect(verdict.identityValid).toBe(true);
     expect(verdict.orderingValid).toBe(true);
     expect(verdict.isolationValid).toBe(true);
     expect(verdict.bindingValid).toBe(true);
-    expect(verdict.requiredEventsObserved).toEqual([
-      ...ompExtensionV1Inventory.requiredEvents,
-    ]);
+    expect(verdict.requiredEventsObserved).toContain("session_compact");
+    expect(verdict.requiredEventsObserved).toHaveLength(13);
     expect(JSON.stringify(verdict)).not.toContain("certified");
   });
 
@@ -549,6 +584,148 @@ describe("Feature: Host Event Surface — validator fail-closed contract", () =>
     expect(dirty.reasonCodes).toContain("EVIDENCE_SANITIZATION_VIOLATION");
   });
 
+  it("Scenario: handoff 不冒充 Session 切换覆盖", () => {
+    const verdict = validateBase(
+      baseRecords().filter((r) => r.event !== "session_compact"),
+    );
+    expect(verdict.reasonCodes).toContain("HANDOFF_EVENT_UNOBSERVABLE");
+    expect(verdict.diagnostics).not.toContain("HANDOFF_EVENT_UNOBSERVABLE");
+    expect(verdict.outcome).toBe("failed");
+  });
+
+  it.each([
+    ["method absent", { compactionMethod: undefined }],
+    ["ordinary compact", { compactionMethod: "other" }],
+    ["invalid structure", { schemaValid: false }],
+    ["different session", { ctxSessionDigest: SESS_B }],
+    ["old run", { runId: "old-run" }],
+    ["missing identity", { compactionEntryDigest: undefined }],
+    ["wrong identity", { compactionEntryDigest: d("other-entry") }],
+    ["missing fromExtension", { fromExtension: undefined }],
+  ])("Scenario: 缺失方法或陈旧跨 Session 事件不证明 handoff — %s", (_label, change) => {
+    const records = baseRecords().map((r) =>
+      r.event === "session_compact" ? { ...r, ...change } : r,
+    );
+    const verdict = validateBase(records);
+    expect(verdict.reasonCodes).toContain("HANDOFF_EVENT_UNOBSERVABLE");
+    expect(verdict.handoffObserved).toBe(false);
+    expect(verdict.outcome).toBe("failed");
+  });
+
+  it.each(["baseline", "complete"])("缺少 %s 窗口边界不能证明排空", (phase) => {
+    const verdict = validateBase(
+      baseRecords().filter((r) => r.phase !== phase),
+    );
+    expect(verdict.reasonCodes).toContain("HANDOFF_WINDOW_INVALID");
+    expect(verdict.handoffObserved).toBe(false);
+  });
+
+  it("Scenario: 窗口外事件不证明 handoff", () => {
+    const records = baseRecords();
+    const compact = records.find((r) => r.event === "session_compact");
+    if (!compact) throw new Error("fixture compact missing");
+    compact.seq = 36;
+    records.sort((a, b) => a.seq - b.seq);
+    const verdict = validateBase(records);
+    expect(verdict.reasonCodes).toContain("HANDOFF_EVENT_UNOBSERVABLE");
+  });
+
+  it("Scenario: 竞争 compact 使 handoff 窗口失败", () => {
+    const records = baseRecords().map((r) =>
+      r.phase === "complete"
+        ? {
+            ...r,
+            compactionEntryDigests: [
+              d("earlier-compact"),
+              d("handoff-entry"),
+              d("unobserved-compact"),
+            ],
+          }
+        : r,
+    );
+    const verdict = validateBase(records);
+    expect(verdict.reasonCodes).toContain("HANDOFF_COMPETING_COMPACTION");
+    expect(verdict.handoffObserved).toBe(false);
+  });
+
+  it.each([
+    true,
+    false,
+  ])("同一 entry 重复不新增覆盖，另一 entry 拒绝（same=%s）", (same) => {
+    const records = baseRecords();
+    const compact = records.find((r) => r.event === "session_compact");
+    const completed = records.find((r) => r.phase === "complete");
+    if (!compact || !completed) throw new Error("fixture window missing");
+    completed.seq = 41;
+    records.splice(records.length - 1, 0, {
+      ...compact,
+      seq: 40,
+      compactionEntryDigest: same ? d("handoff-entry") : d("competing-entry"),
+    });
+    const scenario = baseScenario();
+    if (!scenario.scenario.handoff) throw new Error("fixture handoff missing");
+    scenario.scenario.handoff.window = {
+      baselineSeq: 38,
+      completedSeq: 41,
+      sessionDigest: SESS_A,
+    };
+    const verdict = validateBase(records, scenario);
+    expect(verdict.handoffObserved).toBe(same);
+    expect(verdict.outcome).toBe(same ? "passed" : "failed");
+  });
+
+  it.each([
+    "session_switch",
+    "session_branch",
+    "session_tree",
+    "missing-record",
+  ])("窗口内 %s 使无竞争 compact 证明失效", (eventName) => {
+    const records = baseRecords();
+    const compact = records.find((r) => r.event === "session_compact");
+    const completed = records.find((r) => r.phase === "complete");
+    if (!compact || !completed) throw new Error("fixture window missing");
+    compact.seq = 40;
+    completed.seq = 41;
+    if (eventName !== "missing-record")
+      records.splice(
+        records.length - 2,
+        0,
+        ev(39, eventName, { ctxSessionDigest: SESS_B, hostReason: "new" }),
+      );
+    const scenario = baseScenario();
+    if (!scenario.scenario.handoff) throw new Error("fixture handoff missing");
+    scenario.scenario.handoff.window = {
+      baselineSeq: 38,
+      completedSeq: 41,
+      sessionDigest: SESS_A,
+    };
+    expect(validateBase(records, scenario).handoffObserved).toBe(false);
+  });
+
+  it("RPC response 前的事件与不同进程墙钟不影响有效窗口", () => {
+    const records = baseRecords().map((r) => ({ ...r, atMs: 1000 - r.seq }));
+    const verdict = validateBase(records);
+    expect(verdict.handoffObserved).toBe(true);
+    expect(verdict.reasonCodes).toEqual([]);
+  });
+
+  it("Scenario: 未尝试不算 handoff 覆盖", () => {
+    const scenario = baseScenario();
+    delete scenario.scenario.handoff;
+    const verdict = validateBase(baseRecords(), scenario);
+    expect(verdict.diagnostics).toContain("HANDOFF_NOT_ATTEMPTED");
+    expect(verdict.handoffObserved).toBe(false);
+  });
+
+  it("第二次 handoff 不可复用单次窗口", () => {
+    const scenario = baseScenario();
+    if (!scenario.scenario.handoff) throw new Error("fixture handoff missing");
+    scenario.scenario.handoff.attempts = 2;
+    expect(validateBase(baseRecords(), scenario).reasonCodes).toContain(
+      "HANDOFF_WINDOW_INVALID",
+    );
+  });
+
   it("a refused handoff trigger is a blocked diagnostic, not a failure", () => {
     const scenario = baseScenario();
     scenario.scenario.handoff = { attempted: true, ok: false };
@@ -556,6 +733,7 @@ describe("Feature: Host Event Surface — validator fail-closed contract", () =>
     const verdict = validateBase(records, scenario);
     expect(verdict.outcome).toBe("passed-with-diagnostics");
     expect(verdict.diagnostics).toContain("HANDOFF_TRIGGER_BLOCKED");
+    expect(verdict.handoffObserved).toBe(false);
   });
 
   it("an absent optional credential_disabled event degrades to diagnostics only", () => {
@@ -595,8 +773,8 @@ describe("Feature: Host Event Surface — observer reason/toolName sanitization"
     const validatorPath = join(root, "validator-fixture.mjs");
     await writeFile(
       validatorPath,
-      'export const ompExtensionV1Inventory = { version: "omp-extension-v1" };\n' +
-        "export function validateOmpExtensionV1Event() { return {}; }\n",
+      'export const ompExtensionV2Inventory = { version: "omp-extension-v2" };\n' +
+        "export function validateOmpExtensionV2Event() { return {}; }\n",
       "utf8",
     );
     process.env.SPIKE_OBSERVER_LOG = logPath;
@@ -605,6 +783,7 @@ describe("Feature: Host Event Surface — observer reason/toolName sanitization"
     process.env.HOST_EVENT_OBSERVE_EVENTS = JSON.stringify([
       "session_switch",
       "tool_approval_resolved",
+      "session_compact",
     ]);
     try {
       // Query-suffixed specifier: distinct module instance so the env
@@ -618,6 +797,7 @@ describe("Feature: Host Event Surface — observer reason/toolName sanitization"
         (event: unknown, ctx: unknown) => unknown
       >();
       mod.default({
+        registerCommand() {},
         on: (
           name: string,
           handler: (event: unknown, ctx: unknown) => unknown,
@@ -644,10 +824,28 @@ describe("Feature: Host Event Surface — observer reason/toolName sanitization"
         },
         {},
       );
+      handlers.get("session_compact")?.(
+        {
+          type: "session_compact",
+          fromExtension: false,
+          compactionEntry: {
+            type: "compaction",
+            id: "private-entry-id",
+            parentId: "private-parent-id",
+            summary: secretReason,
+            details: { text: secretReason },
+            method: "handoff",
+          },
+        },
+        { sessionManager: { getSessionId: () => "private-session-id" } },
+      );
       const raw = await readFile(logPath, "utf8");
       expect(raw).not.toContain("/Users/alice");
       expect(raw).not.toContain("alice@example.com");
       expect(raw).not.toContain("bash");
+      expect(raw).not.toContain("private-entry-id");
+      expect(raw).not.toContain("private-parent-id");
+      expect(raw).not.toContain("private-session-id");
       const lines = raw
         .trim()
         .split("\n")
@@ -662,6 +860,16 @@ describe("Feature: Host Event Surface — observer reason/toolName sanitization"
       expect(approval?.hostReasonDigest).toBe(d(secretReason));
       expect(approval?.toolName).toBeUndefined();
       expect(approval?.toolNameDigest).toBe(d("bash"));
+      const compact = lines.find((line) => line.event === "session_compact");
+      expect(compact).toMatchObject({
+        compactionMethod: "handoff",
+        fromExtension: false,
+        compactionEntryDigest: d("private-entry-id"),
+        compactionParentDigest: d("private-parent-id"),
+        ctxSessionDigest: d("private-session-id"),
+      });
+      expect(compact).not.toHaveProperty("summary");
+      expect(compact).not.toHaveProperty("details");
     } finally {
       delete process.env.SPIKE_OBSERVER_LOG;
       delete process.env.HOST_EVENT_RUN_ID;
@@ -766,6 +974,28 @@ describe("Feature: Host Event Surface — failed driver cannot score leftover re
       "utf8",
     );
   };
+
+  it("未尝试 handoff 的 diagnostic 不能通过 live acceptance cell", async () => {
+    const runDir = await mkdtemp(join(tmpdir(), "host-event-no-handoff-"));
+    await writePassingLeftovers(runDir);
+    const scenario = baseScenario();
+    delete scenario.scenario.handoff;
+    await writeFile(
+      join(runDir, "out", "scenario.json"),
+      JSON.stringify(scenario),
+      "utf8",
+    );
+    const result = await completeLiveCellAfterDriver({
+      drive: { code: 0, timedOut: false, spawnFailed: false },
+      runId: RUN_ID,
+      runDir,
+      expectation: EXPECTED,
+    });
+    expect(result.verdict?.diagnostics).toContain("HANDOFF_NOT_ATTEMPTED");
+    expect(result.verdict?.reasonCodes).toEqual([]);
+    expect(result.outcome).toBe("blocked");
+    expect(result.blockedReason).toBe("HANDOFF_COVERAGE_UNVERIFIED");
+  });
 
   it("leftover records that would pass stay blocked on a nonzero driver", async () => {
     const runDir = await mkdtemp(join(tmpdir(), "host-event-driver-exit-"));
@@ -881,7 +1111,7 @@ describe("Feature: Host Event Surface — setup blockedReason stays a stable cod
 
   it("a tarball missing the Slice 4 seam keeps its SUBJECT_STALE:* code", async () => {
     const { root, tgz } = await stageTarball({
-      "package/dist/runtime/index.js": "// probeOmpExtensionV1Capabilities\n",
+      "package/dist/runtime/index.js": "// probeOmpExtensionV2Capabilities\n",
     });
     const result = await runLiveCell({
       ompBin: join(root, "no-omp"),
@@ -890,7 +1120,7 @@ describe("Feature: Host Event Surface — setup blockedReason stays a stable cod
     });
     expect(result.outcome).toBe("blocked");
     expect(result.blockedReason).toBe(
-      "SUBJECT_STALE:tarball-missing-omp-extension-v1",
+      "SUBJECT_STALE:tarball-missing-omp-extension-v2",
     );
   });
 
@@ -901,8 +1131,8 @@ describe("Feature: Host Event Surface — setup blockedReason stays a stable cod
       // Seam-complete but not an installable package (no package.json in
       // the tarball), so npm-offline-v1 install fails closed.
       const { root, tgz } = await stageTarball({
-        "package/dist/runtime/omp-extension-v1.js": "// seam\n",
-        "package/dist/runtime/index.js": "// probeOmpExtensionV1Capabilities\n",
+        "package/dist/runtime/omp-extension-v2.js": "// seam\n",
+        "package/dist/runtime/index.js": "// probeOmpExtensionV2Capabilities\n",
       });
       const pkgDir = join(
         root,

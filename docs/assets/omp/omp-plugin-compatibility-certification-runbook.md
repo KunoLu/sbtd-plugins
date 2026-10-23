@@ -12,12 +12,14 @@
 | 手册 | 管什么 | 不管什么 |
 |---|---|---|
 | 本文件 | 受信任 CI 三 profile 认证、subject 绑定、ledger bot PR、ledger-validate、合入公开 ledger | npm pack / publish、本地 TUI 四命令、消费者安装 |
-| [`omp-plugin-host-acceptance.md`](./omp-plugin-host-acceptance.md) | RC / stable 精确 tarball、隔离四命令验收、`next` 发布、消费者安装 | 三 profile `certified`、Host Contract / `omp-extension-v1` 完整探测 |
+| [`omp-plugin-host-acceptance.md`](./omp-plugin-host-acceptance.md) | RC / stable 精确 tarball、隔离四命令验收、`next` 发布、消费者安装 | 三 profile `certified`、Host Contract / `omp-extension-v2` 完整探测 |
 | [`omp-plugin-compatibility-decoupling-plan.md`](./omp-plugin-compatibility-decoupling-plan.md) | 方案与派生规则 | 可执行 HITL 步骤 |
 
 本地四命令通过只允许把精确 OMP 标为公开 `supported`。`certified` 只能由本手册的受信 ledger 派生。
 
 **Host Contract 不写进 `omp-plugin-host-acceptance.md`。** 那份文档记录的是发布路径上的本地四命令（Command Surface 基线），不是认证矩阵里的 Runtime Capability / Host Contract profile。Host Contract 成功跑通之前，只在本文件第 8 节留位。
+
+现行代码契约为 `omp-extension-v2` / `omp-host-events-v2`：13 required + 1 optional，handoff 必须有同 run/session、完整无竞争窗口内 method 为 `handoff` 的真实 `session_compact`。未尝试/触发失败保留 diagnostic，但不能通过 live acceptance 或派生 v2 certified。历史 v1 ledger/evidence 原样只读，不能重标或当作 v2 通过；同一 tarball/runtime 的第一条 v2 assessment 从独立 null predecessor 链开始。判据见 [testing spec](../../spec/omp-sbtd/backend/testing.md)。
 
 ---
 
@@ -408,7 +410,7 @@ git log -1 --oneline origin/main
 
 写入条件：受信认证 run 里 `runtimeCapabilityProbe`、`commandSurface`、`hostEventSurface` 均为 `passed` 或允许的 `passed-with-diagnostics`，`allProfileEvidenceTrust=verified`，`assessmentProvenance=verified`，ledger-validate success，且合入后公开派生为 `certified`。
 
-写入内容应包括：Host 如何满足 `omp-extension-v1`、cell 不再因 SUBJECT_STALE / 缺 extension 而 blocked、三个 profile 的 evidence locator、`certified` entry 的 digest。
+写入内容应包括：Host 如何满足 `omp-extension-v2`、cell 不再因 SUBJECT_STALE / 缺 extension 而 blocked、三个 profile 的 evidence locator、`certified` entry 的 digest。
 
 **不写入** `omp-plugin-host-acceptance.md`。那份文档的第 4 节四命令是发布 Gate，不能替代本小节。
 

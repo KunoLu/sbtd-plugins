@@ -64,7 +64,7 @@ in the same change.
 - Never convert a failure into a pass. Degrade to `blocked` + `repairPath: "/sbtd doctor"` or
   return `block: true`.
 - Malformed host input is rejected at the adapter edge with stable reason codes
-  (`OmpExtensionV1EventRejection`), never interpreted (see
+  (`OmpExtensionV2EventRejection`), never interpreted (see
   [Security Invariants](./security-invariants.md)).
 - Error text shown to users goes through `ctx.ui.notify(message, "info" | "warning")`; there is no
   console logging in `src/`.

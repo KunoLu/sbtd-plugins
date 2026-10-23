@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
-  ompExtensionV1Inventory,
+  ompExtensionV2Inventory,
   type RuntimeControllerHandlers,
   registerRuntimeController,
 } from "../src/runtime/index.ts";
@@ -129,7 +129,7 @@ describe("Feature: Runtime Controller session isolation", () => {
 });
 
 // Slice 1 characterization kept as the registration-surface lock. Slice 4
-// now owns the versioned omp-extension-v1 inventory; these scenarios assert
+// now owns the versioned omp-extension-v2 inventory; these scenarios assert
 // the live seam against that inventory so required events cannot drift.
 describe("Feature: SBTD 控制引导 — host registration characterization", () => {
   function stubHandlers(): RuntimeControllerHandlers {
@@ -181,7 +181,7 @@ describe("Feature: SBTD 控制引导 — host registration characterization", ()
     expect(commands).toEqual(["sbtd"]);
     expect(tools).toEqual(["sbtd_workflow"]);
     expect([...events.keys()].sort()).toEqual(
-      [...ompExtensionV1Inventory.requiredEvents, "credential_disabled"].sort(),
+      [...ompExtensionV2Inventory.requiredEvents, "credential_disabled"].sort(),
     );
   });
 
@@ -194,7 +194,7 @@ describe("Feature: SBTD 控制引导 — host registration characterization", ()
     expect(tools).toEqual([]);
     expect(events.has("credential_disabled")).toBe(false);
     expect([...events.keys()].sort()).toEqual(
-      [...ompExtensionV1Inventory.requiredEvents].sort(),
+      [...ompExtensionV2Inventory.requiredEvents].sort(),
     );
   });
 });

@@ -9,19 +9,19 @@
 //
 // Slice 5 changes vs the spike:
 // - No REQUIRED_EVENTS list here: the suite's single event list is
-//   `ompExtensionV1Inventory`, delivered to the observer by the runner through
+//   `ompExtensionV2Inventory`, delivered to the observer by the runner through
 //   HOST_EVENT_OBSERVE_EVENTS. Scoring/verdicts moved to the TS evidence
 //   validator (validate.ts); this driver only drives and records.
 // - Every run is bound to HOST_EVENT_RUN_ID; a run dir that already contains a
 //   completed scenario.json is refused so logs are never shared across runs.
 // - The scenario additionally attempts the public RPC `handoff` command.
-//   18.11.1 emits session_compact (outside this inventory), not session_switch;
+//   18.11.1 emits session_compact, not session_switch;
 //   RPC success alone never counts as observed handoff event coverage.
 //
 // Required env: SPIKE_OMP_BIN, SPIKE_PLUGIN_EXT, SPIKE_RUN_DIR,
 //   HOST_EVENT_RUN_ID, HOST_EVENT_OBSERVE_EVENTS (JSON string array).
 // Optional env: HOST_EVENT_VALIDATOR_MODULE (defaults to the sibling
-//   dist/runtime/omp-extension-v1.js of SPIKE_PLUGIN_EXT).
+//   dist/runtime/omp-extension-v2.js of SPIKE_PLUGIN_EXT).
 // Writes: <SPIKE_RUN_DIR>/out/{driver.jsonl,observer.jsonl,driver-ext.jsonl,
 //   scenario.json}. Analysis/verdicts are the evidence validator's job.
 import { spawn } from "node:child_process";
@@ -51,7 +51,7 @@ const RUN_ID = env("HOST_EVENT_RUN_ID");
 const OBSERVE_EVENTS = env("HOST_EVENT_OBSERVE_EVENTS");
 const VALIDATOR_MODULE =
   process.env.HOST_EVENT_VALIDATOR_MODULE ??
-  join(dirname(PLUGIN_EXT), "runtime", "omp-extension-v1.js");
+  join(dirname(PLUGIN_EXT), "runtime", "omp-extension-v2.js");
 const SUITE_DIR = dirname(fileURLToPath(import.meta.url));
 const OBSERVER_EXT = join(SUITE_DIR, "observer.mjs");
 const DRIVER_EXT = join(SUITE_DIR, "driver-ext.mjs");
@@ -546,6 +546,32 @@ const promptAndWait = async (message) => {
   return ack;
 };
 
+const windowDigest = sha256(`${RUN_ID}:handoff`);
+const observeBoundary = async (phase) => {
+  await command("prompt", {
+    message: `/host-event-window ${phase} ${windowDigest}`,
+  });
+  // The RPC acknowledgement may precede extension-command completion.
+  // Wait for the actual synchronous observer append, never a guessed delay.
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    const boundary = readFileSync(OBSERVER_LOG, "utf8")
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line))
+      .find(
+        (entry) =>
+          entry.kind === "handoff_boundary" &&
+          entry.runId === RUN_ID &&
+          entry.windowDigest === windowDigest &&
+          entry.phase === phase,
+      );
+    if (boundary) return boundary;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  throw new Error("HANDOFF_WINDOW_BOUNDARY_TIMEOUT");
+};
+
 // ---------------------------------------------------------------------------
 // Scenario
 // ---------------------------------------------------------------------------
@@ -674,30 +700,30 @@ try {
   await promptAndWait("SPIKE_PLAIN four");
   scenario.postCompactTurn = true;
 
-  // 18.11.1 handoff compacts the current Session through session_compact,
-  // outside the subscribed inventory. Record RPC outcome only; the validator
-  // must diagnose the missing event coverage even when this command succeeds.
+  // One handoff, with Host-side snapshots before RPC and after awaited emit.
+  const baseline = await observeBoundary("baseline");
+  scenario.handoff = { attempted: true, ok: false, attempts: 1, windowDigest };
   try {
     const handoffResult = await command(
       "handoff",
       { customInstructions: "SPIKE_HANDOFF" },
       120_000,
     );
-    scenario.handoff = {
-      attempted: true,
-      ok: handoffResult !== null && handoffResult !== undefined,
-      resultKeys: Object.keys(handoffResult ?? {}).sort(),
-    };
+    scenario.handoff.ok = handoffResult !== null && handoffResult !== undefined;
+    scenario.handoff.resultKeys = Object.keys(handoffResult ?? {}).sort();
   } catch (error) {
-    scenario.handoff = {
-      attempted: true,
-      ok: false,
-      errorName: error instanceof Error ? error.name : "unknown",
-      error: sanitizeStderr(
-        error instanceof Error ? error.message : String(error),
-      ),
-    };
+    scenario.handoff.errorName =
+      error instanceof Error ? error.name : "unknown";
+    scenario.handoff.error = sanitizeStderr(
+      error instanceof Error ? error.message : String(error),
+    );
   }
+  const completed = await observeBoundary("complete");
+  scenario.handoff.window = {
+    baselineSeq: baseline.seq,
+    completedSeq: completed.seq,
+    sessionDigest: baseline.ctxSessionDigest,
+  };
 } catch (error) {
   // Host/RPC error text can embed local paths or file URIs; scenario.json is
   // evidence input, so only sanitized text is ever stored.

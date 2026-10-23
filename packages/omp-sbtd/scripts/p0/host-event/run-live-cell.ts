@@ -6,10 +6,10 @@
 // the evidence validator and persists a sanitized content-addressed
 // local-observation bundle under the run dir.
 //
-// The suite's single event list is `ompExtensionV1Inventory` (Slice 4 Host
+// The suite's single event list is `ompExtensionV2Inventory` (Slice 4 Host
 // Contract); the observer receives it through HOST_EVENT_OBSERVE_EVENTS.
 // The observer validates payloads with the subject tarball's own
-// dist/runtime/omp-extension-v1.js — a missing module fails the cell closed,
+// dist/runtime/omp-extension-v2.js — a missing module fails the cell closed,
 // so a stale pre-Slice-4 pack can never silently pass. After install, the
 // packed registerRuntimeController is additionally probed behaviorally: it
 // must fail closed on a Host without `on` before registerCommand runs.
@@ -31,7 +31,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { ompExtensionV1Inventory } from "../../../src/runtime/omp-extension-v1.ts";
+import { ompExtensionV2Inventory } from "../../../src/runtime/omp-extension-v2.ts";
 import { installSubjectPluginOfflineV1 } from "../install-subject-plugin.ts";
 import {
   buildLocalObservationBundle,
@@ -50,8 +50,8 @@ import {
 /** The suite's single event list — straight from the Slice 4 inventory. */
 export function hostEventObserveEvents(): readonly string[] {
   return [
-    ...ompExtensionV1Inventory.requiredEvents,
-    ...ompExtensionV1Inventory.optionalEvents,
+    ...ompExtensionV2Inventory.requiredEvents,
+    ...ompExtensionV2Inventory.optionalEvents,
   ];
 }
 
@@ -158,11 +158,19 @@ export async function completeLiveCellAfterDriver(input: {
     bundle,
   );
   return {
-    outcome: verdict.outcome,
+    // Trigger diagnostics retain their validator level, but cannot satisfy
+    // the required successful-handoff live acceptance cell.
+    outcome:
+      verdict.outcome !== "failed" && !verdict.handoffObserved
+        ? "blocked"
+        : verdict.outcome,
     runId: input.runId,
     runDir: input.runDir,
     reasonCodes: verdict.reasonCodes,
     diagnostics: verdict.diagnostics,
+    ...(verdict.outcome !== "failed" && !verdict.handoffObserved
+      ? { blockedReason: "HANDOFF_COVERAGE_UNVERIFIED" }
+      : {}),
     verdict,
     evidence,
     bundle,
@@ -218,7 +226,7 @@ export async function installSubjectPlugin(
 
 /**
  * Fail-closed subject assertions (parent blocker): the frozen tarball must
- * contain the Slice 4 seam `dist/runtime/omp-extension-v1.js`, and the packed
+ * contain the Slice 4 seam `dist/runtime/omp-extension-v2.js`, and the packed
  * `dist/runtime/index.js` must wire the Slice 4 probe. A stale pre-Slice-4
  * pack can never become the subject.
  */
@@ -229,8 +237,8 @@ export async function assertSubjectTarballSeam(
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
   });
-  if (!listing.split("\n").includes("package/dist/runtime/omp-extension-v1.js"))
-    throw new Error("SUBJECT_STALE:tarball-missing-omp-extension-v1");
+  if (!listing.split("\n").includes("package/dist/runtime/omp-extension-v2.js"))
+    throw new Error("SUBJECT_STALE:tarball-missing-omp-extension-v2");
   const indexEntry = "package/dist/runtime/index.js";
   if (!listing.split("\n").includes(indexEntry))
     throw new Error("SUBJECT_STALE:tarball-missing-runtime-index");
@@ -240,7 +248,7 @@ export async function assertSubjectTarballSeam(
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
   });
-  if (!indexJs.includes("probeOmpExtensionV1Capabilities"))
+  if (!indexJs.includes("probeOmpExtensionV2Capabilities"))
     throw new Error("SUBJECT_STALE:runtime-index-missing-slice4-probe");
 }
 
@@ -377,7 +385,7 @@ export async function runLiveCell(
   const validatorModule = join(
     dirname(pluginExt),
     "runtime",
-    "omp-extension-v1.js",
+    "omp-extension-v2.js",
   );
   let pluginValidatorModuleSha256: string;
   try {

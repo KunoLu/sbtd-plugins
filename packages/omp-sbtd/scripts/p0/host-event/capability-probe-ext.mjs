@@ -1,7 +1,7 @@
 // Slice 7 three-profile certification — capability probe companion extension
 // for the omp-runtime-capabilities-v1 profile. Loaded inside the real OMP
 // Host next to the frozen subject Plugin tarball; records ONLY the presence
-// flags of the omp-extension-v1 inventory capabilities on the live Host API
+// flags of the omp-extension-v2 inventory capabilities on the live Host API
 // object plus the in-process Host artifact identity (digests and the public
 // package name/version, never local paths). It never mutates Host or Plugin
 // state, never records prompt text, tool I/O, tokens, or PII.
@@ -86,7 +86,7 @@ export default function capabilityProbe(pi) {
     const value = pi?.[name];
     // `zod` is the injected schema-builder namespace; behavior-carrying
     // capabilities (registerCommand/on/registerTool) must be callable.
-    // Mirrors hasCapability in src/runtime/omp-extension-v1.ts.
+    // Mirrors hasCapability in src/runtime/omp-extension-v2.ts.
     present[name] =
       name === "zod"
         ? (typeof value === "object" && value !== null) ||
@@ -95,7 +95,7 @@ export default function capabilityProbe(pi) {
   }
   record({
     kind: "capabilities",
-    inventoryVersion: "omp-extension-v1",
+    inventoryVersion: "omp-extension-v2",
     present,
   });
 }

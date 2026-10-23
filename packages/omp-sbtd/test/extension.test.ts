@@ -127,6 +127,7 @@ describe("Feature: SBTD 控制引导", () => {
       "session_tree",
       "before_agent_start",
       "session.compacting",
+      "session_compact",
       "tool_call",
       "tool_approval_resolved",
       "tool_result",

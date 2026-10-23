@@ -27,7 +27,7 @@ Design-rationale comments are dense and cite provenance. Two recurring forms to 
 - Slice/task markers explaining why something changed or was removed:
   `// P1-04: the mtime-based hasFreshBddCoverage heuristic was removed...` (`src/extension.ts`).
 - `// Trace: packages/omp-sbtd/features/<file>.feature` Rule citations where code implements a
-  feature Rule (`src/runtime/omp-extension-v1.ts:8-10`).
+  feature Rule (`src/runtime/omp-extension-v2.ts:8-10`).
 
 Comment invariants and provenance, not mechanics.
 

@@ -1,5 +1,7 @@
 # OMP Host Event Surface Profile 小白操作指南
 
+现行实现使用 `omp-extension-v2` / `omp-host-events-v2`，完整判据与运行命令见 [testing spec](../../spec/omp-sbtd/backend/testing.md)。下文保留早期 feasibility 方案与 v1 示例，不是当前 evidence schema 或 v2 认证结果；旧 evidence 不重标。现行 inventory 为 13 required + 1 optional，handoff 需 method 标识、同 run/session 完整窗口与无竞争证明。
+
 ## 1. 这项验证到底在证明什么
 
 `Host Event Surface Profile` 不是检查“代码里有没有 `pi.on(...)`”，也不是让人手工伪造事件。它要证明：

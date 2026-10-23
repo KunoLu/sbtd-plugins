@@ -170,7 +170,7 @@ function profileFixture(
   profile:
     | "omp-runtime-capabilities-v1"
     | "omp-command-surface-v1"
-    | "omp-host-events-v1",
+    | "omp-host-events-v2",
   outcome: ProfileOutcome,
   evidenceTrust: "verified" | "missing" | "invalid",
 ): LedgerProfileResult {
@@ -248,7 +248,7 @@ function makeAssessment(
       trust,
     ),
     hostEventSurface: profileFixture(
-      "omp-host-events-v1",
+      "omp-host-events-v2",
       overrides.profiles?.hostEventSurface ?? "passed",
       trust,
     ),
@@ -272,7 +272,7 @@ function makeAssessment(
     loadedRuntimeVersion:
       overrides.loadedRuntimeVersion ?? overrides.ompVersion ?? "17.3.5",
     loadedRuntimeArtifactSha256: OMP_ARTIFACT_SHA,
-    contractProfile: "omp-extension-v1",
+    contractProfile: "omp-extension-v2",
     commandSetSha256: COMMAND_SET_SHA,
     hostEventScenarioSetSha256: SCENARIO_SET_SHA,
     previousEntrySha256:
@@ -346,7 +346,7 @@ function makeRevocation(
     entryType: "revocation",
     pluginTarballSha256: TARBALL_SHA,
     ompVersion: "17.3.5",
-    contractProfile: "omp-extension-v1",
+    contractProfile: "omp-extension-v2",
     supersedesEntrySha256,
     reasonCode: "HOST_REGRESSION_CONFIRMED",
     effectiveAt: "2026-08-25T00:00:00Z",
@@ -583,6 +583,61 @@ describe("compatibility target catalog", () => {
 });
 
 describe("compatibility ledger append and validation", () => {
+  it("历史 v1 可只读验证但不重放为 v2 支持或新 append", async () => {
+    const current = makeAssessment();
+    const old = {
+      ...current,
+      contractProfile: "omp-extension-v1",
+      profiles: {
+        ...current.profiles,
+        hostEventSurface: {
+          ...current.profiles.hostEventSurface,
+          profile: "omp-host-events-v1",
+        },
+      },
+    };
+    const historical = { ...old, entrySha256: ledgerEntryContentSha256(old) };
+    const ledger = {
+      schemaVersion: 1,
+      kind: "compatibility-ledger",
+      entries: [historical],
+    };
+    const before = JSON.stringify(ledger);
+    expect(parseCompatibilityLedger(ledger).entries[0]?.contractProfile).toBe(
+      "omp-extension-v1",
+    );
+    expect(
+      await derivePublishedCompatibilityState(
+        withPublishedTarget(),
+        ledger,
+        committedTrustPolicy,
+        { pluginTarballSha256: TARBALL_SHA, ompVersion: "17.3.5" },
+        trustedReader,
+      ),
+    ).toBe("eligible");
+    expect(
+      (
+        await deriveSupportMatrix(
+          withPublishedTarget(),
+          ledger,
+          committedTrustPolicy,
+          trustedReader,
+        )
+      ).cells,
+    ).toEqual([]);
+    await expectErrorCode(
+      () =>
+        appendLedgerAssessment(
+          ledger,
+          withPublishedTarget(),
+          committedTrustPolicy,
+          historical,
+          trustedReader,
+        ),
+      "COMPATIBILITY_LEDGER_INVALID",
+    );
+    expect(JSON.stringify(ledger)).toBe(before);
+  });
   it("appends a trusted published-catalog assessment and derives certified", async () => {
     const { targets, ledger, entry } = await withCertifiedAssessment();
     expect(ledger.entries).toHaveLength(1);
@@ -1434,7 +1489,7 @@ describe("minimum/latest/new-Runtime matrix planning", () => {
     expect(plan[0]?.profilesToRun).toEqual([
       "omp-runtime-capabilities-v1",
       "omp-command-surface-v1",
-      "omp-host-events-v1",
+      "omp-host-events-v2",
     ]);
   });
 

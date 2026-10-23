@@ -508,7 +508,7 @@ export const runtimeCapabilityEvidenceSchema = z
     pluginTarballSha256: hashSchema,
     ompVersion: exactStableRuntimeSchema,
     ompArtifact: ompArtifactSchema,
-    inventoryVersion: z.literal("omp-extension-v1"),
+    inventoryVersion: z.literal("omp-extension-v2"),
     capabilities: z.record(z.string(), z.enum(["present", "absent"])),
     pluginRegistered: z.boolean(),
     missingRequired: z.array(z.string()),
@@ -560,7 +560,7 @@ export type CommandSurfaceEvidence = z.infer<
 export const hostEventCertificationEvidenceSchema = z
   .object({
     schemaVersion: z.literal(1),
-    profile: z.literal("omp-host-events-v1"),
+    profile: z.literal("omp-host-events-v2"),
     evidenceKind: z.literal(CERTIFICATION_EVIDENCE_KIND),
     runId: certificationRunIdSchema,
     pluginTarballSha256: hashSchema,
@@ -575,6 +575,7 @@ export const hostEventCertificationEvidenceSchema = z
     isolationValid: z.boolean(),
     identityValid: z.boolean(),
     bindingValid: z.boolean(),
+    handoffObserved: z.boolean(),
     reasonCodes: z.array(z.string()),
     diagnostics: z.array(z.string()),
     outcome: certificationOutcomeSchema,
@@ -586,7 +587,11 @@ export const hostEventCertificationEvidenceSchema = z
       })
       .strict(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (evidence) => evidence.outcome === "failed" || evidence.handoffObserved,
+    "Passing v2 certification requires observed handoff coverage.",
+  );
 export type HostEventCertificationEvidence = z.infer<
   typeof hostEventCertificationEvidenceSchema
 >;
@@ -620,7 +625,7 @@ export function hostEventCertificationBundleFromLiveCell(
   const local = hostEventEvidenceBundleSchema.parse(localBundle);
   return hostEventCertificationEvidenceSchema.parse({
     schemaVersion: 1,
-    profile: "omp-host-events-v1",
+    profile: "omp-host-events-v2",
     evidenceKind: CERTIFICATION_EVIDENCE_KIND,
     runId: input.runId,
     pluginTarballSha256: local.pluginTarballSha256,
@@ -635,6 +640,7 @@ export function hostEventCertificationBundleFromLiveCell(
     isolationValid: local.isolationValid,
     identityValid: local.identityValid,
     bindingValid: local.bindingValid,
+    handoffObserved: local.handoffObserved,
     reasonCodes: local.reasonCodes,
     diagnostics: local.diagnostics,
     outcome: local.outcome,
@@ -710,7 +716,7 @@ export function commandSetSubjectDocument(
 /**
  * Canonical Host Event scenario-set subject document: the fixed suite
  * definition is identified by the driver/observer content digests plus the
- * single omp-extension-v1 event inventory the suite observes.
+ * single omp-extension-v2 event inventory the suite observes.
  */
 export function hostEventScenarioSetSubjectDocument(input: {
   readonly driverSha256: string;
@@ -729,7 +735,7 @@ export function hostEventScenarioSetSubjectDocument(input: {
     `${canonicalizeRfc8785({
       schemaVersion: 1,
       kind: "omp-host-event-scenario-set",
-      profile: "omp-host-events-v1",
+      profile: "omp-host-events-v2",
       driver: "scripts/p0/host-event/drive.mjs",
       driverSha256: parsed.driverSha256,
       observer: "scripts/p0/host-event/observer.mjs",
@@ -785,7 +791,7 @@ const draftProfileSchema = z
     profile: z.enum([
       "omp-runtime-capabilities-v1",
       "omp-command-surface-v1",
-      "omp-host-events-v1",
+      "omp-host-events-v2",
     ]),
     outcome: z.enum([
       "passed",
@@ -932,7 +938,7 @@ export function buildCellAssessmentDraft(input: {
             ? "omp-runtime-capabilities-v1"
             : key === "commandSurface"
               ? "omp-command-surface-v1"
-              : "omp-host-events-v1",
+              : "omp-host-events-v2",
         outcome: profile.outcome,
         evidenceSha256: null,
         evidenceLocator: null,
@@ -960,7 +966,7 @@ export function buildCellAssessmentDraft(input: {
         ? "omp-runtime-capabilities-v1"
         : key === "commandSurface"
           ? "omp-command-surface-v1"
-          : "omp-host-events-v1";
+          : "omp-host-events-v2";
     if (
       parsedBundle.profile !== expectedProfile ||
       parsedBundle.pluginTarballSha256 !== input.target.pluginTarballSha256 ||
@@ -1121,7 +1127,7 @@ export function finalizeCellAssessment(input: {
     ompRegistryIntegrity: draft.data.ompRegistryIntegrity,
     loadedRuntimeVersion: draft.data.loadedRuntimeVersion,
     loadedRuntimeArtifactSha256: draft.data.loadedRuntimeArtifactSha256,
-    contractProfile: "omp-extension-v1",
+    contractProfile: "omp-extension-v2",
     commandSetSha256: draft.data.commandSetSha256,
     hostEventScenarioSetSha256: draft.data.hostEventScenarioSetSha256,
     previousEntrySha256: draft.data.previousEntrySha256,

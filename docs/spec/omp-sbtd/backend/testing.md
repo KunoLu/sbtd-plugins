@@ -23,7 +23,7 @@ Scenario titles verbatim:
 - `describe("Feature: SBTD 运行时工作流与门禁", …)` + `it("Scenario: 可见行为缺少 BDD 在交付前被阻断",
   …)` — see `test/gates.test.ts`, `test/rules.test.ts`, `test/environment.test.ts`.
 - Source files back-reference features with `// Trace: packages/omp-sbtd/features/<file>.feature`
-  comments citing Rules (e.g. `src/runtime/omp-extension-v1.ts:8-10`).
+  comments citing Rules (e.g. `src/runtime/omp-extension-v2.ts:8-10`).
 
 There is no Gherkin runner; the binding is naming convention + Trace comments. **New behavior
 starts as a `.feature` Rule/Scenario; tests mirror the title.**
@@ -103,18 +103,42 @@ install/discovery gate. Build and `pnpm pack` first. It uses only the worktree's
 with isolated HOME/XDG/agent directories and no credentials. Discovery must come
 from the installed package's own `omp.extensions`: no wrapper or `--extension`.
 Native debugger inspection checks loader errors, the installed instance's `sbtd`
-command, `sbtd_workflow` tool and 13 hooks. Real PTY input exercises `/tools`,
+command, `sbtd_workflow` tool and 14 hooks. Real PTY input exercises `/tools`,
 `/sbtd onboard plan` and project-only `init-projects`; only two managed project
 AGENTS targets are approved. Raw results remain in the printed scratch directory.
 The older `row-c-smoke.mjs` wrapper is supplementary, not this gate.
 
 18.11.1 event regressions cover `session_branch` reasons `branch|fork|btw`
 and `session_switch` reasons `new|resume|fork`, including rejection of missing/
-unknown branch reasons and obsolete switch `handoff`. Handoff now commits
-same-session compaction and emits `session_compact`, outside the plugin's
-inventory. A successful handoff RPC therefore yields `HANDOFF_EVENT_UNOBSERVABLE`,
-not a false event-coverage pass. The live cell stays env-gated in default tests;
-the frozen-tarball CI job supplies the event-delivery evidence.
+unknown branch reasons and obsolete switch `handoff`. The `omp-extension-v2`
+inventory requires `session_compact` independently of `session.compacting`:
+13 required + optional `credential_disabled`, exactly 14 subscriptions.
+`omp-host-events-v2` accepts handoff coverage only for a structurally valid
+`session_compact` with `compactionEntry.method === "handoff"`, in the same
+run/session and a proven observation window. `fromExtension=false` is not
+a method inference. Missing/wrong method or missing correlated observation
+after successful RPC yields hard `HANDOFF_EVENT_UNOBSERVABLE`.
+
+The driver performs one handoff between observer-owned baseline/completion
+commands. Both snapshot all compaction entry identity digests through the
+Host session manager and synchronously append to the observer's sequence.
+The completion follows the awaited handoff emit in pinned 18.11.1 and an idle
+barrier. Validation requires exactly one new entry and only observations of
+that entry inside the window, including observations before RPC response.
+Competing entries/events fail; duplicates do not add coverage. No wall clock
+or cross-process sequence comparison establishes ordering. Evidence retains
+only allowed structure, method classification, booleans and identity digests,
+never summary/details or raw session paths.
+The window must remain in one session/tree and have no missing observer
+sequence records; switching away and restoring the session cannot hide a
+competing compaction from the entry snapshots.
+
+`handoffObserved` is false for `HANDOFF_TRIGGER_BLOCKED` or
+`HANDOFF_NOT_ATTEMPTED`; these remain diagnostics, not handoff acceptance.
+The live cell stays env-gated in default tests; the frozen-tarball CI job and
+the same locally invoked cell supply actual host-event delivery evidence,
+using the isolated lockfile-pinned 18.11.1 CLI, not the global OMP.
+Historical v1 certification evidence remains immutable and is not v2 proof.
 
 Route tests exercise real `ai/tasks/**/task.md` and `.sbtd/tasks/**/task.md`
 frontmatter. `in-progress`/`checking` feed the existing `trellis-managed-task`

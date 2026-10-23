@@ -485,7 +485,7 @@ function capabilityBundle(overrides: Readonly<Record<string, unknown>> = {}) {
       entrypointSha256: OMP_ENTRYPOINT_SHA,
       packageJsonSha256: OMP_PACKAGE_JSON_SHA,
     },
-    inventoryVersion: "omp-extension-v1",
+    inventoryVersion: "omp-extension-v2",
     capabilities: { registerCommand: "present", on: "present", zod: "present" },
     pluginRegistered: true,
     missingRequired: [],
@@ -544,7 +544,7 @@ function localHostEventBundle(
 ) {
   return {
     schemaVersion: 1,
-    profile: "omp-host-events-v1",
+    profile: "omp-host-events-v2",
     evidenceKind: "local-observation",
     runId: "local-run-1",
     pluginTarballSha256: TARBALL_SHA,
@@ -561,6 +561,7 @@ function localHostEventBundle(
     isolationValid: true,
     identityValid: true,
     bindingValid: true,
+    handoffObserved: true,
     reasonCodes: [],
     diagnostics: [],
     outcome: "passed",
@@ -669,6 +670,19 @@ describe("certification evidence and drafts", () => {
     expect(written.locator).toBe(
       `validation/p0/evidence/${written.sha256}.json`,
     );
+  });
+
+  it("v2 certification 拒绝没有 handoff 覆盖的 diagnostic 成功", () => {
+    expect(() =>
+      hostEventCertificationBundleFromLiveCell(
+        localHostEventBundle({
+          handoffObserved: false,
+          outcome: "passed-with-diagnostics",
+          diagnostics: ["HANDOFF_NOT_ATTEMPTED"],
+        }),
+        { runId: ATTEMPT_ID, hostEventScenarioSetSha256: scenarioSet.sha256 },
+      ),
+    ).toThrow(/observed handoff coverage/);
   });
 
   it("builds a schema-valid draft with content-bound evidence subjects", () => {
@@ -966,7 +980,7 @@ function probeLogText(overrides: {
   })}\n${JSON.stringify({
     kind: "capabilities",
     runId,
-    inventoryVersion: "omp-extension-v1",
+    inventoryVersion: "omp-extension-v2",
     present: overrides.present ?? {
       registerCommand: true,
       on: true,
@@ -1417,7 +1431,7 @@ describe("finalize-cell / collect attested subject staging", () => {
     profilesToRun: [
       "omp-runtime-capabilities-v1",
       "omp-command-surface-v1",
-      "omp-host-events-v1",
+      "omp-host-events-v2",
     ],
   } as const;
   const cellKey = `${draftTarget.pluginTarballSha256.slice(0, 12)}-omp-17.9.2`;
@@ -1444,7 +1458,7 @@ describe("finalize-cell / collect attested subject staging", () => {
   const profileSubjects = [
     ["omp-runtime-capabilities-v1", capabilityBundle()],
     ["omp-command-surface-v1", commandBundle()],
-    ["omp-host-events-v1", hostEventBundle()],
+    ["omp-host-events-v2", hostEventBundle()],
   ] as const;
 
   async function stageFinalizeFixture(

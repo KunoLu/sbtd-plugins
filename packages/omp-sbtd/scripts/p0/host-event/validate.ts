@@ -1,7 +1,7 @@
 // Slice 5 Host Event Surface suite — evidence validator.
 //
 // Scores one real-Host run dir (observer.jsonl + driver.jsonl + scenario.json)
-// against the versioned `ompExtensionV1Inventory` — the single event list,
+// against the versioned `ompExtensionV2Inventory` — the single event list,
 // reused from the Slice 4 Host Contract; this file declares no parallel list.
 // The validator fails closed on: missing required events, schema-invalid
 // required payloads (as judged at observe time by the subject tarball's own
@@ -30,7 +30,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { z } from "zod";
-import { ompExtensionV1Inventory } from "../../../src/runtime/omp-extension-v1.ts";
+import { ompExtensionV2Inventory } from "../../../src/runtime/omp-extension-v2.ts";
 import { hasSensitiveText } from "../sanitization.ts";
 
 const sha256 = (value: string | Buffer): string =>
@@ -56,6 +56,9 @@ const eventRecordSchema = baseRecordSchema.extend({
   sessionDigest: z.string().regex(HEX64).optional(),
   toolCallDigest: z.string().regex(HEX64).optional(),
   ctxSessionDigest: z.string().regex(HEX64).optional(),
+  compactionEntryDigest: z.string().regex(HEX64).optional(),
+  compactionMethod: z.enum(["handoff", "other"]).optional(),
+  fromExtension: z.boolean().optional(),
   approved: z.boolean().optional(),
   hostReason: z.string().optional(),
   hostReasonDigest: z.string().regex(HEX64).optional(),
@@ -80,6 +83,14 @@ const identityRecordSchema = baseRecordSchema.extend({
 const readyRecordSchema = baseRecordSchema.extend({
   kind: z.literal("observer_ready"),
   subscriptions: z.number().int().nonnegative(),
+});
+
+const handoffBoundarySchema = baseRecordSchema.extend({
+  kind: z.literal("handoff_boundary"),
+  phase: z.enum(["baseline", "complete"]),
+  windowDigest: z.string().regex(HEX64),
+  ctxSessionDigest: z.string().regex(HEX64),
+  compactionEntryDigests: z.array(z.string().regex(HEX64)),
 });
 
 export type ObserverEventRecord = z.infer<typeof eventRecordSchema>;
@@ -116,6 +127,15 @@ const scenarioRecordSchema = z.looseObject({
       .looseObject({
         attempted: z.boolean().optional(),
         ok: z.boolean().optional(),
+        attempts: z.number().int().positive().optional(),
+        windowDigest: z.string().regex(HEX64).optional(),
+        window: z
+          .object({
+            baselineSeq: z.number().int().positive(),
+            completedSeq: z.number().int().positive(),
+            sessionDigest: z.string().regex(HEX64),
+          })
+          .optional(),
       })
       .optional(),
     error: z.string().optional(),
@@ -135,7 +155,7 @@ export interface HostEventRunExpectation {
   readonly hostEntrypointSha256: string;
   readonly hostPackageJsonSha256: string;
   readonly hostPackageVersion: string;
-  /** sha256 of the subject tarball's dist/runtime/omp-extension-v1.js. */
+  /** sha256 of the subject tarball's dist/runtime/omp-extension-v2.js. */
   readonly pluginValidatorModuleSha256: string;
   /** sha256 of the frozen candidate tarball (recorded, evidence identity). */
   readonly pluginTarballSha256: string;
@@ -144,7 +164,7 @@ export interface HostEventRunExpectation {
 export type HostEventOutcome = "passed" | "passed-with-diagnostics" | "failed";
 
 export interface HostEventVerdict {
-  readonly profile: "omp-host-events-v1";
+  readonly profile: "omp-host-events-v2";
   readonly outcome: HostEventOutcome;
   /** Fail-closed reason codes; empty unless outcome is "failed". */
   readonly reasonCodes: readonly string[];
@@ -158,6 +178,7 @@ export interface HostEventVerdict {
   readonly isolationValid: boolean;
   readonly identityValid: boolean;
   readonly bindingValid: boolean;
+  readonly handoffObserved: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,8 +194,8 @@ export interface HostEventRunInput {
   readonly sanitizationViolations?: number;
 }
 
-const REQUIRED = ompExtensionV1Inventory.requiredEvents;
-const OPTIONAL = ompExtensionV1Inventory.optionalEvents;
+const REQUIRED = ompExtensionV2Inventory.requiredEvents;
+const OPTIONAL = ompExtensionV2Inventory.optionalEvents;
 const KNOWN_EVENTS: ReadonlySet<string> = new Set<string>([
   ...REQUIRED,
   ...OPTIONAL,
@@ -195,10 +216,13 @@ export function validateHostEventRun(
 
   const parsed: {
     events: ObserverEventRecord[];
+    boundaries: z.infer<typeof handoffBoundarySchema>[];
     identity?: HostIdentityRecord;
     ready?: z.infer<typeof readyRecordSchema>;
-  } = { events: [] };
+  } = { events: [], boundaries: [] };
   let runIdMismatch = false;
+  let previousSeq = 0;
+  let sequenceValid = true;
   for (const raw of input.records) {
     const base = baseRecordSchema.safeParse(raw);
     if (!base.success) {
@@ -206,6 +230,8 @@ export function validateHostEventRun(
       continue;
     }
     if (base.data.runId !== expected.runId) runIdMismatch = true;
+    if (base.data.seq <= previousSeq) sequenceValid = false;
+    previousSeq = base.data.seq;
     if (base.data.kind === "event") {
       const ev = eventRecordSchema.safeParse(raw);
       if (!ev.success) failures.push("EVIDENCE_RECORD_MALFORMED");
@@ -218,9 +244,14 @@ export function validateHostEventRun(
       const rd = readyRecordSchema.safeParse(raw);
       if (!rd.success) failures.push("EVIDENCE_RECORD_MALFORMED");
       else parsed.ready = rd.data;
+    } else if (base.data.kind === "handoff_boundary") {
+      const boundary = handoffBoundarySchema.safeParse(raw);
+      if (!boundary.success) failures.push("EVIDENCE_RECORD_MALFORMED");
+      else parsed.boundaries.push(boundary.data);
     }
   }
   if (runIdMismatch) failures.push("OBSERVER_LOG_SHARED_OR_STALE");
+  if (!sequenceValid) failures.push("OBSERVER_SEQUENCE_INVALID");
   if (parsed.ready === undefined) failures.push("OBSERVER_READY_MISSING");
   else if (parsed.ready.subscriptions !== KNOWN_EVENTS.size)
     failures.push("OBSERVER_SUBSCRIPTION_MISMATCH");
@@ -253,7 +284,7 @@ export function validateHostEventRun(
       failures.push("PLUGIN_MODULE_DIGEST_MISMATCH");
       identityValid = false;
     }
-    if (identity.validatorInventoryVersion !== ompExtensionV1Inventory.version)
+    if (identity.validatorInventoryVersion !== ompExtensionV2Inventory.version)
       mismatch("inventory-version");
   }
 
@@ -518,14 +549,82 @@ export function validateHostEventRun(
   if (!switchReasons.includes("resume"))
     isolationFailure("SESSION_SWITCH_REASON_MISSING:resume");
 
-  if (scenario?.scenario.handoff !== undefined) {
-    if (scenario.scenario.handoff.ok === true) {
-      // 18.11.1 handoff commits same-session compaction and emits
-      // session_compact, outside this inventory. RPC success is not event proof.
-      diagnostics.push("HANDOFF_EVENT_UNOBSERVABLE");
+  let handoffObserved = false;
+  const handoff = scenario?.scenario.handoff;
+  if (handoff?.attempted === true && handoff.ok === true) {
+    const [baseline, completed] = parsed.boundaries;
+    const window = handoff.window;
+    const validWindow =
+      !runIdMismatch &&
+      sequenceValid &&
+      scenario?.runId === expected.runId &&
+      handoff.attempts === 1 &&
+      parsed.boundaries.length === 2 &&
+      baseline?.phase === "baseline" &&
+      completed?.phase === "complete" &&
+      baseline.windowDigest === handoff.windowDigest &&
+      completed.windowDigest === handoff.windowDigest &&
+      baseline.seq === window?.baselineSeq &&
+      completed.seq === window?.completedSeq &&
+      baseline.seq < completed.seq &&
+      baseline.ctxSessionDigest === window?.sessionDigest &&
+      completed.ctxSessionDigest === window?.sessionDigest;
+    if (validWindow && baseline && completed) {
+      const prior = new Set(baseline.compactionEntryDigests);
+      const after = new Set(completed.compactionEntryDigests);
+      const added = [...after].filter((digest) => !prior.has(digest));
+      const windowEvents = parsed.events.filter(
+        (event) => event.seq > baseline.seq && event.seq < completed.seq,
+      );
+      const uninterrupted =
+        windowEvents.length === completed.seq - baseline.seq - 1 &&
+        windowEvents.every(
+          (event) =>
+            event.ctxSessionDigest === baseline.ctxSessionDigest &&
+            ![
+              "session_start",
+              "session_switch",
+              "session_branch",
+              "session_tree",
+            ].includes(event.event),
+        );
+      if (!uninterrupted) failures.push("HANDOFF_WINDOW_INVALID");
+      const compactEvents = windowEvents.filter(
+        (event) => event.event === "session_compact",
+      );
+      const observedEntries = new Set(
+        compactEvents.map((event) => event.compactionEntryDigest),
+      );
+      const competing = added.length > 1 || observedEntries.size > 1;
+      if (competing) failures.push("HANDOFF_COMPETING_COMPACTION");
+      const previouslyObserved = parsed.events.some(
+        (event) =>
+          event.event === "session_compact" &&
+          event.seq <= baseline.seq &&
+          event.compactionEntryDigest === added[0],
+      );
+      handoffObserved =
+        uninterrupted &&
+        !competing &&
+        added.length === 1 &&
+        [...prior].every((digest) => after.has(digest)) &&
+        !previouslyObserved &&
+        compactEvents.length > 0 &&
+        compactEvents.every(
+          (event) =>
+            event.schemaValid &&
+            event.runId === expected.runId &&
+            event.ctxSessionDigest === baseline.ctxSessionDigest &&
+            event.compactionEntryDigest === added[0] &&
+            event.compactionMethod === "handoff" &&
+            typeof event.fromExtension === "boolean",
+        );
     } else {
-      diagnostics.push("HANDOFF_TRIGGER_BLOCKED");
+      failures.push("HANDOFF_WINDOW_INVALID");
     }
+    if (!handoffObserved) failures.push("HANDOFF_EVENT_UNOBSERVABLE");
+  } else if (handoff?.attempted === true) {
+    diagnostics.push("HANDOFF_TRIGGER_BLOCKED");
   } else {
     diagnostics.push("HANDOFF_NOT_ATTEMPTED");
   }
@@ -609,7 +708,7 @@ export function validateHostEventRun(
         : "passed";
 
   return {
-    profile: "omp-host-events-v1",
+    profile: "omp-host-events-v2",
     outcome,
     reasonCodes,
     diagnostics: dedup(diagnostics),
@@ -621,6 +720,7 @@ export function validateHostEventRun(
     isolationValid,
     identityValid,
     bindingValid,
+    handoffObserved,
   };
 }
 
@@ -726,7 +826,7 @@ export function recomputeHostIdentity(ompBin: string): {
 
 export const hostEventEvidenceBundleSchema = z.strictObject({
   schemaVersion: z.literal(1),
-  profile: z.literal("omp-host-events-v1"),
+  profile: z.literal("omp-host-events-v2"),
   evidenceKind: z.literal("local-observation"),
   runId: z.string().min(1),
   pluginTarballSha256: z.string().regex(HEX64),
@@ -745,6 +845,7 @@ export const hostEventEvidenceBundleSchema = z.strictObject({
   bindingValid: z.boolean(),
   reasonCodes: z.array(z.string()),
   diagnostics: z.array(z.string()),
+  handoffObserved: z.boolean(),
   outcome: z.enum(["passed", "passed-with-diagnostics", "failed"]),
   sources: z.strictObject({
     observerLogSha256: z.string().regex(HEX64),
@@ -784,6 +885,7 @@ export function buildLocalObservationBundle(input: {
     bindingValid: verdict.bindingValid,
     reasonCodes: verdict.reasonCodes,
     diagnostics: verdict.diagnostics,
+    handoffObserved: verdict.handoffObserved,
     outcome: verdict.outcome,
     sources: input.sources,
   };

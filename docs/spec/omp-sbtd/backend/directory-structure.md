@@ -14,7 +14,7 @@ packages/omp-sbtd/
 │   ├── extension.ts            # single entry (~3000 lines): all host handlers + /sbtd dispatch
 │   ├── version.ts              # getPluginVersion() reads own package.json (dual src/dist layout)
 │   ├── runtime/index.ts        # registerRuntimeController: host registration seam
-│   ├── runtime/omp-extension-v1.ts  # versioned host capability/event inventory + edge validator
+│   ├── runtime/omp-extension-v2.ts  # versioned host capability/event inventory + edge validator
 │   ├── commands/index.ts       # declarative /sbtd command spec table + parser/completion/help
 │   ├── workflow/index.ts       # task facts schema + deterministic classifier (Route)
 │   ├── gates/index.ts          # book gate state machine (5 gates, pure transforms)
@@ -49,8 +49,8 @@ beforeAgentStart, beforeToolCall, preserveCompaction, approvalResolved, toolResu
 credentialDisabled, turnStart, turnEnd, sessionStop })`.
 
 Extend the extension by adding a handler (plus, when needed, an inventory entry in
-`omp-extension-v1.ts`) — never by side-stepping the probe. `src/runtime/index.ts` runs
-`probeOmpExtensionV1Capabilities(pi)` and **throws before any registration** when a required
+`omp-extension-v2.ts`) — never by side-stepping the probe. `src/runtime/index.ts` runs
+`probeOmpExtensionV2Capabilities(pi)` and **throws before any registration** when a required
 capability or event is missing: a host lacking the contract never gets a `/sbtd` command, tool, or
 event subscription.
 
@@ -79,7 +79,7 @@ through `extension.ts`.
 | `ruleRegistry` (11 rules) | `src/rules/index.ts` | `evaluateRuleRegistry`, `setRuleEnabled` |
 | `sbtdCommandSpecs` | `src/commands/index.ts` | `parseSbtdCommand`, `completeSbtdCommand`, `suggestSbtdCommand`, `renderSbtdHelp` |
 | `builtinToolCapabilities` | `src/tool-risk/index.ts` | tool capability lookup + shell analysis |
-| `ompExtensionV1Inventory` | `src/runtime/omp-extension-v1.ts` | `probeOmpExtensionV1Capabilities`, `validateOmpExtensionV1Event` |
+| `ompExtensionV2Inventory` | `src/runtime/omp-extension-v2.ts` | `probeOmpExtensionV2Capabilities`, `validateOmpExtensionV2Event` |
 
 The command table is the source for parsing, completion, help text, and dispatch simultaneously —
 help, completion, and handlers cannot drift apart. Keep it that way: one `SbtdCommandSpec`
