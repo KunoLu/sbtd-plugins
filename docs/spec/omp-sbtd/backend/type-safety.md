@@ -13,7 +13,7 @@
    `toolEvidenceRecordSchema` (`src/environment/tool-evidence.ts:33-77`),
    `acceptedSkipRecordSchema` (`src/environment/accepted-skip.ts:35`), `kitSnapshotSchema` /
    `onboardPlanSchema` / `transactionJournalSchema` (`src/onboard/index.ts`), and all host event
-   schemas (`src/runtime/omp-extension-v1.ts`).
+   schemas (`src/runtime/omp-extension-v2.ts`).
 
 2. **`.passthrough()` only at the host/tool-call edge**, where payloads are host-owned, and always
    with a justifying comment. Examples: `toolCallSchema` / `bashToolCallSchema` (`src/extension.ts`,
@@ -46,8 +46,8 @@
 - `.safeParse` for untrusted host event field extraction, degrading to `undefined` — e.g.
   `commandFromToolEvent` and toolCallId extraction in `src/extension.ts`.
 - Host event payloads are validated at the adapter edge by `.strict()` schemas with a `type`
-  literal discriminator; `validateOmpExtensionV1Event` throws `OmpExtensionV1EventRejection` with
-  stable reason codes that never echo payload content (`src/runtime/omp-extension-v1.ts`). An
+  literal discriminator; `validateOmpExtensionV2Event` throws `OmpExtensionV2EventRejection` with
+  stable reason codes that never echo payload content (`src/runtime/omp-extension-v2.ts`). An
   unknown event name or wrong discriminator is malformed and never reaches a handler.
 
 ## TypeScript Configuration Inheritance

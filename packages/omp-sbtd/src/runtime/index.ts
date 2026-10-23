@@ -17,29 +17,29 @@ import type {
 } from "@oh-my-pi/pi-coding-agent";
 import { type WorkflowStageId, workflowStageIds } from "../state/index.js";
 import {
-  type OmpExtensionV1CapabilityAssessment,
-  probeOmpExtensionV1Capabilities,
-  validateOmpExtensionV1Event,
-} from "./omp-extension-v1.js";
+  type OmpExtensionV2CapabilityAssessment,
+  probeOmpExtensionV2Capabilities,
+  validateOmpExtensionV2Event,
+} from "./omp-extension-v2.js";
 
 // Slice 4 (08-20-omp-plugin-compatibility-decoupling): this file stays the
-// single public Host seam; the versioned omp-extension-v1 inventory, probe,
+// single public Host seam; the versioned omp-extension-v2 inventory, probe,
 // and adapter-edge validator are re-exported from the sibling module so the
 // runtime probe and the Slice 5 Host Event suite share one inventory.
 export {
-  type OmpExtensionV1CapabilityAssessment,
-  type OmpExtensionV1EventName,
-  type OmpExtensionV1EventPayloadMap,
-  OmpExtensionV1EventRejection,
-  type OmpExtensionV1OptionalCapability,
-  type OmpExtensionV1OptionalEvent,
-  type OmpExtensionV1ProbeStatus,
-  type OmpExtensionV1RequiredCapability,
-  type OmpExtensionV1RequiredEvent,
-  ompExtensionV1Inventory,
-  probeOmpExtensionV1Capabilities,
-  validateOmpExtensionV1Event,
-} from "./omp-extension-v1.js";
+  type OmpExtensionV2CapabilityAssessment,
+  type OmpExtensionV2EventName,
+  type OmpExtensionV2EventPayloadMap,
+  OmpExtensionV2EventRejection,
+  type OmpExtensionV2OptionalCapability,
+  type OmpExtensionV2OptionalEvent,
+  type OmpExtensionV2ProbeStatus,
+  type OmpExtensionV2RequiredCapability,
+  type OmpExtensionV2RequiredEvent,
+  ompExtensionV2Inventory,
+  probeOmpExtensionV2Capabilities,
+  validateOmpExtensionV2Event,
+} from "./omp-extension-v2.js";
 
 export interface RuntimeControllerHandlers {
   readonly complete: (prefix: string) => {
@@ -145,14 +145,14 @@ export function registerRuntimeController(
   handlers: RuntimeControllerHandlers,
 ): void {
   // Fail closed before any host registration: a Host missing a required
-  // omp-extension-v1 capability or required-event delivery (`on`) never gets
+  // omp-extension-v2 capability or required-event delivery (`on`) never gets
   // a /sbtd command, tool, or event subscription, so no misleading ready or
   // partial-registration state can be observed.
-  const assessment: OmpExtensionV1CapabilityAssessment =
-    probeOmpExtensionV1Capabilities(pi);
+  const assessment: OmpExtensionV2CapabilityAssessment =
+    probeOmpExtensionV2Capabilities(pi);
   if (assessment.status === "failed")
     throw new Error(
-      `omp-extension-v1 host contract failed; registration refused: ${assessment.reasonCodes.join(", ")}`,
+      `omp-extension-v2 host contract failed; registration refused: ${assessment.reasonCodes.join(", ")}`,
     );
   const mutationTails = new Map<string, Promise<void>>();
   const serialize = <T>(
@@ -195,7 +195,7 @@ export function registerRuntimeController(
     subscribeRequired("session_start", (event, ctx) =>
       serialize(ctx, () =>
         handlers.reobserve(
-          validateOmpExtensionV1Event("session_start", event),
+          validateOmpExtensionV2Event("session_start", event),
           ctx,
         ),
       ),
@@ -203,7 +203,7 @@ export function registerRuntimeController(
     subscribeRequired("session_switch", (event, ctx) =>
       serialize(ctx, () =>
         handlers.reobserve(
-          validateOmpExtensionV1Event("session_switch", event),
+          validateOmpExtensionV2Event("session_switch", event),
           ctx,
         ),
       ),
@@ -211,7 +211,7 @@ export function registerRuntimeController(
     subscribeRequired("session_branch", (event, ctx) =>
       serialize(ctx, () =>
         handlers.reobserve(
-          validateOmpExtensionV1Event("session_branch", event),
+          validateOmpExtensionV2Event("session_branch", event),
           ctx,
         ),
       ),
@@ -219,7 +219,7 @@ export function registerRuntimeController(
     subscribeRequired("session_tree", (event, ctx) =>
       serialize(ctx, () =>
         handlers.reobserve(
-          validateOmpExtensionV1Event("session_tree", event),
+          validateOmpExtensionV2Event("session_tree", event),
           ctx,
         ),
       ),
@@ -227,7 +227,7 @@ export function registerRuntimeController(
     subscribeRequired("before_agent_start", (event, ctx) =>
       serialize(ctx, () =>
         handlers.beforeAgentStart(
-          validateOmpExtensionV1Event("before_agent_start", event),
+          validateOmpExtensionV2Event("before_agent_start", event),
           ctx,
         ),
       ),
@@ -235,7 +235,15 @@ export function registerRuntimeController(
     subscribeRequired("session.compacting", (event, ctx) =>
       serialize(ctx, () =>
         handlers.preserveCompaction(
-          validateOmpExtensionV1Event("session.compacting", event),
+          validateOmpExtensionV2Event("session.compacting", event),
+          ctx,
+        ),
+      ),
+    );
+    subscribeRequired("session_compact", (event, ctx) =>
+      serialize(ctx, () =>
+        handlers.reobserve(
+          validateOmpExtensionV2Event("session_compact", event),
           ctx,
         ),
       ),
@@ -243,7 +251,7 @@ export function registerRuntimeController(
     subscribeRequired("tool_call", (event, ctx) =>
       serialize(ctx, () =>
         handlers.beforeToolCall(
-          validateOmpExtensionV1Event("tool_call", event),
+          validateOmpExtensionV2Event("tool_call", event),
           ctx,
         ),
       ),
@@ -251,7 +259,7 @@ export function registerRuntimeController(
     subscribeRequired("tool_approval_resolved", (event, ctx) =>
       serialize(ctx, () =>
         handlers.approvalResolved(
-          validateOmpExtensionV1Event("tool_approval_resolved", event),
+          validateOmpExtensionV2Event("tool_approval_resolved", event),
           ctx,
         ),
       ),
@@ -259,7 +267,7 @@ export function registerRuntimeController(
     subscribeRequired("tool_result", (event, ctx) =>
       serialize(ctx, () =>
         handlers.toolResult(
-          validateOmpExtensionV1Event("tool_result", event),
+          validateOmpExtensionV2Event("tool_result", event),
           ctx,
         ),
       ),
@@ -267,20 +275,20 @@ export function registerRuntimeController(
     subscribeRequired("turn_start", (event, ctx) =>
       serialize(ctx, () =>
         handlers.turnStart(
-          validateOmpExtensionV1Event("turn_start", event),
+          validateOmpExtensionV2Event("turn_start", event),
           ctx,
         ),
       ),
     );
     subscribeRequired("turn_end", (event, ctx) =>
       serialize(ctx, () =>
-        handlers.turnEnd(validateOmpExtensionV1Event("turn_end", event), ctx),
+        handlers.turnEnd(validateOmpExtensionV2Event("turn_end", event), ctx),
       ),
     );
     subscribeRequired("session_stop", (event, ctx) =>
       serialize(ctx, () =>
         handlers.sessionStop(
-          validateOmpExtensionV1Event("session_stop", event),
+          validateOmpExtensionV2Event("session_stop", event),
           ctx,
         ),
       ),
@@ -295,7 +303,7 @@ export function registerRuntimeController(
       pi.on("credential_disabled", (event, ctx) =>
         serialize(ctx, () =>
           credentialDisabled(
-            validateOmpExtensionV1Event("credential_disabled", event),
+            validateOmpExtensionV2Event("credential_disabled", event),
             ctx,
           ),
         ),

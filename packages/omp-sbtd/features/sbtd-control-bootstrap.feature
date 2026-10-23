@@ -395,20 +395,20 @@ Feature: SBTD 控制引导
   Rule: Host Contract 决定 /sbtd 注册的完整性与降级边界
 
     Scenario: Host Contract 通过时注册完整 /sbtd
-      Given OMP Host 提供 "omp-extension-v1" 清单中的全部必需 capability 与必需事件
+      Given OMP Host 提供 "omp-extension-v2" 清单中的全部必需 capability 与必需事件
       When Plugin 完成宿主注册
       Then "/sbtd" 命令、全部必需事件订阅与声明的 Tool 都完成注册
       And Plugin 进入可用的 ready 状态
 
     Scenario: 必需 capability 缺失时 fail closed
-      Given OMP Host 缺少 "omp-extension-v1" 清单中的一个必需 capability 或必需事件
+      Given OMP Host 缺少 "omp-extension-v2" 清单中的一个必需 capability 或必需事件
       When Plugin 尝试宿主注册
       Then 注册 fail closed 并给出结构化原因代码
       And Plugin 不进入 ready 状态
       And 部分注册成功不得留下误导性的可用状态
 
     Scenario: 可选 capability 缺失时只降级相关功能
-      Given OMP Host 只缺少 "omp-extension-v1" 清单中的可选 capability 或可选事件
+      Given OMP Host 只缺少 "omp-extension-v2" 清单中的可选 capability 或可选事件
       When Plugin 完成宿主注册
       Then 只有依赖该可选能力的功能被降级
       And 其余命令与事件订阅保持可用
@@ -442,9 +442,45 @@ Feature: SBTD 控制引导
 
     Scenario: handoff 不冒充 Session 切换覆盖
       Given 18.11.1 session_switch 仅允许 "new"、"resume" 与 "fork"
-      When live-cell 的 handoff RPC 成功但 session_compact 不在订阅清单
-      Then validator 报告 "HANDOFF_EVENT_UNOBSERVABLE" diagnostic
+      When live-cell 的 handoff RPC 成功但没有合格的 session_compact 观测
+      Then validator 将 "HANDOFF_EVENT_UNOBSERVABLE" 记为硬失败
       And 不要求或伪造 reason 为 "handoff" 的 session_switch
+
+    Scenario: 同一窗口中的真实 handoff 事件证明覆盖
+      Given inventory 包含 13 个 required 和 1 个 optional 事件且 observer 订阅总数为 14
+      And handoff 发起前与事件排空后有同 run 和同 Session 的观测边界
+      When 唯一新 compaction entry 的 session_compact 结构有效且 method 为 "handoff"
+      Then handoff 覆盖通过且 evidence profile 为 "omp-host-events-v2"
+      And RPC response 前到达的事件仍可计入窗口
+
+    Scenario: 缺失方法或普通 compact 不能冒充 handoff
+      Given handoff RPC 成功
+      When session_compact 的 method 缺失或不是 "handoff"
+      Then handoff 证据失败且不从 fromExtension 为 false 推导方法
+
+    Scenario: 陈旧跨 Session 或窗口外事件不证明 handoff
+      Given handoff RPC 成功且只观测到旧 run、其他 Session 或窗口外的 entry
+      When validator 检查 handoff
+      Then "HANDOFF_EVENT_UNOBSERVABLE" 为硬失败
+      And 窗口内切换 Session、改变分支或缺失观测记录也不能证明关联
+
+    Scenario: 竞争 compact 使 handoff 窗口失败
+      Given handoff 窗口内存在另一个 session_compact 或新 compaction entry
+      When validator 检查窗口事件与 entry 基线差集
+      Then handoff 证据失败
+      And 同一 entry 的重复观测不增加覆盖
+
+    Scenario: 未尝试或触发失败不算 handoff 覆盖
+      Given driver 未尝试 handoff 或 handoff RPC 失败
+      When validator 检查场景
+      Then 分别保留 "HANDOFF_NOT_ATTEMPTED" 或 "HANDOFF_TRIGGER_BLOCKED" diagnostic
+      And 不宣称 handoff 路径通过验收
+
+    Scenario: compaction 公开证据不包含正文或原始身份
+      Given 宿主 compaction entry 包含 summary、details 和原始身份
+      When observer 保存事件与窗口
+      Then 只保留允许的结构、方法枚举、fromExtension 与身份摘要
+      And 不保存正文、凭据或原始 Session 路径
 
   Rule: v2.0.2 任务记录用于只读路由观测
 

@@ -3,11 +3,11 @@
   "pluginPackage": "@kunolu/omp-sbtd",
   "peerRange": ">=18 <19",
   "developmentRuntimeVersion": "18.11.1",
-  "contractProfile": "omp-extension-v1",
+  "contractProfile": "omp-extension-v2",
   "requiredEvidenceProfiles": [
     "omp-runtime-capabilities-v1",
     "omp-command-surface-v1",
-    "omp-host-events-v1"
+    "omp-host-events-v2"
   ],
   "commands": ["help", "status", "report", "onboard plan"]
 }

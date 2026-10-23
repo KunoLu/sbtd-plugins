@@ -50,7 +50,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { ompExtensionV1Inventory } from "../../src/runtime/omp-extension-v1.ts";
+import { ompExtensionV2Inventory } from "../../src/runtime/omp-extension-v2.ts";
 import {
   appendLedgerAssessment,
   type CompatibilityEvidenceReader,
@@ -693,8 +693,8 @@ async function runCell(
     driverSha256: sha256Hex(await readFile(join(suiteDir, "drive.mjs"))),
     observerSha256: sha256Hex(await readFile(join(suiteDir, "observer.mjs"))),
     events: [
-      ...ompExtensionV1Inventory.requiredEvents,
-      ...ompExtensionV1Inventory.optionalEvents,
+      ...ompExtensionV2Inventory.requiredEvents,
+      ...ompExtensionV2Inventory.optionalEvents,
     ],
   });
 
@@ -748,7 +748,7 @@ async function runCell(
         entrypointSha256: host.entrypointSha256,
         packageJsonSha256: host.packageJsonSha256,
       },
-      inventoryVersion: "omp-extension-v1",
+      inventoryVersion: "omp-extension-v2",
       capabilities: capabilityScore.capabilities,
       pluginRegistered: capabilityScore.pluginRegistered,
       missingRequired: [...capabilityScore.missingRequired],
@@ -830,6 +830,7 @@ async function runCell(
   );
   const predecessors = ledger.entries.filter(
     (entry) =>
+      entry.contractProfile === "omp-extension-v2" &&
       entry.pluginTarballSha256 === target.pluginTarballSha256 &&
       entry.ompVersion === cell.ompVersion,
   );
@@ -880,7 +881,7 @@ async function runCell(
         ? "omp-runtime-capabilities-v1"
         : key === "commandSurface"
           ? "omp-command-surface-v1"
-          : "omp-host-events-v1";
+          : "omp-host-events-v2";
     await writeFile(
       join(subjectsDir, `evidence-${profileName}.json`),
       evidence.bytes,

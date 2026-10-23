@@ -1,5 +1,5 @@
 // Slice 4 (08-20-omp-plugin-compatibility-decoupling): the single versioned
-// omp-extension-v1 Host capability/event inventory, the capability probe, and
+// omp-extension-v2 Host capability/event inventory, the capability probe, and
 // the adapter-edge payload validator. `src/runtime/index.ts` remains the
 // public Host seam and re-exports this surface; Slice 5's real Host Event
 // integration suite must reuse the same inventory instead of declaring a
@@ -24,6 +24,7 @@ import type {
   BeforeAgentStartEvent,
   CredentialDisabledEvent,
   SessionBranchEvent,
+  SessionCompactEvent,
   SessionCompactingEvent,
   SessionStartEvent,
   SessionStopEvent,
@@ -38,13 +39,13 @@ import type {
 import { z } from "zod";
 
 /**
- * The versioned omp-extension-v1 Host inventory. Required capabilities and
+ * The versioned omp-extension-v2 Host inventory. Required capabilities and
  * events are fail-closed; optional capability loss degrades only the named
  * feature. `requiredEvents` must stay aligned with `REQUIRED_HOST_EVENTS` in
  * `test/runtime.test.ts`.
  */
-export const ompExtensionV1Inventory = {
-  version: "omp-extension-v1",
+export const ompExtensionV2Inventory = {
+  version: "omp-extension-v2",
   requiredCapabilities: ["registerCommand", "on", "zod"],
   optionalCapabilities: ["registerTool"],
   requiredEvents: [
@@ -54,6 +55,7 @@ export const ompExtensionV1Inventory = {
     "session_tree",
     "before_agent_start",
     "session.compacting",
+    "session_compact",
     "tool_call",
     "tool_approval_resolved",
     "tool_result",
@@ -64,22 +66,22 @@ export const ompExtensionV1Inventory = {
   optionalEvents: ["credential_disabled"],
 } as const;
 
-export type OmpExtensionV1RequiredCapability =
-  (typeof ompExtensionV1Inventory.requiredCapabilities)[number];
-export type OmpExtensionV1OptionalCapability =
-  (typeof ompExtensionV1Inventory.optionalCapabilities)[number];
-export type OmpExtensionV1RequiredEvent =
-  (typeof ompExtensionV1Inventory.requiredEvents)[number];
-export type OmpExtensionV1OptionalEvent =
-  (typeof ompExtensionV1Inventory.optionalEvents)[number];
+export type OmpExtensionV2RequiredCapability =
+  (typeof ompExtensionV2Inventory.requiredCapabilities)[number];
+export type OmpExtensionV2OptionalCapability =
+  (typeof ompExtensionV2Inventory.optionalCapabilities)[number];
+export type OmpExtensionV2RequiredEvent =
+  (typeof ompExtensionV2Inventory.requiredEvents)[number];
+export type OmpExtensionV2OptionalEvent =
+  (typeof ompExtensionV2Inventory.optionalEvents)[number];
 
-export type OmpExtensionV1ProbeStatus =
+export type OmpExtensionV2ProbeStatus =
   | "passed"
   | "failed"
   | "passed-with-diagnostics";
 
-export interface OmpExtensionV1CapabilityAssessment {
-  readonly status: OmpExtensionV1ProbeStatus;
+export interface OmpExtensionV2CapabilityAssessment {
+  readonly status: OmpExtensionV2ProbeStatus;
   readonly missingRequired: readonly string[];
   readonly missingOptional: readonly string[];
   readonly disabledFeatures: readonly string[];
@@ -91,7 +93,7 @@ export interface OmpExtensionV1CapabilityAssessment {
  * the only currently declared optional-capability-dependent feature.
  */
 const optionalCapabilityFeatures: Readonly<
-  Record<OmpExtensionV1OptionalCapability, readonly string[]>
+  Record<OmpExtensionV2OptionalCapability, readonly string[]>
 > = {
   registerTool: ["sbtd_workflow tool registration"],
 };
@@ -105,8 +107,8 @@ function hostRecord(host: unknown): Readonly<Record<string, unknown>> {
 function hasCapability(
   host: Readonly<Record<string, unknown>>,
   capability:
-    | OmpExtensionV1RequiredCapability
-    | OmpExtensionV1OptionalCapability,
+    | OmpExtensionV2RequiredCapability
+    | OmpExtensionV2OptionalCapability,
 ): boolean {
   const value = host[capability];
   // `zod` is the injected schema-builder namespace; capabilities that carry
@@ -120,37 +122,37 @@ function hasCapability(
 }
 
 /**
- * Assess a Host surface against the omp-extension-v1 inventory. Event
+ * Assess a Host surface against the omp-extension-v2 inventory. Event
  * availability is contract-bound to the `on` subscription capability: without
  * `on`, every required event is undeliverable and is reported missing; with
- * `on`, an omp-extension-v1 Host is contracted to emit the required events.
+ * `on`, an omp-extension-v2 Host is contracted to emit the required events.
  */
-export function probeOmpExtensionV1Capabilities(
+export function probeOmpExtensionV2Capabilities(
   host: unknown,
-): OmpExtensionV1CapabilityAssessment {
+): OmpExtensionV2CapabilityAssessment {
   const record = hostRecord(host);
   const missingRequired: string[] = [];
   const missingOptional: string[] = [];
   const disabledFeatures: string[] = [];
   const reasonCodes: string[] = [];
-  for (const capability of ompExtensionV1Inventory.requiredCapabilities) {
+  for (const capability of ompExtensionV2Inventory.requiredCapabilities) {
     if (hasCapability(record, capability)) continue;
     missingRequired.push(capability);
     reasonCodes.push(`missing-required-capability:${capability}`);
   }
   if (typeof record.on !== "function") {
-    for (const event of ompExtensionV1Inventory.requiredEvents) {
+    for (const event of ompExtensionV2Inventory.requiredEvents) {
       missingRequired.push(event);
       reasonCodes.push(`missing-required-event:${event}`);
     }
   }
-  for (const capability of ompExtensionV1Inventory.optionalCapabilities) {
+  for (const capability of ompExtensionV2Inventory.optionalCapabilities) {
     if (hasCapability(record, capability)) continue;
     missingOptional.push(capability);
     reasonCodes.push(`missing-optional-capability:${capability}`);
     disabledFeatures.push(...optionalCapabilityFeatures[capability]);
   }
-  const status: OmpExtensionV1ProbeStatus =
+  const status: OmpExtensionV2ProbeStatus =
     missingRequired.length > 0
       ? "failed"
       : missingOptional.length > 0
@@ -165,14 +167,15 @@ export function probeOmpExtensionV1Capabilities(
   };
 }
 
-/** Payload types for each omp-extension-v1 event the Plugin subscribes to. */
-export interface OmpExtensionV1EventPayloadMap {
+/** Payload types for each omp-extension-v2 event the Plugin subscribes to. */
+export interface OmpExtensionV2EventPayloadMap {
   readonly session_start: SessionStartEvent;
   readonly session_switch: SessionSwitchEvent;
   readonly session_branch: SessionBranchEvent;
   readonly session_tree: SessionTreeEvent;
   readonly before_agent_start: BeforeAgentStartEvent;
   readonly "session.compacting": SessionCompactingEvent;
+  readonly session_compact: SessionCompactEvent;
   readonly tool_call: ToolCallEvent;
   readonly tool_approval_resolved: ToolApprovalResolvedEvent;
   readonly tool_result: ToolResultEvent;
@@ -182,18 +185,18 @@ export interface OmpExtensionV1EventPayloadMap {
   readonly credential_disabled: CredentialDisabledEvent;
 }
 
-export type OmpExtensionV1EventName = keyof OmpExtensionV1EventPayloadMap;
+export type OmpExtensionV2EventName = keyof OmpExtensionV2EventPayloadMap;
 
 const sessionSwitchReasons = ["new", "resume", "fork"] as const;
 
 /**
- * Adapter-edge schemas for the pinned omp-extension-v1 event shapes. Complex
+ * Adapter-edge schemas for the pinned omp-extension-v2 event shapes. Complex
  * nested values the Plugin never inspects structurally (messages, tool input,
  * signals) are validated for presence, not deep content; deep validation of
  * Host-owned structures is the Slice 5 Host Event suite's job.
  */
-const ompExtensionV1EventSchemas: Readonly<
-  Record<OmpExtensionV1EventName, z.ZodType<unknown>>
+const ompExtensionV2EventSchemas: Readonly<
+  Record<OmpExtensionV2EventName, z.ZodType<unknown>>
 > = {
   session_start: z.object({ type: z.literal("session_start") }).strict(),
   session_switch: z
@@ -232,6 +235,27 @@ const ompExtensionV1EventSchemas: Readonly<
       type: z.literal("session.compacting"),
       sessionId: z.string(),
       messages: z.array(z.unknown()),
+    })
+    .strict(),
+  session_compact: z
+    .object({
+      type: z.literal("session_compact"),
+      fromExtension: z.boolean(),
+      // Host-owned nested metadata is not interpreted by the runtime. The
+      // evidence observer projects it; handoff method is required by its gate,
+      // not by ordinary/extension compaction delivery.
+      compactionEntry: z
+        .object({
+          type: z.literal("compaction"),
+          id: z.string().min(1),
+          parentId: z.string().nullable(),
+          timestamp: z.string(),
+          summary: z.string(),
+          firstKeptEntryId: z.string(),
+          tokensBefore: z.number(),
+          method: z.string().optional(),
+        })
+        .passthrough(),
     })
     .strict(),
   tool_call: z
@@ -299,11 +323,11 @@ const ompExtensionV1EventSchemas: Readonly<
  * Keys the pinned 18.11.1 Host types declare as required but whose schema type
  * is `z.unknown()` — which accepts `undefined`, so the schema alone cannot
  * require the key's *presence* (tool_result.details may hold `undefined`,
- * but the key itself must exist on the payload). `validateOmpExtensionV1Event`
+ * but the key itself must exist on the payload). `validateOmpExtensionV2Event`
  * enforces own-property presence for exactly these keys.
  */
 const requiredPresentKeys: Partial<
-  Record<OmpExtensionV1EventName, readonly string[]>
+  Record<OmpExtensionV2EventName, readonly string[]>
 > = {
   tool_result: ["details"],
   turn_end: ["message"],
@@ -315,14 +339,14 @@ const requiredPresentKeys: Partial<
  * are stable identifiers only; payload content is never echoed into the
  * message or the code.
  */
-export class OmpExtensionV1EventRejection extends Error {
+export class OmpExtensionV2EventRejection extends Error {
   readonly eventName: string;
   readonly reasonCode: string;
   constructor(eventName: string, reasonCode: string) {
     super(
-      `${ompExtensionV1Inventory.version} rejected event "${eventName}": ${reasonCode}`,
+      `${ompExtensionV2Inventory.version} rejected event "${eventName}": ${reasonCode}`,
     );
-    this.name = "OmpExtensionV1EventRejection";
+    this.name = "OmpExtensionV2EventRejection";
     this.eventName = eventName;
     this.reasonCode = reasonCode;
   }
@@ -347,14 +371,14 @@ function projectCredentialDisabled(payload: unknown): {
 } {
   try {
     if (typeof payload !== "object" || payload === null)
-      throw new OmpExtensionV1EventRejection(
+      throw new OmpExtensionV2EventRejection(
         "credential_disabled",
         "invalid-event-payload:invalid_type",
       );
     const allowed = new Set(["type", "provider", "disabledCause"]);
     for (const key of Reflect.ownKeys(payload)) {
       if (typeof key !== "string" || !allowed.has(key))
-        throw new OmpExtensionV1EventRejection(
+        throw new OmpExtensionV2EventRejection(
           "credential_disabled",
           "invalid-event-payload:unrecognized_keys",
         );
@@ -362,26 +386,26 @@ function projectCredentialDisabled(payload: unknown): {
     if (Object.hasOwn(payload, "type")) {
       const type = ownDataString(payload, "type");
       if (type !== "credential_disabled")
-        throw new OmpExtensionV1EventRejection(
+        throw new OmpExtensionV2EventRejection(
           "credential_disabled",
           "invalid-event-payload:invalid_value",
         );
     }
     const provider = ownDataString(payload, "provider");
     if (provider === undefined || provider.length === 0)
-      throw new OmpExtensionV1EventRejection(
+      throw new OmpExtensionV2EventRejection(
         "credential_disabled",
         "invalid-event-payload:missing-key:provider",
       );
     if (!Object.hasOwn(payload, "disabledCause"))
-      throw new OmpExtensionV1EventRejection(
+      throw new OmpExtensionV2EventRejection(
         "credential_disabled",
         "invalid-event-payload:missing-key:disabledCause",
       );
     return { type: "credential_disabled", provider };
   } catch (error) {
-    if (error instanceof OmpExtensionV1EventRejection) throw error;
-    throw new OmpExtensionV1EventRejection(
+    if (error instanceof OmpExtensionV2EventRejection) throw error;
+    throw new OmpExtensionV2EventRejection(
       "credential_disabled",
       "invalid-event-payload:parse-exception",
     );
@@ -390,34 +414,34 @@ function projectCredentialDisabled(payload: unknown): {
 
 /**
  * Validate one Host event payload at the adapter edge. A malformed payload or
- * an unknown event name throws `OmpExtensionV1EventRejection`; the value never
+ * an unknown event name throws `OmpExtensionV2EventRejection`; the value never
  * reaches a handler and is never interpreted as an approval or a completion.
  */
-export function validateOmpExtensionV1Event<K extends OmpExtensionV1EventName>(
+export function validateOmpExtensionV2Event<K extends OmpExtensionV2EventName>(
   name: K,
   payload: unknown,
-): OmpExtensionV1EventPayloadMap[K];
-export function validateOmpExtensionV1Event(
+): OmpExtensionV2EventPayloadMap[K];
+export function validateOmpExtensionV2Event(
   name: string,
   payload: unknown,
 ): unknown;
-export function validateOmpExtensionV1Event(
+export function validateOmpExtensionV2Event(
   name: string,
   payload: unknown,
 ): unknown {
   if (name === "credential_disabled") return projectCredentialDisabled(payload);
   const schema = (
-    ompExtensionV1EventSchemas as Readonly<Record<string, z.ZodType<unknown>>>
+    ompExtensionV2EventSchemas as Readonly<Record<string, z.ZodType<unknown>>>
   )[name];
   if (schema === undefined)
-    throw new OmpExtensionV1EventRejection(name, "unknown-event");
-  for (const key of requiredPresentKeys[name as OmpExtensionV1EventName] ?? [])
+    throw new OmpExtensionV2EventRejection(name, "unknown-event");
+  for (const key of requiredPresentKeys[name as OmpExtensionV2EventName] ?? [])
     if (
       typeof payload !== "object" ||
       payload === null ||
       !Object.hasOwn(payload, key)
     )
-      throw new OmpExtensionV1EventRejection(
+      throw new OmpExtensionV2EventRejection(
         name,
         `invalid-event-payload:missing-key:${key}`,
       );
@@ -425,18 +449,18 @@ export function validateOmpExtensionV1Event(
   try {
     parsed = schema.safeParse(payload);
   } catch {
-    throw new OmpExtensionV1EventRejection(
+    throw new OmpExtensionV2EventRejection(
       name,
       "invalid-event-payload:parse-exception",
     );
   }
   if (!parsed.success)
-    throw new OmpExtensionV1EventRejection(
+    throw new OmpExtensionV2EventRejection(
       name,
       payloadReasonCode(parsed.error),
     );
   // The typed overload bridges the validated structural shape to the pinned
-  // omp-extension-v1 Host type; zod cannot express nominal Host members
+  // omp-extension-v2 Host type; zod cannot express nominal Host members
   // (AgentMessage, ImageContent, AbortSignal).
   return parsed.data;
 }

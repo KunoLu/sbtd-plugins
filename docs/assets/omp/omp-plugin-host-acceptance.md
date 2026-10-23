@@ -27,7 +27,7 @@ Plugin SemVer 独立于 OMP SemVer。支持 OMP `17.3.0` 不要求 Plugin 使用
 
 本章只覆盖 RC / stable **发布**与第 4 节四命令验收。仓库内受信任 CI 三 profile 认证、subject 绑定、ledger bot PR、环境审批与合入公开 ledger，见 [`omp-plugin-compatibility-certification-runbook.md`](./omp-plugin-compatibility-certification-runbook.md)。
 
-第 4 节四命令通过可以把精确 OMP 标为公开 `supported`，并作为 Command Surface 基线保留；不能派生 `certified`，也不是 Host Contract / `omp-extension-v1` Runtime Capability 完整探测。后者成功执行后写入认证 runbook 第 8.1 节，不写入本章。
+第 4 节四命令通过可以把精确 OMP 标为公开 `supported`，并作为 Command Surface 基线保留；不能派生 `certified`，也不是 Host Contract / `omp-extension-v2` Runtime Capability 完整探测。后者成功执行后写入认证 runbook 第 8.1 节，不写入本章。
 
 
 ## 2. 不可变身份、隔离与保密

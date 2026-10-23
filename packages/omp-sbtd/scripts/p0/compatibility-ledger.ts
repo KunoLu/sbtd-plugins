@@ -333,6 +333,8 @@ const ledgerProfileResultSchema = z
     profile: z.enum([
       "omp-runtime-capabilities-v1",
       "omp-command-surface-v1",
+      "omp-host-events-v2",
+      // Read-only historical ledger records retain their original profile.
       "omp-host-events-v1",
     ]),
     outcome: z.enum([
@@ -432,15 +434,21 @@ export const ledgerAssessmentEntrySchema = z
     ompRegistryIntegrity: sriSchema,
     loadedRuntimeVersion: exactStableRuntimeSchema,
     loadedRuntimeArtifactSha256: hashSchema,
-    contractProfile: z.literal("omp-extension-v1"),
+    contractProfile: z.literal("omp-extension-v2"),
     commandSetSha256: hashSchema,
     hostEventScenarioSetSha256: hashSchema,
     previousEntrySha256: hashSchema.nullable(),
     profiles: z
       .object({
-        runtimeCapabilityProbe: ledgerProfileResultSchema,
-        commandSurface: ledgerProfileResultSchema,
-        hostEventSurface: ledgerProfileResultSchema,
+        runtimeCapabilityProbe: ledgerProfileResultSchema.safeExtend({
+          profile: z.literal("omp-runtime-capabilities-v1"),
+        }),
+        commandSurface: ledgerProfileResultSchema.safeExtend({
+          profile: z.literal("omp-command-surface-v1"),
+        }),
+        hostEventSurface: ledgerProfileResultSchema.safeExtend({
+          profile: z.literal("omp-host-events-v2"),
+        }),
       })
       .strict(),
     provenance: assessmentProvenanceSchema,
@@ -461,7 +469,7 @@ export const ledgerRevocationEntrySchema = z
     entryType: z.literal("revocation"),
     pluginTarballSha256: hashSchema,
     ompVersion: exactStableRuntimeSchema,
-    contractProfile: z.literal("omp-extension-v1"),
+    contractProfile: z.literal("omp-extension-v2"),
     supersedesEntrySha256: hashSchema,
     reasonCode: z.string().min(1).max(64),
     effectiveAt: z.string().datetime({ offset: true }),
@@ -471,10 +479,29 @@ export const ledgerRevocationEntrySchema = z
   .strict();
 export type LedgerRevocationEntry = z.infer<typeof ledgerRevocationEntrySchema>;
 
-export const compatibilityLedgerEntrySchema = z.discriminatedUnion(
-  "entryType",
-  [ledgerAssessmentEntrySchema, ledgerRevocationEntrySchema],
-);
+// History is parsed with its original labels and hashes. Only the v2 schemas
+// above are accepted by append/finalize; no old evidence is promoted to v2.
+const historicalAssessmentEntrySchema = ledgerAssessmentEntrySchema.extend({
+  contractProfile: z.literal("omp-extension-v1"),
+  profiles: ledgerAssessmentEntrySchema.shape.profiles.extend({
+    hostEventSurface: ledgerProfileResultSchema.safeExtend({
+      profile: z.literal("omp-host-events-v1"),
+    }),
+  }),
+});
+const historicalRevocationEntrySchema = ledgerRevocationEntrySchema.extend({
+  contractProfile: z.literal("omp-extension-v1"),
+});
+type ReadableAssessmentEntry =
+  | LedgerAssessmentEntry
+  | z.infer<typeof historicalAssessmentEntrySchema>;
+
+export const compatibilityLedgerEntrySchema = z.union([
+  ledgerAssessmentEntrySchema,
+  ledgerRevocationEntrySchema,
+  historicalAssessmentEntrySchema,
+  historicalRevocationEntrySchema,
+]);
 export type CompatibilityLedgerEntry = z.infer<
   typeof compatibilityLedgerEntrySchema
 >;
@@ -564,7 +591,7 @@ function assertProvenanceTrusted(
     );
 }
 
-function assertAssessmentSubjectsBound(entry: LedgerAssessmentEntry): void {
+function assertAssessmentSubjectsBound(entry: ReadableAssessmentEntry): void {
   const subjects = entry.provenance.subjectDigests;
   const bound =
     subjects.pluginTarball === entry.pluginTarballSha256 &&
@@ -607,7 +634,7 @@ function toDerivedProfile(profile: LedgerProfileResult): {
  * equal this derivation; callers never submit an authoritative state.
  */
 export function deriveLedgerAssessmentOutcome(
-  entry: LedgerAssessmentEntry,
+  entry: ReadableAssessmentEntry,
 ): CompatibilityOverallState {
   return deriveCompatibilityOverallState({
     runtimeInRange: true,
@@ -1140,6 +1167,7 @@ function latestEntryForIdentity(
   for (const entry of ledger.entries) {
     if (
       entry.pluginTarballSha256 === pluginTarballSha256 &&
+      entry.contractProfile === "omp-extension-v2" &&
       entry.ompVersion === ompVersion
     )
       latest = entry;
@@ -1218,7 +1246,7 @@ export interface CompatibilityMatrixCell {
   readonly pluginVersion: string;
   readonly pluginTarballSha256: string;
   readonly ompVersion: string;
-  readonly contractProfile: "omp-extension-v1";
+  readonly contractProfile: "omp-extension-v2";
   readonly state: CompatibilityOverallState;
   readonly sourceEntrySha256: string;
 }
@@ -1258,7 +1286,10 @@ export async function deriveSupportMatrix(
   for (const target of catalog.targets) {
     const versions = new Set<string>();
     for (const entry of validated.entries) {
-      if (entry.pluginTarballSha256 === target.pluginTarballSha256)
+      if (
+        entry.contractProfile === "omp-extension-v2" &&
+        entry.pluginTarballSha256 === target.pluginTarballSha256
+      )
         versions.add(entry.ompVersion);
     }
     for (const ompVersion of versions) {
@@ -1272,7 +1303,7 @@ export async function deriveSupportMatrix(
         pluginVersion: target.pluginVersion,
         pluginTarballSha256: target.pluginTarballSha256,
         ompVersion,
-        contractProfile: "omp-extension-v1",
+        contractProfile: "omp-extension-v2",
         state:
           latest.entryType === "revocation"
             ? "revoked"
@@ -1310,7 +1341,7 @@ export async function deriveSupportMatrix(
 export const MATRIX_PROFILE_IDS = [
   "omp-runtime-capabilities-v1",
   "omp-command-surface-v1",
-  "omp-host-events-v1",
+  "omp-host-events-v2",
 ] as const;
 export type MatrixProfileId = (typeof MATRIX_PROFILE_IDS)[number];
 

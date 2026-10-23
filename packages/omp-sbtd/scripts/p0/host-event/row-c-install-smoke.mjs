@@ -306,7 +306,7 @@ try {
   const extension = extensions[0];
   assert.deepEqual(extension.commands, ["sbtd"]);
   assert.deepEqual(extension.tools, ["sbtd_workflow"]);
-  assert.equal(extension.hooks.length, 13);
+  assert.equal(extension.hooks.length, 14);
   assert(
     extension.hooks.includes("session_start") &&
       extension.hooks.includes("tool_call"),

@@ -1516,12 +1516,12 @@ export const compatibilityManifestSchema = z
     developmentRuntimeVersion: runtimeVersionSchema,
     pluginPackage: z.literal("@kunolu/omp-sbtd"),
     commands: compatibilityCommandsSchema,
-    contractProfile: z.literal("omp-extension-v1").optional(),
+    contractProfile: z.literal("omp-extension-v2").optional(),
     requiredEvidenceProfiles: z
       .tuple([
         z.literal("omp-runtime-capabilities-v1"),
         z.literal("omp-command-surface-v1"),
-        z.literal("omp-host-events-v1"),
+        z.literal("omp-host-events-v2"),
       ])
       .optional(),
   })

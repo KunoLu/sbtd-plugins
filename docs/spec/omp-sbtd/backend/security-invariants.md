@@ -7,14 +7,14 @@
 
 ## Fail-Closed Everywhere
 
-- **Registration**: `probeOmpExtensionV1Capabilities` throws before any command/tool/event is
+- **Registration**: `probeOmpExtensionV2Capabilities` throws before any command/tool/event is
   registered when a required host capability or event is missing (`src/runtime/index.ts`). No
   partial registration, no optimistic ready state; `registerTool` runs before `registerCommand` so
   a later throw cannot leave a misleading ready state, and event subscriptions roll back via host
   `off`/`removeListener`.
 - **Malformed events are never interpreted**: adapter-edge `.strict()` schemas +
-  `OmpExtensionV1EventRejection`; reason codes are stable identifiers carrying no payload content
-  (`src/runtime/omp-extension-v1.ts`). Feature Rule: "malformed event 不得被解释成批准或完成"
+  `OmpExtensionV2EventRejection`; reason codes are stable identifiers carrying no payload content
+  (`src/runtime/omp-extension-v2.ts`). Feature Rule: "malformed event 不得被解释成批准或完成"
   (`features/sbtd-control-bootstrap.feature`).
 - **Unknown tools are mutation-capable**: anything not in `builtinToolCapabilities` (including
   `mcp__*`) → capability `unknown`, `mutationOrPhaseAdvancing: true` (`src/tool-risk/index.ts`;

@@ -299,7 +299,7 @@ function contractAssessment(
       "passed",
     ),
     commandSurface: contractProfile("omp-command-surface-v1", "passed"),
-    hostEventSurface: contractProfile("omp-host-events-v1", "passed"),
+    hostEventSurface: contractProfile("omp-host-events-v2", "passed"),
   };
   const subjectDigests = {
     pluginTarball: contractTarget.pluginTarballSha256,
@@ -327,7 +327,7 @@ function contractAssessment(
     ompRegistryIntegrity: ledgerSri("contract-omp-registry"),
     loadedRuntimeVersion: "17.3.5",
     loadedRuntimeArtifactSha256: ledgerSha("contract-omp-artifact"),
-    contractProfile: "omp-extension-v1",
+    contractProfile: "omp-extension-v2",
     commandSetSha256: ledgerSha("contract-command-set"),
     hostEventScenarioSetSha256: ledgerSha("contract-scenario-set"),
     previousEntrySha256: null,
@@ -371,7 +371,7 @@ function contractRevocation(
     entryType: "revocation",
     pluginTarballSha256: contractTarget.pluginTarballSha256,
     ompVersion: "17.3.5",
-    contractProfile: "omp-extension-v1",
+    contractProfile: "omp-extension-v2",
     supersedesEntrySha256,
     reasonCode: "HOST_REGRESSION_CONFIRMED",
     effectiveAt: "2026-08-25T00:00:00Z",

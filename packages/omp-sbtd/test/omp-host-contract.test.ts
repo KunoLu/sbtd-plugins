@@ -1,6 +1,6 @@
 // Slice 4 contract tests for 08-20-omp-plugin-compatibility-decoupling.
 //
-// These tests encode the omp-extension-v1 Host Contract against the runtime
+// These tests encode the omp-extension-v2 Host Contract against the runtime
 // seam: probe, adapter-edge payload validation, and fail-closed registration
 // that does not leave a visible /sbtd command after a required subscription
 // failure.
@@ -20,14 +20,14 @@
 // host surface, not a real OMP host.
 //
 // Slice 4 contract surface (exported from src/runtime/index.ts):
-//   probeOmpExtensionV1Capabilities(host): {
+//   probeOmpExtensionV2Capabilities(host): {
 //     status: "passed" | "failed" | "passed-with-diagnostics",
 //     missingRequired: string[],   // required capability/event names
 //     missingOptional: string[],   // optional capability/event names
 //     disabledFeatures: string[],  // features degraded by optional loss
 //     reasonCodes: string[],
 //   }
-//   validateOmpExtensionV1Event(name, payload): validated payload, or a
+//   validateOmpExtensionV2Event(name, payload): validated payload, or a
 //     structured fail-closed rejection; a malformed or unknown event never
 //     reaches handlers and is never interpreted as approval or completion.
 import { describe, expect, it } from "vitest";
@@ -52,12 +52,12 @@ type CapabilityAssessment = Readonly<{
 }>;
 
 function probeCapabilities(host: unknown): CapabilityAssessment {
-  const probe = seam.probeOmpExtensionV1Capabilities;
+  const probe = seam.probeOmpExtensionV2Capabilities;
   expect(
     typeof probe,
-    "Slice 4 must export probeOmpExtensionV1Capabilities from " +
+    "Slice 4 must export probeOmpExtensionV2Capabilities from " +
       "src/runtime/index.ts backed by the single versioned " +
-      "omp-extension-v1 inventory; the current seam registers " +
+      "omp-extension-v2 inventory; the current seam registers " +
       "unconditionally and cannot fail closed on a missing required " +
       "capability.",
   ).toBe("function");
@@ -67,7 +67,7 @@ function probeCapabilities(host: unknown): CapabilityAssessment {
   return probeFn(host);
 }
 
-// Simulated host surfaces at the omp-extension-v1 inventory level.
+// Simulated host surfaces at the omp-extension-v2 inventory level.
 const fullHost = {
   registerCommand() {},
   registerTool() {},
@@ -134,7 +134,7 @@ describe("Feature: SBTD 控制引导 — Host Contract capability boundary", () 
         } as never,
         stubHandlers(),
       ),
-    ).toThrow(/omp-extension-v1 host contract failed/);
+    ).toThrow(/omp-extension-v2 host contract failed/);
     expect(commands).toEqual([]);
     expect(tools).toEqual([]);
   });
@@ -211,7 +211,7 @@ describe("Feature: SBTD 控制引导 — Host Contract capability boundary", () 
     "unknown",
   ])("Scenario: session_branch rejects absent or unknown reason %s", (reason) => {
     expect(() =>
-      runtimeSeam.validateOmpExtensionV1Event("session_branch", {
+      runtimeSeam.validateOmpExtensionV2Event("session_branch", {
         type: "session_branch",
         ...(reason === undefined ? {} : { reason }),
       }),
@@ -225,24 +225,98 @@ describe("Feature: SBTD 控制引导 — Host Contract capability boundary", () 
   ])("Scenario: session_switch accepts host reason %s", (reason) => {
     const event = { type: "session_switch", reason };
     expect(
-      runtimeSeam.validateOmpExtensionV1Event("session_switch", event),
+      runtimeSeam.validateOmpExtensionV2Event("session_switch", event),
     ).toEqual(event);
   });
 
   it("Scenario: session_switch rejects obsolete handoff reason", () => {
     expect(() =>
-      runtimeSeam.validateOmpExtensionV1Event("session_switch", {
+      runtimeSeam.validateOmpExtensionV2Event("session_switch", {
         type: "session_switch",
         reason: "handoff",
       }),
     ).toThrow();
   });
 
+  it("session_compact 验证真实 entry 结构且不替代 session.compacting", async () => {
+    const event = {
+      type: "session_compact",
+      fromExtension: false,
+      compactionEntry: {
+        type: "compaction",
+        id: "entry",
+        parentId: null,
+        timestamp: "2026-10-23T00:00:00Z",
+        summary: "private summary",
+        firstKeptEntryId: "kept",
+        tokensBefore: 42,
+        method: "handoff",
+      },
+    };
+    expect(
+      runtimeSeam.validateOmpExtensionV2Event("session_compact", event),
+    ).toEqual(event);
+    for (const field of [
+      "type",
+      "id",
+      "parentId",
+      "timestamp",
+      "summary",
+      "firstKeptEntryId",
+      "tokensBefore",
+    ]) {
+      const entry: Record<string, unknown> = { ...event.compactionEntry };
+      delete entry[field];
+      expect(() =>
+        runtimeSeam.validateOmpExtensionV2Event("session_compact", {
+          ...event,
+          compactionEntry: entry,
+        }),
+      ).toThrow();
+    }
+    expect(() =>
+      runtimeSeam.validateOmpExtensionV2Event("session.compacting", event),
+    ).toThrow();
+    expect(() =>
+      runtimeSeam.validateOmpExtensionV2Event("session_compact", {
+        ...event,
+        fromExtension: undefined,
+      }),
+    ).toThrow();
+    const events = new Map<string, (event: unknown, ctx: unknown) => unknown>();
+    const seen: unknown[] = [];
+    registerRuntimeController(
+      {
+        ...fullHost,
+        zod: z,
+        on: (
+          name: string,
+          handler: (event: unknown, ctx: unknown) => unknown,
+        ) => events.set(name, handler),
+      } as never,
+      {
+        ...stubHandlers(),
+        reobserve: async (value) => {
+          seen.push(value);
+        },
+      },
+    );
+    await events.get("session_compact")?.(event, { sessionManager: {} });
+    expect(seen).toEqual([event]);
+    await expect(
+      events.get("session_compact")?.(
+        { type: "session_compact" },
+        { sessionManager: {} },
+      ),
+    ).rejects.toThrow();
+    expect(seen).toEqual([event]);
+  });
+
   it("Scenario: malformed event 不得被解释成批准或完成", async () => {
-    const validateEvent = seam.validateOmpExtensionV1Event;
+    const validateEvent = seam.validateOmpExtensionV2Event;
     expect(
       typeof validateEvent,
-      "Slice 4 must export validateOmpExtensionV1Event from " +
+      "Slice 4 must export validateOmpExtensionV2Event from " +
         "src/runtime/index.ts: adapter-edge payload validation that fails " +
         "closed; the current seam forwards raw host events to handlers, " +
         "so a malformed payload could be interpreted as an approval or a " +
@@ -313,7 +387,7 @@ describe("Feature: SBTD 控制引导 — Host Contract capability boundary", () 
   });
 
   it("Scenario: credential_disabled 缺少 disabledCause own key 时 fail closed", () => {
-    const validate = seam.validateOmpExtensionV1Event as (
+    const validate = seam.validateOmpExtensionV2Event as (
       name: string,
       payload: unknown,
     ) => unknown;
@@ -346,7 +420,7 @@ describe("Feature: SBTD 控制引导 — Host Contract capability boundary", () 
     // edge enforces own-property presence. The pinned 17.3.5 Host types
     // declare these keys as required (tool_result.details may hold
     // `undefined`, but the key itself must be present).
-    const validate = seam.validateOmpExtensionV1Event as (
+    const validate = seam.validateOmpExtensionV2Event as (
       name: string,
       payload: unknown,
     ) => unknown;
