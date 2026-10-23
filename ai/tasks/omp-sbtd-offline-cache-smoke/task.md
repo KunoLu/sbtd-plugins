@@ -7,7 +7,7 @@ mode_note: 用户 2026-10-23 10:32 +08:00 明确启动 item 1 offline-cache chor
 status: checking
 branch: chore/offline-cache-smoke
 created_at: '2026-10-23T10:34:09+08:00'
-updated_at: '2026-10-23T11:02:17+08:00'
+updated_at: '2026-10-23T11:51:56+08:00'
 completed_at: null
 ---
 # OMP offline-cache smoke chore
@@ -29,6 +29,7 @@ completed_at: null
 | 2026-10-23T10:41:37+08:00 | in-progress | in-progress | 缓存修复首次真实 smoke 到达宿主，但既有报错文案断言失败；不转为 cache skip | smoke-focused raw：offline install completed，exit 1，1 failed / 55 name-filter skipped；宿主实际 No default model selected，原断言 No models available |
 | 2026-10-23T10:52:34+08:00 | in-progress | in-progress | 保留无 Provider 时 RPC 前阻断及全部文件系统断言，将不稳定文案匹配改为真实退出生命周期断言，定点 smoke 通过 | exact OMP 18.11.1 源码 main.ts 的无模型出口位于 runRpcMode 前；Error.cause 断言 exitCode=1、signal=null、stdoutBytes=0；smoke-focused-behavior exit 0，1 passed / 55 name-filter skipped |
 | 2026-10-23T11:02:17+08:00 | in-progress | checking | 实现、真实 smoke、全套验证与两项独立只读复核完成；保留历史失败，等待编排方 Reviewy PR-tip CLEAN + merge | build/typecheck/lint exit 0；harness 56 passed；full suite 890 passed / 3 skipped；smoke 1 passed；真实 cache-unavailable 1 runtime skip（不计 PASS）；本地报告见下方最终证据表；completed_at 保持 null |
+| 2026-10-23T11:51:56+08:00 | checking | checking | Reviewy B1 @950df81：补充锚定 RPC 退出前缀及 OMP 18.11.1 两种无模型文案的消息正则，保留 cause，拒绝扩展加载失败 | build/typecheck/lint exit 0；healthy smoke 1 passed；注入 broken plugin 后 1 failed，received message 以 Failed to load extension 开始；重建后注入计数 0、smoke 1 passed；harness 56 passed；full suite 890 passed / 3 skipped、46 files passed；报告见 Reviewy B1 fix 节 |
 
 ## Book Gate Plan
 
@@ -116,7 +117,7 @@ completed_at: null
 - Production path：无生产代码或包身份变化；只改变本地测试依赖准备和可观察生命周期断言，受信 §4 gate 不变。
 - Failure modes / safeguards：未知安装错误、成功准备后的离线失败继续 FAIL；真正缺 cache 且准备失败才 SKIP，理由可见。30s 子进程上限，单次准备，无全局 HOME/cache 写入；本测试 temporaryRoots 清理。完整 smoke 的 90s 总界和宿主 15s 生命周期界保留。
 - Rollback / cleanup：回退本次测试/文档提交即可；无 schema、migration、SBOM、lockfile、生产数据或 global config 改动。微型探针与网络故障 wrapper 已删除；repo-local pnpm/Corepack cache 为复跑保留，ignored，不入提交。
-- Residual risk：每次 smoke 使用新测试 cache，网络确不可用时允许带原因的 native skip；不承诺离线机器首次运行也能下载。行为断言证明退出 1、无信号、零 RPC 输出，不对内部错误来源进行类型认证；理论上其他 agent.db 创建后的前 RPC exit 1 也可能满足生命周期断言，当前无凭据路径由实跑 stderr 与 exact host source 交叉核对。此为 smoke-only，不能替代 §4 trusted gate。
+- Residual risk：每次 smoke 使用新测试 cache，网络确不可用时允许带原因的 native skip；不承诺离线机器首次运行也能下载。消息正则锚定 RPC 退出前缀及 OMP 18.11.1 的两种文案 `No default model selected` / `No models available`，并保留 cause 的 exitCode=1、signal=null、stdoutBytes=0 检查；本地仅在 built dist 注入损坏插件，已证明 `Failed to load extension` 导致 smoke 失败，重建后健康插件恢复通过。此为 smoke-only，不能替代 §4 trusted gate。
 
 ## 最终验证证据（当前值）
 
@@ -170,3 +171,41 @@ Tests  1 passed | 55 skipped (56)
 
 - 当前 status = **checking**，completed_at = **null**；本地验收无阻塞项，后续 Reviewy CLEAN + merge 仍由编排方负责。未 push、开 PR、comment、tag、publish 或 merge。
 - 只对指定共享文档及测试作显式路径本地提交；不改历史事件、schema、CHANGELOG、全局配置。报告和缓存 ignored，不进入提交；同机保留 raw，跨机器恢复不可假定。
+
+## Reviewy B1 fix（@950df81）
+
+- 本轮沿用 strict、唯一 writer/验证 controller；仅 B1 测试断言及指定文档，deferred nit 不动。未完整调用 grill-with-docs：需求与验收明确，无领域歧义。
+- 源码确认 `runPackedHostSmoke` 将完整 stderr 接到 `actual OMP host ended during its public RPC exchange: ` 后；采用 `^actual OMP host ended during its public RPC exchange: No (?:default model selected|models available)\b`，保留 cause 及目录/agent.db 断言。现有 console.info 仍准确，未改。
+- `extractPackedPlugin` 直接 `pnpm pack`，package 无 prepack/build hook，安装使用 `--ignore-scripts`；注入只改 ignored `dist/extension.js` 首行，未改生产源码。negative 的 received message 为 `actual OMP host ended during its public RPC exchange: Failed to load extension /tmp/kpi-authorized-rpc-harness-Wy12OP/installed-plugins/node_modules/@kunolu/o…: Failed to load extension: B1 injected broken plugin`；其后仍有 `No default model selected`，但锚定消息检查正确拒绝。
+- 首轮 build 在 runner 启动前因 repo-local pnpm 缺 `dist/pnpm.mjs` 失败；保留原生报告。通过 `npm pack pnpm@11.17.0 --ignore-scripts --pack-destination .tmp` 取得同版包，仅补回缺失 runtime，`pnpm --version` 为 11.17.0；未改全局配置。随后 build 按现有 pnpm 行为恢复依赖并成功。
+- 验证均在本 worktree 的 `packages/omp-sbtd`，PATH 前置 `.tmp/bin`，COREPACK_HOME 为 `.tmp/corepack`。证据基线 `950df81d947aa30bf554757db1df84eb0b35f838` + B1 dirty changes，developer-local / local-only，不冒充最终 PR head CI。下列 raw 均位于本任务 `reports/`，各有同 stem 中文 `.md`，旧失败未覆盖。
+
+| 命令 / 轮次 | exit | 结果 | 原生报告文件 |
+|---|---|---|---|
+| `pnpm build`（初次） | 1 | 环境失败：pnpm runtime 缺失，未执行 build | `b1-build-2026-10-23T114239+0800.txt` |
+| `npm pack pnpm@11.17.0 --ignore-scripts --pack-destination .tmp`（repo root） | 0 | 获取同版 runtime | `b1-pnpm-runtime-fetch-2026-10-23T114255+0800.txt` |
+| `pnpm --version` | 0 | 11.17.0 | `b1-pnpm-version-2026-10-23T114256+0800.txt` |
+| `pnpm build` | 0 | 通过 | `b1-build-2026-10-23T114257+0800.txt` |
+| `pnpm typecheck` | 0 | 通过 | `b1-typecheck-2026-10-23T114316+0800.txt` |
+| `pnpm lint` | 0 | 99 files，0 fixes | `b1-lint-2026-10-23T114319+0800.txt` |
+| `pnpm exec vitest run test/p0-authorized-omp-rpc-harness.test.ts -t "exact local OMP 18.11.1"`（healthy） | 0 | 1 passed / 55 name-filter skipped | `b1-smoke-healthy-2026-10-23T114319+0800.txt` |
+| 同一定点命令（built dist 首行注入 `throw new Error("B1 injected broken plugin");`） | 1 | 预期 1 failed / 55 name-filter skipped；消息断言显示 `Failed to load extension` | `b1-smoke-injected-broken-2026-10-23T114337+0800.txt` |
+| `pnpm build`（恢复） | 0 | 重建通过；随后文本计数及 grep 均证明 `B1 injected` 为 0 | `b1-build-restore-2026-10-23T114343+0800.txt` |
+| `git status --short`（恢复后，repo root） | 0 | 仅指定 test/doc，未出现 dist | `b1-status-after-restore-2026-10-23T114347+0800.txt` |
+| 同一定点命令（restored healthy） | 0 | 1 passed / 55 name-filter skipped | `b1-smoke-restored-2026-10-23T114348+0800.txt` |
+| `pnpm exec vitest run test/p0-authorized-omp-rpc-harness.test.ts` | 0 | 56 passed / 0 skipped；126.72s | `b1-harness-2026-10-23T114408+0800.txt` |
+| `pnpm test` | 0 | 890 passed / 3 skipped，46 files passed；331.21s | `b1-full-suite-2026-10-23T114616+0800.txt` |
+
+- B1 Book Gate Plan / 结果：legacy safety before-dev 已 characterized（Reviewy 已确认的 false positive + 源码 + 既有 smoke safety net），本轮注入负向及恢复正向均通过预期；DDD、DDIA、production refactoring、release readiness 为 not-required：无领域/数据流/缓存机制/生产运行或发布变化。手写断言可读性复核：直接复用 `toMatchObject`，无新增抽象。独立复核沿用编排方 Reviewy 流程，本轮不声称新 PR-tip CLEAN。
+- BDD skipped（仅内部测试断言，无新 .feature）；rtk skipped-for-report；Graft/Web/Mobile skipped（无对应变更表面或挂载）；API Contract / Cross-repo context not-needed；真实 smoke Mock Strategy none。3 个既有环境门控 skip 不计 PASS；CI live cell 只运行 `run-live-cell.ts`，不运行本 Vitest，本轮真实本地证据证明 B1。仍为 smoke-only，不替代 §4 gate。
+
+### 本轮模型（SNAPSHOT）
+
+`2026-10-23T11:51:56+08:00` 只读抽取 RD/session 下本会话 JSONL：计数 `type=message` 且 `message.role=assistant`，toolCall 为这些消息 content 的同名项。计数不含此后文档/提交/回复，最终计数由编排方补充。
+
+| session | model / thinking | purpose | assistant messages / tool calls |
+|---|---|---|---|
+| ping / `01a166d8-e39e-7510-8b86-d118fa3ff68e` | openai-codex/gpt-6-astra:high | reachability ping | 1 / 0 |
+| main / `01a166d9-a19f-75e1-b35a-f6e1e0009143` | openai-codex/gpt-6-astra:high | sole writer B1 fix | SNAPSHOT **15 / 37** |
+
+来源：`/home/box/.omp/logs/sbtd-offline-cache/run-fix1/session/2026-10-23T03-41-41-151Z_01a166d9-a19f-75e1-b35a-f6e1e0009143.jsonl`；ping 为同 RD 的 `ping-session/2026-10-23T03-40-52-510Z_01a166d8-e39e-7510-8b86-d118fa3ff68e.jsonl`。沿用既有 TaskStore 历史 schema blocker，不重跑、不声称 lifecycle/自动恢复通过；本次仅显式授权的共享记录更新。status 保持 checking，completed_at 保持 null，无远端操作。

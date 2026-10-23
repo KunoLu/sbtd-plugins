@@ -345,7 +345,7 @@ pnpm --filter @kunolu/omp-sbtd exec vitest run test/p0-authorized-omp-rpc-harnes
 
 该测试把 `HOME` 和 `BUN_INSTALL_CACHE_DIR` 指向本次临时根，安装清单精确钉 OMP `18.11.1`。首次离线安装缺少 manifest 或包缓存时，尝试一次 `bun install --ignore-scripts` 在线准备，再删除测试安装目录中的 `node_modules` 并重新 `bun install --ignore-scripts --offline`，以证明实际离线可安装；不修改全局 Bun 配置。在线准备失败且离线仍明确缺缓存时，Vitest 标记 **SKIP** 并打印缓存目录、缺项与准备失败原因，不能记为 PASS；其他安装错误、准备成功后的离线失败和宿主断言失败仍为 FAIL。测试临时根由既有清理钩子移除。
 
-无 Provider 的阻断按行为判定：真实宿主退出码为 1、不是信号终止、没有任何 stdout/RPC 输出，同时保留包、项目、其他 Runtime 目录不变及 agent 数据库生成断言；不依赖宿主的报错文案。
+无 Provider 的阻断按行为判定：真实宿主退出码为 1、不是信号终止、没有任何 stdout/RPC 输出，同时保留包、项目、其他 Runtime 目录不变及 agent 数据库生成断言；错误消息还须以宿主 RPC 退出前缀紧接 `No (?:default model selected|models available)\b` 匹配 OMP 18.11.1 的两种文案（`No default model selected` / `No models available`），损坏插件导致宿主先打印 `Failed to load extension` 时 smoke 必须失败。
 
 ## 10. 失败、回退与清理
 

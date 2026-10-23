@@ -1762,6 +1762,9 @@ describe("authorized OMP public-RPC harness", () => {
         agent,
       }),
     ).rejects.toMatchObject({
+      message: expect.stringMatching(
+        /^actual OMP host ended during its public RPC exchange: No (?:default model selected|models available)\b/,
+      ),
       cause: { exitCode: 1, signal: null, stdoutBytes: 0 },
     });
 
