@@ -7,7 +7,7 @@ mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only �
 status: done
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T17:29:07+08:00'
+updated_at: '2026-10-23T17:40:28+08:00'
 completed_at: '2026-10-23T17:03:32+08:00'
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -278,6 +278,7 @@ package.json
 - 编排方整理：BilingualFacts / ReleaseContracts（主进程 pid 101611）配置为 `kimi-code/k3:max`，实际 thinking 为 high。原因按已核验的 omp 18.12.6 源码结论记录：「配置为 k3:max，主代理 spawn 时传 effort=med，按 omp 优先级覆盖后映射为 high」。`task/executor.ts` 优先级为 caller effort > `:level` suffix > agent default；pi-tui `thinking.ts` 的 `resolveTaskEffortLevel` 把 med 映射到 supported `[low, high, max]` 的中位 high；`task.maxEffort` 仅封顶。本轮未重新核验该宿主源码，不把配置 max 写成实际 max。
 - 编排方整理：#119 原 task 第 144 行的 fix1 启动/usage 断言无法核验，已在 `ai/tasks/dsh-sbtd-prd-readme-zh-shipped/task.md` 末尾追加「未知」纠正，不改原行。
 - 编排方整理：本 task「Fix2 验证与修正」B3（基线第 104 行）记载的两条旧 backfill 纠正，后来在 merge `56e43af` 被丢弃；不是当前 main 中仍保留的两行。合并选择 main wins，合并后 `ai/tasks/sbtd-changelog-backfill/task.md` 与当时 main 字节一致。来源 `~/.omp/logs/sbtd-rowg-dsh-rc2/pr118-body.v2.md`「Merge choices」第 38–46 行：旧归因目标行已不存在，pid 79530 两位子代理标题成功已包含于 main FINAL。旧 B3 与当时 smoke 记录保留为历史，不回写。
+- 编排方整理：四项补正中的第 (d) 项即下方「使用的模型（FINAL，#118）」完整回填；前三条分别对应 (a) effort、(b) #119 未知使用量、(c) merge 56e43af 丢弃 B3 纠正。此处追加对应关系，不改写原标题或前三条。
 
 ## 使用的模型（FINAL，#118）
 
