@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-1-pr-e-release
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求每个 task 都用 strict
-status: "checking"
+status: "done"
 branch: feat/dsh-sbtd-0.2.0-rc.1-pr-e-release
 created_at: '2026-10-19T04:15:15+08:00'
-updated_at: '2026-10-19T04:18:02+08:00'
-completed_at: null
+updated_at: '2026-10-23T10:35:03+08:00'
+completed_at: '2026-10-19T04:39:44+08:00'
 ---
 
 # PR-E 前半：release bump PR（PRD 行 E，仅 bump，不 publish）
@@ -60,3 +60,8 @@ omp 正在实现。范围见 PRD `docs/prd/dsh-sbtd-0.2.0-rc.1.md` 行 E。**本
 |---|---|---|---|---|
 | 2026-10-19T04:15:15+08:00 | planned | in-progress | 任务启动（首个 commit 回填 PRD 行 D） | 分支 feat/dsh-sbtd-0.2.0-rc.1-pr-e-release @ 73f0ca525bf73577560b6ce86d9e7a43ccb94517 |
 | 2026-10-19T04:18:02+08:00 | in-progress | checking | bump + 双语戳 + 钉版断言完成，335/335 绿、pack dry-run 名实相符 | commit 2（本任务分支）；测试输出 pass 335 / fail 0 |
+| 2026-10-19T04:39:44+08:00 | checking | done | 记录回填：PR #99 已合并 | gh pr view 99：MERGED，headRefName=feat/dsh-sbtd-0.2.0-rc.1-pr-e-release 与 branch 一致；merge SHA 1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831；mergedAt=2026-10-19T04:39:45+08:00；git %cI=2026-10-19T04:39:44+08:00；于 2026-10-23T10:35:03+08:00 回填 updated_at |
+
+## 当前值（offline-cache chore 记录回填）
+
+- PR #99 release bump 已合并，status = done；completed_at 取 merge commit 时间，不代表本任务执行了 publish。上文进度保留为历史。用户明确授权本次仅修正文档状态，不重绑定历史 branch，不补造旧事件或重跑历史门禁。
