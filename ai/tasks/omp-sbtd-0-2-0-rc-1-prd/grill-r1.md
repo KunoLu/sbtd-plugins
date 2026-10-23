@@ -4,6 +4,8 @@ Round 1 已全部锁定（Asia/Shanghai）：Q6 A（用户 2026-10-19 11:39）�
 
 已核对、不再问：上游钉 v2.0.2 `1d82494`；先迁移后同步；D1 目标布局（sync 脚本、transform 与 overlays 进 `packages/omp-sbtd/scripts/` 与 `packages/omp-sbtd/upstream/`，钉与 manifest 进插件，`packages/sbtd-workflow-kit` 删除，sourceId 不变）；只发 `next`，`latest`（`0.1.0-rc.2`）不动；annotated tag + 双语 prerelease；任务 A 纯搬移（revision、transformVersion `p0-v3`、sourceId 均不变）；插件目录中文 README 文件名 `README_zh.md`（D6，同根先例，不用 `README.zh.md`）；每个任务 strict；每 PR 首 commit 回填上一行。
 
+> 编排方整理：上段为 2026-10-19 历史锁定；插件中文 README 命名已由 omp PRD §6 R11 改为 `README.zh.md`，2026-10-23 R12 起随 npm 包发布；根 `README_zh.md` 不变。
+
 术语对齐：本轮「迁移」指 D1 的 kit 投影/生成逻辑搬进 `packages/omp-sbtd` 并删除 `packages/sbtd-workflow-kit`；「同步」指任务 B 把上游钉从 `f8aa0d7…`（v1.0.13）升到 `1d82494…`（v2.0.2）。两者不是同一件事，顺序已锁（D2）。
 
 ---
@@ -74,12 +76,16 @@ Round 1 已全部锁定（Asia/Shanghai）：Q6 A（用户 2026-10-19 11:39）�
 
 **Q6** 双语 README 的语言切换链接指向哪，`README_zh.md` 进不进 npm 包？事实（已核验）：npm 只展示包内 `README.md`（npm 自动收录，不占 `files`）；两个包的 `files` 均实测不含 `README_zh.md`（omp-sbtd `package.json:26-39`，dsh-sbtd `package.json:16-22`）；omp-sbtd 的 p0 release validator 在 `scripts/p0/release-validator.ts` 的 `inventoryDeclaredPackageContent`（约 5363-5375 行）硬编码发布物清单（含 `README.md`），新增打包文件须同步该清单与 SBOM；npm 上已发布版本的 README 不可变，而 `blob/main` 链接目标随 main 漂移；release tag `omp-sbtd-v0.2.0-rc.1` 在写 README 时尚不存在。
 
+> 编排方整理：Q6 题干及下列 A/B/C/D 选项保留当时历史，不作为当前命名/打包规则。2026-10-23 R12 起采用 `README.zh.md` 随 npm 包发布（npm 强制打包包根 `README.*`，不受 `files` / `.npmignore` 排除）；命名决定见 omp PRD §6 R11，随包发布决定见 R12。此处历史选项 B 不等同 2026-10-23 群内选 B。
+
 - A. 绝对链接钉 release tag（omp-sbtd：`https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README_zh.md`；dsh 侧行 G 钉 `blob/dsh-sbtd-v0.2.0-rc.2/...`），`README_zh.md` **不进包**：`package.json` files 与 p0 发布物清单均不动，任务 A 字节级 CLEAN 门不受影响。代价：写 README 时 tag 不存在，链接必须在打 tag 后、publish 前点击核验（已列入任务 E 步骤）。
 - B. 钉 tag 链接 + 同时把 `README_zh.md` 打进包：须改 `package.json` files 与 p0 硬编码发布物清单，SBOM 面随之变化。
 - C. 链接指 `blob/main`：链接永远可打开，但已发布 npm 版本的 README 不可变，目标内容随 main 漂移，与发布版本不再一一对应。
 - D. 相对链接（`./README_zh.md`）+ 进包：npm 页面对未入包文件的相对链接无法解析，必须进包（代价同 B），且 GitHub 仓库页与 npm 页的解析基准不同。
 
 推荐 A（已锁定，见下）。理由：npm 只渲染 `README.md`，中文读者经顶部链接跳 GitHub 即可，无需进包；不进包使 files、p0 清单、任务 A CLEAN 门三者零变化，是本 RC 最小 diff；B/D 进包要同时改 p0 硬编码清单与 SBOM 面；C 用可漂移目标换链接永活，违背行 R「EN/ZH 内容对应、版本钉正确」的验收；A 的「写时 tag 不存在」由任务 E 的「打 tag 后、publish 前点击核验」闭环。
+
+> 编排方整理：上述推荐及下列原锁定仅记历史；其「不进包」前提已由 omp PRD §6 R12 取代。英文 `README.md` 默认、顶部 EN/中文互链及 tag 后 publish 前点击核验保持；不追改 omp-sbtd 0.2.0-rc.1 发布物。
 
 > 锁定：✅ 已锁定 **A**（用户 2026-10-19 11:39，Asia/Shanghai）。
 
@@ -88,6 +94,9 @@ Round 1 已全部锁定（Asia/Shanghai）：Q6 A（用户 2026-10-19 11:39）�
 **Q7** dsh-sbtd 是否做双语 README + 仅文档 `0.2.0-rc.2` 发布（即 `docs/prd/dsh-sbtd-0.2.0-rc.1.md` 行 G，已登记为「推荐，待用户确认」）？现状：`packages/dsh-sbtd/README.md` 为中文单语；`@kunolu/dsh-sbtd@0.2.0-rc.1` 已发布（dist-tags `next=0.2.0-rc.1`，`latest=0.1.0-rc.1`）。
 
 - A. 做：独立 PR 把 `packages/dsh-sbtd/README.md` 改 EN 默认 + 新增 `README_zh.md`（D6 命名；顶部互相切换链接，钉 `blob/dsh-sbtd-v0.2.0-rc.2/...`，同 Q6 推荐 A），随后独立发布 docs-only `0.2.0-rc.2`（annotated tag `dsh-sbtd-v0.2.0-rc.2`、双语 prerelease、`npm publish --tag next`、`latest` 不动）；独立 PR、独立 release。
+
+> 编排方整理：Q7 A 保留历史；当前行 G 使用 `README.zh.md` 并随 npm 包发布，命名见 omp PRD §6 R11、随包发布见 R12；独立 PR / docs-only 0.2.0-rc.2 release 与其余门禁不变。
+
 - B. 只做双语 README 的 PR，不发 `0.2.0-rc.2`；npm 页面保持已发布的单语 README，直到下一个功能版。
 - C. 不做，dsh-sbtd 保持中文单语 README。
 
@@ -122,6 +131,6 @@ Round 1 已全部锁定（Asia/Shanghai）：Q6 A（用户 2026-10-19 11:39）�
 | distribution map 决策 | 逐文件 include/omit/replace-with-overlay + reason | 目录级规则（本 RC 不引入） |
 | CLEAN 门 | 嵌入 `kit/`、`skills/`、manifest 哈希、pack 清单与逐文件 sha256 对 `4f7388c` 构建完全一致；唯一例外为 package.json 恰好两处编辑（删 devDep `@kunolu/sbtd-workflow-kit`；`scripts.build` 仅把 kit check-generated 调用替换为插件包内新入口，peerDependencies/devDep omp 钉、`files`、`version` 不变）与根 `pnpm-lock.yaml` 的 kit workspace 包移除 | 「测试绿」子集 |
 | fail-closed 预检（D8） | 需要 5 依赖的入口执行前隔离预检；缺依赖即结构化拒跑（缺失清单 + 手动安装命令）；验签缺 cryptography 一律拒跑；可降级 skipped 的普通入口当前为无 | 自动 pip install / 静默 skipped |
-| README 切换链接（D7） | 钉 release tag 的绝对链接（`blob/omp-sbtd-v0.2.0-rc.1/...`），打 tag 后、publish 前点击核验；`README_zh.md` 不进 npm 包，files 与 p0 清单不变 | `blob/main` 漂移链接 / 进包改 files 与 p0 清单 |
+| README 切换链接（D7） | 钉 release tag 的绝对链接（`blob/omp-sbtd-v0.2.0-rc.1/...`），打 tag 后、publish 前点击核验；`README_zh.md` 不进 npm 包，files 与 p0 清单不变（编排方整理：本格及右格保留历史；2026-10-23 R12 起由 `README.zh.md` 随包发布取代，见 omp PRD §6 R11/R12） | `blob/main` 漂移链接 / 进包改 files 与 p0 清单 |
 | 宿主 smoke 硬门（D11） | omp 18.11.1 真实宿主 smoke（插件加载、工具/hooks 注册、onboard 冒烟）PASS 是任务 C 验收项、任务 E 前置；失败修到通过 | 退回旧 peer range 的退路（不存在） |
 | 回填 | 每个 PR 首 commit 回填上一行的 PR/merge SHA/done 时间（+08:00） | 当行自填 |

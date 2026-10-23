@@ -14,6 +14,7 @@
 - [dsh-sbtd-fu3-multi-fact-persist](archive/2026-Q3/dsh-sbtd-fu3-multi-fact-persist/task.md)
 - [dsh-sbtd-fu4-clarify-schema-ddd](archive/2026-Q3/dsh-sbtd-fu4-clarify-schema-ddd/task.md)
 - [dsh-sbtd-fu4-clarify-schema-grill](archive/2026-Q3/dsh-sbtd-fu4-clarify-schema-grill/task.md)
+- [dsh-sbtd-prd-readme-zh-shipped](dsh-sbtd-prd-readme-zh-shipped/task.md)
 - [dsh-sbtd-readme-host-pin-0-2-0-rc-2](dsh-sbtd-readme-host-pin-0-2-0-rc-2/task.md)
 - [dsh-sbtd-t10-sbtd-validate-ddd](archive/2026-Q3/dsh-sbtd-t10-sbtd-validate-ddd/task.md)
 - [dsh-sbtd-t10-sbtd-validate-grill](archive/2026-Q3/dsh-sbtd-t10-sbtd-validate-grill/task.md)
