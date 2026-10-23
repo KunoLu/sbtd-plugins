@@ -4,11 +4,11 @@ id: sbtd-rc2-closeout
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict 收尾；四个逻辑提交；主会话唯一 writer；仅授权本地提交，不授权远端写入或发布。
-status: checking
+status: done
 branch: chore/omp-sbtd-rc2-closeout
 created_at: '2026-10-23T21:12:56+08:00'
-updated_at: '2026-10-23T21:31:41+08:00'
-completed_at: null
+updated_at: '2026-10-23T22:31:43+08:00'
+completed_at: '2026-10-23T22:31:43+08:00'
 ---
 # SBTD rc.2 closeout
 
@@ -51,6 +51,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-23T21:12:56+08:00 | planned | in-progress | 编排方整理：建立 strict 收尾记录 | 实际分支／基线／路径／ignore 与 npm、GitHub 初次核验通过 |
 | 2026-10-23T21:31:41+08:00 | in-progress | checking | 编排方整理：四类修改已实现，包测试／实际 tarball／历史边界检查通过，进入最终独立复核及提交绑定 | omp 917 passed / 3 env-gated skipped；dsh 342 passed；packed check 472 files；8 task YAML；旧历史保留及 PRD 单元格边界通过；用户 2026-10-23 21:15 +08:00 群内确认：合入后补一个仅改本收尾 task 状态的回填 commit，Lord 记录 |
+| 2026-10-23T22:31:43+08:00 | checking | done | 用户 2026-10-23 21:15 +08:00 群内确认（合入后补该项回填 commit），Lord 记录；编排方整理：#125 已 squash-merge | 编排方整理：PR #125 https://github.com/KunoLu/sbtd-plugins/pull/125，merge SHA `d7d799b8b1e5aa91d986f74119b9d2d4e4c3b993`（`gh pr view 125 --repo KunoLu/sbtd-plugins --json mergedAt,mergeCommit`）；Git `%cI` = `2026-10-23T22:31:43+08:00`（`git show -s --format=%cI d7d799b`）；GitHub mergedAt = `2026-10-23T22:31:43+08:00`（原值 `2026-10-23T14:31:43Z`）；Reviewy CLEAN @ `234416d`（编排方整理）；CI run 39968589728 `omp-runtime-linux-probe`，head `234416db963660501a7e5b2f4575d768baff492c`，success，1/1 job success（`gh run view 39968589728 --repo KunoLu/sbtd-plugins --json conclusion,headSha,jobs`） |
 
 ## 事实核验（2026-10-23T21:12:56+08:00）
 
