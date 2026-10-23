@@ -78,3 +78,28 @@ completed_at: null
 - Release Readiness Review：**ready（仅 PREP）**。风险为包身份、文件清单、SBOM/staging 一致性，已通过校验；容量/背压/新遥测不适用，无服务、迁移、全局配置或运行时逻辑变化。回滚为本次范围内提交，无用户数据回滚。no tag / no publish / no GitHub release；Lord 在合并后处理发布及语言链接核验，本记录不声称在线链接通过。
 - 最终运行输入共 **1975** 个 package/workspace 文件取 SHA256；提交后与 Git blob 逐项绑定。证据为 developer-local / dirty / local-only，不冒充 CI；提交后核对结果单独保留 `reports/final-repository-checks.json/.md`，交付对话列明最终 SHA 与检查结果。
 - 偏差仅为必要 blockers 修复：补齐 promotion 源路径与 fixture、替换陈旧 handoff 文案；build 先于 test 以避免已知 SBOM 漂移。package.json files 无需改，lockfile 无需改；docs/prd 与 dsh-sbtd 保持不变。专用 grep 替代 shell rg，不降低扫描范围。TaskStore 历史 schema blocker 保留，不能承诺自动恢复或跨机 ignored reports 可用。
+
+## 合并与 FINAL 执行记录补记（2026-10-23，编排方整理）
+
+- 由 #124 交付；squash merge `2393d10c3fb1a1f3cb756a351297a430fd2afc81`。Git `%cI` 为 `2026-10-23T20:39:29+08:00`；GitHub mergedAt 为 `2026-10-23T20:39:30+08:00`，分别核验，不混用。
+- 编排方整理：Reviewy CLEAN @ `7432be486b42c3b7326ed1b0574d0bab38b30739`。GitHub CI `omp-runtime-linux-probe` run `39954216679` 在同一 head 上 1/1 success，收尾会话已通过 `gh run view` 重核。
+- 编排方整理：下表为 #124 FINAL 模型记录，不是收尾会话的模型统计。执行窗口 20:03:22 → 20:27:12（2026-10-23 +08:00），exit 0；无 advisor、无执行模型 fallback，watchdog 未触发。
+
+| 角色 | 实际模型／effort | assistant msgs | tool calls |
+|---|---|---|---|
+| ping | openai-codex/gpt-6-astra:high | 1 | 0 |
+| main | openai-codex/gpt-6-astra:high | 50 | 101 |
+| PackageReview | reviewer subagent kimi-code/k3；agent default @slow=k3:max；spawned effort=hi，实际 max | 67 | 74 |
+| DocsReview | reviewer subagent kimi-code/k3；spawned effort=hi，实际 max | 13 | 20 |
+
+- 编排方整理：title-gen ping pid 428237 为 0；main pid 428413：main 7 次、无 title，依序 composer-2.5 → k3-256k → deepseek-flash response error → gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol，均无 title；grok-4.7/4.6 计入 title-gen fallback。PackageReview 1 次（composer-2.5 success）；DocsReview 2 次（composer-2.5 none、k3-256k success）。title-gen fallback 与执行模型无 fallback 是不同统计口径。
+
+## rc.2 发布补记（2026-10-23，编排方整理）
+
+- 编排方整理：发布由 Lord 执行。annotated tag `omp-sbtd-v0.2.0-rc.2`，tag object `d22a877b449cfde587f2f0041ab27256176df765` → `2393d10c3fb1a1f3cb756a351297a430fd2afc81`，tagger `2026-10-23T20:40:57+08:00`；收尾会话已通过 Git 重核。
+- [GitHub prerelease](https://github.com/KunoLu/sbtd-plugins/releases/tag/omp-sbtd-v0.2.0-rc.2) createdAt `2026-10-23T20:40:57+08:00`，publishedAt `2026-10-23T20:41:17+08:00`，prerelease=true；releases/latest HTTP 404。收尾会话已通过 GitHub API 重核。
+- 编排方整理：publish 前两个 tag-bound README 链接均 HTTP 200；收尾会话再次请求 `blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.md` 和 `README.zh.md`，均 HTTP 200。
+- 编排方整理：从 `2393d10` clean worktree 重新 pack，472 files，check-package exit 0，tarball SHA256 `3b6c696e15798146251712498672f92bc01a089d3e536273d00ec3d23f49604b`。npm dist.shasum `543fa7c3decdb0f6ca8faef98e90bd6eff3ad362`、dist.fileCount 472 已通过 `npm view` 重核。
+- npm `time['0.2.0-rc.2']` 为 `2026-10-23T12:44:10.098Z`，即 `2026-10-23T20:44:10+08:00`（保留原始毫秒值作为证据）。编排方整理：先发布到 next，再将 latest 指向 rc.2；收尾会话查询结果 latest=next=`0.2.0-rc.2`。
+- 编排方整理：OMP 自提 nit，由 chore/omp-sbtd-rc2-closeout 分支的 PR 交付：在既有真实 pack 场景显式断言包含 `README.zh.md` 且不含 `README_zh.md`，不再增加第二次 pack。
+- 以上发布事实解除历史 PREP-only 发布边界；历史验证与限制原文保留。checking → done 事件在收尾提交 2 追加，completed_at 采用 #124 GitHub mergedAt（20:39:30），事件证据同时引用本节稍后完成的发布记录，不将 npm 发布时间当作合并时间。
