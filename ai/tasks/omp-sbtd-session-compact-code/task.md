@@ -7,7 +7,7 @@ mode_note: 编排方整理：按明确交付执行 strict；唯一 writer；由 
 status: checking
 branch: feat/omp-sbtd-session-compact
 created_at: '2026-10-23T19:01:18+08:00'
-updated_at: '2026-10-23T19:40:43+08:00'
+updated_at: '2026-10-23T19:42:33+08:00'
 completed_at: null
 ---
 # session_compact v2 代码与隔离宿主验证
@@ -115,3 +115,12 @@ pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/host-event/run-live-cell.ts
 - Native/raw 与同stem中文汇总均保留在受保护 `reports/`，包括 `WindowReview`、`VersionReview`、`real-capture-negative-smoke`；生成报告不冒充公开认证。未生成长期lesson：本轮修正已有PRD/契约的执行缺口，行为规则已落入BDD/testing，不复制身份相关长期记录。
 - 源码绑定：最终静态检查后对183个源码/脚本/测试/feature/当前契约/manifest/lock文件取SHA256，最终suite、live与review后逐一核对不变；提交后继续与Git blob核对，避免用旧HEAD冒充新源码验证。
 - task保持 **checking / completed_at null**；由 `feat/omp-sbtd-session-compact` 分支及后续 PR 交付。后续合并回填另追加done事件；不将实现、验证、部署、发布混为一项完成。
+
+## 提交绑定与范围终检（2026-10-23T19:42:33+08:00）
+
+- 代码提交：`2311a410ca739899b0ad3eaf0e14d4ef7d78ac3d`（35 files，包含runtime模块76%相似度重命名）；首个独立历史回填提交 `a48592459cfd6d01825629f7c27c395ca7e7d01f`。代码提交只在两轮真实18.11.1 live method=handoff证明、完整验证与独立审查闭环后创建。
+- 已将最终验证时保存的183个源码/脚本/测试/feature/当前契约/manifest/lock摘要逐一与 `2311a41` Git blob核对：**全部一致**。这是已有本地运行与代码提交的字节绑定，不捏造在新SHA上重新执行完整suite或远端CI。
+- `git diff --check origin/main..HEAD` **exit 0**；`git diff --stat origin/main..HEAD` 为 **36 files，1157 insertions / 302 deletions**（包含首个回填）；完整stat保留 `reports/committed-diff-stat.txt`。后续仅此task追加终检证据，因此最终stat行数可以增加，不把该历史计数覆盖。
+- `git diff origin/main..HEAD -- docs/prd/omp-sbtd-session-compact.md` **empty**；package.json、pnpm-lock同样empty。无 dsh-sbtd、README_zh rename、CHANGELOG release stamping、历史ledger/evidence修改。
+- committed新增行禁词检索 **0 hits**；所有changed文件冲突标记 **0**；两份task frontmatter YAML可解析，当前task严格为checking且completed_at null；#122原正文与历史事件逐行、顺序保留（只更新其当前完成字段并追加记录）。
+- 本节是文档证据追加，不改变上述已验证代码；最终提交列表与最后HEAD范围检查由交付输出列明。受保护reports不是公开认证材料，源码字节绑定不承诺TaskStore自动恢复或跨机本地报告可用。
