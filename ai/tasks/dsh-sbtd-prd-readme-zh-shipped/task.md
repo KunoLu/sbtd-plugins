@@ -7,7 +7,7 @@ mode_note: 编排方整理：本任务采用 strict、唯一 writer、两个本�
 status: done
 branch: docs/prd-dsh-readme-zh-shipped
 created_at: '2026-10-23T16:20:38+08:00'
-updated_at: '2026-10-23T16:43:53+08:00'
+updated_at: '2026-10-23T17:29:07+08:00'
 completed_at: '2026-10-23T16:37:30+08:00'
 ---
 # dsh-sbtd 中文 README 命名与随包发布：PRD-only
@@ -143,3 +143,8 @@ completed_at: '2026-10-23T16:37:30+08:00'
 
 - 编排方整理：无 subagents，无 fallback model；fix1 在启动前中止，usage=0。此处主任务模型路由与下列 title-gen fallback 分开统计。
 - 编排方整理：title-gen 日志 `~/.omp/logs/omp.2026-10-23.<pid>.log`：pid 224808（ping）0 requests；pid 225930（main）8 requests，先 composer-2.5 success ×1，再经历未产出标题的 7-model chain：composer-2.5 → kimi-code/k3-256k → deepseek-flash（401 provider-response-error）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol；grok-4.7/4.6 计为 fallback。不把标题生成统计当主任务模型计数，也不冒充本轮日志复核。
+
+## #119 FINAL 记录补正（2026-10-23）
+
+- 编排方整理：基线第 144 行「fix1 在启动前中止，usage=0」无法核验；fix1 是否在启动前中止、usage 是否为 0 均记为 **未知**。本条取代该句的确定性断言，原行及其余 FINAL/SNAPSHOT 保持原样；不把缺失证据推断为零使用量。
+- 编排方整理：本轮仅追加历史记录纠正并更新 updated_at，保留 done、completed_at 与原 branch；不重新执行 #119 lifecycle、不重绑定、不调用 TaskStore 或写 active pointer。
