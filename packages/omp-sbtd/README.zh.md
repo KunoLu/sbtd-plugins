@@ -28,9 +28,9 @@ omp --version
 
 ## 安装
 
-以下命令固定 `@kunolu/omp-sbtd@0.2.0-rc.2`，供该版本发布后使用。
-发布与本次 README/version bump 分开；版本号或 CHANGELOG 日期均不证明
-registry 可用性或 dist-tag 状态。该版本要求 omp `>=18 <19`；
+`@kunolu/omp-sbtd@0.2.0-rc.2` 已于 2026-10-23 20:44:10 +08:00
+发布到 npm；dist-tag `next` 与 `latest` 均指向该版本。
+以下命令固定该发布版本。它要求 omp `>=18 <19`，已在 `18.11.1` 上实测；
 omp 17.x 用户须显式钉旧的 0.1.x 版本。
 
 为便于复现，建议优先固定精确 RC 版本，而不是使用 `@latest` 等会移动的 dist-tag：

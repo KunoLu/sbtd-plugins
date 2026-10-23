@@ -20,12 +20,12 @@ SBTD host-plugin monorepo: OMP and DSH host adapters, with the OMP workflow kit 
 
 | Package | Path | Role |
 | --- | --- | --- |
-| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Version **0.2.0-rc.2**; publication is separate from the version bump. |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter (T5): sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.1** on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
+| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Published **0.2.0-rc.2** on npm dist-tags `next` and `latest`. |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter: sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.2** on npm dist-tags `next` and `latest`. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
 
 ## Install
 
-The command below pins `@kunolu/omp-sbtd@0.2.0-rc.2` for use once that version is published. A version bump does not prove registry availability or dist-tag state. This version requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x version.
+`@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on 2026-10-23 20:44:10 +08:00; dist-tags `next` and `latest` point to it. The command below pins that release. This version requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x version.
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
@@ -39,7 +39,7 @@ For 0.2.0-rc.2, the host peer is `@oh-my-pi/pi-coding-agent` `>=18 <19`; the dev
 
 DSH host pin: @deepseek-ai/dsh@0.2.0-rc.2.
 
-DSH plugin **0.2.0-rc.1** is published on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Install with `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.2.0-rc.2`. Never `@latest` or a github path.
+DSH plugin **0.2.0-rc.2** is published on npm dist-tags `next` and `latest` (2026-10-23 17:08:50 +08:00). The existing installation guidance remains: use `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.2.0-rc.2`, not `@latest` or a GitHub path.
 
 ```bash
 npx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next

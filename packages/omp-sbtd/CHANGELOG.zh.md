@@ -25,6 +25,10 @@
 与 [#122](https://github.com/KunoLu/sbtd-plugins/pull/122)（契约决定）。
 本条日期记录准备工作，不代表发布。
 
+### 发布
+
+- Annotated tag `omp-sbtd-v0.2.0-rc.2`；GitHub prerelease 发布时间 2026-10-23 20:41:17 +08:00；npm 发布时间 2026-10-23 20:44:10 +08:00；dist-tag `next` 与 `latest` 均指向 `0.2.0-rc.2`。
+
 ## [0.2.0-rc.1] - 2026-10-22
 
 ### Breaking（破坏性变更）

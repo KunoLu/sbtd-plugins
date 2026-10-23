@@ -20,6 +20,11 @@ With `@deepseek-ai/dsh@0.2.1-rc.2`, npm can report `ERESOLVE` because its defaul
 
 Install from dist-tag `next`.
 
+`0.2.0-rc.2` was published to npm on 2026-10-23 17:08:50 +08:00;
+both `next` and `latest` point to it. GitHub prerelease:
+[`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2).
+The existing `@next` installation guidance is unchanged.
+
 Use `@next`, not the bare package name, `@latest`, or a GitHub path:
 
 ```bash

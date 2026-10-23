@@ -20,6 +20,11 @@ DSH 宿主上的 SBTD workflow 适配器，提供短中文 sbtd section、hooks�
 
 从 dist-tag `next` 安装。
 
+`0.2.0-rc.2` 已于 2026-10-23 17:08:50 +08:00 发布到 npm；
+`next` 与 `latest` 均指向该版本。GitHub prerelease：
+[`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2)。
+现有 `@next` 安装指引保持不变。
+
 使用 `@next`，不要使用裸包名、`@latest` 或 GitHub 路径：
 
 ```bash
