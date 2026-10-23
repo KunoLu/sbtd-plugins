@@ -1,6 +1,6 @@
 # omp-sbtd：session_compact handoff 证据 PRD
 
-状态：**PRD-only；D1–D5 已决定（decided）：D1-B / D2-A / D3-B（v2）/ D4-A / D5-A**。本文件交付已登记 follow-up 的步骤 (a)，不代表代码、CI、硬失败恢复或发布已完成；本次仅本地文档提交。
+状态：**PRD-only；D1–D5 已决定（decided）：D1-B / D2-A / D3-B（v2）/ D4-A / D5-A**。本文件交付已登记 follow-up 的步骤 (a)，由 #122 PRD-only PR 交付；代码/CI/硬失败恢复未执行，不代表发布已完成。
 
 ## 1. 来源与范围
 
@@ -133,10 +133,12 @@
 
 | 步骤 | 内容 | 本轮状态 |
 |---|---|---|
-| (a) PRD-only | 本文写入新判据、现状证据、D1–D5 与验收边界；#120 草案已合并，本次补入已确认决定 | D1-B / D2-A / D3-B（v2）/ D4-A / D5-A 已决定；本次仅本地文档交付，未执行新的远端 PR/合并 |
+| (a) PRD-only | 本文写入新判据、现状证据、D1–D5 与验收边界；#120 草案已合并，#122 补入已确认决定 | D1-B / D2-A / D3-B（v2）/ D4-A / D5-A 已决定；由 #122 PRD-only PR 交付；代码/CI/硬失败恢复未执行 |
 | (b) 代码 PR | 在裁决后同步 inventory/adapter schema、runtime 订阅、observer、driver 关联证据、validator、tests、BDD 与 CI live cell；按 D3 同步实际受影响的 contract/evidence 引用 | 未开始；本 PRD 不修改这些文件 |
 | (c) 合并切换 | 代码 PR 的新判据与预合并验证通过后合并，主线 HANDOFF_EVENT_UNOBSERVABLE 恢复硬失败；保留旧证据的历史语义 | 未执行；不把 (a) 完成或文档合并当作恢复完成 |
 
-更新（2026-10-23，编排方整理）：#120 草案已开 PR 并以 `67465db93e7c6f1e6f5f43704c1d4c22ae74306d` squash-merge（git %cI `2026-10-23T17:56:18+08:00`；GitHub mergedAt `2026-10-23T17:56:19+08:00`）。其后 §1 的 18:30 / 18:31 群内确认已决定 D1–D5 与 v2；步骤 (b)/(c) 未完成，不把文档合并或裁决当作硬失败恢复。
+更新（2026-10-23，编排方整理）：步骤 (a) 的「未开 PR、未合并」是历史快照；#120 已开 PR 并以 `67465db93e7c6f1e6f5f43704c1d4c22ae74306d` squash-merge（git %cI `2026-10-23T17:56:18+08:00`；GitHub mergedAt `2026-10-23T17:56:19+08:00`）。D1–D5 仍 **open / pending**；步骤 (b)/(c) 未完成，不把文档合并当作硬失败恢复。
+
+更新（2026-10-23，编排方整理）：用户 2026-10-23 18:30 +08:00 群内确认（采纳 D1-B/D2-A/D3-B/D4-A/D5-A，与 OMP/Researchy/Reviewy 投票一致），Lord 记录；用户 2026-10-23 18:31 +08:00 群内确认（v2，开始），Lord 记录（`omp-extension-v2` / `omp-host-events-v2`）；由 #122 PRD-only PR 交付；代码/CI/硬失败恢复未执行。
 
 后续实现须由同一批准的 inventory 派生订阅/validator 清单，避免 observer、runtime、tests 手工分叉；这些是现有单一真源约束的延续，不新增第二套 registry。与新判据有关的 docs/spec、现有说明和发布材料应由后续代码/发布任务按授权更新；本轮不越界。回退本 PRD 的本地提交只影响文档，不恢复或改变任何宿主行为。
