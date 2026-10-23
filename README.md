@@ -64,8 +64,9 @@ Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](do
 
 This repository ships **two host plugins** only: `omp-sbtd` and `dsh-sbtd`.
 
-- **omp-sbtd** version `0.2.0-rc.2`: publication is separate from the version bump. The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
-- **dsh-sbtd** uses shell plugin scheme **2a**. **T0–T5** are done on `main` (section, state, `sbtd_plan`, `sbtd_review`, hooks, manuals). Later tasks remain. Details: [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md).
+- **omp-sbtd** `0.2.0-rc.2` is published on npm dist-tags `next` and `latest`, with GitHub prerelease [`omp-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/omp-sbtd-v0.2.0-rc.2). The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
+- **dsh-sbtd** `0.2.0-rc.2` is published on npm dist-tags `next` and `latest`, with GitHub prerelease [`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2). It uses shell plugin scheme **2a**. **T0–T5** and the [0.2.0-rc.1/rc.2 task rows 0–G](docs/prd/dsh-sbtd-0.2.0-rc.1.md#3-任务表) are done. Earlier technical design: [`v1.2`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md).
+- **session_compact** shipped in `omp-sbtd 0.2.0-rc.2`: PRD [#120](https://github.com/KunoLu/sbtd-plugins/pull/120) (`67465db`), decisions [#122](https://github.com/KunoLu/sbtd-plugins/pull/122) (`6843878`), and code [#123](https://github.com/KunoLu/sbtd-plugins/pull/123) (`008cea7`) are merged. It is a required event under `omp-extension-v2` / `omp-host-events-v2`; handoff proof requires a correlated event with `compactionEntry.method === "handoff"`.
 
 ## Development
 

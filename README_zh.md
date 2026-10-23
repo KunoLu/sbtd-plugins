@@ -64,8 +64,9 @@ dsh web --no-open
 
 本仓库只交付 **两个宿主插件**：`omp-sbtd` 与 `dsh-sbtd`。
 
-- **omp-sbtd** 版本 `0.2.0-rc.2`：发布与版本 bump 分开。内嵌 kit 锁定 **640-skills v2.0.2**。同步、投影与生成现位于 `packages/omp-sbtd`，原私有 kit workspace 包已删除。兼容性认证与发布解耦。
-- **dsh-sbtd** 采用 shell plugin scheme **2a**。**T0–T5** 已在 `main` 完成（section、state、`sbtd_plan`、`sbtd_review`、hooks、manuals）。后续任务仍待做。细节见 [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md)。
+- **omp-sbtd** `0.2.0-rc.2` 已发布到 npm dist-tag `next` 与 `latest`，GitHub prerelease 为 [`omp-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/omp-sbtd-v0.2.0-rc.2)。内嵌 kit 锁定 **640-skills v2.0.2**。同步、投影与生成现位于 `packages/omp-sbtd`，原私有 kit workspace 包已删除。兼容性认证与发布解耦。
+- **dsh-sbtd** `0.2.0-rc.2` 已发布到 npm dist-tag `next` 与 `latest`，GitHub prerelease 为 [`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2)。采用 shell plugin scheme **2a**；**T0–T5** 及 [0.2.0-rc.1/rc.2 任务表 0–G 行](docs/prd/dsh-sbtd-0.2.0-rc.1.md#3-任务表) 均已完成。前代技术设计见 [`v1.2`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md)。
+- **session_compact** 已随 `omp-sbtd 0.2.0-rc.2` 发布：PRD [#120](https://github.com/KunoLu/sbtd-plugins/pull/120)（`67465db`）、decisions [#122](https://github.com/KunoLu/sbtd-plugins/pull/122)（`6843878`）、code [#123](https://github.com/KunoLu/sbtd-plugins/pull/123)（`008cea7`）均已合并。它是 `omp-extension-v2` / `omp-host-events-v2` 的必需事件；handoff 证明须关联事件且满足 `compactionEntry.method === "handoff"`。
 
 ## 开发
 

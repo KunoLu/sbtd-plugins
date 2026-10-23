@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-2-prep
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict release PREP；唯一 writer；两个逻辑提交；不执行远端写入或发布。
-status: checking
+status: done
 branch: chore/omp-sbtd-0.2.0-rc.2-prep
 created_at: '2026-10-23T20:04:08+08:00'
-updated_at: '2026-10-23T20:23:06+08:00'
-completed_at: null
+updated_at: '2026-10-23T20:39:30+08:00'
+completed_at: '2026-10-23T20:39:30+08:00'
 ---
 # omp-sbtd 0.2.0-rc.2 release PREP
 
@@ -39,6 +39,7 @@ completed_at: null
 | 2026-10-23T20:04:08+08:00 | planned | in-progress | 编排方整理：建立 strict release PREP 记录 | 根、分支、基线、路径和 ignore 核对；现有发布先例与清单已读 |
 | 2026-10-23T20:10:16+08:00 | in-progress | checking | 编排方整理：版本、文档与发布物清单准备完成，进入完整验证及独立复核 | build 已生成 rc.2 SBOM 且包含中文文档；原生命令序列运行中；PackageReview / DocsReview 只读复核 |
 | 2026-10-23T20:23:06+08:00 | checking | checking | 编排方整理：验证及独立审查闭环，按范围保持 checking | 46 files / 917 passed / 3 env-gated skipped；真实 npm tarball 与 P0 check-package 通过；PackageReview / DocsReview correct；发布由 Lord 合并后处理 |
+| 2026-10-23T20:39:30+08:00 | checking | done | 编排方整理：#124 已合并且 rc.2 发布完成；按本仓约定以 GitHub mergedAt 记完成时间 | #124 squash 2393d10c3fb1a1f3cb756a351297a430fd2afc81；本文追加发布记录：tag omp-sbtd-v0.2.0-rc.2，GitHub prerelease 20:41:17、npm 20:44:10（2026-10-23 +08:00），latest=next=0.2.0-rc.2 |
 
 ## 验证计划
 
