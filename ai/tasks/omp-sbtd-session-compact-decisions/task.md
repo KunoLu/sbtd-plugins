@@ -4,11 +4,11 @@ id: omp-sbtd-session-compact-decisions
 workflow_mode: default
 mode_source: default
 mode_note: 编排方整理：独立 PRD-only 决策记录沿用 default，未选择其他执行模式；唯一 writer；由 #122 PRD-only PR 交付，fix1 仅新增一个文档提交，不 push、不发布 PR 评论、不改全局配置。
-status: checking
+status: done
 branch: docs/omp-sbtd-session-compact-decisions
 created_at: '2026-10-23T18:36:09+08:00'
-updated_at: '2026-10-23T18:51:33+08:00'
-completed_at: null
+updated_at: '2026-10-23T18:58:43+08:00'
+completed_at: '2026-10-23T18:58:43+08:00'
 ---
 # session_compact D1–D5 决策：PRD-only
 
@@ -67,6 +67,7 @@ completed_at: null
 | 2026-10-23T18:36:09+08:00 | planned | in-progress | 编排方整理：建立独立 default 共享决策记录，不重开 #120 done task | 分支/路径/ignore/tracked 检查；两条群内确认；真实 v1 标识只读核对；首个本地回填提交 5363876 |
 | 2026-10-23T18:39:30+08:00 | in-progress | checking | 编排方整理：D1–D5 与 v2、source-only 补证、四项代码 PR 门禁已写入；本地文档验证通过，等待后续独立 PR/合并，不标 done | python3 文档 smoke：7 个允许文件、3 份 task YAML、追加保护、10 条原选项保留、当前决定、渲染/链接/锚点/index、删除白名单均通过；whitespace exit 0 |
 | 2026-10-23T18:51:33+08:00 | checking | checking | Reviewy 审查 #122 @ 9dc48f0 NOT CLEAN（2 项），编排方整理：fix1 恢复 §5 日期历史记录并追加确认；修正当前交付措辞，历史验证及事件不改 | c90fddb 两条日期记录为字节基准；7 文件新增行时效措辞检索与处置见下节；状态保持 checking、completed_at null |
+| 2026-10-23T18:58:43+08:00 | checking | done | 编排方整理：#122 经 Reviewy 对 100614b CLEAN 后由 Lord admin squash 合并 | squash 684387835b27d46b3b96b01f2015e42fe7937b12；git %cI 与 GitHub mergedAt 均为 2026-10-23T18:58:43+08:00；omp-runtime-linux-probe run 39942299079 在 100614b 上 1/1 success |
 
 ## 本次验证与交付边界
 
@@ -104,3 +105,26 @@ completed_at: null
 
 - 验证范围：原生 Git/Python 文档检查、三个 changed task 的 YAML 解析、Markdown 渲染 smoke、日期记录字节比较、历史追加保护、删除白名单、冲突与新增行归因检查；最终 committed SHA 的实际结果在交付输出，不预写通过。
 - 跳过：代码 lint/build/typecheck、单元/集成/E2E/BDD、宿主 live cell、CI、发布；fix1 仅修复文档与历史记录。rtk=not-needed，Graft=skipped；不重跑历史 TaskStore blocker、不调用 lifecycle，不声称自动恢复通过。
+
+## #122 合并回填与 FINAL 模型记录（2026-10-23）
+
+- 编排方整理：#122 已由 Lord admin squash 合并，squash SHA `684387835b27d46b3b96b01f2015e42fe7937b12`。git `%cI` 与 GitHub `mergedAt` 均为 `2026-10-23T18:58:43+08:00`；本分支入口 Git 已核对提交及 `%cI`，GitHub、审查、CI 与模型统计按编排方材料记录。
+- 编排方整理：Reviewy 对 `100614b` 为 CLEAN；CI `omp-runtime-linux-probe` run `39942299079` 在 `100614b` 上 **1/1 success**。该历史结果不代表后续 session_compact v2 实现认证。
+
+| 会话 | provider/model / thinking | assistant msgs | tool calls |
+|---|---|---:|---:|
+| ping | openai-codex/gpt-6-astra / high | 1 | 0 |
+| main | openai-codex/gpt-6-astra / high | 17 | 48 |
+| fix1-ping | openai-codex/gpt-6-astra | 1 | 0 |
+| fix1 | openai-codex/gpt-6-astra / high | 13 | 22 |
+
+- 编排方整理：上述 FINAL 主执行统计无 subagents、无 advisor、无 fallback；标题生成单列，不混入主执行统计。
+
+| Title-gen 会话 / pid | requests | 结果 |
+|---|---:|---|
+| ping / 333612 | 0 | 无请求 |
+| main / 333773 | 2 | composer-2.5 success ×2 |
+| fix1-ping / 345085 | 0 | 无请求 |
+| fix1 / 345244 | 5 | composer-2.5 success；第二链 composer-2.5 none → k3-256k none → deepseek-flash provider-response-error → gpt-6-astra success；未到 grok fallback |
+
+- 编排方整理：此回填只追加合并与 FINAL 事实并更新当前完成字段，保留原分支、历史事件及逐轮验证文字；不重绑定旧任务、不重跑已知 TaskStore 全库历史 schema blocker，不声称 helper lifecycle 或自动恢复通过。代码由 `feat/omp-sbtd-session-compact` 分支及后续 PR 交付。
