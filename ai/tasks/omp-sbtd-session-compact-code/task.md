@@ -4,11 +4,11 @@ id: omp-sbtd-session-compact-code
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：按明确交付执行 strict；唯一 writer；由 feat/omp-sbtd-session-compact 分支及后续 PR 交付；不修改 PRD 裁决、全局 omp 或发布配置。
-status: checking
+status: done
 branch: feat/omp-sbtd-session-compact
 created_at: '2026-10-23T19:01:18+08:00'
-updated_at: '2026-10-23T19:42:33+08:00'
-completed_at: null
+updated_at: '2026-10-23T20:01:45+08:00'
+completed_at: '2026-10-23T20:01:45+08:00'
 ---
 # session_compact v2 代码与隔离宿主验证
 
@@ -39,6 +39,7 @@ completed_at: null
 | 2026-10-23T19:15:04+08:00 | in-progress | checking | 编排方整理：v2 实现与首轮真实 handoff 通过，进入完整验证及独立 review；完成只由合并回填确认 | 18.11.1 live run-1792753752427-7153a6ad；focused-handoff 74 passed / 1 env-gated skipped；focused-history 144 passed / 1 env-gated skipped |
 | 2026-10-23T19:32:13+08:00 | checking | checking | 编排方整理：审查修正与最终完整套件、第二轮 frozen-tarball live 均通过；保留 checking 待合并回填 | 917 passed / 0 failed / 3 skipped；run-1792754760821-9e927e73 handoffObserved=true；VersionReview 两项闭环；WindowReview 结果另追加 |
 | 2026-10-23T19:40:43+08:00 | checking | checking | 编排方整理：两项独立review无阻断项，release readiness在代码交付范围ready；完成时间留待合并回填 | WindowReview / VersionReview correct；917 passed / 3 skipped；最终live与负例smoke通过；183个源码/测试/契约文件摘要保持一致 |
+| 2026-10-23T20:01:45+08:00 | checking | done | 编排方整理：#123 由 Lord admin squash-merge，回填完成 | squash 008cea74dfbab5ce2c688c2c42e4bd8cfeddfe5f；git %cI 与 GitHub mergedAt 均为 2026-10-23T20:01:45+08:00；Reviewy CLEAN；CI run 39949600365 success |
 
 ## 验证记录
 
@@ -124,3 +125,11 @@ pnpm --filter @kunolu/omp-sbtd exec tsx scripts/p0/host-event/run-live-cell.ts
 - `git diff origin/main..HEAD -- docs/prd/omp-sbtd-session-compact.md` **empty**；package.json、pnpm-lock同样empty。无 dsh-sbtd、README_zh rename、CHANGELOG release stamping、历史ledger/evidence修改。
 - committed新增行禁词检索 **0 hits**；所有changed文件冲突标记 **0**；两份task frontmatter YAML可解析，当前task严格为checking且completed_at null；#122原正文与历史事件逐行、顺序保留（只更新其当前完成字段并追加记录）。
 - 本节是文档证据追加，不改变上述已验证代码；最终提交列表与最后HEAD范围检查由交付输出列明。受保护reports不是公开认证材料，源码字节绑定不承诺TaskStore自动恢复或跨机本地报告可用。
+
+## #123 合并回填与 FINAL 模型记录（2026-10-23T20:01:45+08:00）
+
+- 编排方整理：#123 由 Lord admin squash-merged 为 `008cea74dfbab5ce2c688c2c42e4bd8cfeddfe5f`；git `%cI` 与 GitHub `mergedAt` 均为 `2026-10-23T20:01:45+08:00`。本次实际核对本地 Git SHA/%cI；GitHub、CI 与模型统计按编排方材料回填，不冒充本会话重新执行。
+- 编排方整理：Reviewy **CLEAN @ 512f5ba41028b57450e42acc2d80e3738eb1df8e**；`omp-runtime-linux-probe` run **39949600365** 在 `512f5ba` 上 **1/1 success**。CI live cell 使用 lockfile-pinned **18.11.1**，`handoffObserved=true`、profile `omp-host-events-v2`、outcome `passed-with-diagnostics`。
+- 编排方整理：FINAL（assistant msgs / tool calls）：ping `openai-codex/gpt-6-astra:high` **1/0**；main astra high **101/185**；WindowReview 为 reviewer subagent `kimi-code/k3`（agent default `@slow = k3:max`），spawned effort=hi、实际 ran max，**106/116**；VersionReview 为 reviewer subagent k3，spawned effort=hi、实际 ran max，**34/54**。无 advisor、无执行模型 fallback，watchdog 从未触发，exit **0**；执行时间 **19:00:36 → 19:45:38（+08:00）**。
+- 编排方整理：Title-gen：ping pid **354088**，**0** 次；main pid **354585**，main **7** requests、无 title：`composer-2.5 → k3-256k → deepseek-flash response error → gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol` 全部 none（grok-4.7/4.6 计作 title-gen fallback）。VersionReview **2** 次（composer-2.5 none、k3-256k success）；WindowReview **1** 次（composer-2.5 success）。title-gen fallback 与执行模型无 fallback 分开记录。
+- 编排方整理：Reviewy P3 旧常量注释由 `chore/omp-sbtd-0.2.0-rc.2-prep` 分支的 PR 处理；只更新注释，`ompExtensionV2Inventory.requiredEvents` 是真实 inventory，`test/runtime.test.ts` 直接消费该清单核对注册面。

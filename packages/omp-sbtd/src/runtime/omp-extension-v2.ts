@@ -41,8 +41,8 @@ import { z } from "zod";
 /**
  * The versioned omp-extension-v2 Host inventory. Required capabilities and
  * events are fail-closed; optional capability loss degrades only the named
- * feature. `requiredEvents` must stay aligned with `REQUIRED_HOST_EVENTS` in
- * `test/runtime.test.ts`.
+ * feature. `requiredEvents` is the single source of truth for the required
+ * event inventory consumed by the registration tests in `test/runtime.test.ts`.
  */
 export const ompExtensionV2Inventory = {
   version: "omp-extension-v2",
