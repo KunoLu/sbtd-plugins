@@ -7,7 +7,7 @@ mode_note: 用户 2026-10-22 22:56 +08:00 在 SBTD 群内确认 CHANGELOG 回填
 status: done
 branch: docs/changelog-backfill
 created_at: '2026-10-23T12:40:50+08:00'
-updated_at: '2026-10-23T13:10:17+08:00'
+updated_at: '2026-10-23T16:21:23+08:00'
 completed_at: '2026-10-23T13:06:30+08:00'
 ---
 # SBTD CHANGELOG backfill
@@ -29,10 +29,8 @@ completed_at: '2026-10-23T13:06:30+08:00'
 | 2026-10-23T12:40:50+08:00 | planned | in-progress | 用户明确 strict 与两个提交的文档范围；核实根、分支及路径安全 | git status --short --branch；git rev-parse --show-toplevel；路径无 symlink；git ls-files / git check-ignore |
 | 2026-10-23T12:50:42+08:00 | in-progress | checking | 双语回填、逐版本证据、原始 npm JSON、模型 SNAPSHOT 与文档 smoke 完成；本地交付不标 done | 四文件 9/9/4/4 个版本日期匹配；原 EN body 保留；提交 1 append-only；全表 Git ranges/counts 与 raw JSON 比对通过；completed_at null |
 | 2026-10-23T12:54:37+08:00 | checking | checking | provenance wording fix | 按本次明确纠正，将本分支新增文字中的 PR body、npm JSON、日志/tarball 与 ping 归属改为编排方；保留用户决策归属及基线旧正文 |
-| 2026-10-23T13:06:30+08:00 | checking | done | 回填 PR #117 squash-merge；Lord 合并 | main merge SHA 46680a5f6403d9c6032e1dd6a3d2cb49cb2ff842；merge commit %cI 与 GitHub mergedAt 均为 2026-10-23T13:06:30+08:00；远程 docs/changelog-backfill 已删除，本地分支及 worktree /workspace/sbtd-plugins-changelog 也已移除（本次任务提供的完成事实）；本轮 git ls-remote --heads origin docs/changelog-backfill 无输出 |
-| 2026-10-23T13:10:17+08:00 | done | done | record correction | 历史「提交 1 `965dca5`」保留不改；965dca5 是 autosquash 前 SHA，合并分支的实际提交 1 为 2058673；本轮 git log --oneline -3 2058673 已确认该提交存在 |
-| 2026-10-23T13:51:14+08:00 | done | done | record correction | 纠正 d60b4c1 版本第 32、159、169 行的来源归属：「本次任务提供的完成事实 / FINAL 计数 / 最终统计」均为编排方整理，不是用户提供；原行及 0410bf1 已提交内容保留不改 |
-| 2026-10-23T13:51:14+08:00 | done | done | record correction | #117 的 pid 79530 title-gen 日志还包含子代理成功：OmpHistory 1 次（cursor/composer-2.5 success，2026-10-23 12:40:46 +08:00）、DshHistory 1 次（cursor/composer-2.5 success，2026-10-23 12:41:03 +08:00）；此前「pid 79530（main）… 没有生成标题」仅指 main session，不包含子代理；本轮只读核对 omp.2026-10-23.79530.log 的 title-generator success 记录 |
+| 2026-10-23T13:06:30+08:00 | checking | done | 编排方整理：#117 squash-merged，完成 CHANGELOG 回填 | 本轮 gh pr view 117 核验 mergedAt=2026-10-23T05:06:30Z、mergeCommit=46680a5f6403d9c6032e1dd6a3d2cb49cb2ff842、headRefOid=005e08c617dcdfa27952e4e4c9a4215b44aab83c；PR commits 依次为 2058673、005e08c；git log 核验 merge；Reviewy CLEAN @ 005e08c 为编排方整理，GitHub reviews 为空，仅 chatgpt-codex-connector 评论，Codex 自动评审触达 usage limit，不冒充 GitHub review |
+| 2026-10-23T16:21:23+08:00 | done | done | 编排方整理：追加 commit-1 SHA 纠正，保留原第 138 行及旧 SNAPSHOT | 965dca50325a461b7da89c523c81bf40360a2e8b 为修正前本地 SHA（commit date 2026-10-23T12:42:01+08:00）；#117 实际合入的提交 1 为 2058673b0058af379e7e36effa7cb9548e0ff341（2026-10-23T12:55:11+08:00）；本轮 gh/git 核验，两者均为 1 file、35 insertions / 3 deletions；FINAL 计数见文末 |
 
 ## Book Gate Plan
 
@@ -158,18 +156,17 @@ completed_at: '2026-10-23T13:06:30+08:00'
 
 ## 使用的模型（FINAL）
 
-以下为本次任务提供的 session JSONL **FINAL** 计数（assistant messages / tool calls），取代上方 SNAPSHOT 的当前结论；历史 SNAPSHOT 原样保留。本轮不访问其他会话日志目录，不声称重新采集这些计数。
+编排方整理：下表为 #117 会话的 FINAL，旧 SNAPSHOT 不改。本轮只读运行 `python3 ~/.omp/logs/sbtd-changelog-backfill/count.py <jsonl...>`，按 `type=message`、`message.role=assistant` 及 content 中 `toolCall` 项重新计数，五行全部匹配。
 
-| run | model | assistant messages / tool calls |
-|---|---|---|
-| ping | openai-codex/gpt-6-astra:high | 1 / 0 |
-| main | openai-codex/gpt-6-astra:high | 39 / 75（此前 SNAPSHOT 28 / 63） |
-| OmpHistory (subagent) | cursor/composer-2.5 | 2 / 78 |
-| DshHistory (subagent) | cursor/composer-2.5 | aborted，3 / 203（此前 SNAPSHOT 2 / 201） |
-| fix1 | openai-codex/gpt-6-astra:high | 11 / 23 |
+| run | session | model | assistant msgs / tool calls |
+|---|---|---|---|
+| ping | `01a1670c-525a-7540-9b14-3d1b5df83785` | openai-codex/gpt-6-astra:high | 1 / 0 |
+| main | `01a1670e-bd7f-7447-b9d9-4ae12fbc2556` | openai-codex/gpt-6-astra:high | 39 / 75（旧 SNAPSHOT 28 / 63） |
+| OmpHistory（main 子代理） | — | cursor/composer-2.5 | 2 / 78 |
+| DshHistory（main 子代理；停止，无最终报告） | — | cursor/composer-2.5 | 3 / 203（旧 SNAPSHOT 2 / 201） |
+| fix1 | `01a1671c-2f58-716d-ae3a-60ff22a6a364` | openai-codex/gpt-6-astra:high | 11 / 23 |
 
-标题生成来源为 `~/.omp/logs/omp.2026-10-23.<pid>.log`，以下同为本次任务提供的最终统计：
-
-- pid 79530（main）：7 次 title-generator 请求，没有生成标题；deepseek 返回 401，grok-4.7 / grok-4.6 回复计为 fallback，不计成功。
-- pid 88190（fix1）：8 次请求，composer 成功 1 次；deepseek 返回 401，grok 计为 fallback。
-- #117 的 Codex auto-review 因 quota 失败，没有产生 findings，未阻塞合并。
+- 编排方整理：main/fix1 均未使用 fallback model；本轮复核消息/toolCall 数，不将其冒充模型路由或标题日志的独立复核。
+- 编排方整理：title-gen 来源 `~/.omp/logs/omp.2026-10-23.<pid>.log`；本轮未重新读取标题日志，下列按编排方证据记录。
+- 编排方整理：pid 79530（main）主会话 7 requests，依次为 cursor/composer-2.5、kimi-code/k3-256k、deepseek/deepseek-flash（provider-response-error）、openai-codex/gpt-6-astra、xai-oauth/grok-4.7、xai-oauth/grok-4.6、openai-codex/gpt-6.1-sol，无 title；OmpHistory 与 DshHistory 各 1 request，均 composer-2.5 success。
+- 编排方整理：pid 88190（fix1）8 requests，首个 composer-2.5 success 1，随后同一 7-model chain 未生成 title；grok requests 计为 fallback，不计 success。
