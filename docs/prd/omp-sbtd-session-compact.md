@@ -14,6 +14,8 @@
 
 不改宿主 compaction 算法、handoff 文档生成、task/handoff 自动保存、session 恢复协议、dsh-sbtd、工具名、四命令发布授权或其他事件门禁。不新增遥测、重试服务或持久化系统。不安装/升级宿主，不改 packages、README、CHANGELOG、docs/spec、CI 或全局配置；这些必要实现面仅列为后续代码 PR 的影响面。本轮不 push、开 PR、comment、tag、publish、merge。
 
+更新（2026-10-23，编排方整理）：上文「本轮不 push、开 PR…」保留为原执行授权边界；后续 #120 已开 PR 并 squash-merge 为 `67465db93e7c6f1e6f5f43704c1d4c22ae74306d`。git %cI 为 `2026-10-23T17:56:18+08:00`，GitHub mergedAt 为 `2026-10-23T17:56:19+08:00`，分别记录；不代表 D1–D5 已裁决或代码实现完成。
+
 ## 2. 当前事实与证据边界
 
 仓库基线：`548a0bf125e3b3fe1407de11094409e55c2e779e`。下列为只读源码核对，不是本轮真实宿主 live-cell 测试。
@@ -111,5 +113,7 @@
 | (a) PRD-only | 本文写入新判据、现状证据、D1–D5 与验收边界；后续裁决并审阅 PRD-only PR | 本地文档交付；裁决 pending；未开 PR、未合并 |
 | (b) 代码 PR | 在裁决后同步 inventory/adapter schema、runtime 订阅、observer、driver 关联证据、validator、tests、BDD 与 CI live cell；按 D3 同步实际受影响的 contract/evidence 引用 | 未开始；本 PRD 不修改这些文件 |
 | (c) 合并切换 | 代码 PR 的新判据与预合并验证通过后合并，主线 HANDOFF_EVENT_UNOBSERVABLE 恢复硬失败；保留旧证据的历史语义 | 未执行；不把 (a) 完成或文档合并当作恢复完成 |
+
+更新（2026-10-23，编排方整理）：步骤 (a) 的「未开 PR、未合并」是历史快照；#120 已开 PR 并以 `67465db93e7c6f1e6f5f43704c1d4c22ae74306d` squash-merge（git %cI `2026-10-23T17:56:18+08:00`；GitHub mergedAt `2026-10-23T17:56:19+08:00`）。D1–D5 仍 **open / pending**；步骤 (b)/(c) 未完成，不把文档合并当作硬失败恢复。
 
 后续实现须由同一批准的 inventory 派生订阅/validator 清单，避免 observer、runtime、tests 手工分叉；这些是现有单一真源约束的延续，不新增第二套 registry。与新判据有关的 docs/spec、现有说明和发布材料应由后续代码/发布任务按授权更新；本轮不越界。回退本 PRD 的本地提交只影响文档，不恢复或改变任何宿主行为。

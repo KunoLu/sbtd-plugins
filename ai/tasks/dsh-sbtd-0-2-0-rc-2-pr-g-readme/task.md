@@ -7,7 +7,7 @@ mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only �
 status: done
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T17:40:28+08:00'
+updated_at: '2026-10-23T18:00:01+08:00'
 completed_at: '2026-10-23T17:03:32+08:00'
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -315,3 +315,21 @@ package.json
 
 - 编排方整理：title-gen 链为 composer-2.5 → k3-256k → deepseek-flash（401 provider-response-error）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol；grok-4.7/4.6 计为 fallback，均未产出标题。不把 title-gen fallback 计为主任务 fallback。
 - 编排方整理：无 advisor，无 k3:max main fallback，watchdog 未触发；仅 main 派生上述两位子代理。以上来源为 PR body FINAL，不冒充本轮会话模型统计。
+
+## 发布时刻、tag/prerelease 与 host-compat 回填（2026-10-23）
+
+- 编排方整理：纠正基线第 272 行「17:04 … 发布至 dist-tag next」的完成语气：应为「约 17:04 开始发布」，完成时间按 registry time `2026-10-23T17:08:50+08:00` 记录；不改写旧行，latest 操作精确时刻仍未知。
+- 编排方整理（约 17:58 +08:00 已由编排方以 git/gh/curl 核验，本轮不冒充独立线上核验）：Lord 已补建 annotated tag `dsh-sbtd-v0.2.0-rc.2` → `548a0bf125e3b3fe1407de11094409e55c2e779e`，tagger date `2026-10-23T17:55:10+08:00`；双语 prerelease https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2 创建于 `2026-10-23T17:55:10+08:00`、发布于 `2026-10-23T17:55:13+08:00`，prerelease=true，未标 latest；仓库没有 latest release，GET releases/latest = 404。
+- 编排方整理：prerelease notes 已明确 tag/prerelease 晚于 npm publish，且该提交的 dsh-host-compat run `39933109206` 两个 REQUIRED 宿主 cell 为红。未重新发布 npm 包；dist-tags `latest=next=0.2.0-rc.2`，registry time 仍为 `2026-10-23T17:08:50+08:00`。
+- 编排方整理：约 17:58 +08:00 curl 核验 `https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/README.md` → 200；`https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/README.zh.md` → 200。本轮未复跑 curl；这是编排方核验，不是本地 smoke 结果。
+- 编排方整理：行 G 历史计划为「先打 tag 再 publish」，实际顺序相反：约 17:04 开始 publish、17:08:50 registry 完成，17:55:10 才打 tag。旧计划保留；上述事实更新基线第 274 行及 PRD row G 中「tag/prerelease/链接核验新增证据未知」的历史快照，不据此宣布旧 lint/host 门禁通过。PRD 状态格只恢复 #120 丢失的 `feat/dsh-sbtd-0.2.0-rc.2-readme` / 本次仅 README/bump 前缀，其余原文保留。
+
+### dsh-host-compat run 39933109206：失败边界与时间差异
+
+- 用户 2026-10-23 17:38 +08:00 群内确认（跑 dsh-host-compat），Lord 记录。
+- 编排方整理：该 run 为 workflow_dispatch，main `548a0bf125e3b3fe1407de11094409e55c2e779e`，actor KunoLu，candidateDshVersions advisory `0.2.1-rc.3`。GitHub API 显示 created/started `2026-10-23T17:36:37+08:00`、finished `2026-10-23T17:37:41+08:00`；触发约比记录的 17:38 确认早 1.5 分钟，结束也早于确认。群内确认与触发的精确关系**未知**，不声称按 17:38 确认之后触发。
+- 编排方整理：Parse advisory candidate versions success；REQUIRED unit + pack dist/ success；Advisory dsh `0.2.1-rc.3` success。但 `.github/workflows/dsh-host-compat.yml:214` 的 `DSH_PIN_SMOKE: \"0\"` 跳过版本/peer/engines 断言（也跳过 dsh-tools 钉版），其绿色只证明 schema/registration 与前置检查通过，不是 REQUIRED pin smoke 通过。
+- 编排方整理：REQUIRED dsh `0.2.0-rc.2` 和 `0.2.1-rc.2`（workflow 第 134 行 `DSH_PIN_SMOKE: \"1\"`）都在 `smoke.mjs:23` 失败：`assert.equal(pluginPkg.version, \"0.1.0-rc.3\")`，actual `0.2.0-rc.2`。本轮已读取 workflow 与脚本核对分支；GitHub 结果按编排方整理，不声称本轮触发或复跑 CI。
+- 本轮 git 核对：字面量由 #89 `bbe11789eaf89c3eabad1987f1ff3326d58c09c2` 于 `2026-09-19T08:50:35+08:00` 引入；最后改脚本的是 #97 `155982bf1992463556b06126b74aa275fd6839f9`，`2026-10-19T03:17:27+08:00`；#99 `1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831` 于 `2026-10-19T04:39:44+08:00` bump `0.2.0-rc.1` 后断言即陈旧。核验命令：`git log -S'0.1.0-rc.3' -- .github/workflows/scripts/dsh-host-register-smoke.mjs`、`git log -1 -- ...`、`git show` 对应 commit/manifest。
+- 编排方整理：最后 green run `39157727639` 位于 `b9328fa860375a7cfb18cd29aa82faab4455a89f`，PR 分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-c-host`；本轮 git 核对其 commit 时间 `2026-10-19T03:12:05+08:00`、包版本仍 `0.1.0-rc.3`。已发布 `0.2.0-rc.1` 和 `0.2.0-rc.2` 从未通过 REQUIRED host smoke；修复合并后的重新运行将是首个真正检查 0.2.x 插件的 host-compat 结果，成败未知。workflow 仅 workflow_dispatch，PR CI 不运行该门禁，因而未在 bump PR 中暴露。
+- 编排方整理：修复与本地断言证据由 [dsh-host-smoke-version-assert](../dsh-host-smoke-version-assert/task.md) 承接；本轮不重新发布、不修宿主适配、不将 assertion-only 检查称为完整 host smoke。
