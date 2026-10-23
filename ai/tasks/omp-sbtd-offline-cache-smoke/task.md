@@ -4,11 +4,11 @@ id: omp-sbtd-offline-cache-smoke
 workflow_mode: strict
 mode_source: user
 mode_note: 用户 2026-10-23 10:32 +08:00 明确启动 item 1 offline-cache chore；唯一 writer，仅本地显式路径提交，不 push/PR/comment/tag/publish/merge。
-status: checking
+status: done
 branch: chore/offline-cache-smoke
 created_at: '2026-10-23T10:34:09+08:00'
-updated_at: '2026-10-23T11:51:56+08:00'
-completed_at: null
+updated_at: '2026-10-23T12:40:50+08:00'
+completed_at: '2026-10-23T12:15:38+08:00'
 ---
 # OMP offline-cache smoke chore
 
@@ -30,6 +30,7 @@ completed_at: null
 | 2026-10-23T10:52:34+08:00 | in-progress | in-progress | 保留无 Provider 时 RPC 前阻断及全部文件系统断言，将不稳定文案匹配改为真实退出生命周期断言，定点 smoke 通过 | exact OMP 18.11.1 源码 main.ts 的无模型出口位于 runRpcMode 前；Error.cause 断言 exitCode=1、signal=null、stdoutBytes=0；smoke-focused-behavior exit 0，1 passed / 55 name-filter skipped |
 | 2026-10-23T11:02:17+08:00 | in-progress | checking | 实现、真实 smoke、全套验证与两项独立只读复核完成；保留历史失败，等待编排方 Reviewy PR-tip CLEAN + merge | build/typecheck/lint exit 0；harness 56 passed；full suite 890 passed / 3 skipped；smoke 1 passed；真实 cache-unavailable 1 runtime skip（不计 PASS）；本地报告见下方最终证据表；completed_at 保持 null |
 | 2026-10-23T11:51:56+08:00 | checking | checking | Reviewy B1 @950df81：补充锚定 RPC 退出前缀及 OMP 18.11.1 两种无模型文案的消息正则，保留 cause，拒绝扩展加载失败 | build/typecheck/lint exit 0；healthy smoke 1 passed；注入 broken plugin 后 1 failed，received message 以 Failed to load extension 开始；重建后注入计数 0、smoke 1 passed；harness 56 passed；full suite 890 passed / 3 skipped、46 files passed；报告见 Reviewy B1 fix 节 |
+| 2026-10-23T12:15:38+08:00 | checking | done | #116 squash-merged after Reviewy CLEAN @12fd0142f3c9dbf3efb4a6a04294646265675cce | merge SHA 25d7e83bbc25b6f7d2c5018d7f945376670a2d9a；git %cI 2026-10-23T12:15:38+08:00；gh mergedAt 2026-10-23T04:15:38Z = 2026-10-23T12:15:38+08:00；git log -1 --format='%H %cI' 25d7e83；gh pr view 116 --json state,mergedAt,mergeCommit,mergedBy,headRefName |
 
 ## Book Gate Plan
 
@@ -209,3 +210,34 @@ Tests  1 passed | 55 skipped (56)
 | main / `01a166d9-a19f-75e1-b35a-f6e1e0009143` | openai-codex/gpt-6-astra:high | sole writer B1 fix | SNAPSHOT **15 / 37** |
 
 来源：`/home/box/.omp/logs/sbtd-offline-cache/run-fix1/session/2026-10-23T03-41-41-151Z_01a166d9-a19f-75e1-b35a-f6e1e0009143.jsonl`；ping 为同 RD 的 `ping-session/2026-10-23T03-40-52-510Z_01a166d8-e39e-7510-8b86-d118fa3ff68e.jsonl`。沿用既有 TaskStore 历史 schema blocker，不重跑、不声称 lifecycle/自动恢复通过；本次仅显式授权的共享记录更新。status 保持 checking，completed_at 保持 null，无远端操作。
+
+## #116 合并回填（当前值）
+
+- #116 已在 Reviewy CLEAN @`12fd0142f3c9dbf3efb4a6a04294646265675cce` 后 squash-merge；merge SHA `25d7e83bbc25b6f7d2c5018d7f945376670a2d9a`，mergedBy `KunoLu`。`git log -1 --format='%H %cI' 25d7e83` 与 `gh pr view 116 --json state,mergedAt,mergeCommit,mergedBy,headRefName` 核实 MERGED、历史 head `chore/offline-cache-smoke` 及上方时间。
+- status 当前为 done，completed_at 取 merge commit 的 `2026-10-23T12:15:38+08:00`；上方 checking、等待合并、SNAPSHOT 等原文均保留为历史，不代表当前状态。本次为用户明确授权的记录回填，不重绑定历史 branch。
+
+### 模型计数 FINAL 补充
+
+来源：#116 PR body 的 Models 表（编排方于 2026-10-23 只读采集的 `gh pr view 116 --json body` 输出 `pr116-body.md`）。计数口径仍为 `type=message` 且 `message.role=assistant`，tool calls 为这些消息 content 中的 `toolCall`。
+
+| session | model / thinking | purpose | assistant messages / tool calls |
+|---|---|---|---|
+| main / `01a1669b-a431-75c5-931b-9cb8276290c7` | openai-codex/gpt-6-astra:high | 首轮唯一 writer、验证 controller | FINAL **69 / 121** |
+| CacheReview / `01a166a4-229f-7254-ac77-bb7a772d92f0` | kimi-code/k3:max | 缓存修复只读复核 | FINAL **28 / 44** |
+| RecordsReview / `01a166a4-59da-77e9-8af6-a514098d574a` | kimi-code/k3:high | 历史记录只读复核 | FINAL **10 / 16** |
+| main / `01a166d9-a19f-75e1-b35a-f6e1e0009143` | openai-codex/gpt-6-astra:high | B1 唯一 writer、真实宿主注入与验证 | FINAL **22 / 47** |
+
+B1 的 `2026-10-23T11:51:56+08:00` SNAPSHOT **15 / 37** 原样保留；首轮及 reviewer 的旧快照同样保留，不以快照冒充 FINAL。
+
+### 会话标题生成纠正 / 补充
+
+以下逐字镜像 #116 PR body 的 session-title-generation 表；来源为 `~/.omp/logs/omp.2026-10-23.<pid>.log`，时间均 Asia/Shanghai。标题生成不属于代码/记录写入模型表；本节纠正/补充本任务此前任何「no grok」或「标题模型未知/未记录」的读法，旧模型表只是省略了 title-gen。
+
+| omp pid / session | title-gen requests (Asia/Shanghai) | result | fallback |
+|---|---|---|---|
+| 806930 run1 main `01a1669b` (10:34:09–10:34:53) | composer-2.5 ×2, k3-256k ×1, deepseek-flash ×1, gpt-6-astra ×1, grok-4.7 ×1, grok-4.6 ×1, gpt-6.1-sol ×1 (8) | composer-2.5 1 success ("Execute attached prompt task"); the other 7 returned no title (grok-4.7 replied 10:34:47, grok-4.6 replied 10:34:48, no title) | true (grok replied) |
+| 806930 CacheReview (10:43:15–10:43:43) | composer-2.5 ×1, k3-256k ×1 | composer no title; k3-256k success | k3 (not grok) |
+| 806930 RecordsReview (10:43:29–10:43:59) | composer-2.5 ×1, k3-256k ×1 | composer no title; k3-256k success | k3 (not grok) |
+| 26506 B1 main `01a166d9` (11:41:51–11:42:35) | composer-2.5 ×2, k3-256k ×1, deepseek-flash ×1, gpt-6-astra ×1, grok-4.7 ×1, grok-4.6 ×1, gpt-6.1-sol ×1 (8) | composer-2.5 1 success ("Execute attached prompt task"); deepseek-flash response error (401); the others returned no title (grok-4.7 replied 11:42:32, grok-4.6 replied 11:42:33, no title) | true (grok replied) |
+
+两次 main 均发出 8 次标题请求；grok-4.7 / grok-4.6 有回复但无标题，计为 title-only fallback，未写代码或记录。deepseek-flash 在 pid 26506 为 401 response error，在 pid 806930 未产出标题。CacheReview / RecordsReview 均在 composer-2.5 无标题后由 k3-256k 生成标题。
