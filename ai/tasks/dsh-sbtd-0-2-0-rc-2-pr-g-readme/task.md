@@ -3,11 +3,11 @@ schema_version: 1
 id: dsh-sbtd-0-2-0-rc-2-pr-g-readme
 workflow_mode: strict
 mode_source: user
-mode_note: 用户 2026-10-22 22:53 +08:00 群内确认（两个包的中文 README 都命名为 `README.zh.md`），Lord 记录；沿用 strict、唯一 writer 与先 records-only 后 README/bump 的提交顺序；仅本 worktree 本地提交，不 push/PR/comment/tag/publish/merge。
+mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only 后 README/bump 的提交顺序；仅本 worktree 本地提交，不 push/PR/comment/tag/publish/merge。
 status: checking
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T13:54:49+08:00'
+updated_at: '2026-10-23T13:59:56+08:00'
 completed_at: null
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -100,7 +100,7 @@ completed_at: null
 ## Fix2 验证与修正
 
 - B1：双语 README 安装状态改为不随时间失效的 dist-tag `next` 指引；删除版本发布状态与 dist-tag 当前版本断言，保留宿主 pin、@next 命令、禁止裸包名/绝对路径/旧版本、顶部 tag-pinned 语言链接和 EN/ZH 标题 parity guards。t0 增加不含未发布措辞或 dist-tag 版本赋值的反向 guard；feature 同步为「安装指引不依赖版本发布状态」，沿用中文场景 + 英文关键词，BDD=traceable。
-- B2：mode_note、决策条目与 fix1 入场事件使用用户 2026-10-22 22:53 +08:00 群内确认的准确归属，Lord 记录；删除 PRD 行 G 解释注及其空行，同时去掉状态单元格中的悬空「见下注」。`git diff origin/main -- docs/prd/dsh-sbtd-0.2.0-rc.1.md` 及 Python 逐行/逐单元格比较证明仅行 G 的状态单元格变化。
+- B2：决策条目保留用户 2026-10-22 22:53 +08:00 群内确认的命名归属，Lord 记录；mode_note 与 fix1 入场事件的操作要求归属为编排方整理，不使用该命名确认时间。删除 PRD 行 G 解释注及其空行，同时去掉状态单元格中的悬空「见下注」。`git diff origin/main -- docs/prd/dsh-sbtd-0.2.0-rc.1.md` 及 Python 逐行/逐单元格比较证明仅行 G 的状态单元格变化。
 - B3：既有 lint 基线结论明确为编排方整理；旧 backfill 任务仅追加两条 done → done / record correction 事件，分别纠正材料来源与标题生成统计范围。只读日志确认 pid 79530 的 OmpHistory、DshHistory 各有一次 cursor/composer-2.5 success；不改既有事件、0410bf1 内容或历史分支绑定。
 - 时间：fix1 两条事件按同一时刻转换至 +08:00；本轮 updated_at 与新事件使用实际 +08:00 时间。当前 completed_at 保持 null。本任务的 **FINAL 模型统计段在合并后回填，不在本轮填写或猜测**。
 - 原生验证 cwd 为 `packages/dsh-sbtd`，命令按要求使用 `../../node_modules/.bin/tsc -p tsconfig.json --noEmit`，再 `../../node_modules/.bin/tsc -p tsconfig.json && node --test test/*.test.mjs`。首轮 typecheck exit 0，完整测试 **341 passed / 1 failed / 0 skipped（342 tests）**：`test/t6-clarify.test.mjs:423` 仍断言 README 含 `0.1.0-rc.1`，与 B1 冲突。仅删除此陈旧断言，保留 clarify 与宿主 pin 检查；这是本轮第八个修改文件，未改运行时代码。
@@ -116,7 +116,8 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-23T13:12:28+08:00 | planned | in-progress | 首提交完成，建立 strict 记录并开始 row G 文档/元数据实现 | 0410bf1；index 新增一行；授权根/分支与路径检查通过 |
 | 2026-10-23T13:25:38+08:00 | in-progress | checking | 本地实现与验证完成，按用户要求保留 checking；发布门被 pack 排除失败与既有 lint 失败阻塞，不标 done | 测试 335/335、typecheck/文档 smoke 通过；三次 pack 均含 README.zh.md；ReleaseContracts P1；completed_at null |
-| 2026-10-23T13:31:04+08:00 | checking | in-progress | fix1: restore README guards, remove README blocker text, PRD note accuracy | 用户 2026-10-22 22:53 +08:00 群内确认（两个包的中文 README 都命名为 `README.zh.md`），Lord 记录；fix1 限定六文件修复；入口 clean，HEAD 1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b；沿用 strict 与既有 TaskStore 限制，仅编辑获授权共享记录 |
+| 2026-10-23T13:31:04+08:00 | checking | in-progress | fix1: restore README guards, remove README blocker text, PRD note accuracy | 编排方整理：fix1 限定六文件修复；入口 clean，HEAD 1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b；沿用 strict 与既有 TaskStore 限制，仅编辑获授权共享记录 |
 | 2026-10-23T13:33:28+08:00 | in-progress | checking | fix1: 双语 guards、README 中性发布指引与 PRD 冲突记录修正并验证；publish 待用户 A/B 裁决 | 包测试 342/342、typecheck exit 0、scratch 8/8 拒绝、双语渲染 parity 通过；reports/fix1-*；既有 lint 11/44 errors 非本次引入；completed_at null |
 | 2026-10-23T13:51:14+08:00 | checking | in-progress | fix2: Reviewy findings B1–B3 + nits | 入口 clean，HEAD d60b4c1d4ce28134be14ea443e0c8aadfb49a6ee；沿用 strict 与既有 TaskStore 限制，仅编辑明确授权共享记录；本轮只新增一个本地提交，不改 README.zh.md 文件名、不执行远端写入 |
 | 2026-10-23T13:54:49+08:00 | in-progress | checking | fix2: Reviewy B1–B3 + nits 修正并完成本地验证 | 定点 1/1、子集 37/37、最终全包 342/342、typecheck/build exit 0；双语渲染 smoke 通过；旧任务仅新增两行、PRD 仅行 G 状态单元格变化；reports/fix2-* 保留首轮失败；completed_at null；FINAL 模型统计合并后回填 |
+| 2026-10-23T13:59:56+08:00 | checking | checking | fix3: attribution correction (Lord/Reviewy 13:58) | mode_note 与 fix1 事件改为「编排方整理」；22:53 归属仅保留于命名决策（:24）；未找到本项 strict 的可核验用户群内确认时间。 |
