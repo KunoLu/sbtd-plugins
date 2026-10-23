@@ -7,7 +7,7 @@ mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only �
 status: checking
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T13:59:56+08:00'
+updated_at: '2026-10-23T16:46:38+08:00'
 completed_at: null
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -121,3 +121,144 @@ completed_at: null
 | 2026-10-23T13:51:14+08:00 | checking | in-progress | fix2: Reviewy findings B1–B3 + nits | 入口 clean，HEAD d60b4c1d4ce28134be14ea443e0c8aadfb49a6ee；沿用 strict 与既有 TaskStore 限制，仅编辑明确授权共享记录；本轮只新增一个本地提交，不改 README.zh.md 文件名、不执行远端写入 |
 | 2026-10-23T13:54:49+08:00 | in-progress | checking | fix2: Reviewy B1–B3 + nits 修正并完成本地验证 | 定点 1/1、子集 37/37、最终全包 342/342、typecheck/build exit 0；双语渲染 smoke 通过；旧任务仅新增两行、PRD 仅行 G 状态单元格变化；reports/fix2-* 保留首轮失败；completed_at null；FINAL 模型统计合并后回填 |
 | 2026-10-23T13:59:56+08:00 | checking | checking | fix3: attribution correction (Lord/Reviewy 13:58) | mode_note 与 fix1 事件改为「编排方整理」；22:53 归属仅保留于命名决策（:24）；未找到本项 strict 的可核验用户群内确认时间。 |
+| 2026-10-23T16:46:38+08:00 | checking | checking | 编排方整理：align #118 与已合并 #119；U2/R12 解除命名/打包阻塞，其他既有阻塞保留；本轮不标 done | #119 merge 9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f，2026-10-23T16:37:30+08:00；typecheck/build exit 0；全包 342 passed / 0 failed / 0 skipped；pack entryCount 103，含 README.zh.md；双语渲染、历史保留、YAML 与差异检查通过；reports/align-*；completed_at null |
+
+## Align：合并 #119 后的当前状态
+
+- 编排方整理：本轮沿用 strict，入口 HEAD `56e43afe6e9b8896ef144fe7b81cd0b394820ff0`，唯一 writer，仅在原分支做一个本地 alignment commit；#119 历史回填保留原 branch，不重绑定。沿用既有 TaskStore 全库 schema blocker，不重跑、不调用 lifecycle、不写 active pointer，不声称自动恢复通过。未完整调用 grill-with-docs：范围和验收明确，无新领域歧义。
+- U1：用户 2026-10-22 22:53 +08:00 群内确认（两个包的中文 README 都命名为 `README.zh.md`），Lord 记录。
+- U2：用户 2026-10-23 16:15 +08:00 群内确认（选 B：保留 `README.zh.md` 随包发布，先开 PRD PR 改 D6/row G），Lord 记录。
+- 编排方整理：#119 已于 `2026-10-23T16:37:30+08:00` squash-merge 为 `9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f`，并已合入本分支。现行 PRD R11/R12 规定 `README.zh.md` 随 npm 包发布；U2 与 #119 已解除历史 A/B 待决及 Release Readiness 的命名/打包阻塞。旧正文、旧门禁表和旧事件保留为历史，不再代表当前命名/打包要求；其他既有阻塞（包括 lint）不变，不宣称 release-ready。
+- 编排方整理：行 G 仅恢复状态单元格为本分支 in-progress / 本次仅 README/bump，保留 2026-10-19 11:43、D13、U2/R12 来源；任务描述保持合并后 main 原文。任务仍 checking / completed_at null，不在 #118 合并前标 done。
+- 编排方整理：收到的 B2 发布状态/时机描述与「Fix2 验证与修正」编号不符；该记录中发布状态与 dist-tag 版本断言是 B1，22:53 命名归属及 PRD 行 G 注释删除是 B2。本轮同时满足两项：双语 README 保持不含 rc.2 已发布/未发布、发布日期或 after row X 时机声明，保留 RC 发布流程；仅在原镜像链接句补明 `README.zh.md` 随包发布，顶部 EN/中文 tag-pinned 互链和英文默认不变；U1/U2 分列，操作材料归属编排方整理，不恢复旧 PRD 注释。
+- 编排方整理：D6/D7 状态措辞区分历史原锁定与现行 R11/R12；D6 只保留 2026-10-19，D7 保留 11:39，不补造精度；§6 不新增修订行。
+- Book Gate Plan（本轮）：DDD/DDIA/legacy/refactor 均 not-required（无完整 grill、领域/数据设计、生产代码或运行时修改）；Release Readiness 在本轮验证后更新，仅解除有 U2/#119 依据的命名/打包项，既有 lint 阻塞保留。
+
+### Align 验证证据
+
+- 编排方整理：原生命令 cwd=`packages/dsh-sbtd`。`../../node_modules/.bin/tsc -p tsconfig.json --noEmit`：exit 0；`../../node_modules/.bin/tsc -p tsconfig.json && TMPDIR=/tmp GIT_CEILING_DIRECTORIES=/tmp node --test test/*.test.mjs`：exit 0，**342 passed / 0 failed / 0 skipped / 0 cancelled / 0 todo，total 342**，测试耗时 6051.622153 ms。没有改测试、feature、package.json、lockfile 或 src。
+- `npm pack --dry-run --json`：exit 0，`@kunolu/dsh-sbtd@0.2.0-rc.2`，**entryCount=103**；含 `README.md` 与 `README.zh.md`，符合现行 R11/R12；完整清单见下。本次为 dry-run，不是 publish 或已发布 tarball 证据。
+- Python 3 + markdown-it CommonMark/tables 实际渲染双语 README：各 15 headings，完整 block token 结构一致；英文默认、顶部 EN/中文 release-tag-pinned 互链与发布流程保留；无 rc.2 发布状态、发布日期、dist-tag 版本赋值或 after row X 时机断言。仅 README 第 104 行各补一处随包说明。
+- `git diff --check origin/main..HEAD` 与工作树 `git diff --check`：均无输出、exit 0；`git grep -n -E '^(<<<<<<<|>>>>>>>)'`：无输出、exit 1（无冲突标记）。对 `git diff HEAD~1` 的新增行用 Python 执行所要求的归因正则过滤（等价于两层 grep）：无输出、0 matches。提交后同范围检查结果在最终交付给出，不预写提交后成功。
+- 两个修改 task 的 YAML frontmatter 均由 `yaml.safe_load` 解析通过；逐行比较确认旧正文、旧事件及 SNAPSHOT 全部原样保留、顺序未变，原 branch 保留。PRD 逐单元格检查仅 dsh 行 85 状态和 omp 行 37/38 状态变化；描述及 §6 修订日志不变。修改范围恰为六个获授权 Markdown 文件。
+- 证据环境：Linux / Node v22.20.0 / npm 10.9.3；基于 `56e43afe6e9b8896ef144fe7b81cd0b394820ff0` 加本轮工作树变更，Evidence Source=developer-local、Source Revision=dirty、Evidence Publication=local-only，不冒充 CI 或提交后 exact SHA 测试。原生 raw 与同 stem 中文汇总：ignored `reports/align-{typecheck,tests,pack,verification}.{txt,md}`；rtk=skipped-for-report。
+- BDD=skipped：本轮仅文档事实对齐，没有行为或 feature 变化；既有 t0 等 guard 随全包测试执行，未新增文案测试。Cross-repo context/API Contract=not-needed，新增 Mock Strategy=none；未运行 Web/Mobile E2E、真实宿主安装或线上 tag 链接。Graft skipped：无代码影响，使用文档/manifest/pack 证据，不接线或启动额外服务。
+
+### Release Readiness Review（Align）
+
+- Status: **blocked**（仅既有未解决发布门禁，不再包含命名/打包 A/B 冲突）。
+- Production path and affected users / systems：未来 npm 包内的双语 README；本轮无 runtime、API、依赖或发布操作。
+- Failure modes and safeguards：U2 与 #119 / R11/R12 已将 `README.zh.md` 随包发布确认为现行要求；本轮真实 pack 103 files 包含该文件，故命名/打包阻塞 cleared。双语无时间敏感发布断言，互链、渲染与原包 suite 通过；既有 lint 11/44 errors 按旧记录保留，未重跑或清除。
+- Capacity / backpressure / limits：not-applicable，无运行时变化。
+- Observability / alerts / runbook：保留本地 raw 与同 stem 中文报告，无新增遥测。
+- Rollout / migration / rollback / cleanup：仅本地 scoped alignment commit；无数据迁移、生产变更或清理，不执行 push、PR 操作、tag、publish。#118 合并及后续发布仍属后续授权，不能由本轮验证替代。
+- Required validation and result：typecheck/build exit 0，全包 342/342，pack 与 Markdown smoke 通过；lint 既有阻塞仍在，不标 ready。测试和生产代码未改，无新代码可读性/重构门禁。
+- Optional checks / residual risk：CI、线上 tag 链接与真实宿主安装未执行；#119 的 Reviewy 与模型统计按编排方整理回填，不冒充本轮独立复核。TaskStore 既有 schema blocker 不变，不承诺自动恢复。
+
+### npm pack 完整文件清单（entryCount=103）
+
+```text
+CHANGELOG.md
+CHANGELOG.zh.md
+LICENSE
+README.md
+README.zh.md
+cordis.patch.yml
+dist/backends/graft.d.ts
+dist/backends/graft.d.ts.map
+dist/backends/graft.js
+dist/backends/graft.js.map
+dist/backends/maestro.d.ts
+dist/backends/maestro.d.ts.map
+dist/backends/maestro.js
+dist/backends/maestro.js.map
+dist/backends/sbtd-task.d.ts
+dist/backends/sbtd-task.d.ts.map
+dist/backends/sbtd-task.js
+dist/backends/sbtd-task.js.map
+dist/commands/sbtd.d.ts
+dist/commands/sbtd.d.ts.map
+dist/commands/sbtd.js
+dist/commands/sbtd.js.map
+dist/hooks.d.ts
+dist/hooks.d.ts.map
+dist/hooks.js
+dist/hooks.js.map
+dist/host-context.d.ts
+dist/host-context.d.ts.map
+dist/host-context.js
+dist/host-context.js.map
+dist/index.d.ts
+dist/index.d.ts.map
+dist/index.js
+dist/index.js.map
+dist/section.d.ts
+dist/section.d.ts.map
+dist/section.js
+dist/section.js.map
+dist/state.d.ts
+dist/state.d.ts.map
+dist/state.js
+dist/state.js.map
+dist/tools/bdd.d.ts
+dist/tools/bdd.d.ts.map
+dist/tools/bdd.js
+dist/tools/bdd.js.map
+dist/tools/clarify.d.ts
+dist/tools/clarify.d.ts.map
+dist/tools/clarify.js
+dist/tools/clarify.js.map
+dist/tools/e2e.d.ts
+dist/tools/e2e.d.ts.map
+dist/tools/e2e.js
+dist/tools/e2e.js.map
+dist/tools/lessons.d.ts
+dist/tools/lessons.d.ts.map
+dist/tools/lessons.js
+dist/tools/lessons.js.map
+dist/tools/plan.d.ts
+dist/tools/plan.d.ts.map
+dist/tools/plan.js
+dist/tools/plan.js.map
+dist/tools/review.d.ts
+dist/tools/review.d.ts.map
+dist/tools/review.js
+dist/tools/review.js.map
+dist/tools/spec.d.ts
+dist/tools/spec.d.ts.map
+dist/tools/spec.js
+dist/tools/spec.js.map
+dist/tools/task-artifact.d.ts
+dist/tools/task-artifact.d.ts.map
+dist/tools/task-artifact.js
+dist/tools/task-artifact.js.map
+dist/tools/tickets.d.ts
+dist/tools/tickets.d.ts.map
+dist/tools/tickets.js
+dist/tools/tickets.js.map
+dist/tools/validate.d.ts
+dist/tools/validate.d.ts.map
+dist/tools/validate.js
+dist/tools/validate.js.map
+manuals/book-ddd-distilled-modeling/SKILL.md
+manuals/book-ddia-data-design/SKILL.md
+manuals/book-legacy-change-safety/SKILL.md
+manuals/book-refactoring-pass/SKILL.md
+manuals/book-release-readiness/SKILL.md
+manuals/domain-modeling/SKILL.md
+manuals/grill-me/SKILL.md
+manuals/grill-with-docs/SKILL.md
+manuals/grilling/SKILL.md
+manuals/MANIFEST.json
+manuals/sbtd-task/references/handoff.md
+manuals/sbtd-task/references/methods.md
+manuals/sbtd-task/references/presentation.md
+manuals/sbtd-task/references/state.md
+manuals/sbtd-task/references/strict.md
+manuals/sbtd-task/references/task-data.schema.json
+manuals/sbtd-task/references/tooling.md
+manuals/sbtd-task/SKILL.md
+manuals/to-spec/SKILL.md
+manuals/to-tickets/SKILL.md
+package.json
+```

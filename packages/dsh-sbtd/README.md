@@ -101,7 +101,7 @@ The package declares no `os` or `cpu` restriction. Runtime support depends on th
 
 Publication is separate from this README/version bump. After review and merge, create the annotated tag `dsh-sbtd-v0.2.0-rc.2` on the merge commit, verify both top language links after tagging and before publishing, and create a bilingual GitHub prerelease.
 
-Run package tests, lint, typecheck, and `npm pack --dry-run` before release; the Chinese mirror is linked via the release-tag-pinned URL. From `packages/dsh-sbtd`, the release operation is `npm publish --tag next`; leave `latest` untouched. Do not treat a changelog date or local version bump as publication evidence. See [CHANGELOG.md](CHANGELOG.md) and [CHANGELOG.zh.md](CHANGELOG.zh.md) for mirrored release notes.
+Run package tests, lint, typecheck, and `npm pack --dry-run` before release; the Chinese mirror is linked via the release-tag-pinned URL, and `README.zh.md` ships in the npm package. From `packages/dsh-sbtd`, the release operation is `npm publish --tag next`; leave `latest` untouched. Do not treat a changelog date or local version bump as publication evidence. See [CHANGELOG.md](CHANGELOG.md) and [CHANGELOG.zh.md](CHANGELOG.zh.md) for mirrored release notes.
 
 ## Support
 

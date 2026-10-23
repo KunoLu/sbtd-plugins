@@ -4,11 +4,11 @@ id: dsh-sbtd-prd-readme-zh-shipped
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：本任务采用 strict、唯一 writer、两个本地提交；决策依据为 U2，先完成 PRD-only 对齐。
-status: checking
+status: done
 branch: docs/prd-dsh-readme-zh-shipped
 created_at: '2026-10-23T16:20:38+08:00'
-updated_at: '2026-10-23T16:24:17+08:00'
-completed_at: null
+updated_at: '2026-10-23T16:43:53+08:00'
+completed_at: '2026-10-23T16:37:30+08:00'
 ---
 # dsh-sbtd 中文 README 命名与随包发布：PRD-only
 
@@ -28,6 +28,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-23T16:20:38+08:00 | planned | in-progress | 编排方整理：strict、唯一 writer、两个本地文档提交；范围与历史保留规则明确 | 根、分支、HEAD 与 origin/main 匹配；入口 clean；路径/ignore/tracked 核验通过；时间来自 TZ=Asia/Shanghai date -Is |
 | 2026-10-23T16:24:17+08:00 | in-progress | checking | 编排方整理：PRD-only 对齐与历史取代注记完成，交付保持 checking | npm 临时包实测通过；文档解析/渲染、历史保留、归因、索引与允许范围检查通过；git diff --check exit 0；completed_at null |
+| 2026-10-23T16:37:30+08:00 | checking | done | 编排方整理：#119 已 squash-merge，PRD-only 任务完成；本轮回填保留历史正文与原 branch | merge 9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f；GitHub mergedAt 与 git %cI 均为 2026-10-23T16:37:30+08:00；远端分支已删除；Reviewy CLEAN @ e44f1ee 为编排方整理，非 GitHub review |
 
 ## 决策来源
 
@@ -124,3 +125,21 @@ completed_at: null
 | `01a167d8-3147-710b-8688-a042a28b4047` | openai-codex/gpt-6-astra | SNAPSHOT **18 / 35** | 唯一 writer / 验证 controller |
 
 - 日志：`~/.omp/logs/sbtd-prd-readme-zh/sessions/main/2026-10-23T08-19-44-071Z_01a167d8-3147-710b-8688-a042a28b4047.jsonl`；模型字段实测为 openai-codex/gpt-6-astra。thinking/fallback/title-gen 本轮未统计，不补造；未调用子代理。
+
+## #119 合并回填
+
+- 编排方整理：`gh pr view 119 --json state,mergedAt,mergeCommit,headRefOid` 实测 state=MERGED，mergeCommit=`9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f`，headRefOid=`e44f1eebad669277f8d8e4203e298eba6bcbfb4f`，mergedAt=`2026-10-23T08:37:30Z`（同一时刻为 `2026-10-23T16:37:30+08:00`）；`git log -1 --format='%H %cI' 9ad277c` 返回该 merge SHA 与 `2026-10-23T16:37:30+08:00`。
+- 编排方整理：`gh pr view 119 --json headRefName` 确认远端分支名 `docs/prd-dsh-readme-zh-shipped`；`git ls-remote --heads origin docs/prd-dsh-readme-zh-shipped` 无输出、exit 0，确认该远端分支已删除。Reviewy CLEAN @ `e44f1ee` 按编排方整理回填，不是 GitHub review，未声称本轮重做 Reviewy。
+- 编排方整理：本轮在 #118 分支做明确授权的历史回填，保留原 branch 与旧正文/SNAPSHOT；仅更新 status/updated_at/completed_at 并追加事件/证据，不操作 TaskStore lifecycle 或 active pointer。PRD-only 完成不等于 #118 合并、omp README 改名或 npm 发布。
+
+## 使用的模型（FINAL）
+
+编排方整理：以下为最终使用量回填，非本轮重新计数；原 SNAPSHOT 保持原样。
+
+| run | session | model | assistant msgs / tool calls |
+|---|---|---|---|
+| ping | `01a167d6-ff82-7392-a878-b730ad470c65` | openai-codex/gpt-6-astra:high (`--no-tools`) | 1 / 0 |
+| main | `01a167d8-3147-710b-8688-a042a28b4047` | openai-codex/gpt-6-astra:high | 27 / 46 (SNAPSHOT 18 / 35) |
+
+- 编排方整理：无 subagents，无 fallback model；fix1 在启动前中止，usage=0。此处主任务模型路由与下列 title-gen fallback 分开统计。
+- 编排方整理：title-gen 日志 `~/.omp/logs/omp.2026-10-23.<pid>.log`：pid 224808（ping）0 requests；pid 225930（main）8 requests，先 composer-2.5 success ×1，再经历未产出标题的 7-model chain：composer-2.5 → kimi-code/k3-256k → deepseek-flash（401 provider-response-error）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol；grok-4.7/4.6 计为 fallback。不把标题生成统计当主任务模型计数，也不冒充本轮日志复核。
