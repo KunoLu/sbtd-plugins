@@ -4,11 +4,11 @@ id: dsh-host-smoke-version-assert
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict、唯一 writer；先 records-only 回填，再最小 smoke 断言修复；仅本地提交，不执行远端或全局配置写入。
-status: checking
+status: done
 branch: chore/dsh-host-smoke-version-assert
 created_at: '2026-10-23T18:00:01+08:00'
-updated_at: '2026-10-23T18:07:11+08:00'
-completed_at: null
+updated_at: '2026-10-23T18:12:05+08:00'
+completed_at: '2026-10-23T18:12:05+08:00'
 ---
 # dsh host register smoke：版本断言与追加式记录回填
 
@@ -51,6 +51,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-23T18:00:01+08:00 | planned | in-progress | 编排方整理：建立 strict chore 共享记录，开始追加回填与最小修复 | 根/分支/基线及路径/ignore/tracked 检查通过；未调用 TaskStore lifecycle |
 | 2026-10-23T18:07:11+08:00 | in-progress | checking | 编排方整理：records-only 提交完成，最小断言修复与本地正负例通过，进入独立复核及最终提交检查 | 34a9091c899752c76df416da1a5c6594fb81094f；10/10 assertion-only checks；node --check exit 0；七文件边界/追加保护/YAML/Markdown 检查通过 |
+| 2026-10-23T18:12:05+08:00 | checking | done | 编排方整理：限定本地 chore 的记录回填、断言修复、正负例及提交后检查完成；不代表完整宿主 CI 或发布就绪 | 34a9091 记录提交；0311219 修复提交；10/10 checks；两位独立 reviewer 无发现；origin/main..HEAD whitespace 与记录保护通过；临时 harness 已清理 |
 
 ## 提交 1 与 before-dev review
 
@@ -76,3 +77,13 @@ completed_at: null
 - ponytail-review：**Lean already. Ship.** 无可删除的 speculative abstraction；保留 workspace 明确失败与显式 peer===engines，是本轮验收而非冗余清理目标。
 - Release Readiness 适用性复核：初始 Book Gate Plan 的 planned 更新为 **not-required**。本次只改内部 CI 测试断言，不改生产运行时、宿主集成实现、依赖、部署、rollout 或发布流程；无容量/重试/事务/迁移风险，不制造生产 ready 结论。已发布 rc.1/rc.2 的 REQUIRED host 认证缺口仍在，只有后续获授权的完整 workflow 可以提供结果；本 chore 的局部通过不能解除该缺口。
 - 恢复/回滚边界：仅本地两阶段提交；回退脚本修复会恢复已知旧断言问题，不会改变已发布包。记录继续 append-only，若需纠错追加新说明，不删除历史。TaskStore lifecycle 未运行，自动恢复可靠性不作保证；没有远端写入、全局修改或清理用户资产。
+
+## 独立复核与提交后验收
+
+- `AssertionReview`（只读 reviewer）：**无发现 / correct**。核对脚本、两 caller、manifest、PRD line 17 与临时 harness；确认 checkout 与安装包来源独立、固定 range/显式 equality、workspace 清晰失败、advisory 不变、正负例覆盖及无 full-smoke 误述。reviewer 未执行测试，其执行结果判断只是静态检查；实际运行证据由主会话提供。
+- `RecordReview`（只读 reviewer）：**无发现 / correct**。对 base `67465db` 与修复提交 `0311219` 完整核对所有回填项、四 nits、FINAL 模型数字、时间差异、git provenance、追加式保护与单元格前缀；独立读取本地 tag object，确认 target `548a0bf…` 与 tagger date `2026-10-23T17:55:10+08:00`。没有重新查询 GitHub/npm/curl；外部事实仍按编排方整理，不扩大证据来源。
+- 两位 reviewer 未修改文件、未运行 build/lint/tests/formatter；主会话唯一 writer 与验证 controller，无持久协作 runtime。
+- 修复提交 `0311219dc039453a931d874a9e3c50c6421e17e2`，`fix(ci): derive dsh smoke version from checkout manifest`，2 files changed / 38 insertions / 5 deletions（脚本 + 本 task）。`2026-10-23T18:09:41+08:00` 提交后执行 `git diff --check origin/main..HEAD` **exit 0**；同一 Python 检查对 HEAD 的 **7 文件范围、3 份 YAML、append-only、row G 精确前缀、index、Markdown 渲染、新增行禁词及冲突检查全部通过**。新 chore task 相对提交 1 也只追加正文/事件并更新允许的 frontmatter。
+- 脚本 pin block 外字节与基线一致；workflow/package 未修改。已核对提交中的脚本 SHA-256 等于实际 10-case smoke 被测字节 `a2ffd3c89d793277a7b905316cecea7bb6e081c073c68608ca0d6b603215e8b7`；不以提交后哈希核对冒充新 CI。仓库级冲突标记 regex 检查 **0 matches**。
+- `2026-10-23T18:12:05+08:00` 已删除本轮 `/tmp/dsh-host-version-assert-check.mjs`；其 fixture 早已自动清理，ignored 原生报告与同 stem 中文汇总保留。最终仅追加本验收记录的提交不改脚本；提交后再次检查最终 diff 范围/whitespace 与被测脚本字节，在最终回复列真实提交清单和 diff stat。
+- 完成定义：本地断言修复及明确回填已完成；完整 REQUIRED host-compat **未运行、结果未知**，后续 workflow 执行需另行授权。本轮没有 push、PR/comment、tag、publish、merge、workflow trigger 或全局配置写入。
