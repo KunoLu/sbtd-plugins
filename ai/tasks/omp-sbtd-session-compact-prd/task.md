@@ -4,11 +4,11 @@ id: omp-sbtd-session-compact-prd
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict、唯一 writer；先 records-only 回填，再 PRD-only；仅本地提交，不执行远端写入或全局配置变更。
-status: checking
+status: done
 branch: docs/omp-sbtd-session-compact-prd
 created_at: '2026-10-23T17:29:07+08:00'
-updated_at: '2026-10-23T17:41:10+08:00'
-completed_at: null
+updated_at: '2026-10-23T18:00:01+08:00'
+completed_at: '2026-10-23T17:56:19+08:00'
 ---
 # session_compact handoff 证据：PRD-only
 
@@ -38,6 +38,7 @@ completed_at: null
 |---|---|---|---|---|
 | 2026-10-23T17:29:07+08:00 | planned | in-progress | 编排方整理：建立 strict PRD-only 文档记录，开始历史回填与契约调查 | 根/分支/基线及路径检查通过；17:25 群内确认；仅共享文档写入，不调用 TaskStore lifecycle |
 | 2026-10-23T17:41:10+08:00 | in-progress | checking | 编排方整理：已完成 PRD-only 草案、开放选项与文档验证；待裁决及后续 PR 流程，不标 done | python3 文档 smoke 通过；D1–D5 open / pending；DDD confirmed（边界），DDIA blocked（稳定设计/实现）；completed_at null；提交后检查在最终交付报告 |
+| 2026-10-23T17:56:19+08:00 | checking | done | 编排方整理：#120 已 squash-merge，完成 PRD-only 交付；历史回填保留原 branch 与所有旧记录 | squash 67465db93e7c6f1e6f5f43704c1d4c22ae74306d；GitHub mergedAt 2026-10-23T17:56:19+08:00；git %cI 2026-10-23T17:56:18+08:00；D1–D5 仍 open / pending，不代表实现门禁通过 |
 
 ## 调查与提交 1 证据
 
@@ -107,3 +108,23 @@ completed_at: null
 - rtk=not-needed：按编排方验收使用原生 Git 和 python3。Graft=skipped：使用源码/契约证据，不启动或配置。Cross-repo context=contract-only（18.12.6 本机源码可读，目标 18.11.1 新判据证据不完整）；API Contract=missing（指待裁决的新判据；当前仓库契约已核对）；Mock Strategy=none；Final Test Report / Run Summary MD=not-needed（本轮为文档解析/渲染检查，无正式测试 runner）。
 - 尚未获 D1–D5 裁决，DDIA 稳定设计门未通过；本 task 保持 checking / completed_at null。这是完整的待裁决 PRD-only 交付，不是代码、硬失败恢复、合并或发布完成。
 - 恢复边界：本地 docs 提交与共享 task 记录；不调用 TaskStore、不写 active/handoff/developer/ignore，不承诺自动恢复。没有远端写入、全局配置变更或运行时回滚；回退文档不会改变已发布包。
+
+## #120 合并回填（2026-10-23，编排方整理）
+
+- 编排方整理：#120 已开 PR 并 squash-merge 为 `67465db93e7c6f1e6f5f43704c1d4c22ae74306d`。本轮 `git show -s --format='%H %cI' 67465db` 核对 commit 时间 `2026-10-23T17:56:18+08:00`；GitHub mergedAt `2026-10-23T17:56:19+08:00` 按编排方约 17:58 +08:00 核验材料记录，二者分别保留，completed_at 采用 mergedAt。
+- 编排方整理：本次追加更新上方「实际验证与交付边界」的 checking / 未合并历史快照，done 仅指 PRD-only PR 已交付并合并；D1–D5 仍 open / pending，DDIA 稳定设计/后续实现 blocker 未解除，代码 PR 与硬失败恢复未完成。旧事件、正文及 branch 不改写；不调用 TaskStore 或执行远端操作。
+
+## 使用的模型（FINAL，#120）
+
+编排方整理：以下是 #120 runs 的最终统计，不是本 chore 的使用量；来源为本次编排材料，本轮未重数原始 session 日志。
+
+| run | model / 配置与实际 thinking | assistant msgs / tool calls |
+|---|---|---|
+| ping | openai-codex/gpt-6-astra:high | 1 / 0 |
+| main | openai-codex/gpt-6-astra:high | 37 / 76 |
+| HostEvidence | scout 子代理；cursor/composer-2.5；agent default @smol、thinking medium；spawned effort=hi，实际 high | 3 / 89 |
+| BackfillEvidence | reviewer 子代理；kimi-code/k3；agent default @slow = k3:max；spawned effort=med，实际 high | 32 / 42 |
+
+- 编排方整理：无 advisor、无主任务 fallback（resolvedModelIsFallback=false），watchdog 未触发，exit 0；运行窗口为 `2026-10-23T17:27:42+08:00` → `2026-10-23T17:44:22+08:00`。
+- 编排方整理：title-gen pid `283212`；ping pid `281766` 为 0 requests。main session 共 8 requests：首个 composer-2.5 请求成功，产出一个标题；第二条 7-request chain 为 composer-2.5 → k3-256k → deepseek-flash（401 provider-response-error）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol，无标题产出。grok-4.7/4.6 计为 title-gen fallback，均未产出标题，不混同主任务 fallback。
+- 编排方整理：子代理 title-gen 为 HostEvidence 1 request + BackfillEvidence 1 request，均 composer-2.5 success；与 main 的 8 requests 分列。
