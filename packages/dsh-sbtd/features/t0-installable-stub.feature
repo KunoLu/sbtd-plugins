@@ -10,18 +10,26 @@ Feature: DSH T0 stub 可安装
     And 插件不写入 AGENTS.md 或用户磁盘
 
   Scenario: README 钉 0.2.0-rc.2 并说明 @next 安装命令
-    Given 用户打开 packages/dsh-sbtd 的 README
+    Given 用户分别打开 packages/dsh-sbtd 的 README.md 与 README.zh.md
     Then 文档钉 @deepseek-ai/dsh@0.2.0-rc.2
     And 文档给出 dsh plugin --profile web add @kunolu/dsh-sbtd@next
     And 文档不出现裸包名安装或本地路径安装
     And 文档不出现 0.1.0-rc.7 或 0.1.2-alpha
 
-  Scenario: README 声明 0.1.0-rc.3 已发布到 next 且 latest 仍为 0.1.0-rc.1
-    Given 用户打开 packages/dsh-sbtd 的 README
-    Then 文档提到 0.1.0-rc.3 已发布到 next
-    And 文档提到 latest 仍为 0.1.0-rc.1
-    And 文档没有待发布或尚未发布到 npm 的失败警告
-    And package.json 的 private 为 false、version 为 0.1.0-rc.3
+  Scenario: README 安装指引不依赖版本发布状态
+    Given 用户分别打开 packages/dsh-sbtd 的 README.md 与 README.zh.md
+    Then 文档引导用户从 dist-tag next 安装
+    And 文档不宣称版本尚未发布或给出当前 dist-tag 对应版本
+
+  Scenario: 双语 README 顶部语言切换钉 release tag 且章节数量一致
+    Given 用户分别打开 packages/dsh-sbtd 的 README.md 与 README.zh.md
+    Then 两份文档顶部均链接到 https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/README.md
+    And 两份文档顶部均链接到 https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/README.zh.md
+    And 英文与中文文档的二级标题数量相同，三级标题数量也相同
+
+  Scenario: 0.2.0-rc.2 包可发布且标记为 dsh-plugin
+    Given 用户检查 packages/dsh-sbtd 的 package.json
+    Then private 为 false、version 为 0.2.0-rc.2
     And keywords 包含 dsh-plugin
 
   @todo

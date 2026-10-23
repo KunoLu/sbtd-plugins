@@ -21,7 +21,7 @@ SBTD 宿主插件 monorepo：OMP / DSH 宿主适配器，OMP workflow kit 内嵌
 | 包 | 路径 | 说明 |
 | --- | --- | --- |
 | `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README_zh.md) | OMP SBTD workflow 插件。提供 `/sbtd`、内嵌 kit、`doctor` 与 `onboard`。已发布 **0.2.0-rc.1** 到 npm dist-tag `next` 与 `latest`。 |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。已发布 **0.2.0-rc.1** 到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。宿主钉 `@deepseek-ai/dsh@0.2.0-rc.2`。 |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.zh.md) | DSH SBTD 适配器（T5）：sbtd section、进程内状态、`sbtd_plan`、`sbtd_review`、hooks、`manuals/`。已发布 **0.2.0-rc.1** 到 dist-tag `next`。dist-tag `latest` 仍为 **0.1.0-rc.1**。宿主钉 `@deepseek-ai/dsh@0.2.0-rc.2`。 |
 
 ## 安装
 

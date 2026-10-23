@@ -51,7 +51,7 @@ async function loadHostAndPlugin() {
 
 test("pinned dsh@0.2.0-rc.2 Cordis register/load 接受 clarify/spec/tickets output.schema", async () => {
   const pluginPkg = readJson(join(pkgRoot, "package.json"));
-  assert.equal(pluginPkg.version, "0.2.0-rc.1");
+  assert.equal(pluginPkg.version, "0.2.0-rc.2");
   assert.equal(pluginPkg.peerDependencies["@deepseek-ai/dsh"], ">=0.2.0-rc.2 <0.3.0-0");
   assert.equal(pluginPkg.engines.dsh, ">=0.2.0-rc.2 <0.3.0-0");
   assert.equal(pluginPkg.devDependencies["@deepseek-ai/dsh"], "0.2.0-rc.2");

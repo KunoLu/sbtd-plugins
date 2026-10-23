@@ -420,7 +420,6 @@ test("README 提到 sbtd_clarify 并保持钉版本", () => {
   const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
   assert.match(readme, /sbtd_clarify/);
   assert.match(readme, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/);
-  assert.match(readme, /0\.1\.0-rc\.1/);
 });
 
 test("hydrate 空 snapshot 清除 clarify 绑定", () => {

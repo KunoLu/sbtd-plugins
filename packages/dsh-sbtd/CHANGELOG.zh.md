@@ -4,6 +4,15 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，最新在前。
 英文对照：[CHANGELOG.md](CHANGELOG.md)。
 
+## [0.2.0-rc.2] - 2026-10-23
+
+### Changed（变更）
+
+- 仅文档 RC：英文默认 `README.md` 与中文镜像 `README.zh.md`，
+  顶部语言切换链接钉到 release tag。
+- 无运行时或契约变化。宿主范围保持 `>=0.2.0-rc.2 <0.3.0-0`；
+  开发宿主仍钉为 `@deepseek-ai/dsh@0.2.0-rc.2`。
+
 ## [0.2.0-rc.1] - 2026-10-19
 
 ### Added（新增）
