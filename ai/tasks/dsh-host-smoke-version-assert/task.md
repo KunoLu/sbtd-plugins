@@ -4,11 +4,11 @@ id: dsh-host-smoke-version-assert
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict、唯一 writer；先 records-only 回填，再最小 smoke 断言修复；仅本地提交，不执行远端或全局配置写入。
-status: done
+status: checking
 branch: chore/dsh-host-smoke-version-assert
 created_at: '2026-10-23T18:00:01+08:00'
-updated_at: '2026-10-23T18:12:05+08:00'
-completed_at: '2026-10-23T18:12:05+08:00'
+updated_at: '2026-10-23T18:14:32+08:00'
+completed_at: null
 ---
 # dsh host register smoke：版本断言与追加式记录回填
 
@@ -52,6 +52,7 @@ completed_at: '2026-10-23T18:12:05+08:00'
 | 2026-10-23T18:00:01+08:00 | planned | in-progress | 编排方整理：建立 strict chore 共享记录，开始追加回填与最小修复 | 根/分支/基线及路径/ignore/tracked 检查通过；未调用 TaskStore lifecycle |
 | 2026-10-23T18:07:11+08:00 | in-progress | checking | 编排方整理：records-only 提交完成，最小断言修复与本地正负例通过，进入独立复核及最终提交检查 | 34a9091c899752c76df416da1a5c6594fb81094f；10/10 assertion-only checks；node --check exit 0；七文件边界/追加保护/YAML/Markdown 检查通过 |
 | 2026-10-23T18:12:05+08:00 | checking | done | 编排方整理：限定本地 chore 的记录回填、断言修复、正负例及提交后检查完成；不代表完整宿主 CI 或发布就绪 | 34a9091 记录提交；0311219 修复提交；10/10 checks；两位独立 reviewer 无发现；origin/main..HEAD whitespace 与记录保护通过；临时 harness 已清理 |
+| 2026-10-23T18:14:32+08:00 | done | checking | 编排方整理：本地完成不等于任务完成；按仓库惯例待 PR 合并，且合并后在 main 手动触发 dsh-host-compat、两个 REQUIRED 格均为绿后再记 done；18:12:05 事件保留为历史 | 完成条件：PR 合并后由 Lord/OMP 在 main 手动触发 dsh-host-compat，dsh 0.2.0-rc.2 与 dsh 0.2.1-rc.2 两个 REQUIRED 格均为绿；本次仅纠正记录，不触发 workflow |
 
 ## 提交 1 与 before-dev review
 
