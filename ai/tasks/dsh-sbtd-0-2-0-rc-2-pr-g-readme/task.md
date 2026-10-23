@@ -7,7 +7,7 @@ mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only �
 status: checking
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T16:46:38+08:00'
+updated_at: '2026-10-23T16:53:59+08:00'
 completed_at: null
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -122,6 +122,7 @@ completed_at: null
 | 2026-10-23T13:54:49+08:00 | in-progress | checking | fix2: Reviewy B1–B3 + nits 修正并完成本地验证 | 定点 1/1、子集 37/37、最终全包 342/342、typecheck/build exit 0；双语渲染 smoke 通过；旧任务仅新增两行、PRD 仅行 G 状态单元格变化；reports/fix2-* 保留首轮失败；completed_at null；FINAL 模型统计合并后回填 |
 | 2026-10-23T13:59:56+08:00 | checking | checking | fix3: attribution correction (Lord/Reviewy 13:58) | mode_note 与 fix1 事件改为「编排方整理」；22:53 归属仅保留于命名决策（:24）；未找到本项 strict 的可核验用户群内确认时间。 |
 | 2026-10-23T16:46:38+08:00 | checking | checking | 编排方整理：align #118 与已合并 #119；U2/R12 解除命名/打包阻塞，其他既有阻塞保留；本轮不标 done | #119 merge 9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f，2026-10-23T16:37:30+08:00；typecheck/build exit 0；全包 342 passed / 0 failed / 0 skipped；pack entryCount 103，含 README.zh.md；双语渲染、历史保留、YAML 与差异检查通过；reports/align-*；completed_at null |
+| 2026-10-23T16:53:59+08:00 | checking | checking | 编排方整理：D6/D7 状态单元格去掉「locked（…）」外壳，改为「用户 2026-10-19 原锁定；现行命名见 R11，随包发布见 R12」/「用户 2026-10-19 11:39 原锁定；…」，修正上一 align 提交 1df186a 仍保留 locked 前缀 | 追加本事件前 `git diff --stat`：docs/prd/omp-sbtd-0.2.0-rc.1.md，1 file changed, 2 insertions(+), 2 deletions(-)；`git diff --check` 无输出、exit 0 |
 
 ## Align：合并 #119 后的当前状态
 
