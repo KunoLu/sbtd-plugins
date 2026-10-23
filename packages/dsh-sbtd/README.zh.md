@@ -20,6 +20,11 @@ DSH 宿主上的 SBTD workflow 适配器，提供短中文 sbtd section、hooks�
 
 从 dist-tag `next` 安装。
 
+`0.2.0-rc.2` 已于 2026-10-23 17:08:50 +08:00 发布到 npm；
+`next` 与 `latest` 均指向该版本。GitHub prerelease：
+[`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2)。
+现有 `@next` 安装指引保持不变。
+
 使用 `@next`，不要使用裸包名、`@latest` 或 GitHub 路径：
 
 ```bash
@@ -102,6 +107,8 @@ packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
 发布与本次 README/version bump 分开。评审与合并后，在 merge commit 上创建 annotated tag `dsh-sbtd-v0.2.0-rc.2`；打 tag 后、publish 前核验顶部两个语言链接，并创建双语 GitHub prerelease。
 
 发布前运行包测试、lint、typecheck 与 `npm pack --dry-run`；中文镜像通过钉 release tag 的 URL 链接，且 `README.zh.md` 随 npm 包发布。在 `packages/dsh-sbtd` 下，发布操作为 `npm publish --tag next`，`latest` 保持不动。不要把 CHANGELOG 日期或本地版本 bump 当作发布证据。双语发布说明见 [CHANGELOG.md](CHANGELOG.md) 与 [CHANGELOG.zh.md](CHANGELOG.zh.md)。
+
+发布补记（2026-10-23；查询时间 22:10 +08:00）：`@kunolu/dsh-sbtd@0.2.0-rc.2` 已发布。上述 rc.2 指令保留为发布前计划，不代表当前发布状态。Annotated tag `dsh-sbtd-v0.2.0-rc.2`（对象 `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e`，目标提交 `548a0bf125e3b3fe1407de11094409e55c2e779e`）创建于 2026-10-23 17:55:10 +08:00；GitHub prerelease（`isPrerelease=true`）创建于 2026-10-23 17:55:10 +08:00，发布于同日 17:55:13 +08:00。npm 记录的发布时间为 2026-10-23 17:08:50.745 +08:00。在上述查询时点，dist-tag `next` 与 `latest` 均指向 `0.2.0-rc.2`；“`latest` 保持不动”不代表实测 registry 状态。来源：`git for-each-ref`、`gh release view dsh-sbtd-v0.2.0-rc.2 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease`，以及 `npm view @kunolu/dsh-sbtd time --json` / `npm view @kunolu/dsh-sbtd dist-tags --json`。
 
 ## 支持
 

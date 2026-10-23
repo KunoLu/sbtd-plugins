@@ -122,6 +122,8 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
     }
 
     const entries = await packedPaths(packageRoot);
+    expect(entries).toContain("README.zh.md");
+    expect(entries).not.toContain("README_zh.md");
     const policyText = await readFile(
       join(packageRoot, "validation/p0/compatibility.v2.json"),
       "utf8",

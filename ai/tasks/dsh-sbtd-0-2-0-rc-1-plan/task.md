@@ -429,6 +429,7 @@ Open conflicts and questions: 无阻塞项；第 1、2、4 条是实现期核查
 - TODO：`docs/TODO.md` 第三节加一行指针（顺序 3），不复制整表。
 - 下一步：commit → PR → Reviewy 评审；CLEAN 后进入 PR-A（开发前新建 strict 任务）。
 | 2026-10-18T09:06:13+08:00 | in-progress | in-progress | 补齐 CONTEXT + Q&A 附录并开 PRD PR | Lord 09:05 催办 |
+| 2026-10-18T09:11:01+08:00 | in-progress | done | 编排方整理：收束本附录最后一条事件链；不重复主表事件、不改变已有 done 字段 | #93 squash 3fafd73f828b0f61c3310e4828cfb63bbced3f9a；gh pr view 93 mergedAt 2026-10-18T01:11:01Z = 09:11:01+08:00；用户 2026-10-23 21:09 +08:00 群内要求 SBTD tasks 状态更新为最新（应均为 done），Lord 记录 |
 
 ## 当前值（offline-cache chore 记录回填）
 

@@ -29,11 +29,10 @@ omp --version
 
 ## Install
 
-The commands below pin `@kunolu/omp-sbtd@0.2.0-rc.2` for use once that
-version is published. Publication is separate from this README/version bump;
-neither the version nor the changelog date proves registry availability or
-dist-tag state. This version requires omp `>=18 <19`; omp 17.x users must
-explicitly pin an older 0.1.x version.
+`@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on
+2026-10-23 20:44:10 +08:00; dist-tags `next` and `latest` point to it.
+The commands below pin that release. It requires omp `>=18 <19` and was
+tested on `18.11.1`; omp 17.x users must explicitly pin an older 0.1.x version.
 
 Prefer the exact RC over a moving dist-tag such as `@latest` for a reproducible installation:
 

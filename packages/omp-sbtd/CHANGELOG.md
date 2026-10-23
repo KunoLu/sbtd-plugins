@@ -27,6 +27,10 @@ Sources: [#123](https://github.com/KunoLu/sbtd-plugins/pull/123) (implementation
 and [#122](https://github.com/KunoLu/sbtd-plugins/pull/122) (contract decisions).
 This entry's date records preparation, not publication.
 
+### Released
+
+- Annotated tag `omp-sbtd-v0.2.0-rc.2`; GitHub prerelease published 2026-10-23 20:41:17 +08:00; npm publish 2026-10-23 20:44:10 +08:00; dist-tags `next` and `latest` point to `0.2.0-rc.2`.
+
 ## [0.2.0-rc.1] - 2026-10-22
 
 ### Breaking

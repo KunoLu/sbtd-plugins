@@ -20,12 +20,12 @@ SBTD host-plugin monorepo: OMP and DSH host adapters, with the OMP workflow kit 
 
 | Package | Path | Role |
 | --- | --- | --- |
-| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Version **0.2.0-rc.2**; publication is separate from the version bump. |
-| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter (T5): sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.1** on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
+| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Published **0.2.0-rc.2** on npm dist-tags `next` and `latest`. |
+| `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter: sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.2** on npm dist-tags `next` and `latest`. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
 
 ## Install
 
-The command below pins `@kunolu/omp-sbtd@0.2.0-rc.2` for use once that version is published. A version bump does not prove registry availability or dist-tag state. This version requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x version.
+`@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on 2026-10-23 20:44:10 +08:00; dist-tags `next` and `latest` point to it. The command below pins that release. This version requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x version.
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
@@ -39,7 +39,7 @@ For 0.2.0-rc.2, the host peer is `@oh-my-pi/pi-coding-agent` `>=18 <19`; the dev
 
 DSH host pin: @deepseek-ai/dsh@0.2.0-rc.2.
 
-DSH plugin **0.2.0-rc.1** is published on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Install with `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.2.0-rc.2`. Never `@latest` or a github path.
+DSH plugin **0.2.0-rc.2** is published on npm dist-tags `next` and `latest` (2026-10-23 17:08:50 +08:00). The existing installation guidance remains: use `@kunolu/dsh-sbtd@next` and host `@deepseek-ai/dsh@0.2.0-rc.2`, not `@latest` or a GitHub path.
 
 ```bash
 npx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile web add @kunolu/dsh-sbtd@next
@@ -64,8 +64,9 @@ Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](do
 
 This repository ships **two host plugins** only: `omp-sbtd` and `dsh-sbtd`.
 
-- **omp-sbtd** version `0.2.0-rc.2`: publication is separate from the version bump. The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
-- **dsh-sbtd** uses shell plugin scheme **2a**. **T0–T5** are done on `main` (section, state, `sbtd_plan`, `sbtd_review`, hooks, manuals). Later tasks remain. Details: [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md).
+- **omp-sbtd** `0.2.0-rc.2` is published on npm dist-tags `next` and `latest`, with GitHub prerelease [`omp-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/omp-sbtd-v0.2.0-rc.2). The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
+- **dsh-sbtd** `0.2.0-rc.2` is published on npm dist-tags `next` and `latest`, with GitHub prerelease [`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2). It uses shell plugin scheme **2a**. **T0–T5** and the [0.2.0-rc.1/rc.2 task rows 0–G](docs/prd/dsh-sbtd-0.2.0-rc.1.md#3-任务表) are done. Earlier technical design: [`v1.2`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md).
+- **session_compact** shipped in `omp-sbtd 0.2.0-rc.2`: PRD [#120](https://github.com/KunoLu/sbtd-plugins/pull/120) (`67465db`), decisions [#122](https://github.com/KunoLu/sbtd-plugins/pull/122) (`6843878`), and code [#123](https://github.com/KunoLu/sbtd-plugins/pull/123) (`008cea7`) are merged. It is a required event under `omp-extension-v2` / `omp-host-events-v2`; handoff proof requires a correlated event with `compactionEntry.method === "handoff"`.
 
 ## Development
 

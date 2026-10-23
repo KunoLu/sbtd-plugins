@@ -57,4 +57,5 @@
 - [omp-sbtd-session-compact-decisions](omp-sbtd-session-compact-decisions/task.md)
 - [omp-sbtd-session-compact-prd](omp-sbtd-session-compact-prd/task.md)
 - [sbtd-changelog-backfill](sbtd-changelog-backfill/task.md)
+- [sbtd-rc2-closeout](sbtd-rc2-closeout/task.md)
 <!-- sbtd-task-index:end -->

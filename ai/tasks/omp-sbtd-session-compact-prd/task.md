@@ -128,3 +128,8 @@ completed_at: '2026-10-23T17:56:19+08:00'
 - 编排方整理：无 advisor、无主任务 fallback（resolvedModelIsFallback=false），watchdog 未触发，exit 0；运行窗口为 `2026-10-23T17:27:42+08:00` → `2026-10-23T17:44:22+08:00`。
 - 编排方整理：title-gen pid `283212`；ping pid `281766` 为 0 requests。main session 共 8 requests：首个 composer-2.5 请求成功，产出一个标题；第二条 7-request chain 为 composer-2.5 → k3-256k → deepseek-flash（401 provider-response-error）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol，无标题产出。grok-4.7/4.6 计为 title-gen fallback，均未产出标题，不混同主任务 fallback。
 - 编排方整理：子代理 title-gen 为 HostEvidence 1 request + BackfillEvidence 1 request，均 composer-2.5 success；与 main 的 8 requests 分列。
+
+## 状态补记（2026-10-23，编排方整理）
+
+- 原 DDIA「blocked（稳定设计与代码实现）」与 Book Gate 快照保留。D1–D5 的后续裁决由 #122 squash `684387835b27d46b3b96b01f2015e42fe7937b12`（2026-10-23T18:58:43+08:00）交付；实现由 #123 squash `008cea74dfbab5ce2c688c2c42e4bd8cfeddfe5f`（2026-10-23T20:01:45+08:00）交付，CI run `39949600365` success。
+- [code task](../omp-sbtd-session-compact-code/task.md) 保留隔离 18.11.1 live 的真实 method=handoff、同 run/session、窗口／排空和无竞争证据及负例硬失败记录，解除草案阶段的未知与后续等待；不把草案时点的 DDIA blocked 改成通过。必需事件、v2 契约与主线硬失败已随 `omp-sbtd-v0.2.0-rc.2` 发布（npm 2026-10-23 20:44:10 +08:00）。

@@ -59,6 +59,8 @@ omp 正在实现。范围见 PRD `docs/prd/dsh-sbtd-0.2.0-rc.1.md` 行 D。本�
 - Required validation and result: pack --dry-run 通过、335/335 通过。
 - Optional checks / residual risk: README 安装段仍描述 0.1.0-rc.3 现状（对 npm 当前发布态为真，不在本任务范围）；dsh-host-compat.yml 为 workflow_dispatch，合并后需人工触发取双行绿（沿用 PR-C 交接）。
 
+状态补记（2026-10-23，编排方整理）：上述 `Status: ready` 与“未来发版”是本轮文档／打包清单交付时的历史结论，不代表仍待发布。PRD 行 D 的 [#98](https://github.com/KunoLu/sbtd-plugins/pull/98) 已合并，merge SHA `73f0ca525bf73577560b6ce86d9e7a43ccb94517`，GitHub mergedAt 为 2026-10-19 04:11:26 +08:00；双语 CHANGELOG 已随 `@kunolu/dsh-sbtd@0.2.0-rc.1` 于 2026-10-19 04:43:02.349 +08:00 发布到 npm。2026-10-23 通过 `gh pr view 98 --repo KunoLu/sbtd-plugins --json mergedAt,mergeCommit`、`npm view @kunolu/dsh-sbtd time --json`、`npm view @kunolu/dsh-sbtd@0.2.0-rc.1 dist.fileCount` 与 `npm pack @kunolu/dsh-sbtd@0.2.0-rc.1 --dry-run --json` 重核：已发布 tarball 共 102 files，包含 `CHANGELOG.md`（5508 bytes）和 `CHANGELOG.zh.md`（5087 bytes）。发布由后续 release 流程完成，不追改本轮未 publish 的事实或旧验证结论；frontmatter 与状态事件保持原样。用户 2026-10-23 21:09 +08:00 群内要求 SBTD tasks 状态更新为最新（应均为 done），Lord 记录。
+
 ## 状态事件
 | at | from | to | reason | evidence |
 |---|---|---|---|---|

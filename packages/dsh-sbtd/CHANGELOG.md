@@ -14,6 +14,10 @@ first. Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
   `>=0.2.0-rc.2 <0.3.0-0`; the development host stays pinned to
   `@deepseek-ai/dsh@0.2.0-rc.2`.
 
+### Released
+
+- Annotated tag `dsh-sbtd-v0.2.0-rc.2`; GitHub prerelease published 2026-10-23 17:55:13 +08:00; npm publish 2026-10-23 17:08:50 +08:00; dist-tags `next` and `latest` point to `0.2.0-rc.2`.
+
 ## [0.2.0-rc.1] - 2026-10-19
 
 ### Added
