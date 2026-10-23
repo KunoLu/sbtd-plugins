@@ -197,3 +197,69 @@ PRD 归因：用户 2026-10-23 21:08 +08:00 群内确认（PRD 任务状态同�
 - 与编排方整理可重核事实无差异：npm tags/time、GitHub prereleases、tag object/time、merge SHA/time、#124 CI 与已发布 omp tarball SHA256 一致。模型 FINAL/title-gen/Reviewy 历史统计标明编排方整理，未假称独立重跑。审计 scout 的 shell 在其环境不可用，registry/merge/pack 验证均由主会话实际执行；未据此缩减验证。
 - 偏差与明确保留：无第五提交；提交 2 写 prep done；D12 archive 不执行；DSH 安装策略不变；旧措辞检索的三处历史文件命中已逐文件解释；dsh lint 及原已知失败不重跑确认；没有为 docs-only 变更新增生产重构、schema 或契约修改。TaskStore 既有 blocker 使 helper lifecycle／自动恢复仍未获证明，交付为已校验共享 Markdown 记录。
 - 最终 task 保持 checking / completed_at null；由 chore/omp-sbtd-rc2-closeout 分支的 PR 交付。用户 2026-10-23 21:15 +08:00 群内确认：合入后补一个仅改本收尾 task 状态的回填 commit，Lord 记录。
+
+## fix3（2026-10-23，编排方整理）：Reviewy #125 @ a443f35 NOT CLEAN
+
+### 范围、归因与门禁计划
+
+- 起点 `a443f35869886d71dac1cd55ed38d43e03198b8e`，分支 `chore/omp-sbtd-rc2-closeout`，入口工作树干净；沿用 strict。此次授权只在该基线上新增一个 commit，不 amend/rebase，不 push/comment/tag/publish/merge，不 bump 版本；本节是后续 fix3 授权记录，不改上文四提交历史。
+- Blocker：dsh 双语 README 发布节仍保留 rc.2 合并后打 tag、`latest` 不动的计划，缺少就地发布事实。Nits：docs-changelog 与 pr-e-release 两处 `Status: ready`／未来发版缺后续发布补记。所有旧句逐字保留，只在对应节末追加。
+- README／CHANGELOG 归因：用户 2026-10-23 21:07 +08:00 群内要求仓内所有 README 和 CHANGELOG 更新到最新并集成到本 PR，Lord 记录。
+- tasks 归因：用户 2026-10-23 21:09 +08:00 群内要求 SBTD tasks 状态更新为最新（应均为 done），Lord 记录。
+- 未完整调用 grill-with-docs：需求、证据来源、追加位置与验收清楚，无领域歧义。主会话唯一 writer／验证 controller；仅 Markdown 追加，无新生产代码或契约。
+- Book Gate Plan：DDD、DDIA、legacy、refactoring 均 not-required（无完整 grill、领域／数据设计、行为修改或生产代码编辑）；release-readiness 按 Skill 的 docs-only 排除规则 not-required（仅记录已发生的发布，不改变 rollout/runtime，不把旧 ready 当作本轮门禁）。Code Readability、TDD、BDD/Web/Mobile 新场景 not-required；既有 dsh suite 与 pack 按此次要求执行。
+- 三份 task frontmatter／原状态事件均不变；本 task 保持 `checking` / `completed_at: null`，不新增 done 事件，原 21:15 确认原样保留。沿用已记录的 TaskStore 历史 schema blocker，不重跑已知失败；本轮仅追加共享 Markdown，不声称 helper lifecycle 或自动恢复通过。
+
+### 实时证据（查询于 2026-10-23 22:10 +08:00）
+
+- `git for-each-ref`：rc.2 annotated tag `dsh-sbtd-v0.2.0-rc.2` 对象 `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e` → `548a0bf125e3b3fe1407de11094409e55c2e779e`，tagger 为 2026-10-23 17:55:10 +08:00。`gh release view ... --json createdAt,publishedAt,isPrerelease`：createdAt 17:55:10、publishedAt 17:55:13（同日 +08:00），isPrerelease=true。
+- `npm view @kunolu/dsh-sbtd time --json`：rc.2 为 2026-10-23 17:08:50.745 +08:00，rc.1 为 2026-10-19 04:43:02.349 +08:00。`npm view @kunolu/dsh-sbtd dist-tags --json`：本次查询时 `next = latest = 0.2.0-rc.2`；不是永久不变的 tag 保证。另以 `npm view @kunolu/{dsh,omp}-sbtd time dist-tags --json` 归档复核，两包均为 rc.2。
+- `gh pr view 98 --repo KunoLu/sbtd-plugins --json mergedAt,mergeCommit`：`73f0ca525bf73577560b6ce86d9e7a43ccb94517`，mergedAt 2026-10-19 04:11:26 +08:00；#99：`1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831`，mergedAt 2026-10-19 04:39:45 +08:00。
+- rc.1 annotated tag `dsh-sbtd-v0.2.0-rc.1` 对象 `73d4c0a4cc37fb6b445809aa164a382a20b681b8` → #99 merge SHA，tagger 2026-10-19 04:43:55 +08:00；GitHub prerelease createdAt 04:43:55、publishedAt 04:43:59（同日 +08:00），isPrerelease=true。
+- `npm view @kunolu/dsh-sbtd@0.2.0-rc.1 dist.fileCount` 为 102；`npm pack @kunolu/dsh-sbtd@0.2.0-rc.1 --dry-run --json` 核验该已发布 tarball 含 `CHANGELOG.md` 5508 bytes、`CHANGELOG.zh.md` 5087 bytes，entryCount=102。不是拿当前工作树 pack 冒充历史发布物。
+
+### fixed：逐文件旧 → 追加新
+
+行号为此次结果；旧句未替换，箭头仅表示追加事实对旧当前态描述的澄清。
+
+| 文件:旧行 → 新行 | 原文／旧状态 → 追加事实 |
+|---|---|
+| `packages/dsh-sbtd/README.md:107,109 → 111` | “Publication is separate … After review and merge …”／“leave `latest` untouched” → rc.2 已发布，完整 tag 对象／target／tagger、GitHub created/published、npm time 与有查询时点的 next/latest；旧段明确为发布前计划 |
+| `packages/dsh-sbtd/README.zh.md:107,109 → 111` | “发布与本次 README/version bump 分开。评审与合并后……”／“`latest` 保持不动” → 与英文相同事实、时间和证据命令的中文镜像 |
+| `ai/tasks/dsh-sbtd-0-2-0-rc-1-docs-changelog/task.md:53–60 → 62` | `Status: ready`／未来发版 → 状态补记：PRD D / #98 merge SHA、mergedAt、rc.1 npm time、已发布 tarball 双语 CHANGELOG 验证；不改旧验证与 frontmatter |
+| `ai/tasks/dsh-sbtd-0-2-0-rc-1-pr-e-release/task.md:49–56 → 58` | `Status: ready`／未来 tarball → 状态补记：#99 merge SHA、mergedAt、rc.1 npm time、annotated tag 与 prerelease；区分 Git commit 时间，不改旧验证与 frontmatter |
+| `ai/tasks/sbtd-rc2-closeout/task.md:199 → 201 起` | 原收尾记录缺 fix3 → 追加本节问题、归因、实时证据、全部变更／扫描分类与验证；旧文及 checking/null 保留 |
+
+### checked-not-stale：全仓 README／CHANGELOG 复扫
+
+名称盘点共 31 文件：12 自有、19 上游／模板／生成镜像。对全部文件执行大小写不敏感关键词检索（will tag / will be tagged / after … merge / latest … stay 或 untouched / leave … latest / not yet published / publication is separate / publication remains blocked / next RC candidate，以及合并后、发布后、保持不动、尚未发布、未发布、待发布、发布仍被阻止、未来发布）；另对 12 自有文件扩大到 publish/release/tag/合并/发布/latest/next。追加后再次扫描：dsh 旧命中因 append-only 留存，已由紧随的补记澄清，不误报为零命中。
+
+| 文件:行 | checked, not stale／保留理由 |
+|---|---|
+| `README.md:23–42,67–69`；`README_zh.md:23–42,67–69` | 两包 rc.2 已发布／next+latest 与本轮 registry 一致；精确版本或 @next 为安装策略，不断言 latest 仍为旧版本；D11 日期引用为明确历史快照 |
+| `packages/dsh-sbtd/README.md:21–28,109,111`；`packages/dsh-sbtd/README.zh.md:21–28,109,111` | 安装节当前发布事实仍真；:109 测试、打包、链接核验与“不把日期当发布证据”为通用程序；仅 rc.2 将来态和 latest 计划由 :111 澄清，其他句不改；:111 引用旧措辞用于否定其当前态含义 |
+| `packages/dsh-sbtd/CHANGELOG.md:19`；`packages/dsh-sbtd/CHANGELOG.zh.md:18` | rc.2 发布补记与 npm/GitHub 相符；其余 dated 版本条目是历史，不重写 |
+| `packages/omp-sbtd/README.md:17–22,32–37,99–119`；`packages/omp-sbtd/README.zh.md:19–21,31–36,95–113` | 当前 rc.2 事实仍真；兼容认证与发布解耦；发布 helper 只接受 next 是通用操作约束，不声称 registry latest 没有 rc.2，不改通用流程 |
+| `packages/omp-sbtd/CHANGELOG.md:28,32`；`packages/omp-sbtd/CHANGELOG.zh.md:26,30` | “日期记录准备工作，不代表发布”限定的是日期证据；后面已有真实发布补记，不是尚未发布声明 |
+| `packages/omp-sbtd/CHANGELOG.md:39–42,93–98`；`packages/omp-sbtd/CHANGELOG.zh.md:37–39,85–89` | rc.1 日期条目中的旧 dist-tag 与后续 session_compact 计划是历史；rc.2 条目已记录后续交付，保留旧文 |
+| `packages/omp-sbtd/CHANGELOG.md:167–170,215–217`；`packages/omp-sbtd/CHANGELOG.zh.md:153–156,195–196` | rc.11 日期条目中的 candidate／发布阻止门槛为历史，不是 rc.2 当前状态 |
+| `docs/assets/dsh/README.md:3–8` | 文档索引与当前 rc.2/next/latest 已对齐；“发新版前”是通用校验链接，不是待发布声明 |
+| `packages/omp-sbtd/validation/p0/evidence/README.md:1–30` | 仅证据存储／信任边界，无当前发布状态声明，旧措辞扫描无命中 |
+
+排除但报告命中（均不修改，不以本轮插件发布状态改写上游）：
+
+- `packages/omp-sbtd/upstream/vendor/sbtd-workflow-kit-upstream/README.zh.md:272,509,511`：规则保持不动、维护未发布章节／版本检查程序。
+- `packages/omp-sbtd/upstream/vendor/sbtd-workflow-kit-upstream/CHANGELOG.md:355`：`.gitignore` incremental merge，非发布合并。
+- `packages/omp-sbtd/upstream/vendor/sbtd-workflow-kit-upstream/CHANGELOG.zh.md:3,7,9,212,226,242,356`：上游未发布章节／上游 dated release 历史／`.gitignore` 合并。
+- 其余 16 个排除文件关键词无命中：同 vendor 的 `README.md`、`docs/lessons/archive/README.md`，及七组 `web-ui-autotest-generator/{README.md,README.zh-CN.md}`（vendor 的 `sbtd-workflow-onboard/templates/skills`、`upstream/{omp-overlays,generated,generated-omp}/onboard/runtime/templates/skills`、`upstream/generated-agent-plugin/skills`、`kit/onboard/runtime/templates/skills`、`skills`；各路径均位于 `packages/omp-sbtd` 下）。
+
+### fix3 实际检查与边界
+
+- `COREPACK_HOME=/home/box/.cache/node/corepack TMPDIR=/tmp GIT_CEILING_DIRECTORIES=/tmp node --test test/*.test.mjs`（`packages/dsh-sbtd`）：exit 0；342 passed / 0 failed / 0 skipped，runner 6056.596244 ms。
+- `COREPACK_HOME=/home/box/.cache/node/corepack npm pack --dry-run --json`（`packages/dsh-sbtd`）：exit 0，103 files；README.md、README.zh.md、CHANGELOG.md、CHANGELOG.zh.md 均在包内，大小与工作树一致。manifest files 显式列双语 CHANGELOG，npm pack 实测自动包含双语 README。dsh 无 SBOM。
+- 未修改任何 omp-sbtd packaged file：因此不触发 omp build/SBOM 重生成、actual pack/check-package --packed、agent-plugin-pack 或 full omp test；不运行这些无变化范围。dsh 既有 lint 失败不重跑确认；无 src/types/config 变化，不运行额外 lint/typecheck/build，不声称其通过。
+- 文档 smoke：MarkdownIt CommonMark + table 实际渲染五个修改文件，发布补记在各自发布节内且先于 Support／支持；双语新增代码标识、时间、原命令块一致。三份 task YAML 可解析，frontmatter 字节与旧事件完全不变；旧句零删除。全仓受跟踪范围冲突标记扫描为零。
+- 原始实时查询、dsh tests、pack 与同 stem 中文汇总保留 `reports/fix3-publication.{json,md}`、`reports/fix3-dsh-tests.{json,md}`、`reports/fix3-dsh-dry-pack.{json,md}`；静态检查与最终提交绑定保留 `reports/fix3-final-checks.{json,md}`。82 个 dsh/workspace 验证输入 SHA256 保留 `reports/fix3-validation-inputs.json`，提交后与 Git blob 核对，不将本地测试冒充远端 PR CI。
+- 提交前／后分别核验 whitespace、追加行归因禁词、禁用英文时间短语、归因时间专用性、YAML、零删除及唯一子提交；确切 commit SHA 和最终检查结果在交付及本地报告记录，不在提交内预填自身 SHA。
+- rtk=skipped-for-report（原生命令保存真实输出）；Graft=skipped（文档事实取 Git/GitHub/npm，无需结构图）；BDD=skipped（docs-only，无新行为／场景）；Cross-repo context/API Contract=not-needed；Mock Strategy=none（发布查询／pack／Markdown smoke，无新 mock；既有 suite 内部测试替身不冒充 full-stack）。Evidence Source=developer-local、Source Revision=dirty（执行时）、Evidence Publication=local-only；无新 CI、真实宿主或 Web/Mobile 执行。
+- 发布与恢复边界：已发布 npm rc.2 tarball 不可覆盖，本次 README 只随本 PR 进入仓库，不声称 registry 已包含新补记；此次无发布授权、无新版本。任务仍 checking/null，后续合并回填遵守原确认；本轮不新建 lesson/身份/handoff，不修改任何全局配置。

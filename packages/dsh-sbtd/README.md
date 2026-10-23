@@ -108,6 +108,8 @@ Publication is separate from this README/version bump. After review and merge, c
 
 Run package tests, lint, typecheck, and `npm pack --dry-run` before release; the Chinese mirror is linked via the release-tag-pinned URL, and `README.zh.md` ships in the npm package. From `packages/dsh-sbtd`, the release operation is `npm publish --tag next`; leave `latest` untouched. Do not treat a changelog date or local version bump as publication evidence. See [CHANGELOG.md](CHANGELOG.md) and [CHANGELOG.zh.md](CHANGELOG.zh.md) for mirrored release notes.
 
+Publication update (2026-10-23; lookup at 22:10 +08:00): `@kunolu/dsh-sbtd@0.2.0-rc.2` is published. The preceding rc.2 instructions are retained as the pre-publication plan, not the current release state. Annotated tag `dsh-sbtd-v0.2.0-rc.2` (object `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e`, target commit `548a0bf125e3b3fe1407de11094409e55c2e779e`) was created at 2026-10-23 17:55:10 +08:00; the GitHub prerelease (`isPrerelease=true`) was created at 17:55:10 and published at 17:55:13 on 2026-10-23 +08:00. npm records publication at 2026-10-23 17:08:50.745 +08:00. At the lookup above, both dist-tags `next` and `latest` pointed to `0.2.0-rc.2`; “leave `latest` untouched” is not a claim about the observed registry state. Sources: `git for-each-ref`, `gh release view dsh-sbtd-v0.2.0-rc.2 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease`, and `npm view @kunolu/dsh-sbtd time --json` / `npm view @kunolu/dsh-sbtd dist-tags --json`.
+
 ## Support
 
 Report reproducible issues at <https://github.com/KunoLu/sbtd-plugins/issues>. Include plugin/host versions, workflow mode, and sanitized reproduction steps; do not include credentials or private session contents.

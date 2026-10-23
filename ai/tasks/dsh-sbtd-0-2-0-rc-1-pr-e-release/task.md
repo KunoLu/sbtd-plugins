@@ -55,6 +55,8 @@ omp 正在实现。范围见 PRD `docs/prd/dsh-sbtd-0.2.0-rc.1.md` 行 E。**本
 - Required validation and result: 包测试 335/335 通过；pack --dry-run 通过。
 - Optional checks / residual risk: `dsh-host-compat.yml` 为 workflow_dispatch，双行 REQUIRED 绿以 PR-C 已跑证据为准（本 PR 不动宿主兼容面）；README 仍描述 0.1.0-rc.3 npm 发布态，publish 后需由后续任务更新——已写入范围与测试注释。
 
+状态补记（2026-10-23，编排方整理）：上述 `Status: ready` 与“未来”tarball 是 release bump PR 当轮的历史结论，后续发布已完成。[#99](https://github.com/KunoLu/sbtd-plugins/pull/99) 的 merge SHA 为 `1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831`，GitHub mergedAt 为 2026-10-19 04:39:45 +08:00（不混同旧 completed_at 采用的 Git commit 时间）；`@kunolu/dsh-sbtd@0.2.0-rc.1` 已于 2026-10-19 04:43:02.349 +08:00 发布到 npm。Annotated tag `dsh-sbtd-v0.2.0-rc.1`（对象 `73d4c0a4cc37fb6b445809aa164a382a20b681b8`）指向该 merge SHA，tagger 时间为 2026-10-19 04:43:55 +08:00；[GitHub prerelease](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.1)（`isPrerelease=true`）创建于同日 04:43:55 +08:00、发布于 04:43:59 +08:00。2026-10-23 通过 `gh pr view 99 --repo KunoLu/sbtd-plugins --json mergedAt,mergeCommit`、`git for-each-ref`、`gh release view dsh-sbtd-v0.2.0-rc.1 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease` 与 `npm view @kunolu/dsh-sbtd time --json` 重核。后续发布不代表本轮执行过 publish/tag/Release，不追改旧验证或安装指引；frontmatter 与状态事件保持原样。用户 2026-10-23 21:09 +08:00 群内要求 SBTD tasks 状态更新为最新（应均为 done），Lord 记录。
+
 ## 状态事件
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
