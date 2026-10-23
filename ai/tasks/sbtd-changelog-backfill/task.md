@@ -4,11 +4,11 @@ id: sbtd-changelog-backfill
 workflow_mode: strict
 mode_source: user
 mode_note: 用户 2026-10-22 22:56 +08:00 在 SBTD 群内确认 CHANGELOG 回填，Lord 记录；本次明确指定 strict、唯一 writer、两个本地提交，不 push/PR/comment/tag/publish/merge。
-status: checking
+status: done
 branch: docs/changelog-backfill
 created_at: '2026-10-23T12:40:50+08:00'
-updated_at: '2026-10-23T12:54:37+08:00'
-completed_at: null
+updated_at: '2026-10-23T13:10:17+08:00'
+completed_at: '2026-10-23T13:06:30+08:00'
 ---
 # SBTD CHANGELOG backfill
 
@@ -29,6 +29,8 @@ completed_at: null
 | 2026-10-23T12:40:50+08:00 | planned | in-progress | 用户明确 strict 与两个提交的文档范围；核实根、分支及路径安全 | git status --short --branch；git rev-parse --show-toplevel；路径无 symlink；git ls-files / git check-ignore |
 | 2026-10-23T12:50:42+08:00 | in-progress | checking | 双语回填、逐版本证据、原始 npm JSON、模型 SNAPSHOT 与文档 smoke 完成；本地交付不标 done | 四文件 9/9/4/4 个版本日期匹配；原 EN body 保留；提交 1 append-only；全表 Git ranges/counts 与 raw JSON 比对通过；completed_at null |
 | 2026-10-23T12:54:37+08:00 | checking | checking | provenance wording fix | 按本次明确纠正，将本分支新增文字中的 PR body、npm JSON、日志/tarball 与 ping 归属改为编排方；保留用户决策归属及基线旧正文 |
+| 2026-10-23T13:06:30+08:00 | checking | done | 回填 PR #117 squash-merge；Lord 合并 | main merge SHA 46680a5f6403d9c6032e1dd6a3d2cb49cb2ff842；merge commit %cI 与 GitHub mergedAt 均为 2026-10-23T13:06:30+08:00；远程 docs/changelog-backfill 已删除，本地分支及 worktree /workspace/sbtd-plugins-changelog 也已移除（本次任务提供的完成事实）；本轮 git ls-remote --heads origin docs/changelog-backfill 无输出 |
+| 2026-10-23T13:10:17+08:00 | done | done | record correction | 历史「提交 1 `965dca5`」保留不改；965dca5 是 autosquash 前 SHA，合并分支的实际提交 1 为 2058673；本轮 git log --oneline -3 2058673 已确认该提交存在 |
 
 ## Book Gate Plan
 
@@ -151,3 +153,21 @@ completed_at: null
 - 两份 task 与 index 均经 markdown-it 实际渲染通过；四 CHANGELOG 的标题、日期、原文保护、index generator 与链接解析检查已通过。没有新增永久测试来断言文案。
 - 原生取证命令：`git log -1 --format='%h' --until=<npm-time>` 选可见边界；`git log --format='%h %cI %s' <from>..<to> -- <package-path>`；`git rev-list --count <from>..<to> -- <package-path>`；`git show <sha>:<package-path>/package.json`；`git show e515f76 -- plugins/omp-sbtd/package.json`；`git diff fcd11b1 2cabe79 -- packages/dsh-sbtd/README.md`；`git show --stat 46ac3e6`；`git diff 2cabe79 838f454 -- packages/dsh-sbtd/src/tools/lessons.ts`。所有新记录日期均以 npm 的 +08:00 日期为准，不用 commit date 代替 publish date。
 - 交付保持 checking，未执行远端写操作；回滚边界为本次两个 docs-only 本地提交，不涉及生产状态、包版本或已发布 tarball。
+
+## 使用的模型（FINAL）
+
+以下为本次任务提供的 session JSONL **FINAL** 计数（assistant messages / tool calls），取代上方 SNAPSHOT 的当前结论；历史 SNAPSHOT 原样保留。本轮不访问其他会话日志目录，不声称重新采集这些计数。
+
+| run | model | assistant messages / tool calls |
+|---|---|---|
+| ping | openai-codex/gpt-6-astra:high | 1 / 0 |
+| main | openai-codex/gpt-6-astra:high | 39 / 75（此前 SNAPSHOT 28 / 63） |
+| OmpHistory (subagent) | cursor/composer-2.5 | 2 / 78 |
+| DshHistory (subagent) | cursor/composer-2.5 | aborted，3 / 203（此前 SNAPSHOT 2 / 201） |
+| fix1 | openai-codex/gpt-6-astra:high | 11 / 23 |
+
+标题生成来源为 `~/.omp/logs/omp.2026-10-23.<pid>.log`，以下同为本次任务提供的最终统计：
+
+- pid 79530（main）：7 次 title-generator 请求，没有生成标题；deepseek 返回 401，grok-4.7 / grok-4.6 回复计为 fallback，不计成功。
+- pid 88190（fix1）：8 次请求，composer 成功 1 次；deepseek 返回 401，grok 计为 fallback。
+- #117 的 Codex auto-review 因 quota 失败，没有产生 findings，未阻塞合并。
