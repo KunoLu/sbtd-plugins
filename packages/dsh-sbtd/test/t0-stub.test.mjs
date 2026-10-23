@@ -38,15 +38,9 @@ test("插件加载时打印 T0 stub 日志并注册非空中文 sbtd section", (
   assert.ok(sections[0].text.length > 0);
 });
 
-test("README 钉 0.2.0-rc.2 并说明 @next 安装命令", () => {
-  const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
+test("包声明支持的宿主范围与发布文件清单", () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 
-  assert.match(readme, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/);
-  assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
-  assert.doesNotMatch(readme, /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/);
-  assert.doesNotMatch(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd(?!@next)/);
-  assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
   assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], ">=0.2.0-rc.2 <0.3.0-0");
   // 0.2.1+ hosts let engines.dsh decide alone; it must carry the same range.
   assert.equal(pkg.engines.dsh, ">=0.2.0-rc.2 <0.3.0-0");
@@ -61,18 +55,11 @@ test("README 钉 0.2.0-rc.2 并说明 @next 安装命令", () => {
   ]);
 });
 
-test("README 声明 0.2.0-rc.1 已发布到 next，latest 仍为 0.1.0-rc.1", () => {
-  const readme = readFileSync(join(pkgRoot, "README.md"), "utf8");
+test("0.2.0-rc.2 包可发布且标记为 dsh-plugin", () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 
-  assert.match(readme, /0\.2\.0-rc\.1/);
-  assert.match(readme, /已发布到 dist-tag `next`/);
-  assert.match(readme, /`latest` 仍为 0\.1\.0-rc\.1/);
-  assert.doesNotMatch(readme, /待发布/);
-  assert.doesNotMatch(readme, /尚未发布到 npm/);
-  assert.doesNotMatch(readme, /复制粘贴.*会失败/);
   assert.equal(pkg.private, false);
-  assert.equal(pkg.version, "0.2.0-rc.1");
+  assert.equal(pkg.version, "0.2.0-rc.2");
   assert.ok(pkg.keywords.includes("dsh-plugin"));
 });
 

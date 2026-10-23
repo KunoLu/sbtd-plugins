@@ -4,6 +4,16 @@ All notable changes to `@kunolu/dsh-sbtd` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); newest
 first. Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
+## [0.2.0-rc.2] - 2026-10-23
+
+### Changed
+
+- Documentation-only RC: English default `README.md` and Chinese mirror
+  `README.zh.md`, with release-tag-pinned language switchers.
+- No runtime or contract changes. The host range remains
+  `>=0.2.0-rc.2 <0.3.0-0`; the development host stays pinned to
+  `@deepseek-ai/dsh@0.2.0-rc.2`.
+
 ## [0.2.0-rc.1] - 2026-10-19
 
 ### Added

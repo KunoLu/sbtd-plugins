@@ -10,6 +10,7 @@
 - [dsh-sbtd-0-2-0-rc-1-pr-c-host](dsh-sbtd-0-2-0-rc-1-pr-c-host/task.md)
 - [dsh-sbtd-0-2-0-rc-1-pr-e-release](dsh-sbtd-0-2-0-rc-1-pr-e-release/task.md)
 - [dsh-sbtd-0-2-0-rc-1-prd-f-backfill](dsh-sbtd-0-2-0-rc-1-prd-f-backfill/task.md)
+- [dsh-sbtd-0-2-0-rc-2-pr-g-readme](dsh-sbtd-0-2-0-rc-2-pr-g-readme/task.md)
 - [dsh-sbtd-0.1.0-rc.2-bump](archive/2026-Q3/dsh-sbtd-0.1.0-rc.2-bump/task.md)
 - [dsh-sbtd-fu3-multi-fact-persist](archive/2026-Q3/dsh-sbtd-fu3-multi-fact-persist/task.md)
 - [dsh-sbtd-fu4-clarify-schema-ddd](archive/2026-Q3/dsh-sbtd-fu4-clarify-schema-ddd/task.md)
