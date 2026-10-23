@@ -4,11 +4,11 @@ id: dsh-host-smoke-version-assert
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict、唯一 writer；先 records-only 回填，再最小 smoke 断言修复；仅本地提交，不执行远端或全局配置写入。
-status: checking
+status: done
 branch: chore/dsh-host-smoke-version-assert
 created_at: '2026-10-23T18:00:01+08:00'
-updated_at: '2026-10-23T18:14:32+08:00'
-completed_at: null
+updated_at: '2026-10-23T18:34:13+08:00'
+completed_at: '2026-10-23T18:23:58+08:00'
 ---
 # dsh host register smoke：版本断言与追加式记录回填
 
@@ -53,6 +53,7 @@ completed_at: null
 | 2026-10-23T18:07:11+08:00 | in-progress | checking | 编排方整理：records-only 提交完成，最小断言修复与本地正负例通过，进入独立复核及最终提交检查 | 34a9091c899752c76df416da1a5c6594fb81094f；10/10 assertion-only checks；node --check exit 0；七文件边界/追加保护/YAML/Markdown 检查通过 |
 | 2026-10-23T18:12:05+08:00 | checking | done | 编排方整理：限定本地 chore 的记录回填、断言修复、正负例及提交后检查完成；不代表完整宿主 CI 或发布就绪 | 34a9091 记录提交；0311219 修复提交；10/10 checks；两位独立 reviewer 无发现；origin/main..HEAD whitespace 与记录保护通过；临时 harness 已清理 |
 | 2026-10-23T18:14:32+08:00 | done | checking | 编排方整理：本地完成不等于任务完成；按仓库惯例待 PR 合并，且合并后在 main 手动触发 dsh-host-compat、两个 REQUIRED 格均为绿后再记 done；18:12:05 事件保留为历史 | 完成条件：PR 合并后由 Lord/OMP 在 main 手动触发 dsh-host-compat，dsh 0.2.0-rc.2 与 dsh 0.2.1-rc.2 两个 REQUIRED 格均为绿；本次仅纠正记录，不触发 workflow |
+| 2026-10-23T18:23:58+08:00 | checking | done | 编排方整理：#121 已 squash-merge，合并后 main 的 dsh-host-compat 5/5 success，两个 REQUIRED 宿主格均绿；完成条件已满足 | squash c90fddb6c49af1f9d89c33f61f5b34f8f9081b99；post-merge run 39938831551；at/completed_at 沿用合并回填的 mergedAt 口径，不冒充 run 完成时刻；详见下方回填 |
 
 ## 提交 1 与 before-dev review
 
@@ -88,3 +89,35 @@ completed_at: null
 - 脚本 pin block 外字节与基线一致；workflow/package 未修改。已核对提交中的脚本 SHA-256 等于实际 10-case smoke 被测字节 `a2ffd3c89d793277a7b905316cecea7bb6e081c073c68608ca0d6b603215e8b7`；不以提交后哈希核对冒充新 CI。仓库级冲突标记 regex 检查 **0 matches**。
 - `2026-10-23T18:12:05+08:00` 已删除本轮 `/tmp/dsh-host-version-assert-check.mjs`；其 fixture 早已自动清理，ignored 原生报告与同 stem 中文汇总保留。最终仅追加本验收记录的提交不改脚本；提交后再次检查最终 diff 范围/whitespace 与被测脚本字节，在最终回复列真实提交清单和 diff stat。
 - 完成定义：本地断言修复及明确回填已完成；完整 REQUIRED host-compat **未运行、结果未知**，后续 workflow 执行需另行授权。本轮没有 push、PR/comment、tag、publish、merge、workflow trigger 或全局配置写入。
+
+## #121 合并与 post-merge host-compat 回填（2026-10-23）
+
+- 编排方整理：本次只在 `docs/omp-sbtd-session-compact-decisions` 分支追加历史回填，旧 branch、正文与事件原样保留，不重开或重绑定旧任务；仅本地文档提交，无远端或全局配置写入。沿用已记录的 TaskStore 全库历史 schema blocker，不重跑、不调用 lifecycle，不声称自动恢复通过。
+- 已先读取并检索 #121 原提交 `34a9091` / `0311219` / `022bcf9` / `0687982`：#120 合并已在 [PRD task](../omp-sbtd-session-compact-prd/task.md) 的状态事件及「#120 合并回填」中记录，不重复追加；tag/prerelease、两条 README blob 链接 200 与先 publish 后 tag 的事实已在 [row G task](../dsh-sbtd-0-2-0-rc-2-pr-g-readme/task.md)「发布时刻、tag/prerelease 与 host-compat 回填」中记录，本次只给 PRD row G 状态格追加指针。
+- 编排方整理：#121 squash-merged 为 `c90fddb6c49af1f9d89c33f61f5b34f8f9081b99`；GitHub mergedAt 与 git %cI 均为 `2026-10-23T18:23:58+08:00`。本轮以 `git show -s --format='%H %cI' c90fddb` 核对 git 时间；GitHub mergedAt 及下列 run 结果来自编排方核验材料，不冒充本轮 GitHub 查询或执行。
+- 编排方整理：合并后 main `c90fddb` 的 [dsh-host-compat run 39938831551](https://github.com/KunoLu/sbtd-plugins/actions/runs/39938831551)，trigger=`workflow_dispatch`，**5/5 jobs success**：Parse advisory candidate versions；REQUIRED unit + pack dist/；REQUIRED dsh 0.2.0-rc.2 × packed dsh-sbtd；REQUIRED dsh 0.2.1-rc.2 × packed dsh-sbtd；Advisory dsh 0.2.1-rc.3 × packed dsh-sbtd。Advisory 仍为 `DSH_PIN_SMOKE="0"`，不能替代两个 REQUIRED 格。
+- 编排方整理：这是合并后主线首次 REQUIRED 0.2.x 插件 host smoke 通过，更新上方第 71/79/90 行的缺口与未知快照；不将通过扩张为其他历史门禁或发布就绪。done 事件及 completed_at 采用与 #120 相同的 **GitHub mergedAt** 回填口径 `2026-10-23T18:23:58+08:00`；run 精确完成时刻未知，该时间不表示 run 已在合并瞬间完成。完成判断包含其后 run 的成功证据，updated_at 是本次记录时间。
+- 编排方整理：[pre-check run 39937887823](https://github.com/KunoLu/sbtd-plugins/actions/runs/39937887823) 在 PR 分支提交 `0687982` 上 **5/5 success**，只是合并前 pre-check，不是 main 的 post-merge 结果；上条「首次」指合并后主线认证，不抹去此前 pre-check。
+
+## 使用的模型（FINAL，#121）
+
+编排方整理：以下是 #121 的最终统计，不是本次 decisions 会话的使用量；按本次编排材料记录，未重数原始 session 日志。
+
+| run | model / 配置与实际 thinking | assistant msgs / tool calls |
+|---|---|---|
+| ping | openai-codex/gpt-6-astra:high | 1 / 0 |
+| main | openai-codex/gpt-6-astra:high | 29 / 60 |
+| RecordReview | reviewer 子代理 kimi-code/k3；agent default @slow = k3:max；spawned effort=hi，实际 max | 19 / 26 |
+| AssertionReview | reviewer 子代理 kimi-code/k3；spawned effort=med，实际 high | 8 / 12 |
+| fix1-ping | openai-codex/gpt-6-astra:high | 1 / 0 |
+| fix1 | openai-codex/gpt-6-astra:high | 10 / 17 |
+
+- 编排方整理：无 advisor、无主任务 fallback，watchdog 从未触发，全部 exit 0；title-gen fallback 单独记，不混同主任务 fallback。
+- 编排方整理：title-gen ping pid `308627` 为 0 requests；main pid `309149` 的 main session 为 7 requests，无标题：composer-2.5 → k3-256k → deepseek-flash（401）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol，均未产出标题；grok-4.7/4.6 计为 fallback。
+- 编排方整理：RecordReview title-gen 2 requests（composer-2.5 none、k3-256k success）；AssertionReview 1 request（composer-2.5 success），与 main 的 7 requests 分列。
+- 编排方整理：fix1-ping pid `318579` 为 0 requests；fix1 pid `318729` 为 2 requests，composer-2.5 success ×2。
+
+### 本次 backfill 文档验证
+
+- `2026-10-23T18:35:34+08:00`：原生 `python3 -c <文档检查> WORKTREE` 通过；3 个允许文件、2 份 task YAML 解析、旧正文/事件追加保护、Markdown 实际渲染与相对链接目标、row G 仅状态格追加均通过；新增行归因过滤 0 hits、冲突标记 0；`git diff --check origin/main` exit 0。提交后检查留在最终交付，不预写成功。
+- 本次未运行宿主、包测试/build/lint、CI 或发布核验：纯历史文档回填；线上结果按编排方整理，不与本次文档 smoke 混同。rtk=not-needed（明确要求原生 Git/Python）；BDD=skipped（无运行行为改动）；Graft=skipped（Git/文档证据足够，不接线）。

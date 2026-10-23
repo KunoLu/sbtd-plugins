@@ -1,6 +1,6 @@
 # omp-sbtd：session_compact handoff 证据 PRD
 
-状态：**PRD-only 草案；D1–D5 open / pending，尚未裁决**。本文件交付已登记 follow-up 的步骤 (a)，不代表代码、CI、硬失败恢复或发布已完成。
+状态：**PRD-only；D1–D5 已决定（decided）：D1-B / D2-A / D3-B（v2）/ D4-A / D5-A**。本文件交付已登记 follow-up 的步骤 (a)，由 #122 PRD-only PR 交付；代码/CI/硬失败恢复未执行，不代表发布已完成。
 
 ## 1. 来源与范围
 
@@ -8,6 +8,9 @@
 - 用户 2026-10-23 17:25 +08:00 群内确认（开始 session_compact），Lord 记录。
 - 编排方整理：本轮仅将「订阅 `session_compact` 作为 handoff 证据」写入 host-event inventory/validator 的 PRD 契约，先交付包含待裁决选项的 PRD-only 草案；进入后续代码 PR 前须完成相关裁决与 PRD-only PR。**代码 PR 合并后，`HANDOFF_EVENT_UNOBSERVABLE` 恢复为硬失败**。这项顺序及最终硬失败要求已登记，不在本轮重新开放选择。
 - 编排方整理：新增独立 PRD，因该事项已明确不在 rc.1 主序列；不改写 rc.1 历史验收或已发布证据。[strict 任务记录](../../ai/tasks/omp-sbtd-session-compact-prd/task.md)保存调查、选址、验证及历史回填。
+- 用户 2026-10-23 18:30 +08:00 群内确认（采纳 D1-B/D2-A/D3-B/D4-A/D5-A，与 OMP/Researchy/Reviewy 投票一致），Lord 记录
+- 用户 2026-10-23 18:31 +08:00 群内确认（v2，开始），Lord 记录
+- 编排方整理：上方草案交付与旧 strict task 链接保留为 #120 历史；本次决定及验证由独立 [decisions task](../../ai/tasks/omp-sbtd-session-compact-decisions/task.md) 记录，不重开已 done 的 #120 task。当前结论以 §3.2 的裁决结果为准。
 - 检索覆盖 docs/prd、ai/tasks、docs/spec 的 session_compact / session compact / HANDOFF_EVENT_UNOBSERVABLE / handoff，以及 ROADMAP、backlog、follow-up。ROADMAP §20.2 的「Session Compaction」是旧专项测试条目，不据此扩展成 compaction 产品重构。offline-cache、README 命名、ROADMAP 归档等独立事项不并入本 PRD。
 
 ### 非目标
@@ -41,6 +44,17 @@
 - `src/session/session-maintenance.ts:2084–2118,2484–2538`：handoff 生成文档后提交 compaction，设置 `fromExtension: false`、`method: "handoff"`；保存 entry 后发出 `session_compact`，该 handoff 调用等待 emit 后返回。普通 compact 也走 compaction 提交，故仅看到事件名不能证明由本次 handoff 引起。
 - **未知**：18.11.1 的精确 payload 是否具有同样的 entry.method、相关可用性下限、所有受支持版本的跨流落盘顺序。本仓行 C 留有 18.11.1 同 session compaction 的历史源码核对，但本 worktree 未安装该版本；18.12.6 源码不是 18.11.1 类型或运行验收。后续代码 PR 必须补目标版本证据，不能按全局版本替换 D11 钉版。
 
+#### 18.11.1 源码补证（编排方整理；source-only，未执行宿主）
+
+以下追加更新上方对 18.11.1 payload 的「未知」历史快照，不将 18.12.6 或源码核对当作 18.11.1 live/runtime certification。编排方整理：OMP 与 Researchy 独立发现 npm `@oh-my-pi/pi-coding-agent@18.11.1` 的下列证据；编排方以 `npm view` 再核对 dist.shasum 为 `e8cb333e5d6d471cdbedf66b8be5af902502927e`。本轮按材料记录，未重新执行 npm view、安装或运行宿主。源路径相对该 npm 包：
+
+- `src/extensibility/shared-events.ts:97–102`：`SessionCompactEvent` 为 `{ type: "session_compact", compactionEntry, fromExtension }`。
+- `src/session/session-entries.ts:141–142`：`method?: CompactionMethod`；legacy sessions 与 extension compactions 可无此字段，不能把类型 optional 解释为 D1-B 验收 optional。
+- `src/session/session-maintenance.ts:2076`：handoff 提交 `method: "handoff"`，`fromExtension: false`。
+- `src/session/session-maintenance.ts:2484–2497`：事件携带保存后的 entry，emit 被 await；handoff 未传 `detachExtensionEmit`。这支持目标版本的源码可行性，不证明 observer 落盘/排空或窗口隔离已实测。
+
+当前边界：18.11.1 类型与 handoff 发射路径已有上述 source-only 证据；真实事件捕获、跨流落盘顺序、排空与无竞争窗口仍须在隔离 live cell 证明。所有受支持版本的能力下限未知，peer range 不等于逐版本认证。
+
 ## 3. host-event inventory / validator 新判据
 
 ### 3.1 已登记要求（本 PRD 写明，代码尚未实现）
@@ -49,41 +63,42 @@
 2. `session.compacting` 保留既有独立语义与验收；新增判据不能以改名/替换旧事件降低其覆盖。
 3. handoff 覆盖通过必须有符合最终裁决规则、可归属于该次 handoff 的 `session_compact` 证据。单纯 inventory 中存在名字、observer_ready 订阅数正确或另一场 compact 的事件不足以证明覆盖。
 4. 代码 PR 合并后：成功 handoff 缺少有效关联观测时，`HANDOFF_EVENT_UNOBSERVABLE` 进入硬失败路径，不能再仅进入 diagnostics 而得到 passed-with-diagnostics。本轮不改变当前运行语义、不追改旧证据结果；代码 PR 的预合并测试需先证明新硬失败分支，合并是主线切换点，不是再等一次 release。
-5. 保留既有证据身份、schema、脱敏、session 隔离及其他失败门禁。事件归属与 payload 的具体最小字段、订阅分级和版本标识由 D1–D5 裁决后落地，不在本文暗定。
+5. 保留既有证据身份、schema、脱敏、session 隔离及其他失败门禁。payload 最小字段、订阅分级和版本标识按 §3.2 已决定的 D1–D5 落地；本轮只记录要求，不修改运行代码。
 
-### 3.2 待裁决方案（均为编排方整理）
+### 3.2 已决定方案与保留选项（选项说明为编排方整理）
 
-各项状态均 **open / pending**；所有推荐均为 **推荐（仅建议，待用户裁决）**。选项不是已经锁定的契约，不以多数推荐或本轮完成自动生效。
+当前状态：各项均 **decided / 已决定**，依据 §1 两条群内确认。下面 A/B 选项原文（包括当时的推荐、未知和待裁决措辞）只保留为裁决前历史，不代表当前状态；每项「裁决结果」是当前结论。未选项不生效，不能因实现困难自动改选。
 
 #### D1 — 哪些 payload 字段足以证明 handoff？
 
 - **A：结构 + 关联窗口。** 按目标宿主真实类型验证 type、compactionEntry、fromExtension；证据至少保留 entry 身份摘要与 ctx session 摘要，结合 D4 的隔离窗口归属 handoff，不要求 entry.method。优点是兼容无 method 的形态；风险是窗口内其他 compaction 可能误归属，必须能证明隔离。
 - **B：A + handoff 方法标识。推荐（仅建议，待用户裁决）** 额外要求真实 entry 的 `method="handoff"`，不从 fromExtension=false 推导 handoff。18.12.6 源码支持该区别，可拒绝普通 compact 冒充；18.11.1 是否支持未知，必须先补证，不能造字段或自动抬版本下限。
-- 裁决结果：**未知；open / pending**。两方案都不持久化 summary/details/raw session 路径，不用 method 或事件名代替 session/run 关联。
+- 裁决结果：**已决定 D1-B**：结构 + 关联窗口 + `compactionEntry.method === "handoff"`。不持久化 summary/details/raw session 路径，不用 method 或事件名代替 session/run 关联；缺少 method 就是失败。18.11.1 的源码补证见 §2.1，真实 live run 若缺字段必须返回用户重新选择，不默认降为 D1-A。
 
 #### D2 — inventory 必需性与 13 → 14
 
 - **A：将 session_compact 加入 requiredEvents。推荐（仅建议，待用户裁决）** 保留原 12 required 与 1 optional，成为 13 required + 1 optional，总订阅数 14；全量 host-event profile 必须观测它，handoff 还需单独满足 D1/D4。优点是新契约 fail-closed，代价是缺少该能力的宿主不满足新契约。
 - **B：加入 optionalEvents，但 handoff 成功场景条件必需。** 总订阅数同样为 14（12 required + 2 optional）；成功 handoff 无证据仍硬失败，不能以 optional 逃逸。其他场景不强制出现；需明确 optional 能力与 handoff profile 条件的区别。
-- 裁决结果：**未知；open / pending**。新增事件而不删除旧事件时，订阅名总数自然为 14；争议是 required/optional 与认证含义，不把手工改 count 当事件覆盖。
+- 裁决结果：**已决定 D2-A**：`session_compact` 加入 requiredEvents，13 required + 1 optional（`credential_disabled`），共 14 subscriptions；保留全部旧事件。全量 profile 必须观测该事件，handoff 仍需满足 D1/D4；手工改 count 不等于事件覆盖。
 
 #### D3 — contract / evidence profile 如何版本化？
 
 - **A：保留 `omp-extension-v1` / `omp-host-events-v1` 名称。** 以精确 subject、validator 与 scenario-set 身份区分新旧判据，验证所有消费者都不会把旧 diagnostic 结果当作新合格证据。改动较小，但同名结果含义变更需明确说明。
 - **B：为变更后的 inventory/contract 与 evidence profile 使用新版本。推荐（仅建议，待用户裁决）** 让新硬失败判据与旧证据身份明确分离；具体版本值、compatibility/ledger 引用清单须在代码 PR 前补齐裁决，不预写为已存在的 v2。旧记录只读保留，不为新产物保留旧语义兼容 shim。
-- 裁决结果：**未知；open / pending**。不借此重做 p0 ledger/schema 或四命令协议；只同步本判据实际影响的消费者。两方案均禁止重新解释或覆盖历史认证证据。
+- 裁决结果：**已决定 D3-B，两个标识同时升 v2**：inventory/contract `omp-extension-v1` → `omp-extension-v2`；evidence profile `omp-host-events-v1` → `omp-host-events-v2`。这些是后续代码 PR 的目标值，本轮未重命名代码。不重做 p0 ledger/schema 或四命令协议，只同步本判据实际影响的消费者；禁止重新解释或覆盖历史认证证据，不保留新产物的旧语义兼容 shim。
+- 编排方整理：本轮只读核对的实际标识为 `src/runtime/omp-extension-v1.ts:47` 的 inventory.version、`scripts/p0/compatibility-ledger.ts:435` 的 contractProfile、`scripts/p0/three-profile-certification.ts:511` 的 inventoryVersion，均为 `omp-extension-v1`；`scripts/p0/host-event/validate.ts:147,612,729` 的 profile 为 `omp-host-events-v1`（路径相对 packages/omp-sbtd）。实际基名与编排材料一致；代码 PR 须同步实际受影响的 inventory/contract、compatibility/ledger、evidence producer/consumer 与测试引用，旧 evidence 只读保留，不将旧 diagnostic 认证重标为 v2。
 
 #### D4 — 如何关联 handoff RPC、同 session 与事件顺序？
 
 - **A：单次串行 handoff + 明确观测窗口。推荐（仅建议，待用户裁决）** 使用现有 runId 与 session 摘要，建立 handoff 发起前基线、一次 RPC 及观测完成边界；只认可窗口内同 session 的合格新 entry。代码 PR 需证明窗口内无竞争 compact、事件日志排空可见及边界可靠；不能用两个进程各自 seq 大小或墙钟先后假装全局顺序，也不能要求事件必须在 RPC response 之后才算数。
 - **B：原生因果 ID 关联。** 仅当目标宿主契约证明可获得 handoff/RPC 与 compaction entry 的稳定对应 ID 时采用；当前 SessionCompactEvent 顶层未声明 requestId，是否有其他可靠映射未知。若需修改上游宿主协议，须另行授权，本 PRD 不包含该实现。
-- 裁决结果：**未知；open / pending**。重复同一 entry 不形成新的覆盖；旧 run、跨 session、窗口外或无法关联的事件不能消除 handoff 证据缺失。具体观测等待上限与排空方案须由真实宿主行为确定，不虚构超时数值，不加重试框架。
+- 裁决结果：**已决定 D4-A**：一次一个 handoff，按同 run + 同 session + 可证明的观测窗口匹配；代码 PR 必须证明窗口内无竞争 compact、事件日志排空可见及边界可靠。重复同一 entry 不形成新的覆盖；旧 run、跨 session、窗口外或无法关联的事件不能消除缺证据。事件在 RPC response 前到达不能被误拒；不比较跨进程 seq 或用墙钟伪造全序。具体等待上限与排空方案由真实宿主行为证明，不虚构超时、不加重试框架。
 
 #### D5 — 宿主版本与兼容性下限
 
 - **A：保留 D11 peer `>=18 <19` 与认证目标 18.11.1。推荐（仅建议，待用户裁决）** 先补 18.11.1 类型、发射路径和真实 live-cell 证据；若 D1/D4 所选方案在该版本不可实现，停止该方案并返回裁决，不把缺事件降级为通过。
 - **B：将新判据的兼容/认证下限提高到有充分证据的版本。** 具体版本未知；18.12.6 只有本轮源码证据，尚非运行认证。须显式裁决 peer/dev/CI 是否联动及兼容影响，不能由本 PRD 的本机版本自动选择。
-- 裁决结果：**未知；open / pending**。D1-B 与 D5-A 的组合须先证明 18.11.1 的 method 字段；没有证据时不可宣称两个推荐已能同时落地。
+- 裁决结果：**已决定 D5-A**：保持 peer `>=18 <19`，认证目标 **18.11.1**。D1-B 的类型与发射路径已有 §2.1 source-only 补证，但组合的 live/runtime 认证尚未执行；必须隔离安装 18.11.1，绝不降级主用/全局 omp。若实跑缺 method 或不能证明所选窗口方案，停止并返回用户重新选择，不默认降级判据或升降宿主下限。
 
 ### 3.3 不重新裁决的诊断边界
 
@@ -91,7 +106,7 @@
 
 ## 4. 验收意图与后续证明
 
-以下为 PRD 验收意图，不是已执行测试，也不替代项目既有 `.feature`。实现阶段沿用中文场景 + 英文 Gherkin 关键词，将最终裁决同步到 `packages/omp-sbtd/features/sbtd-control-bootstrap.feature` 并映射既有 Vitest 测试。当前全部 **待后续代码 PR 验证**；D1–D5 未裁决前不得把候选细节锁入行为测试。
+以下为 PRD 验收要求，不是已执行测试，也不替代项目既有 `.feature`。实现阶段沿用中文场景 + 英文 Gherkin 关键词，将已决定的 D1–D5 同步到 `packages/omp-sbtd/features/sbtd-control-bootstrap.feature` 并映射既有 Vitest 测试。当前全部 **待后续代码 PR 验证**，不能把文档裁决当作行为测试通过。
 
 | 场景 | 前提 / 动作 | 预期边界 |
 |---|---|---|
@@ -100,20 +115,30 @@
 | 普通 compact 冒充 | 只有先前普通 compact 的事件或 session.compacting | 不满足 handoff 证据；保留原 compact 覆盖规则 |
 | 陈旧 / 跨 session | 有事件但属于旧 run、其他 session 或窗口外 | 不可通过；既有身份/隔离失败保持，handoff 缺证据仍失败 |
 | payload / 订阅不完整 | 事件 schema 无效、缺少最终必需字段或 observer 订阅清单不完整 | 不计作有效证据；保留 schema/subscription 硬门 |
-| 顺序与重复（细则待 D4） | 事件在 RPC response 前到达，或同一 entry 重复观测 | 关联/窗口规则待裁决；候选验收须覆盖 response 前到达与重复事件，不能将该候选当作已锁定实现 |
+| 缺少 handoff method | 真实 handoff 的 session_compact entry 未携带 method，或 method 不等于 handoff | D1-B 验收失败，不得用 fromExtension=false 补造；若 live run 缺字段，返回用户重新选择，不默认降级 |
+| 顺序与重复（D4-A） | 事件在 RPC response 前到达，或同一 entry 重复观测 | 满足同 run/session、可证明窗口且 method=handoff 的前置到达不得误拒；重复 entry 不新增覆盖；须证明排空可见及窗口无竞争 compact |
 | 未尝试 / 触发失败 | driver 无成功 handoff | 如实保留当前诊断区别，不宣称新增 handoff 路径已验收 |
 | 脱敏 | 事件包含 summary、details、身份/路径等 | 公开证据不泄露正文、凭据、原始身份或路径；仅保留裁决允许的结构与摘要 |
 
 后续验证面：`test/omp-host-contract.test.ts`（adapter-edge schema）、`test/host-event-surface.test.ts`（validator 与负例、live cell）、`test/runtime.test.ts` / `test/extension.test.ts`（runtime 注册面；stub host 不等于真实宿主投递）、frozen-tarball CI live cell。必需真实场景：按批准的精确宿主版本加载实际新 tarball，执行一次成功 handoff，核对脱敏 observer/driver/scenario 与新失败判据。测试 fixture 不冒充宿主事件投递；旧 13-hook/diagnostic-only 证据不冒充新判据认证。
 
+### 4.1 后续代码 PR 的强制门禁
+
+1. 在**隔离的 18.11.1 安装**中运行 live cell，加载实际新 tarball，捕获真实 handoff 的 `session_compact` 事件；绝不降级主用/全局 omp。源码或 fixture 不能代替这次运行认证。
+2. `compactionEntry.method` 缺失是失败。若真实 live run 显示字段缺失，必须回到用户重新选择，不能默认退回 D1-A、放宽 schema 或以 RPC 成功替代事件。
+3. 证明同 run/session 的基线、一次 handoff 与观测完成边界，事件日志已排空可见，且窗口内**没有竞争 compact**；仅有 method 或相近时间不足以证明归属。
+4. **代码 PR 不包含 PRD 裁决**。实现或实跑暴露任何新选择，先返回独立 PRD-only PR，不能在代码 PR 内顺便改判据。上述测试完成前不声称 v2 认证或主线硬失败恢复。
+
 ## 5. 分步交付与影响面
 
 | 步骤 | 内容 | 本轮状态 |
 |---|---|---|
-| (a) PRD-only | 本文写入新判据、现状证据、D1–D5 与验收边界；后续裁决并审阅 PRD-only PR | 本地文档交付；裁决 pending；未开 PR、未合并 |
+| (a) PRD-only | 本文写入新判据、现状证据、D1–D5 与验收边界；#120 草案已合并，#122 补入已确认决定 | D1-B / D2-A / D3-B（v2）/ D4-A / D5-A 已决定；由 #122 PRD-only PR 交付；代码/CI/硬失败恢复未执行 |
 | (b) 代码 PR | 在裁决后同步 inventory/adapter schema、runtime 订阅、observer、driver 关联证据、validator、tests、BDD 与 CI live cell；按 D3 同步实际受影响的 contract/evidence 引用 | 未开始；本 PRD 不修改这些文件 |
 | (c) 合并切换 | 代码 PR 的新判据与预合并验证通过后合并，主线 HANDOFF_EVENT_UNOBSERVABLE 恢复硬失败；保留旧证据的历史语义 | 未执行；不把 (a) 完成或文档合并当作恢复完成 |
 
 更新（2026-10-23，编排方整理）：步骤 (a) 的「未开 PR、未合并」是历史快照；#120 已开 PR 并以 `67465db93e7c6f1e6f5f43704c1d4c22ae74306d` squash-merge（git %cI `2026-10-23T17:56:18+08:00`；GitHub mergedAt `2026-10-23T17:56:19+08:00`）。D1–D5 仍 **open / pending**；步骤 (b)/(c) 未完成，不把文档合并当作硬失败恢复。
+
+更新（2026-10-23，编排方整理）：用户 2026-10-23 18:30 +08:00 群内确认（采纳 D1-B/D2-A/D3-B/D4-A/D5-A，与 OMP/Researchy/Reviewy 投票一致），Lord 记录；用户 2026-10-23 18:31 +08:00 群内确认（v2，开始），Lord 记录（`omp-extension-v2` / `omp-host-events-v2`）；由 #122 PRD-only PR 交付；代码/CI/硬失败恢复未执行。
 
 后续实现须由同一批准的 inventory 派生订阅/validator 清单，避免 observer、runtime、tests 手工分叉；这些是现有单一真源约束的延续，不新增第二套 registry。与新判据有关的 docs/spec、现有说明和发布材料应由后续代码/发布任务按授权更新；本轮不越界。回退本 PRD 的本地提交只影响文档，不恢复或改变任何宿主行为。

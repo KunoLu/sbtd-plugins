@@ -52,6 +52,7 @@
 - [omp-sbtd-0-2-0-rc-1-prd-f-backfill](omp-sbtd-0-2-0-rc-1-prd-f-backfill/task.md)
 - [omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4](omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4/task.md)
 - [omp-sbtd-offline-cache-smoke](omp-sbtd-offline-cache-smoke/task.md)
+- [omp-sbtd-session-compact-decisions](omp-sbtd-session-compact-decisions/task.md)
 - [omp-sbtd-session-compact-prd](omp-sbtd-session-compact-prd/task.md)
 - [sbtd-changelog-backfill](sbtd-changelog-backfill/task.md)
 <!-- sbtd-task-index:end -->

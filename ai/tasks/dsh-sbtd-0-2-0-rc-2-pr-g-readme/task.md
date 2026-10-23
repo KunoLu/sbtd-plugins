@@ -7,7 +7,7 @@ mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only �
 status: done
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T18:00:01+08:00'
+updated_at: '2026-10-23T18:34:13+08:00'
 completed_at: '2026-10-23T17:03:32+08:00'
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -333,3 +333,8 @@ package.json
 - 本轮 git 核对：字面量由 #89 `bbe11789eaf89c3eabad1987f1ff3326d58c09c2` 于 `2026-09-19T08:50:35+08:00` 引入；最后改脚本的是 #97 `155982bf1992463556b06126b74aa275fd6839f9`，`2026-10-19T03:17:27+08:00`；#99 `1fdf9e8701afbb7d199c3f3ca5d10ac4a6a0a831` 于 `2026-10-19T04:39:44+08:00` bump `0.2.0-rc.1` 后断言即陈旧。核验命令：`git log -S'0.1.0-rc.3' -- .github/workflows/scripts/dsh-host-register-smoke.mjs`、`git log -1 -- ...`、`git show` 对应 commit/manifest。
 - 编排方整理：最后 green run `39157727639` 位于 `b9328fa860375a7cfb18cd29aa82faab4455a89f`，PR 分支 `feat/dsh-sbtd-0.2.0-rc.1-pr-c-host`；本轮 git 核对其 commit 时间 `2026-10-19T03:12:05+08:00`、包版本仍 `0.1.0-rc.3`。已发布 `0.2.0-rc.1` 和 `0.2.0-rc.2` 从未通过 REQUIRED host smoke；修复合并后的重新运行将是首个真正检查 0.2.x 插件的 host-compat 结果，成败未知。workflow 仅 workflow_dispatch，PR CI 不运行该门禁，因而未在 bump PR 中暴露。
 - 编排方整理：修复与本地断言证据由 [dsh-host-smoke-version-assert](../dsh-host-smoke-version-assert/task.md) 承接；本轮不重新发布、不修宿主适配、不将 assertion-only 检查称为完整 host smoke。
+
+### run 39933109206 时间关系纠正（2026-10-23，编排方整理）
+
+- 编排方整理：对上方第 329–330 行的 17:38 群内确认标签及「精确关系未知」追加纠正：用户「跑」早于 17:36:37（Lord 收到后触发 run 39933109206）；17:38 为 OMP 收到时间。上述时刻均为 2026-10-23 +08:00；真实发言的精确秒级时刻未知，不以接收时刻补造发言时刻，不改写旧行。
+- 编排方整理：上方第 334 行的「从未通过 / 成败未知」保留为历史；#121 合并后 main 的结果及 pre-check 区分见 [host smoke task 的 #121 回填](../dsh-host-smoke-version-assert/task.md)。本次仅追加历史纠正，原 branch/status/completed_at 保留，不重开、不重绑定或执行发布。
