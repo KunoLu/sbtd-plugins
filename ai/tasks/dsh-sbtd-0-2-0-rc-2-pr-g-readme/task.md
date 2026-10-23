@@ -338,3 +338,9 @@ package.json
 
 - 编排方整理：对上方第 329–330 行的 17:38 群内确认标签及「精确关系未知」追加纠正：用户「跑」早于 17:36:37（Lord 收到后触发 run 39933109206）；17:38 为 OMP 收到时间。上述时刻均为 2026-10-23 +08:00；真实发言的精确秒级时刻未知，不以接收时刻补造发言时刻，不改写旧行。
 - 编排方整理：上方第 334 行的「从未通过 / 成败未知」保留为历史；#121 合并后 main 的结果及 pre-check 区分见 [host smoke task 的 #121 回填](../dsh-host-smoke-version-assert/task.md)。本次仅追加历史纠正，原 branch/status/completed_at 保留，不重开、不重绑定或执行发布。
+
+## 状态补记（2026-10-23，编排方整理）
+
+- 原 Release Readiness Review 的 `Status: blocked`：命名／打包 A/B 阻塞由 U2 与 #119 squash `9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f`（2026-10-23T16:37:30+08:00）及既有 Align 实包证据解除。#118 squash `548a0bf125e3b3fe1407de11094409e55c2e779e` 于 `2026-10-23T17:03:32+08:00` 合并，npm rc.2 于 17:08:50 +08:00 发布。
+- 原 Align Release Readiness Review 的 `Status: blocked`：发布等待已解除；annotated tag `dsh-sbtd-v0.2.0-rc.2` tagger 为 2026-10-23 17:55:10 +08:00，GitHub prerelease publishedAt 17:55:13 +08:00，当前 npm next=latest=`0.2.0-rc.2`，两个 tag-bound README 链接收尾核验均 HTTP 200。发布先于 tag 的真实顺序不改写；本轮链接通过不冒充 publish 前链接核验。
+- **未解除的历史限制**：既有 lint 11/44 errors 没有新的修复／通过证据，本轮不重跑确认，也不把发布事实推导为旧 lint gate PASS。两处 blocked 原文及其历史失败均保留；此补记仅区分已完成发布、已解决命名与仍未证明的旧检查。

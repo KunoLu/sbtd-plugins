@@ -155,3 +155,8 @@ fix batch 1 计数仅抽取 jsonl 元数据：ping 来源为 `~/.omp/agent/sessi
 6. 行 F：`npm view @kunolu/omp-sbtd dist-tags` 核验 latest = next = 0.2.0-rc.1，npmjs.com 包页显示新 README、链接有效；回填行 E。任一步失败即停止并报告，不强行发布。
 
 发布前只读 registry 快照（orchestrator，2026-10-22T19:04+08:00）：`npm whoami` 成功，已登录（不记录用户名）；`npm view @kunolu/omp-sbtd dist-tags` 为 `{"latest":"0.1.0-rc.2","next":"0.1.0-rc.14"}`。本轮未执行登录或 registry 写入；快照仅在任务记录，不进入 README。
+
+## 状态补记（2026-10-23，编排方整理）
+
+- 原 Release Readiness Review 的「blocked（实际发布）」保留为当轮结论；发布等待已由 #114 与后续发布闭环：#114 squash `f4ea2ac729a6fda86cd41425563d65c68afb3aa3`，GitHub mergedAt `2026-10-22T20:27:23+08:00`；tag `omp-sbtd-v0.2.0-rc.1`、GitHub prerelease 20:33:28、npm 20:59:06（均 2026-10-22 +08:00），Git/GitHub/npm 已重核。后续 #124 / `omp-sbtd-v0.2.0-rc.2` 于 2026-10-23 npm 20:44:10 +08:00 发布，当前 latest=next=`0.2.0-rc.2`。
+- 历史 full-suite Bun offline 环境失败不改写为 PASS；其后续独立修复由 #116（`25d7e83bbc25b6f7d2c5018d7f945376670a2d9a`，2026-10-23T12:15:38+08:00）及 [offline-cache task](../omp-sbtd-offline-cache-smoke/task.md) 记录。旧测试结果和发布授权边界逐字保留，task done 不等于旧门禁自动重判。

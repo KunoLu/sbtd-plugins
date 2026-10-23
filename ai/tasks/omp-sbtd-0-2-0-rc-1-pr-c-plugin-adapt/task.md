@@ -229,3 +229,8 @@ Event 决策：18.11.1 `shared-events.ts` 的 session_branch reason 为 branch/f
 | 10 | orchestrator（Grok Bot，非 omp 会话，无 jsonl） | 分支/worktree、首个 docs commit c9df45d、prompt 编写、omp 启动/监控/中断纠正、独立复核（typecheck、lint、build、wrapper smoke 与 install smoke 复跑、全量测试复跑）、本节、push、CI 跟踪 | Grok Bot | — | — | 不适用（不经 omp 计数） | 不写功能代码 |
 
 18.11.1 宿主 smoke 进程本身无 provider 凭据、`model=null`，不调用任何模型。
+
+## 状态补记（2026-10-23，编排方整理）
+
+- 原第 16 项 `Release Readiness Review：blocked` 为当轮历史结论，不改写。#107 squash `ada08c556608310c679bd7efd2328aa09d1b95f3` 于 `2026-10-22T13:20:55+08:00` 合并；其后独立复核、D11 install-path gate PASS 已在本文第 17–19 项留证。Bun offline 失败的后续修复由 #116 squash `25d7e83bbc25b6f7d2c5018d7f945376670a2d9a`（2026-10-23T12:15:38+08:00）及 [offline-cache task](../omp-sbtd-offline-cache-smoke/task.md) 记录，原失败不追改为 PASS。
+- handoff 后续由 #122 决定、#123 squash `008cea74dfbab5ce2c688c2c42e4bd8cfeddfe5f`（2026-10-23T20:01:45+08:00；CI run `39949600365` success）闭环：隔离 18.11.1 live 与真实捕获负例见 [code task](../omp-sbtd-session-compact-code/task.md)。主线硬失败已恢复，并随 `omp-sbtd-v0.2.0-rc.2` 发布（npm 2026-10-23 20:44:10 +08:00）；不把本轮历史补记冒充行 C 原运行的重新认证。

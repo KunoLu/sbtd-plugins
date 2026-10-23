@@ -4,10 +4,10 @@ id: sbtd-rc2-closeout
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：strict 收尾；四个逻辑提交；主会话唯一 writer；仅授权本地提交，不授权远端写入或发布。
-status: in-progress
+status: checking
 branch: chore/omp-sbtd-rc2-closeout
 created_at: '2026-10-23T21:12:56+08:00'
-updated_at: '2026-10-23T21:12:56+08:00'
+updated_at: '2026-10-23T21:31:41+08:00'
 completed_at: null
 ---
 # SBTD rc.2 closeout
@@ -43,13 +43,14 @@ completed_at: null
 | book-ddia-data-design | 仅既有文档／历史记录；无 schema、持久化机制或数据流设计变化 | before-dev | not-required |
 | book-legacy-change-safety | 无运行时行为修复；断言使用既有真实 tarball 场景 | before-dev | not-required |
 | book-refactoring-pass | 不修改生产代码，仅测试断言、文档与生成 SBOM | before-dev | not-required |
-| book-release-readiness | 已发布状态记录与包内容一致性核对；不部署、不更改运行时 | finish | planned（包文档变化后核对发布物边界） |
+| book-release-readiness | 已发布状态记录与包内容一致性核对；不部署、不更改运行时 | finish | passed（ready，仅本次收尾交付；真实 pack/check、文档与历史边界、独立复核通过，不是发布授权） |
 
 ## 状态事件
 
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 | 2026-10-23T21:12:56+08:00 | planned | in-progress | 编排方整理：建立 strict 收尾记录 | 实际分支／基线／路径／ignore 与 npm、GitHub 初次核验通过 |
+| 2026-10-23T21:31:41+08:00 | in-progress | checking | 编排方整理：四类修改已实现，包测试／实际 tarball／历史边界检查通过，进入最终独立复核及提交绑定 | omp 917 passed / 3 env-gated skipped；dsh 342 passed；packed check 472 files；8 task YAML；旧历史保留及 PRD 单元格边界通过；用户 2026-10-23 21:15 +08:00 群内确认：合入后补一个仅改本收尾 task 状态的回填 commit，Lord 记录 |
 
 ## 事实核验（2026-10-23T21:12:56+08:00）
 
@@ -114,3 +115,85 @@ completed_at: null
 - 从 npm registry 只读下载已发布 omp tarball 并计算 SHA256，实得 `3b6c696e15798146251712498672f92bc01a089d3e536273d00ec3d23f49604b`，与编排方整理一致；该旧包不是本轮新文档包。临时 pack／解包目录已清除。
 - 3 skipped：upstream transform 两项缺 `KPI_PROMOTION_SOURCE_ROOT`，host-event 一项需 `SPIKE_OMP_BIN` / `HOST_EVENT_PLUGIN_TARBALL`。本轮不新增 runtime，不重复真实宿主 live／CI；#123/#124 CI 是经 gh 重核的历史证据。DSH/root lint 的既有失败不重跑确认，未触及 src，不声称这些 lint 通过。
 - Code Readability Review：仅两条沿用 `entries` 的明确断言，无第二次 pack、无新抽象／fixture。BDD=traceable（既有中文 Scenario + 英文关键词），pack 场景随完整 suite 执行；无新 .feature。Cross-repo context/API Contract=not-needed；Mock Strategy=contract-backed（既有套件，无新 mock）。Web/Mobile=not-needed；Graft=skipped；rtk=skipped-for-report。
+
+## PRD 当前状态逐项核对（2026-10-23，编排方整理）
+
+| 文件:行（本轮结果） | 旧状态 → 新状态／核对结果 | 依据 |
+|---|---|---|
+| `docs/prd/omp-sbtd-session-compact.md:3` | PRD-only、代码/CI/硬失败未执行 → (a)/(b)/(c) 完成并随 rc.2 发布 | #120/#122/#123 合并；#123 `008cea74dfbab5ce2c688c2c42e4bd8cfeddfe5f`，2026-10-23 20:01:45 +08:00；tag/npm |
+| 同文件 `:136`，步骤 (a) | 决定已交付但仍带代码未执行 → done，补 #122 SHA/18:58:43 +08:00 | #122 `684387835b27d46b3b96b01f2015e42fe7937b12` |
+| 同文件 `:137`，步骤 (b) | 未开始 → done | #123 SHA/20:01:45 +08:00；CI run 39949600365 success |
+| 同文件 `:138`，步骤 (c) | 未执行 → done，main 恢复 HANDOFF_EVENT_UNOBSERVABLE 硬失败，rc.2 已发布 | #123；Git %cI = GitHub mergedAt；#124 与 npm/tag |
+| 同文件 `:144` | 追加新日期更新；旧 :140/:142 原样保留 | 21:08 确认；#123/#124、rc.2 tag/prerelease/npm |
+| `docs/prd/omp-sbtd-0.2.0-rc.1.md:66–73` | 0/A/B/C/D/R/E/F 均 done：已核对无需改 | 既有 #102/#104/#106/#107/#108/#109/#114/#115 合并字段；本轮不改旧验收 |
+| 同文件 `:120` | 缺 rc.2 后续记录 → 追加「状态同步（编排方整理）」修订行，不新增 R 编号 | #123、#124、tag omp-sbtd-v0.2.0-rc.2、prerelease 20:41:17/npm 20:44:10 +08:00 |
+| `docs/prd/dsh-sbtd-0.2.0-rc.1.md:78–85` | 0/A/B/C/D/E/F/G 均 done：已核对无需改 | 既有合并记录；G 状态格末尾已补「前述未知为历史快照」，故不重写它；#118 548a0bf / 17:03:32 +08:00 与发布核验一致 |
+| `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md` | 已核对无需改 | 前代版本设计／宿主 rc.2 引用，不是本轮插件 0.2.0-rc.2/session_compact 当前状态表 |
+| `docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md` | 已核对无需改 | 前代设计基线，活进度已迁至 dsh rc.1 PRD；不改合同／验收／历史现状 |
+| `docs/prd/ROADMAP.md` | 已核对无需改，不移动 | D12 archive 明确独立 chore；根 README Roadmap 才是本轮状态面 |
+
+PRD 归因：用户 2026-10-23 21:08 +08:00 群内确认（PRD 任务状态同步并入收尾 PR），Lord 记录。机器核对：session PRD 恰好删除／替换 4 条旧当前状态行（header + a/b/c），三行任务内容列逐字相等；omp rc.1 PRD 零删除，仅追加新日期修订。D/R、contracts、acceptance、non-goals、既有日期行均未改。
+
+## 全任务状态扫尾（2026-10-23，编排方整理）
+
+扫描范围为全部 `ai/tasks/*/task.md`，不含 archive；30 个原有任务 + 1 个新收尾任务。旧值取 `origin/main`；新值取本轮文件，YAML 解析 frontmatter 并按文件顺序识别事件行，包含 dsh plan 孤立附录事件（不是 TaskStore lifecycle 操作）。只有两个原有任务最后事件不是 done，与编排方整理一致。
+
+| task id | 旧 frontmatter / 最后事件 → 新 | 处理 |
+|---|---|---|
+| docs-retire-todo | done/done → done/done | 已核对无需改 |
+| dsh-host-smoke-version-assert | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-1-docs-changelog | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-1-plan | done/in-progress → done/done | 仅在最后附录链追加 done；#93 3fafd73 / 2026-10-18 09:11:01 +08:00；不重复主表、不改 frontmatter |
+| dsh-sbtd-0-2-0-rc-1-pr-a-manuals | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-1-pr-b-backend | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-1-pr-c-host | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-1-pr-e-release | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-1-prd-f-backfill | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-0-2-0-rc-2-pr-g-readme | done/done → done/done | 状态已核对无需改；追加两处历史门禁补记 |
+| dsh-sbtd-prd-readme-zh-shipped | done/done → done/done | 已核对无需改 |
+| dsh-sbtd-readme-host-pin-0-2-0-rc-2 | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-d11-d9-sync | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-pr-a-migrate-kit | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-pr-b-sync-upstream | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt | done/done → done/done | 状态已核对无需改；追加历史门禁补记 |
+| omp-sbtd-0-2-0-rc-1-pr-d-changelog | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-pr-e-release | done/done → done/done | 状态已核对无需改；追加历史门禁补记 |
+| omp-sbtd-0-2-0-rc-1-pr-r-readme | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-prd | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-prd-d11-dated | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-prd-d4-release-docs | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-prd-f-backfill | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-1-prd-r7-p0-v4 | done/done → done/done | 已核对无需改 |
+| omp-sbtd-0-2-0-rc-2-prep | checking/checking → done/done | 提交 2；#124 + rc.2 发布；completed_at 取 GitHub mergedAt 20:39:30，不取 %cI 20:39:29 |
+| omp-sbtd-offline-cache-smoke | done/done → done/done | 已核对无需改 |
+| omp-sbtd-session-compact-code | done/done → done/done | 已核对无需改 |
+| omp-sbtd-session-compact-decisions | done/done → done/done | 状态已核对无需改；追加历史门禁补记 |
+| omp-sbtd-session-compact-prd | done/done → done/done | 状态已核对无需改；追加历史门禁补记 |
+| sbtd-changelog-backfill | done/done → done/done | 已核对无需改 |
+| sbtd-rc2-closeout | 新建 → checking/checking | completed_at null；用户 2026-10-23 21:15 +08:00 群内确认：合入后补一个仅改本收尾 task 状态的回填 commit，Lord 记录 |
+
+### 六处历史门禁补记
+
+| 旧文件:行（均相对 ai/tasks） | 旧结论 | 追加解决证据／边界 |
+|---|---|---|
+| `omp-sbtd-0-2-0-rc-1-pr-e-release/task.md:122` | blocked（实际发布） | #114/tag/npm rc.1 已发布；当前 rc.2 亦发布。Bun 旧失败由 #116 后续修复，不追改旧轮 PASS |
+| `omp-sbtd-session-compact-decisions/task.md:54` | blocked（后续稳定实现设计） | #123 008cea7 / 20:01:45 +08:00，CI 39949600365 success；code task 真实 live／负例证据解除后续等待 |
+| `omp-sbtd-session-compact-prd/task.md:79` | blocked（稳定设计与实现） | #122 6843878 / 18:58:43 +08:00 决定，#123 实现／live；不声称草案当轮 DDIA 重跑 |
+| `dsh-sbtd-0-2-0-rc-2-pr-g-readme/task.md:67` | blocked | U2/#119 9ad277c / 16:37:30 +08:00 解命名冲突；#118 合并、npm 17:08:50、tag 17:55:10、prerelease 17:55:13；旧 lint 未证明通过 |
+| 同文件 `:151` | blocked（Align） | 发布等待解除；双语链接本轮 HTTP 200；lint 11/44 errors 没有新通过证据，**仍未解除**，不改判整个旧 review |
+| `omp-sbtd-0-2-0-rc-1-pr-c-plugin-adapt/task.md:129` | Release Readiness blocked | 本文后续 D11 install-path gate/独立核对、#107 合并、#116 offline 修复、#123 handoff 完成及 rc.2 发布；保留原失败和当轮认证边界 |
+
+六条旧 blocked 原文未重写；状态补记不添加多余 done 事件。扫尾归因：用户 2026-10-23 21:09 +08:00 群内要求 SBTD tasks 状态更新为最新（应均为 done），Lord 记录。
+
+## 最终审查、检查与交付边界（2026-10-23，编排方整理）
+
+- HistoryReview 独立只读结论 **correct**：PRD 仅 header／a/b/c 当前状态列及追加日期记录，旧任务历史保留，30+1 任务扫尾与主会话一致；唯一 P3 为 `docs/assets/dsh/README.md:6` 方位词，下列 → 上述，已纳入提交 3，不影响任何 package 验证输入。PublicationReview **correct / 无 qualifying findings**。原始 review 与中文汇总位于 `reports/{PublicationReview,HistoryReview}.json/.md`。
+- 静态检查：24 个改动文件；8 份 changed task YAML 均可解析；新增行归因禁词 0、冲突标记 0；所有旧 task 正文与事件按有序子序列逐字保留；四份 CHANGELOG 旧文本全部保留。PRD 当前状态删除白名单仅 session header + a/b/c，内容列不变；omp rc.1 PRD 只有追加。`pnpm-lock.yaml`、全部 package.json/plugin.json、`docs/prd/ROADMAP.md` 与 origin/main 无差异。
+- 文档实际渲染和新增相对链接验证通过：12/12 README/CHANGELOG，20 个新增相对链接目标存在；三个双语 README 命令块逐字一致。最后方位词修正不改变链接或代码块。
+- `git diff --check origin/main` 与 `git diff --check origin/main..HEAD` 已执行 exit 0；tag 清单保持入口四个既有 tag，没有新建 tag。最终提交后同范围检查及 clean worktree、四提交列表、输入 SHA256 绑定结果另存 `reports/final-input-binding.json/.md` 并在交付对话报告，不在提交内预填自身 SHA。
+- 全部 2055 个 tracked package／workspace 验证输入已保存 SHA256 于 `reports/validation-inputs.json`；最终 Git blob 逐项相等才复用本轮 suite 结果。该绑定是本地结果与源码的一致性证明，不是重跑测试或 CI，也不升级历史 full-stack／认证结论。
+- Release Readiness Review：**ready（仅收尾交付）**。生产面仅包内文档，漂移风险由自动 SBOM、真实 tarball、packed validator、文档镜像核对覆盖；无服务、容量、背压、迁移或新监控适用项。四个范围内提交可逐项回退，未执行回退；npm 已发布物不可覆盖。剩余限制为 main 与已发布 rc.2 文档不同、历史 DSH lint 未证明通过、3 个 env-gated skip，以及 TaskStore 历史 schema blocker；没有权限或事实缺口被伪装为通过。
+- 检查状态：Final Test Report=generated、Run Summary MD=generated、Final Full Rerun=passed（本轮计划包测试范围）、Targeted Rerun=not-needed；真实宿主 live／新 CI／Web/Mobile=未执行（无 runtime/UI 变化且不冒充历史运行）。不产生新长期 lesson，未读取／建立身份，未改全局配置。
+- 与编排方整理可重核事实无差异：npm tags/time、GitHub prereleases、tag object/time、merge SHA/time、#124 CI 与已发布 omp tarball SHA256 一致。模型 FINAL/title-gen/Reviewy 历史统计标明编排方整理，未假称独立重跑。审计 scout 的 shell 在其环境不可用，registry/merge/pack 验证均由主会话实际执行；未据此缩减验证。
+- 偏差与明确保留：无第五提交；提交 2 写 prep done；D12 archive 不执行；DSH 安装策略不变；旧措辞检索的三处历史文件命中已逐文件解释；dsh lint 及原已知失败不重跑确认；没有为 docs-only 变更新增生产重构、schema 或契约修改。TaskStore 既有 blocker 使 helper lifecycle／自动恢复仍未获证明，交付为已校验共享 Markdown 记录。
+- 最终 task 保持 checking / completed_at null；由 chore/omp-sbtd-rc2-closeout 分支的 PR 交付。用户 2026-10-23 21:15 +08:00 群内确认：合入后补一个仅改本收尾 task 状态的回填 commit，Lord 记录。

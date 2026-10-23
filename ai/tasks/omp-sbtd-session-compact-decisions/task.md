@@ -128,3 +128,8 @@ completed_at: '2026-10-23T18:58:43+08:00'
 | fix1 / 345244 | 5 | composer-2.5 success；第二链 composer-2.5 none → k3-256k none → deepseek-flash provider-response-error → gpt-6-astra success；未到 grok fallback |
 
 - 编排方整理：此回填只追加合并与 FINAL 事实并更新当前完成字段，保留原分支、历史事件及逐轮验证文字；不重绑定旧任务、不重跑已知 TaskStore 全库历史 schema blocker，不声称 helper lifecycle 或自动恢复通过。代码由 `feat/omp-sbtd-session-compact` 分支及后续 PR 交付。
+
+## 状态补记（2026-10-23，编排方整理）
+
+- 原 DDIA「blocked（仅后续稳定实现设计）」保留为 #122 当轮结论。#122 squash `684387835b27d46b3b96b01f2015e42fe7937b12` 于 `2026-10-23T18:58:43+08:00` 合并；后续 #123 squash `008cea74dfbab5ce2c688c2c42e4bd8cfeddfe5f` 于 `2026-10-23T20:01:45+08:00` 合并，CI run `39949600365` success。
+- 隔离 18.11.1 的真实事件链、窗口／排空／无竞争证明与缺 method／other 硬失败负例已由 [code task 最终 live 记录](../omp-sbtd-session-compact-code/task.md) 闭环；因此后续实现等待已解除，不声称本 PRD-only 轮重跑 DDIA 或真实宿主。v2 与 `HANDOFF_EVENT_UNOBSERVABLE` 硬失败已在 main，且随 `omp-sbtd-v0.2.0-rc.2` 发布（npm 2026-10-23 20:44:10 +08:00）。
