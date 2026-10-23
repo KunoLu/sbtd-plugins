@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-1-plan
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求每个 task 都用 strict
-status: "in-progress"
+status: "done"
 branch: docs/dsh-sbtd-0.2.0-rc.1-prd
 created_at: '2026-10-17T21:43:52.311268+08:00'
-updated_at: '2026-10-18T09:06:13+08:00'
-completed_at: null
+updated_at: '2026-10-23T10:35:03+08:00'
+completed_at: '2026-10-18T09:11:01+08:00'
 ---
 # dsh-sbtd 0.2.0-rc.1 升级方案 grill
 
@@ -147,6 +147,7 @@ PRD 已落地（`docs/prd/dsh-sbtd-0.2.0-rc.1.md`，DDD confirmed）。下一步
 | 2026-10-18T00:28:09+08:00 | in-progress | in-progress | grill 完成并交付 DDD Boundary Review（done-pending-confirmation） | Round 1–3 全部锁定；/tmp/g020/ddd.md；本文件「DDD Boundary Review」小节 |
 | 2026-10-18T00:34:44+08:00 | in-progress | in-progress | 用户确认 DDD Boundary Review | 群消息「确认」 |
 | 2026-10-18T00:37:56+08:00 | in-progress | in-progress | 进入 PRD 撰写（DDD 经用户确认为 confirmed） | docs/prd/dsh-sbtd-0.2.0-rc.1.md；docs/TODO.md 第三节指针行；本文件「PRD 撰写」小节 |
+| 2026-10-18T09:11:01+08:00 | in-progress | done | 记录回填：PR #93 已合并 | gh pr view 93：MERGED，headRefName=docs/dsh-sbtd-0.2.0-rc.1-prd 与 branch 一致；merge SHA 3fafd73f828b0f61c3310e4828cfb63bbced3f9a；mergedAt=2026-10-18T09:11:01+08:00；git %cI=2026-10-18T09:11:01+08:00；于 2026-10-23T10:35:03+08:00 回填 updated_at |
 
 ---
 
@@ -428,3 +429,7 @@ Open conflicts and questions: 无阻塞项；第 1、2、4 条是实现期核查
 - TODO：`docs/TODO.md` 第三节加一行指针（顺序 3），不复制整表。
 - 下一步：commit → PR → Reviewy 评审；CLEAN 后进入 PR-A（开发前新建 strict 任务）。
 | 2026-10-18T09:06:13+08:00 | in-progress | in-progress | 补齐 CONTEXT + Q&A 附录并开 PRD PR | Lord 09:05 催办 |
+
+## 当前值（offline-cache chore 记录回填）
+
+- PR #93 已合并，status = done；completed_at 取 merge commit 时间。上文进度及下一步保留为历史。用户明确授权本次仅修正文档状态，不重绑定历史 branch，不补造旧事件或重跑历史门禁。

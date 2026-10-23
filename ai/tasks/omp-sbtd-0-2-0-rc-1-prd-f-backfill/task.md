@@ -4,11 +4,11 @@ id: omp-sbtd-0-2-0-rc-1-prd-f-backfill
 workflow_mode: strict
 mode_source: user
 mode_note: 用户明确选择 strict；docs-only、主会话唯一 writer，仅指定四个路径与两个本地提交，不 push/PR/tag/publish/dist-tag。
-status: "checking"
+status: "done"
 branch: docs/omp-sbtd-0.2.0-rc.1-pr-f-backfill
 created_at: '2026-10-22T21:20:46+08:00'
-updated_at: '2026-10-22T21:46:45+08:00'
-completed_at: null
+updated_at: '2026-10-23T10:35:03+08:00'
+completed_at: '2026-10-22T22:05:47+08:00'
 ---
 # omp-sbtd 0.2.0-rc.1 行 F：发布证据回填
 
@@ -27,6 +27,8 @@ completed_at: null
 | 2026-10-22T21:20:46+08:00 | planned | in-progress | 用户授权 strict 行 F docs-only 回填；分支匹配、起点 clean | 基线 origin/main = f4ea2ac729a6fda86cd41425563d65c68afb3aa3；PRD L59–L62；用户指定两次提交 |
 | 2026-10-22T21:29:12+08:00 | in-progress | checking | 两个本地提交及文档范围验证完成；本状态回填 amend 第二提交，保持两提交，不预报 Reviewy CLEAN/merge | 首提交 af84ae7；第二提交初版 a2af6d6；git diff --check origin/main..HEAD exit 0，diff stat 仅指定四路径，packages/ 零变化；PR 尚未打开 |
 | 2026-10-22T21:46:45+08:00 | checking | checking | fix batch 1：修正 Reviewy @0eb9216 两个 blocker（20:44/20:45 授权措辞、最终模型计数）；按 Lord 裁决将行 E done 改为 20:59:34；按用户 20:27 决定统一 smoke 措辞 | docs/prd/omp-sbtd-0.2.0-rc.1.md；ai/tasks/omp-sbtd-0-2-0-rc-1-pr-e-release/task.md；ai/tasks/omp-sbtd-0-2-0-rc-1-prd-f-backfill/task.md |
+| 2026-10-22T22:05:47+08:00 | checking | done | 记录回填：PR #115 已合并；completed_at 依 PRD L60 取 merge commit 时间，updated_at 为本次回填时间 2026-10-23T10:35:03+08:00 | git log -1 --format='%H %cI' aa885d7：aa885d7b7f621e136ef5ba02c2735ba00ab65a2d / 2026-10-22T22:05:47+08:00；gh pr view 115 --json mergedAt：2026-10-22T14:05:48Z（22:05:48+08:00） |
+| 2026-10-23T10:35:03+08:00 | done | done | 记录回填：补记 fix batch 1 最终模型计数及行 E 完成时间修正；旧快照与范围文字保留为历史 | 只读解析 fix1 main jsonl：01a163dc-46e1-716e-95a6-e9230a0ad167 FINAL 10 assistant / 29 toolCall；fix batch 1 已将行 E done 改为 2026-10-22T20:59:34+08:00（本文件既有 fix batch 1 事件及验证证据） |
 
 ## Book Gate Plan
 
@@ -143,6 +145,7 @@ completed_at: null
 - run-1 FINAL 工具分布：read 14、bash 9、eval 9、todo 8、edit 3、grep 2、glob 2、write 1 = 48；末条 session entry **21:30:25+08:00**，`session_exit normal`（编排方提供；本次核对末条时间与计数）。
 - fix1 ping jsonl：`~/.omp/logs/sbtd-pr-f/fix1/sessions/ping/2026-10-22T13-44-52-624Z_01a163db-8290-75a4-b8ba-514d7fb3862a.jsonl`。
 - fix1 main jsonl：`~/.omp/logs/sbtd-pr-f/fix1/sessions/run/2026-10-22T13-45-42-881Z_01a163dc-46e1-716e-95a6-e9230a0ad167.jsonl`；快照工具分布：read 9、bash 2、todo 2、eval 2 = 15。
+- **当前值 / FINAL**：fix1 main `01a163dc-46e1-716e-95a6-e9230a0ad167` = **10 assistant / 29 toolCall**；2026-10-23T10:35:03+08:00 只读逐行 `json.loads` 复核上述 jsonl。表内 4 / 15 保留为当时 SNAPSHOT，不是最终值。
 - 未调用子代理、未 override 模型；不把 reviewer/scout/task 的预期配置当作本次实测，也不声称已完成行 F 独立 Reviewy CLEAN。
 
 ## 本次文档验证与提交
@@ -155,3 +158,9 @@ completed_at: null
 - `project-validation` 已加载；full suite / focused tests / build / pack / SBOM 重生成 / lint / typecheck **skipped**：docs-only，用户禁止改代码/测试/包，PRD 位于 package 外，没有新运行时行为。本次无永久测试或 throwaway 文件；不是新 smoke PASS。
 - `rtk`: not-needed（原生命令用于用户指定 git/只读证据核验）；BDD: skipped（无行为或 .feature 改动）；Cross-repo context / API Contract: not-needed；Mock Strategy: none；Graft / Web / Mobile: skipped（不改结构/UI，npmjs 页面来源明确为既有 Lord 观测）。无新正式测试报告，Final Test Report / Run Summary MD: not-needed；历史 CI/日志保留原来源，不重新包装为当前 PR-head 认证。
 - fix batch 1：仅上述三个授权文件，一个新 commit，使用用户指定提交标题与显式 `git add` 路径；不 amend、不改已推送历史、不 push。本轮执行用户指定的文档检查，结果由交付回复记录；未调用子代理，不声称本轮取得独立 Reviewy CLEAN。历史 smoke/full suite 不重跑；无代码或运行时变更，生产代码审阅与独立授权机制审阅不适用。
+
+## 当前值（offline-cache chore 记录回填）
+
+- 行 F 已由 PR #115 合并，status = done；完成时间为 merge commit 的 `2026-10-22T22:05:47+08:00`。上文未打开 PR / checking / 下一步文字是历史，不再代表当前状态。
+- fix batch 1 的实际范围还包括将行 E done 时间改为 `2026-10-22T20:59:34+08:00`；补记此事实以澄清旧目标段，未改写旧目标或历史事件。
+- 本次按用户明确授权回填共享文档，不重绑定历史 branch，不写 active pointer；沿用已记录的 TaskStore 历史 schema blocker，不声称 helper lifecycle / 自动恢复通过。

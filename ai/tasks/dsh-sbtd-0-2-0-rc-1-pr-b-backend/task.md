@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-1-pr-b-backend
 workflow_mode: strict
 mode_source: user
 mode_note: 用户要求每个 task 都用 strict
-status: "in-progress"
+status: "done"
 branch: feat/dsh-sbtd-0.2.0-rc.1-pr-b-backend
 created_at: '2026-10-18T10:47:15+08:00'
-updated_at: '2026-10-18T19:12:35+08:00'
-completed_at: null
+updated_at: '2026-10-23T10:35:03+08:00'
+completed_at: '2026-10-18T20:35:01+08:00'
 ---
 
 # PR-B 后端：sbtd-task 只读层 + workflow_mode + lessons v2 + Graft
@@ -38,3 +38,13 @@ omp 正在实现。范围见 PRD 行 B 与本会话 prompt。首个 commit 须�
 - **验证**：`cd packages/dsh-sbtd && npm test`（tsc 重建 dist + node --test）→ **330 pass / 0 fail** / 330 total。dist 已清建，无残留 trellis/gitnexus 编译产物。
 - **已披露既有 lint**：`npm run lint`（biome check src）= 10 errors / 4 warnings / 1 info，为既有状态（本轮只改 test/*.mjs，biome 仅查 src；graft.ts 等格式类告警遗留）。
 - 未提交、未推送；PR-C、bump/publish/CHANGELOG、manuals、~/.omp 配置均出范围未动。
+
+## 状态事件
+
+| at | from | to | reason | evidence |
+|---|---|---|---|---|
+| 2026-10-18T20:35:01+08:00 | in-progress | done | 记录回填：PR #96 已合并 | gh pr view 96：MERGED，headRefName=feat/dsh-sbtd-0.2.0-rc.1-pr-b-backend 与 branch 一致；merge SHA 609766b1d911f1a4597e5ee7117877d2238a548f；mergedAt=2026-10-18T20:35:02+08:00；git %cI=2026-10-18T20:35:01+08:00；于 2026-10-23T10:35:03+08:00 回填 updated_at |
+
+## 当前值（offline-cache chore 记录回填）
+
+- PR #96 已合并，status = done；completed_at 取 merge commit 时间。上文进度及下一步保留为历史。用户明确授权本次仅修正文档状态，不重绑定历史 branch，不补造旧事件或重跑历史门禁。

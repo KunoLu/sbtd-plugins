@@ -154,11 +154,13 @@ async function runCommand(
   command: string,
   arguments_: readonly string[],
   cwd: string,
+  env: Readonly<Record<string, string>> = {},
 ): Promise<void> {
   const { promise, resolve, reject } = Promise.withResolvers<void>();
   const child = spawn(command, arguments_, {
     cwd,
-    env: { PATH: process.env.PATH ?? "" },
+    env: { PATH: process.env.PATH ?? "", ...env },
+    timeout: 30_000,
     shell: false,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -168,9 +170,14 @@ async function runCommand(
     stderr += chunk;
   });
   child.once("error", reject);
-  child.once("close", (code) => {
+  child.once("close", (code, signal) => {
     if (code === 0) resolve();
-    else reject(new Error(`${command} failed: ${stderr}`));
+    else
+      reject(
+        new Error(
+          `${command} failed (exit ${code}, signal ${signal}):\n${stderr}`,
+        ),
+      );
   });
   return promise;
 }
@@ -199,10 +206,31 @@ async function extractPackedPlugin(root: string): Promise<PackedPlugin> {
   return { tarball, packageDirectory: join(extractedRoot, "package") };
 }
 
+function offlineCacheMiss(error: unknown): string | undefined {
+  if (!(error instanceof Error)) return undefined;
+  const errors = error.message
+    .split("\n")
+    .filter((line) => line.startsWith("error: "));
+  const missing = errors.filter((line) =>
+    /^error: --offline: (?:no cached manifest for "[^"]+" \(run once online, or use --prefer-offline\)|"[^"]+" is not in the cache)$/.test(
+      line,
+    ),
+  );
+  if (
+    missing.length === 0 ||
+    errors.some(
+      (line) =>
+        !missing.includes(line) && !/^error: \S+ failed to resolve$/.test(line),
+    )
+  )
+    return undefined;
+  return missing.join("; ");
+}
+
 async function installPackedPlugin(
   root: string,
   tarball: string,
-): Promise<string> {
+): Promise<{ installed: string } | { unavailable: string }> {
   const pluginRoot = join(root, "installed-plugins");
   await mkdir(pluginRoot, { recursive: true });
   await writeFile(
@@ -210,18 +238,59 @@ async function installPackedPlugin(
     `${JSON.stringify({
       name: "kpi-omp-packed-host-smoke",
       private: true,
-      dependencies: { "@kunolu/omp-sbtd": `file:${tarball}` },
+      dependencies: {
+        "@kunolu/omp-sbtd": `file:${tarball}`,
+        "@oh-my-pi/pi-coding-agent": "18.11.1",
+      },
     })}\n`,
     "utf8",
   );
-  await runCommand(
-    "bun",
-    ["install", "--ignore-scripts", "--offline"],
-    pluginRoot,
-  );
+  const cache = join(root, "bun-cache");
+  const env = {
+    HOME: join(root, "bun-home"),
+    BUN_INSTALL_CACHE_DIR: cache,
+  };
+  await mkdir(env.HOME, { recursive: true });
+  const install = (offline: boolean) =>
+    runCommand(
+      "bun",
+      ["install", "--ignore-scripts", ...(offline ? ["--offline"] : [])],
+      pluginRoot,
+      env,
+    );
+  try {
+    await install(true);
+  } catch (error) {
+    const missing = offlineCacheMiss(error);
+    if (!missing) throw error;
+    console.info(
+      `[packed-host smoke] preparing Bun cache ${cache}: ${missing}`,
+    );
+    let preparationError: unknown;
+    try {
+      await install(false);
+    } catch (error) {
+      preparationError = error;
+    }
+    // Prove the cache works, not just the node_modules left by preparation.
+    await rm(join(pluginRoot, "node_modules"), {
+      recursive: true,
+      force: true,
+    });
+    try {
+      await install(true);
+    } catch (error) {
+      const missing = offlineCacheMiss(error);
+      if (!preparationError || !missing) throw error;
+      return {
+        unavailable: `Bun offline cache unavailable at ${cache}: ${missing}; preparation failed: ${String(preparationError)}`,
+      };
+    }
+  }
+  console.info(`[packed-host smoke] offline install completed using ${cache}`);
   const installed = join(pluginRoot, "node_modules", "@kunolu", "omp-sbtd");
   await readFile(join(installed, "dist", "extension.js"), "utf8");
-  return installed;
+  return { installed };
 }
 
 async function localOmpExecutable(): Promise<string> {
@@ -317,6 +386,7 @@ async function runPackedHostSmoke(
   const closed = Promise.withResolvers<void>();
   let stopped = false;
   let buffered = "";
+  let stdoutBytes = 0;
   let pending:
     | Readonly<{
         id: string;
@@ -329,18 +399,23 @@ async function runPackedHostSmoke(
   child.stderr.on("data", (chunk: string) => {
     stderr += chunk;
   });
-  const fail = (reason: string): void => {
-    ready.reject(new Error(reason));
-    pending?.reject(new Error(reason));
+  const fail = (reason: string, cause?: unknown): void => {
+    ready.reject(new Error(reason, { cause }));
+    pending?.reject(new Error(reason, { cause }));
   };
   child.once("error", () => fail("actual OMP host could not start"));
-  child.once("close", () => {
+  child.once("close", (code, signal) => {
     closed.resolve();
     if (!stopped)
-      fail(`actual OMP host ended during its public RPC exchange: ${stderr}`);
+      fail(`actual OMP host ended during its public RPC exchange: ${stderr}`, {
+        exitCode: code,
+        signal,
+        stdoutBytes,
+      });
   });
   child.stdout.setEncoding("utf8");
   child.stdout.on("data", (chunk: string) => {
+    stdoutBytes += Buffer.byteLength(chunk);
     buffered += chunk;
     let newline = buffered.indexOf("\n");
     while (newline >= 0) {
@@ -882,6 +957,27 @@ afterEach(async () => {
 });
 
 describe("authorized OMP public-RPC harness", () => {
+  it.each([
+    [
+      'error: --offline: no cached manifest for "zod" (run once online, or use --prefer-offline)\nerror: zod@4.1.12 failed to resolve',
+      'error: --offline: no cached manifest for "zod" (run once online, or use --prefer-offline)',
+    ],
+    [
+      'error: --offline: "@oh-my-pi/pi-coding-agent" is not in the cache',
+      'error: --offline: "@oh-my-pi/pi-coding-agent" is not in the cache',
+    ],
+    ["error: Integrity check failed", undefined],
+    ["error: zod@4.1.12 failed to resolve", undefined],
+    [
+      'error: --offline: "zod" is not in the cache\nerror: EACCES opening package.json',
+      undefined,
+    ],
+  ])("recognizes only actionable offline cache misses: %s", (stderr, expected) => {
+    expect(offlineCacheMiss(new Error(`bun failed: \n${stderr}`))).toBe(
+      expected,
+    );
+  });
+
   it("Scenario: 当前渲染报告可驱动四命令主机认证", async () => {
     const root = await temporaryRoot();
     await createFakeRuntime(root, "safe", currentPublicReport());
@@ -1620,10 +1716,15 @@ describe("authorized OMP public-RPC harness", () => {
       blocker: { code: "OMP_HARNESS_TOOL_POLICY_VIOLATION" },
     });
   });
-  it("smoke-only: exact local OMP 18.11.1 blocks a dependency-resolved packed host before RPC without a provider", async () => {
+  it("smoke-only: exact local OMP 18.11.1 blocks a dependency-resolved packed host before RPC without a provider", async (context) => {
     const root = await temporaryRoot();
     const candidate = await extractPackedPlugin(root);
-    const packedPlugin = await installPackedPlugin(root, candidate.tarball);
+    const installation = await installPackedPlugin(root, candidate.tarball);
+    if ("unavailable" in installation) {
+      console.warn(`[packed-host smoke] SKIP: ${installation.unavailable}`);
+      context.skip(installation.unavailable);
+    }
+    const packedPlugin = installation.installed;
     const home = join(root, "isolated-home");
     const project = join(root, "project");
     const agent = join(root, "agent");
@@ -1660,7 +1761,12 @@ describe("authorized OMP public-RPC harness", () => {
         home,
         agent,
       }),
-    ).rejects.toThrow("No models available");
+    ).rejects.toMatchObject({
+      message: expect.stringMatching(
+        /^actual OMP host ended during its public RPC exchange: No (?:default model selected|models available)\b/,
+      ),
+      cause: { exitCode: 1, signal: null, stdoutBytes: 0 },
+    });
 
     const after = await Promise.all([
       snapshotDirectory(candidate.packageDirectory),
@@ -1673,6 +1779,9 @@ describe("authorized OMP public-RPC harness", () => {
     expect(after[2]).not.toBe(before[2]);
     expect(after[3]).toBe(before[3]);
     await expect(readdir(agent)).resolves.toContain("agent.db");
+    console.info(
+      "[packed-host smoke] OMP 18.11.1 exited 1 before any RPC output without a provider; directory assertions passed",
+    );
     // A cold OMP process can cross the one-minute startup boundary under a full serial suite.
   }, 90_000);
 });

@@ -75,6 +75,8 @@ Plugin SemVer 独立于 OMP SemVer。支持 OMP `17.3.0` 不要求 Plugin 使用
 
 在冻结 revision 上创建 tarball。发布脚本会再次验证包名、prerelease 版本、`next` tag 和 Registry 可用性。
 
+本仓库使用 `pnpm@11.17.0` workspace。以下仓库命令从根目录执行，或使用 `pnpm --filter @kunolu/omp-sbtd <command>` 定位插件包；仅明确标注 `cd` 的步骤切换工作目录。
+
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 PACK_ROOT="$REPO_ROOT/.tmp/kpi-p0/rc-pack"
@@ -98,7 +100,7 @@ shasum -a 256 "$TARBALL"
 
 唯一有效的第 4 节证据是受信 `omp-section4-publish-gate` GitHub Actions workflow 对**该精确 tarball SHA-256 digest** 的通过：
 
-- 仅 `workflow_dispatch`，仅 `KunoLu/KPi` + `refs/heads/main`；其他仓库、ref 或事件 fail closed。
+- 仅 `workflow_dispatch`，仅 `KunoLu/sbtd-plugins` + `refs/heads/main`；其他仓库、ref 或事件 fail closed。
 - workflow 从不可变 main commit **恰好 pack 一次**，全部后续 job 只消费这一份 artifact 并复核 digest；本机 `.tmp` 包不是云端输入。
 - `lock-and-cache` job 用 npm 生成诊断 `package-lock.json`（`integrity` 为 npm 写入的 SRI，禁止手写内容 SHA-256）并物化 content-addressed cache；`pluginTarballSha256` 独立于 lock SRI 记录。
 - `section4` job 只用共享 npm-offline-v1 安装器（`npm ci --offline --ignore-scripts --no-audit`）安装 subject——禁止 bun、禁止无 lock 的 `npm install --offline`——随后通过共享 command-surface cell driver 对钉死的 OMP `18.11.1` `dist/cli.js` 非交互执行四命令，并以 Host 前后 SHA-256 清单做诊断写入对照（`section-4-write-check=passed`）。
@@ -123,7 +125,7 @@ test -f "$TARBALL"
 mkdir -p "$PLUGIN_ROOT" "$PROJECT_ROOT"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 (
-  cd "$REPO_ROOT/plugins/omp-sbtd"
+  cd "$REPO_ROOT/packages/omp-sbtd"
   pnpm exec tsx scripts/p0/install-subject-plugin.ts lock-and-cache \
     --tarball "$TARBALL" --work-dir "$INSTALLER_ROOT"
   pnpm exec tsx scripts/p0/install-subject-plugin.ts install \
@@ -328,12 +330,22 @@ omp plugin list
 
 ```bash
 DIAGNOSTIC_PROJECT="$(mktemp -d "${TMPDIR:-/tmp}/kpi-omp-extension-diagnostic.XXXXXX")"
-EXT="$(realpath plugins/omp-sbtd/dist/extension.js)"
+EXT="$(realpath packages/omp-sbtd/dist/extension.js)"
 test -f "$EXT"
 omp --cwd "$DIAGNOSTIC_PROJECT" --extension "$EXT"
 ```
 
 Docker package-install smoke、`check-compatibility`、P0 candidate evidence、Value Study 和 independent Judge 都可提供额外质量信息，但不是 RC 或 stable 发布门槛。它们不得将开发工件、旧 tarball、host/profile 结果或实验性 Runtime 结果伪装成当前精确候选的四命令验收。
+
+本地 `p0-authorized-omp-rpc-harness.test.ts` 的 exact local OMP 18.11.1 smoke 只验证无 Provider 时在 RPC 前拦截，不替代第 4 节 Gate。从仓库根执行：
+
+```bash
+pnpm --filter @kunolu/omp-sbtd exec vitest run test/p0-authorized-omp-rpc-harness.test.ts -t "exact local OMP 18.11.1"
+```
+
+该测试把 `HOME` 和 `BUN_INSTALL_CACHE_DIR` 指向本次临时根，安装清单精确钉 OMP `18.11.1`。首次离线安装缺少 manifest 或包缓存时，尝试一次 `bun install --ignore-scripts` 在线准备，再删除测试安装目录中的 `node_modules` 并重新 `bun install --ignore-scripts --offline`，以证明实际离线可安装；不修改全局 Bun 配置。在线准备失败且离线仍明确缺缓存时，Vitest 标记 **SKIP** 并打印缓存目录、缺项与准备失败原因，不能记为 PASS；其他安装错误、准备成功后的离线失败和宿主断言失败仍为 FAIL。测试临时根由既有清理钩子移除。
+
+无 Provider 的阻断按行为判定：真实宿主退出码为 1、不是信号终止、没有任何 stdout/RPC 输出，同时保留包、项目、其他 Runtime 目录不变及 agent 数据库生成断言；错误消息还须以宿主 RPC 退出前缀紧接 `No (?:default model selected|models available)\b` 匹配 OMP 18.11.1 的两种文案（`No default model selected` / `No models available`），损坏插件导致宿主先打印 `Failed to load extension` 时 smoke 必须失败。
 
 ## 10. 失败、回退与清理
 
@@ -360,7 +372,7 @@ Docker package-install smoke、`check-compatibility`、P0 candidate evidence、V
 
 `KPI_OMP_HARNESS_PATH` **不是** `command -v omp`，也不是全局 Bun 安装的 `omp`。P0 adapter（`createAuthorizedHostCommandAdapter`）只把 `PATH` 和可选的 `KPI_OMP_COMPAT_AGENT_DIR` 传给子进程。因此：
 
-- 不能把该变量指到 `plugins/omp-sbtd/scripts/p0/authorized-omp-rpc-harness.ts`；父进程里的 `export KPI_OMP_RUNTIME_*` 到不了子进程。
+- 不能把该变量指到 `packages/omp-sbtd/scripts/p0/authorized-omp-rpc-harness.ts`；父进程里的 `export KPI_OMP_RUNTIME_*` 到不了子进程。
 - 不能复制 `~/.bun/bin/omp` 到版本化目录（Bun 模块解析会坏）。
 - 不能用 symlink 充当 `$RUNTIME_ROOT/<version>/bin/omp`（harness 拒绝 symlink）。
 - 聊天里的「授权」、按 Agent 配方现做包装器、再重启 Orca 探测，都不是独立授权 Host（`LESSON-20260812`）。
