@@ -101,9 +101,7 @@ packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
 
 发布与本次 README/version bump 分开。评审与合并后，在 merge commit 上创建 annotated tag `dsh-sbtd-v0.2.0-rc.2`；打 tag 后、publish 前核验顶部两个语言链接，并创建双语 GitHub prerelease。
 
-发布前运行包测试、lint、typecheck 与 pack 检查。tarball 必须包含 `README.md`，不包含 `README.zh.md`；中文镜像通过钉版链接在 GitHub 阅读。在 `packages/dsh-sbtd` 下，发布操作为 `npm publish --tag next`，`latest` 保持不动。不要把 CHANGELOG 日期或本地版本 bump 当作发布证据。双语发布说明见 [CHANGELOG.md](CHANGELOG.md) 与 [CHANGELOG.zh.md](CHANGELOG.zh.md)。
-
-**发布阻塞：** 当前 npm 10.9.3 dry-run 收录了两份 README。`files` 排除与 `.npmignore` 均未能排除 `README.zh.md`。上述不进包要求尚未满足；文件名与打包冲突获得明确解决前不得发布。
+发布前运行包测试、lint、typecheck 与 `npm pack --dry-run`；中文镜像通过钉 release tag 的 URL 链接。在 `packages/dsh-sbtd` 下，发布操作为 `npm publish --tag next`，`latest` 保持不动。不要把 CHANGELOG 日期或本地版本 bump 当作发布证据。双语发布说明见 [CHANGELOG.md](CHANGELOG.md) 与 [CHANGELOG.zh.md](CHANGELOG.zh.md)。
 
 ## 支持
 

@@ -7,7 +7,7 @@ mode_note: 用户本次明确指定 strict、唯一 writer 与先 records-only �
 status: checking
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T13:27:36+08:00'
+updated_at: '2026-10-23T05:33:28+00:00'
 completed_at: null
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -36,7 +36,7 @@ completed_at: null
 | book-ddia-data-design | 无数据/schema/跨服务流设计；共享 task 仅记录既有格式 | before-dev | not-required |
 | book-legacy-change-safety | 无生产行为修改，版本元数据与文档由现有 suite/pack 保护 | before-dev | not-required |
 | book-refactoring-pass | 不改既有生产代码 | before-dev | not-required |
-| book-release-readiness | 版本与未来 tarball 文档变更，按行 E 先例审查发布边界 | after-validation | blocked（中文 README 排除验收失败；既有 lint 失败） |
+| book-release-readiness | 版本与未来 tarball 文档变更，按行 E 先例审查发布边界 | after-validation | blocked（待用户裁决中文文件名/打包选项 A 或 B；既有 lint 失败非本分支引入） |
 
 ## 验证证据
 
@@ -54,7 +54,7 @@ completed_at: null
 - `pnpm --filter @kunolu/dsh-sbtd typecheck`：**exit 0**。`reports/row-g-typecheck.txt`。
 - 根 `pnpm lint`（`biome check .`）：**exit 1**，checked 190 files，44 errors / 9 warnings / 19 infos，输出上限另省略 52 条诊断。该结果与行 R 已记录的既有 dsh lint 数量一致；本轮不修越界格式问题，不报全绿。`reports/row-g-root-lint.txt`。
 - `npm pack --dry-run --json`（cwd packages/dsh-sbtd）：命令 **exit 0**，**打包验收失败**。版本 0.2.0-rc.2，103 files = dist 76 + manuals 20 + README.md + README.zh.md + LICENSE + cordis.patch.yml + package.json + 两份 CHANGELOG。README.md 已收录，但 README.zh.md 也被收录。允许范围内尝试 `files: "!README.zh.md"`，再加 `.npmignore` 同名排除，两次仍为 103 files / 两份 README；无效探针均已撤回，最终 files 与基线完全相同，不保留 .npmignore。原生三次结果为 `row-g-pack-dry`、`row-g-pack-files-exclusion`、`row-g-pack-ignore-exclusion`。
-- 用户要求的 stop 边界已执行：不通过改名、移文件、prepack/lifecycle、打包 staging 或工具替换绕过冲突，不改契约/schema/runtime。本次 **README.zh.md 不进包未达成**，不得发布；需要用户明确裁决文件名/打包要求冲突，不将 blocked 伪称通过。
+- 用户要求的 stop 边界已执行：不通过改名、移文件、prepack/lifecycle、打包 staging 或工具替换绕过冲突，不改契约/schema/runtime。publish 阻塞，待用户裁决：（A）按 PRD 行 G / omp D6 改名为 `README_zh.md`，使中文文件不进包；（B）按本次任务指令保留 `README.zh.md`，接受其随 tarball 发布，并修订行 G 的「不进包」要求。本次不代用户选择。
 - `python3 -c <一次性检查>` 使用 markdown-it CommonMark + tables 实际渲染两文档：各 15 headings（9 个二级、5 个三级、1 个标题），层级/顺序匹配，3 个代码块逐字相同，完整 Markdown block token 结构相同；相对文件目标存在、双向链接精确钉 tag、未发布措辞正确；manifest 仅 version 不同、旧 CHANGELOG 条目逐字保留、index 字母序通过。`row-g-doc-smoke-delivery` 为最终通过；早期一次性脚本错误预设 bullet 数而失败的 `row-g-doc-smoke` 仍保留，修正为真实结构对比后通过。未新增永久文案断言。
 - t0 保留包版本/host/files 契约断言，删除需随语言重钉的旧中文 README 字符串断言；fu4 仅改插件版本常量。代码可读性复核：无新抽象、无压缩表达式、无生产代码变化；ponytail-review 的生产重构复核不适用。
 - BDD=traceable：`features/t0-installable-stub.feature` 沿用中文场景+英文关键词；版本场景对应 t0 测试，文档场景由本次 python3 smoke 验证。没有新增 Gherkin runner。既有真实 CLI 安装场景的 @todo 保留；未安装/运行 dsh CLI，不冒充宿主端到端认证。
@@ -66,11 +66,11 @@ completed_at: null
 
 - Status: **blocked**。
 - Production path and affected users / systems：未来 0.2.0-rc.2 tarball 的 README 与版本元数据；当前安装方仍取已发布 rc.1，未改变 dist-tags。
-- Failure modes and safeguards：`README.zh.md` 被 npm 自动收录，违背 row G 排除要求；三次原生 pack 已证明允许排除手段无效，停止进一步打包变更，两份 README 均明确写出发布阻塞。版本/host 契约、双语镜像由现有测试与文档 smoke 验证。
+- Failure modes and safeguards：npm 自动收录 `README.*`，因此 `README.zh.md` 会进包；此前三次原生 pack 已证明排除探针无效。publish 阻塞，待用户选择 A（改为 `README_zh.md`，不进包）或 B（保留 `README.zh.md` 并接受随包发布，修订行 G）；不自行裁决。fix1 已从两份 shipped README 删除流程阻塞段落，并将 pack 指引改为中性表述；决策与失败证据只留在 PRD/task。版本/host/安装/双向链接契约由双语 README guards 保护。
 - Capacity / backpressure / limits：not-applicable，无运行时变化。
 - Observability / alerts / runbook：本地 raw reports、中文汇总与本记录保留证据；不新增遥测。
-- Rollout / migration / rollback / cleanup：尚未发布，无数据迁移；本地 scoped commits 可回滚。不删除用户产物。后续须先裁决打包冲突、解决必需验证失败，再评审/合并/tag/链接核验/双语 prerelease/publish；不是本任务授权。
-- Required validation and result：测试 335/335、typecheck、文档渲染通过；package/root lint 失败，pack 命令成功但排除验收失败，故不得标 ready。
+- Rollout / migration / rollback / cleanup：尚未发布，无数据迁移；本地 scoped commits 可回滚。不删除用户产物。后续须先取得用户对 A/B 的裁决，并处理发布所需验证，再评审/合并/tag/链接核验/双语 prerelease/publish；不是本任务授权。
+- Required validation and result：fix1 包测试 **342 passed / 0 failed / 0 skipped**、typecheck、文档渲染通过；scratch baseline 11/11，8/8 负向变体均被 guards 拒绝。既有 dsh `biome check src` 11 errors / 根 `biome check .` 44 errors，与 origin/main `46680a5` 相同，本分支无 src 变更，非本次引入（用户提供的基线结论；本次不重跑确认）。pack 命令成功但命名/打包要求冲突待裁决，故不得标 ready。
 - Optional checks / residual risk：未运行 omp suite（未改 omp）、线上 tag 链接（tag 尚未建立）、CI、真实宿主安装；不把后续发布步骤当已完成。TaskStore 全库恢复仍不可靠。
 
 ## 独立复核
@@ -87,9 +87,21 @@ completed_at: null
 4. 创建双语 GitHub prerelease，再执行 `npm publish --tag next`；`latest` 保持不动。
 5. 核验 npm dist-tags/tarball/README，必要时纠正 CHANGELOG publish 日期，再按 merge + publish 证据完成 row G。本轮最终仅 checking、completed_at null。
 
+## Fix1 验证与修正
+
+- 六文件限定修复：恢复 t0 对 README.md / README.zh.md 的 host pin、@next 安装、禁用裸安装/旧路径/旧版本、未发布 rc.2 与当前 dist-tags、顶部两个 tag-pinned 链接及二/三级标题数量 guards；原 package.json 断言保留。feature 沿用中文场景 + 英文关键词，补双语切换与章节 parity 场景，BDD=traceable，对应 t0 测试；真实宿主 CLI 场景仍为既有 @todo。
+- 两份 README 删除发布阻塞段落，pack 指引不再宣称中文文件包含或排除；PRD 2026-10-23 行 G 注释保留用户指令/Lord 句，明确 A/B 待用户裁决。上方初轮验证与独立复核记录保留为历史证据，不将其旧断言当作 fix1 当前状态。
+- `pnpm --filter @kunolu/dsh-sbtd test` 首次启动在执行测试前因 Corepack 尝试写 `/usr/local/share/corepack/v1` 而 EACCES（exit 1）；改用已有 `COREPACK_HOME=/home/box/.cache/node/corepack`，设置 `COREPACK_ENABLE_NETWORK=0`，不安装、不改全局配置。fixture 使用 `TMPDIR=/tmp` / `GIT_CEILING_DIRECTORIES=/tmp`。随后原生命令 **342 passed / 0 failed / 0 skipped，exit 0**；`pnpm --filter @kunolu/dsh-sbtd typecheck` **exit 0**。
+- Python 3 scratch smoke：复制实际 t0 测试与文档到 `/tmp`，baseline **11 passed / 0 failed**；逐一移除两份文档的两个切换链接、各加一条裸安装命令、各加一个二级标题，**8/8** 变体均恰好触发一个测试失败。原始失败输出保留，scratch 已删除。markdown-it 实际渲染两份文档，各 9 个二级 / 5 个三级标题，完整 block token 结构相同。
+- `git diff --check origin/main...HEAD` 与工作树 `git diff --check` 均 exit 0；README 发布状态词及限定文档禁词 grep 无匹配。提交后再次核验三提交链、原两提交不变、diff whitespace 与 clean status。
+- 原生输出与同 stem 中文汇总位于 ignored `reports/fix1-{launch,tests,typecheck,smoke}.{txt,md}`。Evidence Source=developer-local、Source Revision=dirty（基于 `1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b` 的六文件变更）、Evidence Publication=local-only；不冒充 CI 或发布证据。rtk=skipped-for-report。
+- Code Readability Review：沿用 node:test/assert/readFileSync，按文件生成有明确文件名的 guard 用例，单独比较两种标题级别；无生产代码/导出接口变更、无新依赖或抽象。此次仅 docs/tests，不触发 legacy/refactor/DDD/DDIA 新门禁；未运行 omp suite、lint/pack 已知失败重证、线上 tag 链接或真实宿主安装。Graft skipped；Cross-repo context/API Contract=not-needed，新增 Mock Strategy=none。TaskStore 的既有全库 schema blocker 继续保留，仅更新明确授权共享文档，不声称生命周期 helper 或自动恢复通过。
+
 ## 状态事件
 
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 | 2026-10-23T13:12:28+08:00 | planned | in-progress | 首提交完成，建立 strict 记录并开始 row G 文档/元数据实现 | 0410bf1；index 新增一行；授权根/分支与路径检查通过 |
 | 2026-10-23T13:25:38+08:00 | in-progress | checking | 本地实现与验证完成，按用户要求保留 checking；发布门被 pack 排除失败与既有 lint 失败阻塞，不标 done | 测试 335/335、typecheck/文档 smoke 通过；三次 pack 均含 README.zh.md；ReleaseContracts P1；completed_at null |
+| 2026-10-23T05:31:04+00:00 | checking | in-progress | fix1: restore README guards, remove README blocker text, PRD note accuracy | 用户明确限定六文件修复；入口 clean，HEAD 1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b；沿用 strict 与既有 TaskStore 限制，仅编辑获授权共享记录 |
+| 2026-10-23T05:33:28+00:00 | in-progress | checking | fix1: 双语 guards、README 中性发布指引与 PRD 冲突记录修正并验证；publish 待用户 A/B 裁决 | 包测试 342/342、typecheck exit 0、scratch 8/8 拒绝、双语渲染 parity 通过；reports/fix1-*；既有 lint 11/44 errors 非本次引入；completed_at null |

@@ -38,6 +38,64 @@ test("插件加载时打印 T0 stub 日志并注册非空中文 sbtd section", (
   assert.ok(sections[0].text.length > 0);
 });
 
+for (const filename of ["README.md", "README.zh.md"]) {
+  test(`${filename} 钉 0.2.0-rc.2 并说明 @next 安装命令`, () => {
+    const readme = readFileSync(join(pkgRoot, filename), "utf8");
+
+    assert.match(readme, /@deepseek-ai\/dsh@0\.2\.0-rc\.2/);
+    assert.match(readme, /dsh plugin --profile web add @kunolu\/dsh-sbtd@next/);
+    assert.doesNotMatch(
+      readme,
+      /dsh plugin --profile web add @kunolu\/dsh-sbtd(?!@next)/,
+    );
+    assert.doesNotMatch(
+      readme,
+      /\/absolute\/path\/to\/sbtd-plugins\/packages\/dsh-sbtd/,
+    );
+    assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
+  });
+
+  test(`${filename} 区分 docs-only RC 与当前已发布版本`, () => {
+    const readme = readFileSync(join(pkgRoot, filename), "utf8");
+
+    assert.match(readme, /\*\*0\.2\.0-rc\.2\*\*/);
+    assert.match(readme, /`next=0\.2\.0-rc\.1`/);
+    assert.match(readme, /`latest=0\.1\.0-rc\.1`/);
+    assert.match(
+      readme,
+      filename === "README.md" ? /\*\*not yet published\*\*/ : /\*\*尚未发布\*\*/,
+    );
+  });
+
+  test(`${filename} 顶部语言切换钉 release tag`, () => {
+    const readme = readFileSync(join(pkgRoot, filename), "utf8");
+    const switcher = readme.match(/^<p align="center">[\s\S]*?<\/p>/)?.[0];
+
+    assert.ok(switcher, "language switcher must precede the README body");
+    for (const target of ["README.md", "README.zh.md"]) {
+      assert.ok(
+        switcher.includes(
+          `href="https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/${target}"`,
+        ),
+        `missing release-tag-pinned link to ${target}`,
+      );
+    }
+  });
+}
+
+test("双语 README 的二级与三级标题数量一致", () => {
+  const english = readFileSync(join(pkgRoot, "README.md"), "utf8");
+  const chinese = readFileSync(join(pkgRoot, "README.zh.md"), "utf8");
+
+  for (const heading of [/^## /gm, /^### /gm]) {
+    assert.equal(
+      (english.match(heading) ?? []).length,
+      (chinese.match(heading) ?? []).length,
+      `heading count differs for ${heading}`,
+    );
+  }
+});
+
 test("包声明支持的宿主范围与发布文件清单", () => {
   const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 

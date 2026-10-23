@@ -88,7 +88,7 @@ Status：confirmed。全文见 `ai/tasks/dsh-sbtd-0-2-0-rc-1-plan/task.md` 末�
 
 > 注（2026-10-19，行 E publish 证据，由行 F 回填）：第二步已执行。`npm publish --tag next` → `@kunolu/dsh-sbtd@0.2.0-rc.1`，registry shasum `0b4f3ef93703963757cd8cb991a65bb1d0cd35e6`；dist-tags `next=0.2.0-rc.1`，`latest` 仍为 `0.1.0-rc.1`（`npm view` 实测核对）。annotated tag + GitHub prerelease：`dsh-sbtd-v0.2.0-rc.1`（https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.1）。
 
-> 注（2026-10-23，行 G）：用户本次任务指令明确中文文件名为 `README.zh.md`（不同于 PRD 行 G / omp D6 的 `README_zh.md` 文字），Lord 记录。本次仅双语 README、版本 bump 至 `0.2.0-rc.2`、双语 CHANGELOG 日期戳及对应测试/文档；不执行 tag、Release 或 publish。中文文件不进 npm 包；语言链接钉 `dsh-sbtd-v0.2.0-rc.2`，打 tag 后、publish 前点击核验。合并后仍按行 G 执行 annotated tag、双语 prerelease、`npm publish --tag next`，`latest` 不动；PR、merge SHA、done 时间与发布证据由后续 PR 回填。
+> 注（2026-10-23，行 G）：用户本次任务指令明确中文文件名为 `README.zh.md`（不同于 PRD 行 G / omp D6 的 `README_zh.md` 文字），Lord 记录。本次仅双语 README、版本 bump 至 `0.2.0-rc.2`、双语 CHANGELOG 日期戳及对应测试/文档；不执行 tag、Release 或 publish。npm 10.9.3 的 `npm pack --dry-run` 自动收录 `README.*`，因此 `README.zh.md` 会进包，而 omp-sbtd 的 `README_zh.md` 不进包。命名与打包要求的冲突**待用户裁决**：（A）按 PRD 行 G / omp D6 改名为 `README_zh.md`，使中文文件不进包；（B）按本次任务指令保留 `README.zh.md`，接受其随 tarball 发布，并修订行 G 的「不进包」要求。本次不代用户选择，裁决前 publish 仍阻塞。语言链接钉 `dsh-sbtd-v0.2.0-rc.2`，打 tag 后、publish 前点击核验。合并后仍按行 G 执行 annotated tag、双语 prerelease、`npm publish --tag next`，`latest` 不动；PR、merge SHA、done 时间与发布证据由后续 PR 回填。
 
 ## 4. 验收要点
 
