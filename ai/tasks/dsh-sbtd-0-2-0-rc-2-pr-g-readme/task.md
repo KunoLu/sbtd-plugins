@@ -4,11 +4,11 @@ id: dsh-sbtd-0-2-0-rc-2-pr-g-readme
 workflow_mode: strict
 mode_source: user
 mode_note: 编排方整理：沿用 strict、唯一 writer 与先 records-only 后 README/bump 的提交顺序；仅本 worktree 本地提交，不 push/PR/comment/tag/publish/merge。
-status: checking
+status: done
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T16:53:59+08:00'
-completed_at: null
+updated_at: '2026-10-23T17:40:28+08:00'
+completed_at: '2026-10-23T17:03:32+08:00'
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
 
@@ -123,6 +123,7 @@ completed_at: null
 | 2026-10-23T13:59:56+08:00 | checking | checking | fix3: attribution correction (Lord/Reviewy 13:58) | mode_note 与 fix1 事件改为「编排方整理」；22:53 归属仅保留于命名决策（:24）；未找到本项 strict 的可核验用户群内确认时间。 |
 | 2026-10-23T16:46:38+08:00 | checking | checking | 编排方整理：align #118 与已合并 #119；U2/R12 解除命名/打包阻塞，其他既有阻塞保留；本轮不标 done | #119 merge 9ad277c35b5e4e61a6f7cb5fd959e6ce3a89de8f，2026-10-23T16:37:30+08:00；typecheck/build exit 0；全包 342 passed / 0 failed / 0 skipped；pack entryCount 103，含 README.zh.md；双语渲染、历史保留、YAML 与差异检查通过；reports/align-*；completed_at null |
 | 2026-10-23T16:53:59+08:00 | checking | checking | 编排方整理：D6/D7 状态单元格去掉「locked（…）」外壳，改为「用户 2026-10-19 原锁定；现行命名见 R11，随包发布见 R12」/「用户 2026-10-19 11:39 原锁定；…」，修正上一 align 提交 1df186a 仍保留 locked 前缀 | 追加本事件前 `git diff --stat`：docs/prd/omp-sbtd-0.2.0-rc.1.md，1 file changed, 2 insertions(+), 2 deletions(-)；`git diff --check` 无输出、exit 0 |
+| 2026-10-23T17:03:32+08:00 | checking | done | 编排方整理：#118 squash-merge，完成该 PR 的 README/bump 交付；本轮追加历史回填，不重绑定原分支 | squash 548a0bf125e3b3fe1407de11094409e55c2e779e；GitHub mergedAt 2026-10-23T17:03:32+08:00；git %cI 2026-10-23T17:03:31+08:00；Reviewy CLEAN @ 40dc46d；不据此清除历史 lint 门禁 |
 
 ## Align：合并 #119 后的当前状态
 
@@ -263,3 +264,54 @@ manuals/to-spec/SKILL.md
 manuals/to-tickets/SKILL.md
 package.json
 ```
+
+## #118 合并与 0.2.0-rc.2 发布回填
+
+- 编排方整理：本轮在 docs/omp-sbtd-session-compact-prd 分支按历史回填授权追加；保留原 branch、旧正文、旧事件及旧门禁结论，不调用 TaskStore lifecycle、不写 active pointer、不声称自动恢复通过。
+- 编排方整理：#118 squash 为 `548a0bf125e3b3fe1407de11094409e55c2e779e`；本轮 `git show -s --format='%H %cI' 548a0bf` 核对 commit 时间为 `2026-10-23T17:03:31+08:00`。GitHub mergedAt 为 `2026-10-23T17:03:32+08:00`，Reviewy CLEAN @ `40dc46d` 均按编排方整理记录，未在本轮查询 GitHub 或重做 Reviewy。completed_at 采用 mergedAt，不混同 commit 时间。
+- 编排方整理：Lord 于 2026-10-23 17:04 +08:00 将 `@kunolu/dsh-sbtd@0.2.0-rc.2` 发布至 dist-tag `next`，随后执行 `npm dist-tag add … latest`；`latest` 与 `next` 均指向 `0.2.0-rc.2`，registry time 为 `2026-10-23T17:08:50+08:00`。发布秒级时刻及 latest 操作的精确时刻未知；registry time 不冒充两项操作时间。
+- 编排方整理：tarball 在 main `548a0bf` 的 clean worktree 构建，测试 **342/342**；103 files，含 `README.md` 与 `README.zh.md`；shasum `3e414ff4440cee1e7a1bb59fb58cc1e548912239`。发布由 Lord 执行，token 未写入磁盘或日志。本轮未运行 publish、读取 token、重新查询 registry 或复跑该发布验证。
+- 编排方整理：上述已发生的 latest 更新与历史「latest 不动」计划不同，仅追加实际结果，不改写旧计划或补造新的群内裁决。annotated tag、双语 prerelease、在线语言链接核验及既有 lint 门禁如何处置的新增证据未知；不把合并/发布事实冒充本轮 release-ready 审查通过。
+
+## Reviewy 四项记录补正
+
+- 编排方整理：BilingualFacts / ReleaseContracts（主进程 pid 101611）配置为 `kimi-code/k3:max`，实际 thinking 为 high。原因按已核验的 omp 18.12.6 源码结论记录：「配置为 k3:max，主代理 spawn 时传 effort=med，按 omp 优先级覆盖后映射为 high」。`task/executor.ts` 优先级为 caller effort > `:level` suffix > agent default；pi-tui `thinking.ts` 的 `resolveTaskEffortLevel` 把 med 映射到 supported `[low, high, max]` 的中位 high；`task.maxEffort` 仅封顶。本轮未重新核验该宿主源码，不把配置 max 写成实际 max。
+- 编排方整理：#119 原 task 第 144 行的 fix1 启动/usage 断言无法核验，已在 `ai/tasks/dsh-sbtd-prd-readme-zh-shipped/task.md` 末尾追加「未知」纠正，不改原行。
+- 编排方整理：本 task「Fix2 验证与修正」B3（基线第 104 行）记载的两条旧 backfill 纠正，后来在 merge `56e43af` 被丢弃；不是当前 main 中仍保留的两行。合并选择 main wins，合并后 `ai/tasks/sbtd-changelog-backfill/task.md` 与当时 main 字节一致。来源 `~/.omp/logs/sbtd-rowg-dsh-rc2/pr118-body.v2.md`「Merge choices」第 38–46 行：旧归因目标行已不存在，pid 79530 两位子代理标题成功已包含于 main FINAL。旧 B3 与当时 smoke 记录保留为历史，不回写。
+- 编排方整理：四项补正中的第 (d) 项即下方「使用的模型（FINAL，#118）」完整回填；前三条分别对应 (a) effort、(b) #119 未知使用量、(c) merge 56e43af 丢弃 B3 纠正。此处追加对应关系，不改写原标题或前三条。
+
+## 使用的模型（FINAL，#118）
+
+编排方整理：已读取并逐项核对 `~/.omp/logs/sbtd-rowg-dsh-rc2/pr118-body.v2.md` 第 80–114 行；下列 assistant messages / tool calls 及 title-gen 数字与该来源一致，无数字差异。本轮未重数原始 session JSONL；astra 指 `openai-codex/gpt-6-astra:high`。配置 max / 实际 high 的原因由本节上方补正说明。
+
+| run | model | assistant msgs / tool calls |
+|---|---|---|
+| ping | astra | 1 / 0 |
+| main | astra | 39 / 103 |
+| BilingualFacts | kimi-code/k3（配置 max，实际 high） | 33 / 54 |
+| ReleaseContracts | kimi-code/k3（配置 max，实际 high） | 14 / 19 |
+| fix1 | astra | 17 / 41 |
+| ping2 | astra | 1 / 0 |
+| fix2 | astra | 19 / 52 |
+| ping3 | astra | 1 / 0 |
+| fix3 | astra | 9 / 19 |
+| merge ping | astra | 1 / 0 |
+| merge-main | astra | 9 / 20 |
+| align ping | astra | 1 / 0 |
+| align | astra | 14 / 35 |
+| align-fix1 ping | astra | 1 / 0 |
+| align-fix1 | astra | 12 / 20 |
+
+| title-gen run | pid | requests | result |
+|---|---|---|---|
+| ping / ping2 / ping3 / merge ping / align ping / align-fix1 ping | 100933 / 138612 / 147903 / 244747 / 247275 / 255342 | 各 0 | 无标题请求 |
+| main | 101611 | main 7 + BilingualFacts 1 + ReleaseContracts 2 | main 无标题；BilingualFacts composer-2.5 success；ReleaseContracts k3-256k success |
+| fix1 | 116081 | 7 | 无标题 |
+| fix2 | 139153 | 7 | 无标题 |
+| fix3 | 148170 | 8 | composer-2.5 success ×1 |
+| merge-main | 245555 | 8 | composer-2.5 success ×1 |
+| align | 247469 | 7 | 无标题 |
+| align-fix1 | 255501 | 7 | 无标题 |
+
+- 编排方整理：title-gen 链为 composer-2.5 → k3-256k → deepseek-flash（401 provider-response-error）→ gpt-6-astra → grok-4.7 → grok-4.6 → gpt-6.1-sol；grok-4.7/4.6 计为 fallback，均未产出标题。不把 title-gen fallback 计为主任务 fallback。
+- 编排方整理：无 advisor，无 k3:max main fallback，watchdog 未触发；仅 main 派生上述两位子代理。以上来源为 PR body FINAL，不冒充本轮会话模型统计。
