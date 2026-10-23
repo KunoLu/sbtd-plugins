@@ -3,6 +3,28 @@
 `@kunolu/omp-sbtd` 所有重要变更的完整中文对照，最新在前。
 完整英文镜像：[CHANGELOG.md](CHANGELOG.md)。
 
+## [0.2.0-rc.2] - 2026-10-23
+
+### Breaking（破坏性变更）
+
+- **Host Event 证据 v2。** 当前契约与证据 profile 为
+  `omp-extension-v2` / `omp-host-events-v2`。证据消费者须使用 v2；
+  历史 v1 ledger 记录保持只读，不重标为 v2。
+- **必需的 handoff 证明。** `session_compact` 现为必需 Host Event：
+  13 个必需事件加 1 个可选事件，共 14 个订阅。成功 handoff 必须由关联的
+  `session_compact` 证明，且 `compactionEntry.method === "handoff"`。
+  缺少 method 或窗口内存在竞争 compact 均失败；
+  `HANDOFF_EVENT_UNOBSERVABLE` 恢复为硬失败。
+
+### Changed（变更）
+
+- 中文 README 从 `README_zh.md` 改名为 `README.zh.md`，随 npm 包发布；
+  两个语言链接均钉 rc.2 release tag。
+
+来源：[#123](https://github.com/KunoLu/sbtd-plugins/pull/123)（实现）
+与 [#122](https://github.com/KunoLu/sbtd-plugins/pull/122)（契约决定）。
+本条日期记录准备工作，不代表发布。
+
 ## [0.2.0-rc.1] - 2026-10-22
 
 ### Breaking（破坏性变更）

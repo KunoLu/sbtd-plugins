@@ -5,6 +5,28 @@ follows Keep a Changelog; versions are release candidates until promotion.
 
 Full Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
+## [0.2.0-rc.2] - 2026-10-23
+
+### Breaking
+
+- **Host event evidence v2.** The current contract and evidence profile are
+  `omp-extension-v2` / `omp-host-events-v2`. Evidence consumers must use v2;
+  historical v1 ledger records remain read-only and are not relabeled as v2.
+- **Required handoff proof.** `session_compact` is now a required Host Event:
+  13 required events plus 1 optional event make 14 subscriptions. A successful
+  handoff must be proven by a correlated `session_compact` with
+  `compactionEntry.method === "handoff"`. A missing method or competing compact
+  in the window fails; `HANDOFF_EVENT_UNOBSERVABLE` is a hard failure again.
+
+### Changed
+
+- Renamed the Chinese README from `README_zh.md` to `README.zh.md` and included
+  it in the npm package, with both language links pinned to the rc.2 release tag.
+
+Sources: [#123](https://github.com/KunoLu/sbtd-plugins/pull/123) (implementation)
+and [#122](https://github.com/KunoLu/sbtd-plugins/pull/122) (contract decisions).
+This entry's date records preparation, not publication.
+
 ## [0.2.0-rc.1] - 2026-10-22
 
 ### Breaking

@@ -143,6 +143,7 @@ async function promotionFixture(options?: { cliLayout?: boolean }): Promise<{
             "skills",
             "LICENSE",
             "README.md",
+            "README.zh.md",
             "SECURITY.md",
             "CHANGELOG.md",
             "SBOM.spdx.json",
@@ -158,6 +159,11 @@ async function promotionFixture(options?: { cliLayout?: boolean }): Promise<{
     writeFile(
       join(pluginRoot, "README.md"),
       "Promotion fixture Plugin.\n",
+      "utf8",
+    ),
+    writeFile(
+      join(pluginRoot, "README.zh.md"),
+      "Promotion fixture Plugin 中文说明。\n",
       "utf8",
     ),
     writeFile(

@@ -5337,6 +5337,7 @@ async function inventoryDeclaredPackageContent(
     "skills",
     "LICENSE",
     "README.md",
+    "README.zh.md",
     "SECURITY.md",
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",

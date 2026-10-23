@@ -685,6 +685,7 @@ async function stageCandidate(
       cp(join(pluginRoot, "package.json"), join(stagePlugin, "package.json")),
       cp(join(pluginRoot, "plugin.json"), join(stagePlugin, "plugin.json")),
       cp(join(pluginRoot, "README.md"), join(stagePlugin, "README.md")),
+      cp(join(pluginRoot, "README.zh.md"), join(stagePlugin, "README.zh.md")),
       cp(join(pluginRoot, "SECURITY.md"), join(stagePlugin, "SECURITY.md")),
       cp(join(pluginRoot, "CHANGELOG.md"), join(stagePlugin, "CHANGELOG.md")),
       cp(join(pluginRoot, "LICENSE"), join(stagePlugin, "LICENSE")),

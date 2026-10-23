@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README.md">EN</a>
+  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.md">EN</a>
   ·
-  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README_zh.md">中文</a>
+  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.zh.md">中文</a>
 </p>
 
 # @kunolu/omp-sbtd
@@ -10,7 +10,7 @@ OMP-hosted SBTD workflow plugin for KPi. It provides `/sbtd` commands and a fixe
 
 ## Requirements
 
-- `0.2.0-rc.1` declares peer `@oh-my-pi/pi-coding-agent`
+- `0.2.0-rc.2` declares peer `@oh-my-pi/pi-coding-agent`
   `>=18 <19`; the development dependency is pinned to **18.11.1**.
 - An authenticated OMP provider profile for commands that need a provider.
 
@@ -29,21 +29,22 @@ omp --version
 
 ## Install
 
-`@kunolu/omp-sbtd@0.2.0-rc.1` is published to npm dist-tags `next` and `latest`.
-An unversioned install (`omp plugin install @kunolu/omp-sbtd`) now gets
-0.2.0-rc.1, which requires omp `>=18 <19`. omp 17.x users must explicitly pin
-an older 0.1.x version.
+The commands below pin `@kunolu/omp-sbtd@0.2.0-rc.2` for use once that
+version is published. Publication is separate from this README/version bump;
+neither the version nor the changelog date proves registry availability or
+dist-tag state. This version requires omp `>=18 <19`; omp 17.x users must
+explicitly pin an older 0.1.x version.
 
 Prefer the exact RC over a moving dist-tag such as `@latest` for a reproducible installation:
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
 ```
 
 OMP installs to user scope by default. To install only for the current project:
 
 ```bash
-omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.1
+omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.2
 ```
 
 Open a new OMP session after installation, then verify the plugin and command registry:
@@ -80,11 +81,11 @@ The onboard Skill catalog uses `sbtd-task` instead of `trellis-workflow` and
 `checking` under `ai/tasks/**` and `.sbtd/tasks/**`; legacy `.trellis`
 observation remains read-only. Task state writing stays with `sbtd-task`.
 
-**Known limitation:** handoff is not observable as `session_switch` on omp
-18.x. The p0 host-event live cell temporarily reports
-`HANDOFF_EVENT_UNOBSERVABLE` as a diagnostic rather than a hard failure.
-A registered follow-up will update the contract, implement `session_compact`
-observation, and restore the hard failure for missing handoff evidence.
+**Handoff evidence:** the `omp-extension-v2` contract and
+`omp-host-events-v2` profile require `session_compact` (13 required events
+plus 1 optional event). A successful handoff requires a correlated event with
+`compactionEntry.method === "handoff"`; missing method or competing compact
+in the window fails. `HANDOFF_EVENT_UNOBSERVABLE` is a hard failure.
 The omp 18.11.1 install-path smoke is not model end-to-end testing or full
 host-event certification.
 
