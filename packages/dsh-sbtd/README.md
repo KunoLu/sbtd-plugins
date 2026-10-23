@@ -18,7 +18,7 @@ With `@deepseek-ai/dsh@0.2.1-rc.2`, npm can report `ERESOLVE` because its defaul
 
 ## Install
 
-This README describes **0.2.0-rc.2**, a docs-only RC that is **not yet published**. As of 2026-10-23, the published npm dist-tags are `next=0.2.0-rc.1` and `latest=0.1.0-rc.1`. The command below installs the current `next`, not the unpublished RC.
+Install from dist-tag `next`.
 
 Use `@next`, not the bare package name, `@latest`, or a GitHub path:
 

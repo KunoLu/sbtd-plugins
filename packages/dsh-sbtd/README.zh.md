@@ -18,7 +18,7 @@ DSH 宿主上的 SBTD workflow 适配器，提供短中文 sbtd section、hooks�
 
 ## 安装
 
-本 README 描述 **0.2.0-rc.2**，它是**尚未发布**的 docs-only RC。截至 2026-10-23，npm 已发布的 dist-tags 为 `next=0.2.0-rc.1` 与 `latest=0.1.0-rc.1`。以下命令安装当前 `next`，不是尚未发布的 RC。
+从 dist-tag `next` 安装。
 
 使用 `@next`，不要使用裸包名、`@latest` 或 GitHub 路径：
 

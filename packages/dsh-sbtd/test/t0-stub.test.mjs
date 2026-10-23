@@ -55,16 +55,10 @@ for (const filename of ["README.md", "README.zh.md"]) {
     assert.doesNotMatch(readme, /0\.1\.0-rc\.7|0\.1\.2-alpha/);
   });
 
-  test(`${filename} 区分 docs-only RC 与当前已发布版本`, () => {
+  test(`${filename} 安装指引不依赖版本发布状态`, () => {
     const readme = readFileSync(join(pkgRoot, filename), "utf8");
 
-    assert.match(readme, /\*\*0\.2\.0-rc\.2\*\*/);
-    assert.match(readme, /`next=0\.2\.0-rc\.1`/);
-    assert.match(readme, /`latest=0\.1\.0-rc\.1`/);
-    assert.match(
-      readme,
-      filename === "README.md" ? /\*\*not yet published\*\*/ : /\*\*尚未发布\*\*/,
-    );
+    assert.doesNotMatch(readme, /尚未发布|not yet published|(?:next|latest)=/i);
   });
 
   test(`${filename} 顶部语言切换钉 release tag`, () => {

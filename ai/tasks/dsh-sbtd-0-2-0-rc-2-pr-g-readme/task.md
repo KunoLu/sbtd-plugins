@@ -3,11 +3,11 @@ schema_version: 1
 id: dsh-sbtd-0-2-0-rc-2-pr-g-readme
 workflow_mode: strict
 mode_source: user
-mode_note: 用户本次明确指定 strict、唯一 writer 与先 records-only 后 README/bump 的提交顺序；仅本 worktree 本地提交，不 push/PR/comment/tag/publish/merge。
+mode_note: 用户 2026-10-22 22:53 +08:00 群内确认（两个包的中文 README 都命名为 `README.zh.md`），Lord 记录；沿用 strict、唯一 writer 与先 records-only 后 README/bump 的提交顺序；仅本 worktree 本地提交，不 push/PR/comment/tag/publish/merge。
 status: checking
 branch: feat/dsh-sbtd-0.2.0-rc.2-readme
 created_at: '2026-10-23T13:10:17+08:00'
-updated_at: '2026-10-23T05:33:28+00:00'
+updated_at: '2026-10-23T13:54:49+08:00'
 completed_at: null
 ---
 # dsh-sbtd 行 G：0.2.0-rc.2 双语 README 与版本 bump
@@ -21,7 +21,7 @@ completed_at: null
 
 ## 决策与 PR-facing evidence
 
-- 用户本次任务指令明确中文文件名为 `README.zh.md`（不同于 PRD 行 G / omp D6 的 `README_zh.md` 文字），Lord 记录。
+- 用户 2026-10-22 22:53 +08:00 群内确认（两个包的中文 README 都命名为 `README.zh.md`），Lord 记录。
 - 未完整调用 grill-with-docs：用户与 PRD 已锁定范围，无新领域规则或模型歧义。
 - 沿用行 R/backfill 已记录的 TaskStore 全库历史 schema blocker，不重跑确认、不调用 lifecycle、不写 active pointer；本文件为用户明确要求的共享文档产物，不声称 TaskStore/自动恢复通过。父路径无 symlink、目标初始不存在且不被 ignore，reports 命中 /ai/tasks/**/reports；不建立其他任务记录。
 - 0.2.0-rc.2 是尚未发布的 docs-only RC；当前已发布 next=0.2.0-rc.1、latest=0.1.0-rc.1，不把 bump 当作 publish。宿主钉 0.2.0-rc.2、range >=0.2.0-rc.2 <0.3.0-0 不变。
@@ -70,7 +70,7 @@ completed_at: null
 - Capacity / backpressure / limits：not-applicable，无运行时变化。
 - Observability / alerts / runbook：本地 raw reports、中文汇总与本记录保留证据；不新增遥测。
 - Rollout / migration / rollback / cleanup：尚未发布，无数据迁移；本地 scoped commits 可回滚。不删除用户产物。后续须先取得用户对 A/B 的裁决，并处理发布所需验证，再评审/合并/tag/链接核验/双语 prerelease/publish；不是本任务授权。
-- Required validation and result：fix1 包测试 **342 passed / 0 failed / 0 skipped**、typecheck、文档渲染通过；scratch baseline 11/11，8/8 负向变体均被 guards 拒绝。既有 dsh `biome check src` 11 errors / 根 `biome check .` 44 errors，与 origin/main `46680a5` 相同，本分支无 src 变更，非本次引入（用户提供的基线结论；本次不重跑确认）。pack 命令成功但命名/打包要求冲突待裁决，故不得标 ready。
+- Required validation and result：fix1 包测试 **342 passed / 0 failed / 0 skipped**、typecheck、文档渲染通过；scratch baseline 11/11，8/8 负向变体均被 guards 拒绝。既有 dsh `biome check src` 11 errors / 根 `biome check .` 44 errors，与 origin/main `46680a5` 相同，本分支无 src 变更，非本次引入（编排方整理的基线结论；本次不重跑确认）。pack 命令成功但命名/打包要求冲突待裁决，故不得标 ready。
 - Optional checks / residual risk：未运行 omp suite（未改 omp）、线上 tag 链接（tag 尚未建立）、CI、真实宿主安装；不把后续发布步骤当已完成。TaskStore 全库恢复仍不可靠。
 
 ## 独立复核
@@ -97,11 +97,26 @@ completed_at: null
 - 原生输出与同 stem 中文汇总位于 ignored `reports/fix1-{launch,tests,typecheck,smoke}.{txt,md}`。Evidence Source=developer-local、Source Revision=dirty（基于 `1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b` 的六文件变更）、Evidence Publication=local-only；不冒充 CI 或发布证据。rtk=skipped-for-report。
 - Code Readability Review：沿用 node:test/assert/readFileSync，按文件生成有明确文件名的 guard 用例，单独比较两种标题级别；无生产代码/导出接口变更、无新依赖或抽象。此次仅 docs/tests，不触发 legacy/refactor/DDD/DDIA 新门禁；未运行 omp suite、lint/pack 已知失败重证、线上 tag 链接或真实宿主安装。Graft skipped；Cross-repo context/API Contract=not-needed，新增 Mock Strategy=none。TaskStore 的既有全库 schema blocker 继续保留，仅更新明确授权共享文档，不声称生命周期 helper 或自动恢复通过。
 
+## Fix2 验证与修正
+
+- B1：双语 README 安装状态改为不随时间失效的 dist-tag `next` 指引；删除版本发布状态与 dist-tag 当前版本断言，保留宿主 pin、@next 命令、禁止裸包名/绝对路径/旧版本、顶部 tag-pinned 语言链接和 EN/ZH 标题 parity guards。t0 增加不含未发布措辞或 dist-tag 版本赋值的反向 guard；feature 同步为「安装指引不依赖版本发布状态」，沿用中文场景 + 英文关键词，BDD=traceable。
+- B2：mode_note、决策条目与 fix1 入场事件使用用户 2026-10-22 22:53 +08:00 群内确认的准确归属，Lord 记录；删除 PRD 行 G 解释注及其空行，同时去掉状态单元格中的悬空「见下注」。`git diff origin/main -- docs/prd/dsh-sbtd-0.2.0-rc.1.md` 及 Python 逐行/逐单元格比较证明仅行 G 的状态单元格变化。
+- B3：既有 lint 基线结论明确为编排方整理；旧 backfill 任务仅追加两条 done → done / record correction 事件，分别纠正材料来源与标题生成统计范围。只读日志确认 pid 79530 的 OmpHistory、DshHistory 各有一次 cursor/composer-2.5 success；不改既有事件、0410bf1 内容或历史分支绑定。
+- 时间：fix1 两条事件按同一时刻转换至 +08:00；本轮 updated_at 与新事件使用实际 +08:00 时间。当前 completed_at 保持 null。本任务的 **FINAL 模型统计段在合并后回填，不在本轮填写或猜测**。
+- 原生验证 cwd 为 `packages/dsh-sbtd`，命令按要求使用 `../../node_modules/.bin/tsc -p tsconfig.json --noEmit`，再 `../../node_modules/.bin/tsc -p tsconfig.json && node --test test/*.test.mjs`。首轮 typecheck exit 0，完整测试 **341 passed / 1 failed / 0 skipped（342 tests）**：`test/t6-clarify.test.mjs:423` 仍断言 README 含 `0.1.0-rc.1`，与 B1 冲突。仅删除此陈旧断言，保留 clarify 与宿主 pin 检查；这是本轮第八个修改文件，未改运行时代码。
+- 修正后的定点命令 `node --test --test-name-pattern='README 提到 sbtd_clarify' test/t6-clarify.test.mjs`：**1/1**；`node --test test/t0-stub.test.mjs test/t6-clarify.test.mjs`：**37/37**；再次执行上述 noEmit 与 build + 全包测试：**exit 0，342 passed / 0 failed / 0 skipped**。fixture 隔离沿用 `TMPDIR=/tmp` / `GIT_CEILING_DIRECTORIES=/tmp`，未安装依赖或改全局配置。
+- Python 3 + markdown-it 一次性 smoke 实际渲染双语 README：各 **15 headings**，Markdown block token 结构一致，渲染后仍为 next 安装且无发布状态声明；两个任务的事件表均正常渲染。`git diff d60b4c1 -- ai/tasks/sbtd-changelog-backfill/task.md` 为 **2 insertions / 0 deletions**，Python 比较确认每条旧行逐字保留。
+- `git diff --check origin/main...HEAD` 与工作树 `git diff --check` 均 exit 0；README 未发布措辞与 dist-tag 版本赋值无匹配，新任务 UTC 零偏移时间无匹配，八个修改文件的禁止来源措辞无匹配。最终新增提交后的 whitespace、clean status、四提交链及前三提交不变由提交后命令核验，不预写其成功。
+- 本轮 raw 与同 stem 中文报告为 ignored `reports/fix2-{typecheck,tests,verification}.{txt,md}`，首轮失败保留。Linux / Node v22.20.0 / Python 3.13.5；Evidence Source=developer-local、Source Revision=dirty（基于 d60b4c1d4ce28134be14ea443e0c8aadfb49a6ee）、Evidence Publication=local-only；不冒充 CI 或新提交 exact SHA 证据。rtk=skipped-for-report；Final Test Report / Run Summary MD=generated；Targeted / Affected Subset / Final Full Rerun=passed。
+- Code Readability Review：仅删除陈旧断言、沿用 node:test/assert/readFileSync，无生产/导出接口变更、依赖或新抽象。Book Gate Plan 沿用：DDD/DDIA/legacy/refactor 无新触发；Release Readiness Review 仍 **blocked**，名称/打包 A/B 待用户裁决，既有 lint 阻塞未变；容量/重试/遥测不适用，回滚边界为本地 scoped commit。未重跑已知 lint/pack 失败、omp suite、线上 tag 链接、CI 或真实宿主安装；既有 CLI @todo 保留。Graft skipped，Cross-repo context/API Contract=not-needed，新增 Mock Strategy=none。TaskStore 全库 schema blocker 沿用，不调用 lifecycle，不声称自动恢复通过。
+
 ## 状态事件
 
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 | 2026-10-23T13:12:28+08:00 | planned | in-progress | 首提交完成，建立 strict 记录并开始 row G 文档/元数据实现 | 0410bf1；index 新增一行；授权根/分支与路径检查通过 |
 | 2026-10-23T13:25:38+08:00 | in-progress | checking | 本地实现与验证完成，按用户要求保留 checking；发布门被 pack 排除失败与既有 lint 失败阻塞，不标 done | 测试 335/335、typecheck/文档 smoke 通过；三次 pack 均含 README.zh.md；ReleaseContracts P1；completed_at null |
-| 2026-10-23T05:31:04+00:00 | checking | in-progress | fix1: restore README guards, remove README blocker text, PRD note accuracy | 用户明确限定六文件修复；入口 clean，HEAD 1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b；沿用 strict 与既有 TaskStore 限制，仅编辑获授权共享记录 |
-| 2026-10-23T05:33:28+00:00 | in-progress | checking | fix1: 双语 guards、README 中性发布指引与 PRD 冲突记录修正并验证；publish 待用户 A/B 裁决 | 包测试 342/342、typecheck exit 0、scratch 8/8 拒绝、双语渲染 parity 通过；reports/fix1-*；既有 lint 11/44 errors 非本次引入；completed_at null |
+| 2026-10-23T13:31:04+08:00 | checking | in-progress | fix1: restore README guards, remove README blocker text, PRD note accuracy | 用户 2026-10-22 22:53 +08:00 群内确认（两个包的中文 README 都命名为 `README.zh.md`），Lord 记录；fix1 限定六文件修复；入口 clean，HEAD 1c9b1bbfeefd11f3c3390e8dc2fcee0e3a872d7b；沿用 strict 与既有 TaskStore 限制，仅编辑获授权共享记录 |
+| 2026-10-23T13:33:28+08:00 | in-progress | checking | fix1: 双语 guards、README 中性发布指引与 PRD 冲突记录修正并验证；publish 待用户 A/B 裁决 | 包测试 342/342、typecheck exit 0、scratch 8/8 拒绝、双语渲染 parity 通过；reports/fix1-*；既有 lint 11/44 errors 非本次引入；completed_at null |
+| 2026-10-23T13:51:14+08:00 | checking | in-progress | fix2: Reviewy findings B1–B3 + nits | 入口 clean，HEAD d60b4c1d4ce28134be14ea443e0c8aadfb49a6ee；沿用 strict 与既有 TaskStore 限制，仅编辑明确授权共享记录；本轮只新增一个本地提交，不改 README.zh.md 文件名、不执行远端写入 |
+| 2026-10-23T13:54:49+08:00 | in-progress | checking | fix2: Reviewy B1–B3 + nits 修正并完成本地验证 | 定点 1/1、子集 37/37、最终全包 342/342、typecheck/build exit 0；双语渲染 smoke 通过；旧任务仅新增两行、PRD 仅行 G 状态单元格变化；reports/fix2-* 保留首轮失败；completed_at null；FINAL 模型统计合并后回填 |

@@ -31,6 +31,8 @@ completed_at: '2026-10-23T13:06:30+08:00'
 | 2026-10-23T12:54:37+08:00 | checking | checking | provenance wording fix | 按本次明确纠正，将本分支新增文字中的 PR body、npm JSON、日志/tarball 与 ping 归属改为编排方；保留用户决策归属及基线旧正文 |
 | 2026-10-23T13:06:30+08:00 | checking | done | 回填 PR #117 squash-merge；Lord 合并 | main merge SHA 46680a5f6403d9c6032e1dd6a3d2cb49cb2ff842；merge commit %cI 与 GitHub mergedAt 均为 2026-10-23T13:06:30+08:00；远程 docs/changelog-backfill 已删除，本地分支及 worktree /workspace/sbtd-plugins-changelog 也已移除（本次任务提供的完成事实）；本轮 git ls-remote --heads origin docs/changelog-backfill 无输出 |
 | 2026-10-23T13:10:17+08:00 | done | done | record correction | 历史「提交 1 `965dca5`」保留不改；965dca5 是 autosquash 前 SHA，合并分支的实际提交 1 为 2058673；本轮 git log --oneline -3 2058673 已确认该提交存在 |
+| 2026-10-23T13:51:14+08:00 | done | done | record correction | 纠正 d60b4c1 版本第 32、159、169 行的来源归属：「本次任务提供的完成事实 / FINAL 计数 / 最终统计」均为编排方整理，不是用户提供；原行及 0410bf1 已提交内容保留不改 |
+| 2026-10-23T13:51:14+08:00 | done | done | record correction | #117 的 pid 79530 title-gen 日志还包含子代理成功：OmpHistory 1 次（cursor/composer-2.5 success，2026-10-23 12:40:46 +08:00）、DshHistory 1 次（cursor/composer-2.5 success，2026-10-23 12:41:03 +08:00）；此前「pid 79530（main）… 没有生成标题」仅指 main session，不包含子代理；本轮只读核对 omp.2026-10-23.79530.log 的 title-generator success 记录 |
 
 ## Book Gate Plan
 
