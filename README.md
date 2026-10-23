@@ -20,20 +20,20 @@ SBTD host-plugin monorepo: OMP and DSH host adapters, with the OMP workflow kit 
 
 | Package | Path | Role |
 | --- | --- | --- |
-| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Published **0.2.0-rc.1** on npm dist-tags `next` and `latest`. |
+| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Version **0.2.0-rc.2**; publication is separate from the version bump. |
 | `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter (T5): sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Published **0.2.0-rc.1** on dist-tag `next`. dist-tag `latest` is still **0.1.0-rc.1**. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
 
 ## Install
 
-`@kunolu/omp-sbtd@0.2.0-rc.1` is published to npm dist-tags `next` and `latest`. An unversioned install (`omp plugin install @kunolu/omp-sbtd`) now gets 0.2.0-rc.1, which requires omp `>=18 <19`. omp 17.x users must explicitly pin an older 0.1.x version.
+The command below pins `@kunolu/omp-sbtd@0.2.0-rc.2` for use once that version is published. A version bump does not prove registry availability or dist-tag state. This version requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x version.
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
 ```
 
 Prefer the exact RC over a moving dist-tag such as `@latest` for reproducibility. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-For 0.2.0-rc.1, the host peer is `@oh-my-pi/pi-coding-agent` `>=18 <19`; the development pin is `18.11.1`.
+For 0.2.0-rc.2, the host peer is `@oh-my-pi/pi-coding-agent` `>=18 <19`; the development pin is `18.11.1`.
 
 > No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
 
@@ -64,7 +64,7 @@ Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](do
 
 This repository ships **two host plugins** only: `omp-sbtd` and `dsh-sbtd`.
 
-- **omp-sbtd** `0.2.0-rc.1` is published on `next` and `latest`. The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
+- **omp-sbtd** version `0.2.0-rc.2`: publication is separate from the version bump. The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
 - **dsh-sbtd** uses shell plugin scheme **2a**. **T0–T5** are done on `main` (section, state, `sbtd_plan`, `sbtd_review`, hooks, manuals). Later tasks remain. Details: [`docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.1.md).
 
 ## Development

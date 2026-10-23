@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README.md">EN</a>
+  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.md">EN</a>
   ·
-  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.1/packages/omp-sbtd/README_zh.md">中文</a>
+  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.zh.md">中文</a>
 </p>
 
 # @kunolu/omp-sbtd
@@ -10,7 +10,7 @@
 
 ## 环境要求
 
-- `0.2.0-rc.1` 声明宿主 peer `@oh-my-pi/pi-coding-agent`
+- `0.2.0-rc.2` 声明宿主 peer `@oh-my-pi/pi-coding-agent`
   为 `>=18 <19`；开发依赖精确钉为 **18.11.1**。
 - 需要 provider 的命令要求已认证的 OMP provider profile。
 
@@ -28,20 +28,21 @@ omp --version
 
 ## 安装
 
-`@kunolu/omp-sbtd@0.2.0-rc.1` 已发布到 npm dist-tag `next` 与 `latest`。
-不带版本的安装（`omp plugin install @kunolu/omp-sbtd`）现在会取得
-0.2.0-rc.1，它要求 omp `>=18 <19`。omp 17.x 用户须显式钉旧的 0.1.x 版本。
+以下命令固定 `@kunolu/omp-sbtd@0.2.0-rc.2`，供该版本发布后使用。
+发布与本次 README/version bump 分开；版本号或 CHANGELOG 日期均不证明
+registry 可用性或 dist-tag 状态。该版本要求 omp `>=18 <19`；
+omp 17.x 用户须显式钉旧的 0.1.x 版本。
 
 为便于复现，建议优先固定精确 RC 版本，而不是使用 `@latest` 等会移动的 dist-tag：
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.1
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
 ```
 
 OMP 默认安装到用户范围。若只为当前项目安装：
 
 ```bash
-omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.1
+omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.2
 ```
 
 安装后打开新的 OMP 会话，然后验证插件与命令注册：
@@ -75,10 +76,11 @@ Onboard Skill catalog 使用 `sbtd-task` 替代 `trellis-workflow` 与
 下的 `in-progress` 和 `checking`；legacy `.trellis` 观测仍为只读。
 任务状态写入继续由 `sbtd-task` 负责。
 
-**已知限制：** omp 18.x 上的 handoff 无法通过 `session_switch` 观测。
-p0 host-event live cell 暂将 `HANDOFF_EVENT_UNOBSERVABLE` 报为 diagnostic，
-而非硬失败。已登记的后续任务将更新契约、实现 `session_compact` 观测，
-并恢复缺失 handoff 证据时的硬失败。omp 18.11.1 安装路径 smoke 不等于
+**Handoff 证据：** `omp-extension-v2` 契约与 `omp-host-events-v2` profile
+要求 `session_compact`（13 个必需事件加 1 个可选事件）。成功 handoff
+须由关联事件证明，且 `compactionEntry.method === "handoff"`；缺少 method
+或窗口内存在竞争 compact 均失败。`HANDOFF_EVENT_UNOBSERVABLE` 为硬失败。
+omp 18.11.1 安装路径 smoke 不等于
 模型端到端测试或完整 host-event 认证。
 
 ## 平台支持

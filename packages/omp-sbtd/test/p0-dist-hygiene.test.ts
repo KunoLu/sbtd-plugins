@@ -183,6 +183,7 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
       cp(join(workspaceRoot, "LICENSE"), join(copyWorkspace, "LICENSE")),
       cp(join(pluginRoot, "package.json"), join(copyPlugin, "package.json")),
       cp(join(pluginRoot, "README.md"), join(copyPlugin, "README.md")),
+      cp(join(pluginRoot, "README.zh.md"), join(copyPlugin, "README.zh.md")),
       cp(join(pluginRoot, "LICENSE"), join(copyPlugin, "LICENSE")),
       cp(join(pluginRoot, "SECURITY.md"), join(copyPlugin, "SECURITY.md")),
       cp(join(pluginRoot, "CHANGELOG.md"), join(copyPlugin, "CHANGELOG.md")),
@@ -291,6 +292,7 @@ describe("Feature: P0 发布一致性与证据 - 编译产物卫生", () => {
     await Promise.all([
       cp(join(pluginRoot, "package.json"), join(stagePlugin, "package.json")),
       cp(join(pluginRoot, "README.md"), join(stagePlugin, "README.md")),
+      cp(join(pluginRoot, "README.zh.md"), join(stagePlugin, "README.zh.md")),
       cp(join(pluginRoot, "LICENSE"), join(stagePlugin, "LICENSE")),
       cp(join(pluginRoot, "SECURITY.md"), join(stagePlugin, "SECURITY.md")),
       cp(join(pluginRoot, "CHANGELOG.md"), join(stagePlugin, "CHANGELOG.md")),
