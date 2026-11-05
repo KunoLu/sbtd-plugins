@@ -6,6 +6,10 @@
 
 先核对根、任务、分支与只读范围。模式为当前明确选择 > 同任务有效记录 > 新任务default；旧模式缺失／多候选询问，不凭mtime、旧handoff或输出样式推断。推荐升／降模式须先解释并暂停，用户保持原模式就继续，无新实质风险不重复劝说；可持久化时把建议、用户拒绝及理由写入mode_note，续接先读取该决定，不能只保存最终模式。正常“继续”继承模式；跨分支写入另取明确决定。
 
+每个工作流节点第一步先核对并更新task.md：开始／换会话／恢复、审查结论或用户决定到达、提交／push／开PR前、结束会话前。步骤成对追加「开始X」／「完成X＋验证结果」，每条含写入者与真实时间；已解决等待项当场关闭。每次写前重读、保留旧行并原子写入；进展、状态、事件与代码同commit。发现不一致只追加「发现未记录的改动」列出差异交人工判断，不自动改状态或reopen。跨PR中间轮只记进度，合并SHA／时间按路径查git log，不回填上一PR。
+
+branch绑定复用TaskStore.current_binding()，与核对方式分开：lite／strict且ai/tasks中的task已跟踪，有远端走A（fetch后比较默认分支内容），无远端走B（仅本地HEAD／记录分支／工作区）；default、未跟踪或非Git走C（声明目录范围、文件清单及sha256，含ignored验收证据）。detached／多worktree按task记录的branch核对。中途git init后逐task明确重绑定，保留旧哈希证据；共享任务被跟踪后切Git核对，default仍用文件核对。缺范围、远端或历史证据明确不可考；只用Git／本地文件，不接平台工具或CI。
+
 需求已清楚先读事实，不重复grill；说明未完整调用原因。完整grill-with-docs后，所有模式必须调用book-ddd-distilled-modeling，输出独立DDD Boundary Review并按其门禁通过；缺失、不可读或证据不足均blocked，不能用fallback确认需求或进入设计／实现。
 
 纯问答只在会话中路由，不创建任务记录，也不为此请求ignore修改。实际需要记录的任务，在有写权限、分支匹配且路径／ignore已保护时尽早保存确认模式；没有onboard不等于不能开展普通任务。只读三模式均不写task、active、handoff、developer、ignore或会写缓存的工具状态。明确产物、项目已有测试／BDD和必要安全不按模式省略。
@@ -27,6 +31,10 @@ strict先列Book Gate Plan的触发事实、阶段和真实状态（planned/runn
 task唯一拥有mode/status；`.sbtd/active-task.json`只存schema_version/task_id/安全相对task_path，index仅导航。安全解析完整记录并保留其他内容；未知schema、无效旧模式、引用逃逸／symlink、父子冲突或双副本不得猜测覆盖。无法可靠验证／原子更新时不写，明确未持久化，不捏造格式或恢复成功；default/lite可继续不依赖它的安全工作。
 
 状态正常沿planned→in-progress→checking→done；checking发现问题可回in-progress，done重开先回planned。只有验收证据成立才记done与真实completed_at。进入blocked必须写非空blocked_reason，解除时清空；不保存blocked_from字段。完成／阻塞／重开／归档或明确重绑定事件放在同一task.md的`## 状态事件`表（at/from/to/reason/evidence），与字段一次原子更新。重开先保留旧完成证据再清空当前completed_at；持续blocked只改原因，不重写恢复前态。恢复取最近未解除的真实入阻塞前态；未知／冲突则用户选择planned/in-progress/checking，记录真实解除事件和历史未知原因，不能直接done或伪造ingress。完整细节以可用sbtd-task/state reference为准；缺安全能力不强行写入。
+
+新完成必须先checking，审查退回则回in-progress；历史直接done不追改。旧格式指无基线时五列完整、at为unknown或合法时间戳，但不符合当前事件schema的行（如verifying、in_progress），不设状态名枚举，运行输出「旧格式事件，不追溯」，不写task、不阻塞、不算差异；空单元格、非法时间戳等其他解析错误照常报错。首次确需追加新事件才同次追加旧事件基线（事件行数＋sha256，不含frontmatter，不依赖at或git）；基线内只读不校验，后缀逐行严格（含回填历史done），基线哈希变化只追加差异。完整细则见sbtd-task/state reference。
+
+Git收尾采用B方案：CLEAN后另作只改该task的commit，仅允许frontmatter的status／completed_at／updated_at、一条done事件及仅含CLEAN对应SHA／CI run的证据；其他文件或行变化需要整轮重审。Reviewy复核限定diff，CI仍须全绿。文件核对任务无审查需求时可在同一步依次checking、done；completed_at必须为真实完成时间。
 
 `cancelled` 是取消终止而不是验收完成，completed_at保持null；不级联取消子任务，仍有未终止子任务时拒绝终止父任务。done／cancelled重开需明确操作并保留原事件；归档按可证明的终止时间或undated，取消不算bootstrap成功。迁移历史遵循Onboard契约：未知mode/time不补造，首条unknown→blocked只证明历史状态、不证明恢复阶段；恢复必须由用户选择。旧运行包／schema不支持新状态时先成套对齐，不改成done或私自降级。
 
@@ -56,7 +64,7 @@ task唯一拥有mode/status；`.sbtd/active-task.json`只存schema_version/task_
 <!-- graft:start -->
 ## Graft structural evidence (managed)
 
-This project is wired to the pinned local Graft CLI (@nanonets/graft@0.22.0) by the SBTD onboard CLI, the only writer of this fence, host MCP entries, and Codex hook entries. The managed launcher proves the selected graph before forwarding each MCP request; native post-launch refresh remains disabled.
+This project is wired to the pinned local Graft CLI (@nanonets/graft@0.28.0) by the SBTD onboard CLI, the only writer of this fence, host MCP entries, and Codex hook entries. The managed launcher proves the selected graph before forwarding each MCP request; native post-launch refresh remains disabled.
 
 - Use the enabled global managed launcher (`sbtd_graft_entry.py`) in the active host configuration. Its normal name is `sbtd-graft`; it has no fixed cwd/root argument and selects the nearest initialized Git repository/worktree from the MCP process's actual startup cwd. Confirm this connection's project before relying on its results. Project-only setup prepares the graph, not host registration; if the global connection is unavailable, use source/LSP evidence. Never spawn upstream `graft`/`npx` servers or hook shims directly. The launcher revalidates graph data before every request.
 - Each connection locks one repository root for its entire lifetime. Shell cwd changes do not retarget it; start a new host connection for another project. HOME, missing project context, missing/old graph state and uninitialized nested repositories fail closed, never borrowing a demo, parent or sibling graph. A real external Git executable must be available on an absolute PATH entry; project-local and relative PATH entries cannot provide the root proof.
