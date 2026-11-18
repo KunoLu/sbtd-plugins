@@ -4,11 +4,12 @@ id: dsh-sbtd-0-2-0-rc-3-pr1-manuals
 workflow_mode: strict
 mode_source: user
 mode_note: 用户明确要求 strict；用户于 2026-11-18 13:55 Asia/Shanghai 批准 PR1 计划，本会话获准仅实施 dsh PR1，先核验目标与十二技能差异。
-status: checking
+status: blocked
 branch: docs/dsh-sbtd-0.2.0-rc.3-pr1-plan
 created_at: '2026-11-18T13:49:26+08:00'
-updated_at: '2026-11-18T14:03:15+08:00'
+updated_at: '2026-11-18T14:07:57+08:00'
 completed_at: null
+blocked_reason: dsh 0.2.2-rc.3 候选 smoke 在 systemPrompt.assemble 时抛出 TOOL_EXECUTOR_UNAVAILABLE；获批计划明确不改共享 smoke，需用户裁决适配范围；Reviewy strict CLEAN 尚缺。
 ---
 
 ## 当前执行授权（2026-11-18）
@@ -33,13 +34,43 @@ completed_at: null
 ## 本地验证与提交准备（2026-11-18T14:03:15+08:00）
 
 - `bash -n .../sync-manuals.sh` 与 T4 定点：6 passed / 0 failed / 0 skipped，exit 0，2820.799875 ms。两个测试文件覆盖原有正负向契约，不新增测试框架。
-- 逐一验证 nineteen（19）个目标文件：Git blob 字节、MANIFEST sha256、精确文件集合一致；直接执行 `dsh-manuals-pin` 的现有静态断言步骤，exit 0。
+- 逐一验证十九个目标文件：Git blob 字节、MANIFEST sha256、精确文件集合一致；直接执行 `dsh-manuals-pin` 的现有静态断言步骤，exit 0。
 - `pnpm --filter @kunolu/dsh-sbtd test`：TypeScript 编译成功；342 passed / 0 failed / 0 skipped，exit 0，runner 6051.483167 ms。包含真实 `dsh@0.2.0-rc.2` 注册与 pre-step 用例；不是三个宿主版本的完整证据。
 - 该 pnpm test 命令自动触发 workspace supply-chain 检查与依赖补装（+403/-260，47.5s），含下载慢 warning；没有另行执行 install 命令，不冒称 frozen install 独立通过。随后安全核对未发现 lockfile、package 元数据、omp 文件或其他任务 dirty；只存在本 PR 预期十三个文件。没有修改全局软件或配置。
 - 本地环境 Node v24.15.0 / pnpm 11.17.0，与 workflow Node 22 分开记。原始/中文配对报告已生成并核对九节顺序、无模板占位符、同 stem 与非空 raw；本地证据仍为 developer-local / dirty / local-only，不冒充提交后 CI。
 - Code Readability Review：手写生产改动仅两条 pin 常量；测试/feature/workflow 对应值保持现有清晰结构，生成镜像不手改。ponytail-review：无新增抽象、依赖或冗余逻辑，无需简化；这是主会话自审，不是独立 Reviewy。
 - 未独立运行 lint/typecheck/build：src 未改，包 test 已执行 tsc；不夹带既有 lint 清理。真实模型 E2E、Web/Mobile 未运行：非本 PR 手册同步验收面。BDD=traceable；T4 feature 中文场景/英文关键词保持；Cross-repo context=complete（目标 blob 与源路径），Mock Strategy=contract-backed（T4 fixture）。
 - 开始提交、推送与 PR 创建准备；GitHub 仓库查询确认 push 权限，当前分支无既有 open PR，远端 main 仍等于原基线。CI、三版本矩阵与独立 Reviewy 尚待执行，保持 checking，不满足 done 或 release-ready。
+
+## PR 与 CI 运行记录（2026-11-18T14:05:11+08:00）
+
+- 实现提交 `b572e7241677a1519c09628cc5abecabe9524831` 已推送本分支；13 files changed，351 insertions，58 deletions。PR：<https://github.com/KunoLu/sbtd-plugins/pull/127>，base=`main`，state=`OPEN`。
+- PR 描述明确请求独立 Reviewy strict；当前平台显示 `REVIEW_REQUIRED`、reviews=[]、reviewRequests=[]。没有 Reviewy CLEAN，未通过其他模型或主会话自审代替。
+- `dsh-manuals-pin` run `44248627440` 在上述提交上 success；raw JSON 与完整日志已保存，含 T4 与真实上游重同步幂等步骤，详细数字随后由原生日志提取。
+- 已用精确候选 `candidateDshVersions=0.2.2-rc.3` dispatch `dsh-host-compat` run `44248624861`；同一提交的两个 REQUIRED pin 与候选行结果待读取，不能以调度成功充当兼容通过。
+- 仓库既有 PR 触发器自动启动 `omp-runtime-linux-probe` run `44248627354`，未修改 omp，也未主动增加 omp 验收范围；结果单独记录，不当作本机 OMP 18.20.3 或历史 18.19.0 的新认证。
+- 当前 CI watcher 只等待本任务启动的运行；不登录、不改外部评论、不 merge、不启动 PR2。后续任务记录提交不得把旧 SHA CI 冒充新 HEAD，最终 HEAD 的 CI 将单独复核并留证。
+
+## 验收阻塞与停止记录（2026-11-18T14:07:57+08:00）
+
+- 本轮 CI 实际源 SHA 全部为 `b572e7241677a1519c09628cc5abecabe9524831`；以下不是稍后阻塞记录提交的 CI 证明。最终记录提交只改 task，不主动重跑已失败候选；恢复时须针对真实新 HEAD 完成适用 CI。
+- `dsh-manuals-pin`：run `44248627440` success，T4 6 passed / 0 failed / 0 skipped；真实上游同步后的 `git diff --exit-code -- packages/dsh-sbtd/manuals` 成功。
+- `dsh-host-compat`：run `44248624861` 顶层 success，但候选 job failure。已逐 job 核对，**本任务兼容验收失败**，不接受 continue-on-error 的顶层绿灯。
+
+| 验证项 | Job ID | 原始结果 |
+|---|---|---|
+| REQUIRED unit + pack dist/ | 134613574751 | 342 passed / 0 failed / 0 skipped；pack dist 检查成功 |
+| REQUIRED dsh 0.2.0-rc.2 | 134613916674 | success；register smoke ok 0.2.0-rc.2 0.2.0-rc.2 |
+| REQUIRED dsh 0.2.1-rc.2 | 134613916672 | success；register smoke ok 0.2.1-rc.2 0.2.0-rc.2 |
+| Advisory dsh 0.2.2-rc.3 | 134613916615 | failure；exit 1；TOOL_EXECUTOR_UNAVAILABLE |
+
+- 候选已成功安装并加载插件；失败位于共享 `smoke.mjs:68` 的 `ctx.systemPrompt.assemble({})`，调用 `dsh-tools@0.2.2-rc.3` 的 `ToolsService.selectExecutor`。原文：`ToolExecutorUnavailableError: The selected tool executor is unavailable. Load an executor in this composition before running the agent.` Node v22.23.4。此后 schema/pre-step/ask 检查未完成；不能将未执行算作通过。
+- 已有真实失败即复现，不重复执行以确认。直接机制为 smoke composition 未提供候选宿主所需 executor；现有证据不能证明插件本体在完整宿主中不兼容。获批范围明确复用而不改 `dsh-host-register-smoke.mjs`；不擅自加载未知 executor、修改宿主依赖、生产 src、workflow 或跳过断言。需要用户裁决是否扩充 PR1 为 smoke 组合适配，还是另立适配任务。
+- 自动 `omp-runtime-linux-probe` run `44248627354` success；仅保留既有自动检查事实，不声明 OMP 18.20.3/18.19.0 新验收。Actions Node 引擎/Ubuntu 镜像迁移 annotation 未作为本 PR 改配置的理由。
+- 三个 CI run 的 raw JSON、完整日志和各自同 stem 中文汇总已存于 `reports/ci-{manuals,host,automatic-omp}-<run-id>*`；失败日志保留，候选与两条 REQUIRED 的 job ID/结果分别列出。API/模型 E2E 未运行，不补造测试数字或模型调用统计。
+- Release Readiness Review = blocked：容量/背压/服务告警不适用；供应链 pin 与原子替换保持，未部署、迁移或清理。必需候选验证失败，Reviewy strict CLEAN 尚缺，不能完成任务、合入或发布。
+- lessons-record 已评估：草案事件标题问题已由现有精确标题规则覆盖，不新增重复 lesson；候选 executor 更深适配方案尚未验证，不写推测性长期知识。不解析或创建 developer 身份。
+- 接下来仅提交并推送本任务阻塞记录，向用户报告后等待指示；不回复外部评论、不合入、不开始 PR2、不发布。该记录提交不是 CLEAN 后 B 方案 done 收尾；`completed_at` 保持 null。
 
 # PR1 计划草案：dsh manuals 同步 640-skills v2.1.0
 
@@ -125,7 +156,7 @@ completed_at: null
 | book-ddia-data-design | JSON schema blob 未变；只镜像 task 状态说明，不改变插件存储或执行迁移 | not-required；无 schema 语义或数据所有权设计 |
 | book-legacy-change-safety | 同步算法保留；当前脚本与既有隔离 fixture、字节和失败契约已读 | passed；characterized / normal，现有安全网足够，无新 seam；实际测试结果另记 |
 | book-refactoring-pass | 首次生产编辑前复核脚本 pin 与契约测试 | passed；proceed / normal，无结构阻碍，不重构 |
-| book-release-readiness | 后续真实宿主集成验证；本 PR 不发布 | planned；适用测试与 project-validation 后评估 PR1 集成风险，不等同 rc.3 发布就绪 |
+| book-release-readiness | 真实三版本宿主集成验证后；本 PR 不发布 | blocked；候选 0.2.2-rc.3 smoke 缺 executor 失败；不豁免，不宣称发布就绪 |
 
 后续 before-dev 还须读取适用 ponytail、gherkin-bdd、project-validation 方法，核对影响面。若发现新行为或 bug，先确认行为规范与回归证据；不得以改 PIN 掩盖失败。已有测试足够时不另造措辞型测试。
 
@@ -197,7 +228,7 @@ cp "$GITHUB_WORKSPACE/.github/workflows/scripts/dsh-host-register-smoke.mjs" "$c
 - [x] `v2.1.0` 与 `3c83530` 解析到同一可核实完整 commit SHA，已回填 pin 及证据；目标实际差异符合四技能范围。
 - [x] 十二项白名单保持，复制范围仅各自 SKILL.md/references；没有安装器、agents 或 skill-root 附加 Markdown；其他八项正文未变。
 - [x] MANIFEST 元数据、文件集合、逐项 sha256 和 Git blob 原始字节一致；脚本、feature、T4、workflow 的 pin 全部一致。
-- [ ] T4 既有正负向契约通过，sync 幂等；失败报告保留，不以跳过或放宽断言转绿。
+- [x] T4 既有正负向契约通过，sync 幂等；本地 6/0/0，CI run 44248627440 的真实重同步无 diff；候选宿主失败另记，不以此勾选冒充全验收通过。
 - [ ] `dsh-manuals-pin` 与全部适用 CI 在实际提交上通过；`dsh-host-compat` 两个 REQUIRED pin 行及 `0.2.2-rc.3` 候选行分别成功；候选 advisory 红仍阻断本任务验收。
 - [ ] project-validation、Code Readability Review、适用 ponytail-review 与 Book gates 留存真实结论；本轮不得预填 passed/CLEAN。
 - [ ] Reviewy strict 对实际实现提交给出 CLEAN；记录完整 SHA、审查轮次及真实证据，不用主会话自审替代。
@@ -220,6 +251,10 @@ BDD 仅计划对齐现有 T4 场景并映射至两个 T4 测试文件；本轮�
 | 2026-11-18T13:59:56+08:00 | in-progress | checking | OMP 当前会话：完成 PR1 pin/契约编辑与脚本生成，开始本地验证及宿主兼容验收 | sync-manuals.sh 指向隔离目标 HEAD，退出 0；reports/manuals-sync-20261118-1359.txt；测试与 CI 尚未执行，不预填通过 |
 | 2026-11-18T14:03:15+08:00 | checking | checking | OMP 当前会话：完成本地定点、完整包与十九文件核验 | T4 6/0/0；全包 342/0/0；MANIFEST/blob 与 workflow 断言成功；reports 原始+中文同 stem 已核对；CI 未跑 |
 | 2026-11-18T14:03:15+08:00 | checking | checking | OMP 当前会话：开始获准本分支 commit/push 与 PR 创建，后续执行三版本 CI | 远端 main 未前进；安全核对仅十三个预期文件；gh 仓库 push 权限已核对；不合入、不发布、不自动回复评论 |
+| 2026-11-18T14:05:11+08:00 | checking | checking | OMP 当前会话：完成实现提交、push 与 PR 创建 | b572e7241677a1519c09628cc5abecabe9524831；PR #127 OPEN/main；无 merge/tag/release/npm；Reviewy 尚无结论 |
+| 2026-11-18T14:05:11+08:00 | checking | checking | OMP 当前会话：开始记录提交后 CI 与三版本兼容结果 | dsh-manuals-pin 44248627440 success；dsh-host-compat 44248624861 运行中；自动 omp-runtime-linux-probe 44248627354 运行中 |
+| 2026-11-18T14:07:57+08:00 | checking | blocked | OMP 当前会话：完成首轮三版本 CI 结果核对，候选失败触发阻塞并停止实现 | b572e7241677a1519c09628cc5abecabe9524831；host run 44248624861，job 134613916615 exit 1 / TOOL_EXECUTOR_UNAVAILABLE；两条 REQUIRED 分别 success；不改获批范围外 smoke |
+| 2026-11-18T14:07:57+08:00 | blocked | blocked | OMP 当前会话：开始提交阻塞记录并准备报告，等待用户裁决 smoke 适配范围 | PR #127 保持 OPEN；原始+中文 CI 证据已保留；Reviewy strict CLEAN 尚缺；无 merge、PR2、tag、release、npm 操作 |
 
 本轮只执行只读核对、分支创建与本文件写入。没有实现、测试结果、Reviewy CLEAN、CI 成功、commit、push、PR 或发布事实可报告。草案交付不将任务转 checking/done，`completed_at` 保持 null。
 
