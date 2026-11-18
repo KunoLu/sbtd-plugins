@@ -7,7 +7,7 @@ mode_note: 用户要求 strict；2026-11-18 13:55 批准 PR1，14:19 本人进�
 status: checking
 branch: docs/dsh-sbtd-0.2.0-rc.3-pr1-plan
 created_at: '2026-11-18T13:49:26+08:00'
-updated_at: '2026-11-18T14:26:41+08:00'
+updated_at: '2026-11-18T14:29:55+08:00'
 completed_at: null
 ---
 
@@ -40,6 +40,25 @@ completed_at: null
 - 语法、pack、三 install、三 smoke 各有独立 raw JSON 与同 stem 中文摘要：`reports/executor-*-20261118-1424.*`。API 调查另有配对报告。当前为 developer-local / dirty / local-only；不代替将要提交的真实 CI。
 - 提交前安全检查仅两个预期修改文件：共享 smoke 与本 task；无额外用户 dirty、依赖/lockfile/workflow/产品代码变更。Code Readability / ponytail-review：五行局部初始化，复用现有 helper，无 fallback/no-op、无新增抽象，不需要重构；这不是独立 Reviewy。
 - 开始提交并推送本次修复到 PR #127，只调度获准 CI，不修改 PR 描述、不发评论或审查消息。新 HEAD 须运行完整 dsh-host-compat 三版本、pin 检查与仓库自动 CI；CI 结果随后记录，保持 checking。
+
+## 修复提交 CI 闭环与最终 HEAD 复验约定（2026-11-18T14:29:55+08:00）
+
+- 代码修复提交 `cc9ff936017084f737cbea080bf0ddb043a50caa` 已推送原分支/PR #127；只修改共享 smoke 的五行初始化和本 task。没有修改 PR 描述、发送评论、请求评审或群消息。
+- 该提交的 `dsh-host-compat` run `44251445990` 全部五个 job 分别 success；REQUIRED unit+pack 的原生计数 342 passed / 0 failed / 0 skipped，pack dist 检查成功。
+
+| 精确宿主 | Job ID | 原始结果 |
+|---|---|---|
+| REQUIRED 0.2.0-rc.2 | 134623087253 | success；register smoke ok 0.2.0-rc.2 0.2.0-rc.2 |
+| REQUIRED 0.2.1-rc.2 | 134623087142 | success；register smoke ok 0.2.1-rc.2 0.2.0-rc.2 |
+| Candidate 0.2.2-rc.3 | 134623087117 | success；register smoke ok 0.2.2-rc.3 0.2.0-rc.2 |
+
+- `dsh-manuals-pin` run `44251452139` success，6 passed / 0 failed / 0 skipped，真实上游重同步幂等成功；仓库自动 `omp-runtime-linux-probe` run `44251452147` success，不冒称新 OMP 版本认证。
+- 三 run 的精确 headSha 均已核对为代码修复提交；`reports/executor-ci-{host,manuals,automatic-omp}-<run-id>.json/.md` 与 `-log.txt/-log.md` 保留完整原始结果、每个 job 状态及同 stem 中文汇总。旧失败 run 44248624861 未覆盖或删除。
+- 本次只读源码、真实本地三 cell、真实 CI 已闭环；无失败重试，无测试删减或新增 mock。新 executor 通过宿主已有 sdk-minimal 精确依赖解析，旧宿主仍内置 native。没有升级仓库依赖、软件或全局配置。
+- Release Readiness Review = blocked：修复提交技术门禁已通过；本记录提交之后仍需真实最终 HEAD CI，独立 Reviewy strict 尚待用户协调。容量/背压/服务告警/迁移不适用；原始日志可观测，未部署，无数据回滚动作。不提前声明整个 strict 生命周期完成或发布就绪。
+- 接下来仅提交本 task 的闭环记录并推送；该记录提交不是 B 方案 done 收尾，保持 checking/completed_at=null。随后对记录提交后的最终 HEAD 真实重跑相同三版本 CI及适用检查，逐 job 核实 candidate，而不是复用上表旧 SHA。
+- 最终复验原始结果保存为 `reports/executor-final-ci-<类别>-<run-id>*`，完整 HEAD、原生数字与交付边界另存 `reports/executor-final-delivery.json/.md` 并在会话输出。为避免报告写入再次移动已验 HEAD，最终报告仅写 ignored reports，不追加第三个记录提交；后续 Reviewy 结论到达时再按新节点追加 task。
+- 原范围阻塞已由 14:19 授权解除，executor 技术失败已在代码修复提交转绿。仍不标 done、不发送外部消息、不合入/PR2/tag/发布。用户负责独立 Reviewy strict 协调。
 
 ## 当前执行授权（2026-11-18）
 
@@ -185,7 +204,7 @@ completed_at: null
 | book-ddia-data-design | JSON schema blob 未变；只镜像 task 状态说明，不改变插件存储或执行迁移 | not-required；无 schema 语义或数据所有权设计 |
 | book-legacy-change-safety | 原候选 CI 已提供真实 red；三个发布包证实 builtin/native executor API 差异 | passed；本次修复 characterized / normal，现有完整 smoke 是回归 seam，无新增 seam 或模拟 provider |
 | book-refactoring-pass | 首次共享 smoke 编辑前复核初始化、模块归属与保留断言 | passed；本次修复 proceed / normal，仅能力探测后挂载官方 native 插件，无重构 |
-| book-release-readiness | 修复后的真实三版本集成与新 HEAD 验证 | planned；原失败证据保留，等待修复后三版本自身成功；不豁免 candidate |
+| book-release-readiness | 修复提交三版本与包/pin CI 已成功，记录提交须再次绑定最终 HEAD | blocked；仅剩最终记录 HEAD 的 CI 复验及用户协调的独立 Reviewy，非原 executor 技术失败 |
 
 后续 before-dev 还须读取适用 ponytail、gherkin-bdd、project-validation 方法，核对影响面。若发现新行为或 bug，先确认行为规范与回归证据；不得以改 PIN 掩盖失败。已有测试足够时不另造措辞型测试。
 
@@ -258,7 +277,7 @@ cp "$GITHUB_WORKSPACE/.github/workflows/scripts/dsh-host-register-smoke.mjs" "$c
 - [x] 十二项白名单保持，复制范围仅各自 SKILL.md/references；没有安装器、agents 或 skill-root 附加 Markdown；其他八项正文未变。
 - [x] MANIFEST 元数据、文件集合、逐项 sha256 和 Git blob 原始字节一致；脚本、feature、T4、workflow 的 pin 全部一致。
 - [x] T4 既有正负向契约通过，sync 幂等；本地 6/0/0，CI run 44248627440 的真实重同步无 diff；候选宿主失败另记，不以此勾选冒充全验收通过。
-- [ ] `dsh-manuals-pin` 与全部适用 CI 在实际提交上通过；`dsh-host-compat` 两个 REQUIRED pin 行及 `0.2.2-rc.3` 候选行分别成功；候选 advisory 红仍阻断本任务验收。
+- [x] 代码修复提交 cc9ff936017084f737cbea080bf0ddb043a50caa 的 dsh-manuals-pin、完整三版本及自动仓库 CI 已通过；记录提交后的最终 HEAD 另行真实复验并输出精确 SHA，不能沿用本项旧证据。
 - [ ] project-validation、Code Readability Review、适用 ponytail-review 与 Book gates 留存真实结论；本轮不得预填 passed/CLEAN。
 - [ ] Reviewy strict 对实际实现提交给出 CLEAN；记录完整 SHA、审查轮次及真实证据，不用主会话自审替代。
 - [ ] 按 B 方案收尾：CLEAN 后另作只改 task 的限定收尾提交，仅变 status/completed_at/updated_at、追加 done 事件及 CLEAN SHA/CI run 证据；Reviewy 复核限定 diff，最终 CI 仍全绿。其他变化必须重新完整审查。
@@ -289,6 +308,8 @@ BDD 仅计划对齐现有 T4 场景并映射至两个 T4 测试文件；本轮�
 | 2026-11-18T14:23:26+08:00 | in-progress | in-progress | OMP 当前会话：完成三个实际宿主 executor API 调查，开始最小初始化修复 | 发布包 sha512 验证；旧两版 builtin native，新版 setExecutor + 官方 native 插件；从 sdk-minimal 的既有精确依赖解析；保留全部断言 |
 | 2026-11-18T14:24:19+08:00 | in-progress | checking | OMP 当前会话：完成共享 smoke 五行初始化增量，开始三版本实际回归 | 仅新增 setExecutor 能力判断与从 sdk-minimal 解析/挂载官方 native executor；原有断言未删改；先本地 Node 24，后新 HEAD CI |
 | 2026-11-18T14:26:41+08:00 | checking | checking | OMP 当前会话：完成本地三版本完整 smoke，开始获批修复 commit/push 与新 HEAD CI | 三 cell 均 exit 0，同 tarball SHA256 20acf48bfbc5a45bdb871c911be97ed4c8551d6889efa7a2f762692754313737；仅 smoke/task 两文件 dirty；raw+中文已保留；不对外发送评审消息 |
+| 2026-11-18T14:29:55+08:00 | checking | checking | OMP 当前会话：完成修复提交 push 与首轮真实三版本 CI，保留全部原生证据 | cc9ff936017084f737cbea080bf0ddb043a50caa；host 44251445990 三 cell success/342 单测；manuals 44251452139 6 单测；自动 omp 44251452147 success |
+| 2026-11-18T14:29:55+08:00 | checking | checking | OMP 当前会话：完成闭环记录准备，开始最终记录提交后的同范围新 HEAD CI | 只提交 task，不改 smoke/依赖；最终真实 SHA 与 CI/raw/中文交付保存 ignored reports，避免再移动已验 HEAD；Reviewy 留用户协调，不发外部消息 |
 
 本轮只执行只读核对、分支创建与本文件写入。没有实现、测试结果、Reviewy CLEAN、CI 成功、commit、push、PR 或发布事实可报告。草案交付不将任务转 checking/done，`completed_at` 保持 null。
 
