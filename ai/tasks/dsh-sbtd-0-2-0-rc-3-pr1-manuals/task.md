@@ -3,14 +3,43 @@ schema_version: 1
 id: dsh-sbtd-0-2-0-rc-3-pr1-manuals
 workflow_mode: strict
 mode_source: user
-mode_note: 用户明确要求 strict；用户于 2026-11-18 13:55 Asia/Shanghai 批准 PR1 计划，本会话获准仅实施 dsh PR1，先核验目标与十二技能差异。
-status: blocked
+mode_note: 用户要求 strict；2026-11-18 13:55 批准 PR1，14:19 本人进一步批准仅修复共享兼容 smoke 的 executor 初始化，保留全部断言并重跑三个 dsh 版本。
+status: checking
 branch: docs/dsh-sbtd-0.2.0-rc.3-pr1-plan
 created_at: '2026-11-18T13:49:26+08:00'
-updated_at: '2026-11-18T14:07:57+08:00'
+updated_at: '2026-11-18T14:26:41+08:00'
 completed_at: null
-blocked_reason: dsh 0.2.2-rc.3 候选 smoke 在 systemPrompt.assemble 时抛出 TOOL_EXECUTOR_UNAVAILABLE；获批计划明确不改共享 smoke，需用户裁决适配范围；Reviewy strict CLEAN 尚缺。
 ---
+
+## 当前扩围授权与恢复（2026-11-18T14:20:35+08:00）
+
+- 用户确认本人于北京时间 2026-11-18 14:19 批准：“批准PR1扩展范围：修复共享兼容测试脚本的执行器初始化，保留全部断言并重跑三个dsh版本”。该原话与来源由当前用户消息确认，关闭此前“等待 smoke 扩围裁决”项；历史失败证据完整保留。
+- 本轮基线 `301325fd976c012a81138df645ed7574568e6b90`，原分支、原 PR #127；本地 HEAD 与远端本分支一致，工作树干净。远端 main 仍为 `0d9331bd7d64c28dea368fd4385fd009809d58da`，没有基线迁移。进程快照只有当前 OMP，无另一个相关 writer。
+- 新增代码写入范围仅 `.github/workflows/scripts/dsh-host-register-smoke.mjs` 的 executor 初始化；保留全部现有断言和门槛，三个宿主精确版本不变。允许本 task 的状态/证据及 ignored reports 写入；不改 workflow、依赖版本、lockfile、无关产品代码或其他上游手册。
+- 保持 GPT-6 Astra/high、当前 OMP 会话；不新开 OMP、不更新软件或全局配置。可以向当前 PR 提交/push 修复及必要任务记录，但不发送群消息、PR 评论、评审请求或其他对外消息；Reviewy strict 由用户协调。
+- 原真实阻塞前态为 checking；本次先按原态解除阻塞，再返回 in-progress 执行获批修复。Reviewy CLEAN 尚缺并未被“恢复”冒充通过；完成修复后仍须保持 checking 等待独立审查。
+- 先调查三个实际宿主的 API，不凭错误文本猜初始化方法。历史 run 44248624861 的候选失败已是复现，不为确认而重跑；修复后真实重跑 0.2.0-rc.2、0.2.1-rc.2、0.2.2-rc.3 及受影响检查。candidate job 必须自身成功。
+- 最终 HEAD 必须有真实三版本 CI，不能用旧实现 SHA 或后续只改 task 的提交冒充已验。若产生闭环记录提交，须再为该最终 HEAD 运行所需 CI，并分别列出代码提交、记录提交及测试 SHA；CI 原始日志/JSON 与同 stem 中文摘要保留。
+- 本节覆盖历史计划“不修改共享 smoke”的限制；其他边界不变。不得 merge、PR2、tag、release、npm 发布；发现额外 dirty、并发 writer 或仍需超范围时停止报告，不 reset/stash/clean。
+
+## Executor API 证据与最小修复决定（2026-11-18T14:23:26+08:00）
+
+- 已下载三个精确版本的 `@deepseek-ai/dsh-tools` 与 `@deepseek-ai/dsh-tool-executor-native@0.2.2-rc.3` 发布包，仅在临时目录读取 source/lib，逐包核对 registry sha512 integrity；没有安装这些调查包、执行包脚本、修改仓库依赖或全局配置。记录：`reports/executor-api-source-20261118-1421.json`。
+- 0.2.0-rc.2 与 0.2.1-rc.2 的 ToolRuntime 构造器均为 `defaultMode = config.mode ?? "native"`，没有 `setExecutor`；0.2.2-rc.3 的 ToolsService 提供 `setExecutor`，prompt assembly 必须经 `selectExecutor`，缺少 provider 即抛出已观察错误。
+- 0.2.2-rc.3 官方 native 插件 `inject=['tools']`，`apply(ctx)` 调用 `ctx.tools.setExecutor(new NativeToolExecutor(ctx))`，提供真正的 describe/execute，不是模拟 executor。该包是宿主已有 `dsh-sdk-minimal@0.2.2-rc.3` 的精确依赖；通过 dsh → sdk-minimal → native 的实际依赖归属解析，不依赖偶然 hoist 或新增依赖。
+- 最小修复：挂载 ToolRuntime 后，只有宿主支持 `setExecutor` 才导入并挂载官方 native 插件；旧宿主继续其内置 native 路径。模块找不到或注册失败直接失败，不 catch、不伪造 provider、不删任何原有断言。
+- Legacy Change Safety Review = characterized / normal：原 run 44248624861 是已有失败复现，三个发布包提供根因证据；原共享 smoke 即回归 seam。Refactoring Review = proceed / normal：复用 `importPinned` 与 Cordis plugin 生命周期，无重构。before-dev 结论在代码修改前输出。
+- TDD 使用已有真实 red，不重跑只为确认，不新增源文本型永久测试。保留共享 smoke 全部断言，用实际三宿主 smoke 转绿；本地 Node 24 与既有 Node 22 CI 分开记录。候选包声明 Node >=24.9.0，既有 workflow Node 22 是历史配置，本轮不擅改，其结果只证明该具体 smoke 环境，不扩称完整宿主支持认证。
+- DDD/DDIA 不新增触发：不改变领域模型、数据 schema 或持久状态。LSP 仅配置 biome，无需符号改名或导出 API 变更；直接核对发布源。独立 Reviewy 继续由用户协调。
+
+## 修复后本地三版本结果与提交准备（2026-11-18T14:26:41+08:00）
+
+- `node --check .github/workflows/scripts/dsh-host-register-smoke.mjs` exit 0；`pnpm --filter @kunolu/dsh-sbtd pack --pack-destination <本轮隔离目录>` exit 0，未改版本。三 cell 使用同一 tarball，SHA256 `20acf48bfbc5a45bdb871c911be97ed4c8551d6889efa7a2f762692754313737`。
+- 本地 Node v24.15.0 / pnpm 11.17.0，依次执行候选 0.2.2-rc.3 与 REQUIRED 0.2.0-rc.2、0.2.1-rc.2。三次精确宿主隔离安装均 exit 0，三次完整共享 smoke 均 exit 0，原文分别 `register smoke ok <宿主版本> 0.2.0-rc.2`；候选没有跳过后续断言。
+- REQUIRED 两版使用 `DSH_PIN_SMOKE=1` 与真实 `GITHUB_WORKSPACE`；候选使用原 workflow 的 `DSH_PIN_SMOKE=0`。没有改变任何原断言、pin gate 或 continue-on-error 配置。原失败日志保留；本轮没有失败、命令重试或隐藏 skip。
+- 语法、pack、三 install、三 smoke 各有独立 raw JSON 与同 stem 中文摘要：`reports/executor-*-20261118-1424.*`。API 调查另有配对报告。当前为 developer-local / dirty / local-only；不代替将要提交的真实 CI。
+- 提交前安全检查仅两个预期修改文件：共享 smoke 与本 task；无额外用户 dirty、依赖/lockfile/workflow/产品代码变更。Code Readability / ponytail-review：五行局部初始化，复用现有 helper，无 fallback/no-op、无新增抽象，不需要重构；这不是独立 Reviewy。
+- 开始提交并推送本次修复到 PR #127，只调度获准 CI，不修改 PR 描述、不发评论或审查消息。新 HEAD 须运行完整 dsh-host-compat 三版本、pin 检查与仓库自动 CI；CI 结果随后记录，保持 checking。
 
 ## 当前执行授权（2026-11-18）
 
@@ -154,9 +183,9 @@ blocked_reason: dsh 0.2.2-rc.3 候选 smoke 在 systemPrompt.assemble 时抛出 
 |---|---|---|
 | book-ddd-distilled-modeling | 未完整 grill；上游词汇手册按 blob 镜像，无本项目新领域模型设计或歧义 | not-required；目标正文已读，不借本 PR 重设计术语 |
 | book-ddia-data-design | JSON schema blob 未变；只镜像 task 状态说明，不改变插件存储或执行迁移 | not-required；无 schema 语义或数据所有权设计 |
-| book-legacy-change-safety | 同步算法保留；当前脚本与既有隔离 fixture、字节和失败契约已读 | passed；characterized / normal，现有安全网足够，无新 seam；实际测试结果另记 |
-| book-refactoring-pass | 首次生产编辑前复核脚本 pin 与契约测试 | passed；proceed / normal，无结构阻碍，不重构 |
-| book-release-readiness | 真实三版本宿主集成验证后；本 PR 不发布 | blocked；候选 0.2.2-rc.3 smoke 缺 executor 失败；不豁免，不宣称发布就绪 |
+| book-legacy-change-safety | 原候选 CI 已提供真实 red；三个发布包证实 builtin/native executor API 差异 | passed；本次修复 characterized / normal，现有完整 smoke 是回归 seam，无新增 seam 或模拟 provider |
+| book-refactoring-pass | 首次共享 smoke 编辑前复核初始化、模块归属与保留断言 | passed；本次修复 proceed / normal，仅能力探测后挂载官方 native 插件，无重构 |
+| book-release-readiness | 修复后的真实三版本集成与新 HEAD 验证 | planned；原失败证据保留，等待修复后三版本自身成功；不豁免 candidate |
 
 后续 before-dev 还须读取适用 ponytail、gherkin-bdd、project-validation 方法，核对影响面。若发现新行为或 bug，先确认行为规范与回归证据；不得以改 PIN 掩盖失败。已有测试足够时不另造措辞型测试。
 
@@ -255,6 +284,11 @@ BDD 仅计划对齐现有 T4 场景并映射至两个 T4 测试文件；本轮�
 | 2026-11-18T14:05:11+08:00 | checking | checking | OMP 当前会话：开始记录提交后 CI 与三版本兼容结果 | dsh-manuals-pin 44248627440 success；dsh-host-compat 44248624861 运行中；自动 omp-runtime-linux-probe 44248627354 运行中 |
 | 2026-11-18T14:07:57+08:00 | checking | blocked | OMP 当前会话：完成首轮三版本 CI 结果核对，候选失败触发阻塞并停止实现 | b572e7241677a1519c09628cc5abecabe9524831；host run 44248624861，job 134613916615 exit 1 / TOOL_EXECUTOR_UNAVAILABLE；两条 REQUIRED 分别 success；不改获批范围外 smoke |
 | 2026-11-18T14:07:57+08:00 | blocked | blocked | OMP 当前会话：开始提交阻塞记录并准备报告，等待用户裁决 smoke 适配范围 | PR #127 保持 OPEN；原始+中文 CI 证据已保留；Reviewy strict CLEAN 尚缺；无 merge、PR2、tag、release、npm 操作 |
+| 2026-11-18T14:20:35+08:00 | blocked | checking | OMP 当前会话：记录用户 14:19 扩围批准，按已证明的 checking 前态解除范围阻塞 | 当前用户原话；入口 HEAD 301325fd976c012a81138df645ed7574568e6b90；工作树干净；历史失败保留；不声称验证或 Reviewy 通过 |
+| 2026-11-18T14:20:35+08:00 | checking | in-progress | OMP 当前会话：开始获批 executor API 调查与共享 smoke 最小修复 | 仅共享 smoke 初始化与任务/报告；保留全部断言，不改依赖/产品代码；真实三版本新 HEAD CI 待执行 |
+| 2026-11-18T14:23:26+08:00 | in-progress | in-progress | OMP 当前会话：完成三个实际宿主 executor API 调查，开始最小初始化修复 | 发布包 sha512 验证；旧两版 builtin native，新版 setExecutor + 官方 native 插件；从 sdk-minimal 的既有精确依赖解析；保留全部断言 |
+| 2026-11-18T14:24:19+08:00 | in-progress | checking | OMP 当前会话：完成共享 smoke 五行初始化增量，开始三版本实际回归 | 仅新增 setExecutor 能力判断与从 sdk-minimal 解析/挂载官方 native executor；原有断言未删改；先本地 Node 24，后新 HEAD CI |
+| 2026-11-18T14:26:41+08:00 | checking | checking | OMP 当前会话：完成本地三版本完整 smoke，开始获批修复 commit/push 与新 HEAD CI | 三 cell 均 exit 0，同 tarball SHA256 20acf48bfbc5a45bdb871c911be97ed4c8551d6889efa7a2f762692754313737；仅 smoke/task 两文件 dirty；raw+中文已保留；不对外发送评审消息 |
 
 本轮只执行只读核对、分支创建与本文件写入。没有实现、测试结果、Reviewy CLEAN、CI 成功、commit、push、PR 或发布事实可报告。草案交付不将任务转 checking/done，`completed_at` 保持 null。
 

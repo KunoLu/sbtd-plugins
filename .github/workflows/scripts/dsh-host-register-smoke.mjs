@@ -47,6 +47,11 @@ const [{ Context }, { default: SystemPrompt }, { default: ToolRuntime }, { defau
 const ctx = new Context();
 await ctx.plugin(SystemPrompt);
 await ctx.plugin(ToolRuntime);
+// Newer hosts require an executor plugin; older hosts provide native execution in tools.
+if (typeof ctx.tools.setExecutor === "function") {
+  const fromSdk = createRequire(fromDsh.resolve("@deepseek-ai/dsh-sdk-minimal/package.json"));
+  await ctx.plugin(await importPinned(fromSdk, "@deepseek-ai/dsh-tool-executor-native"));
+}
 await ctx.plugin(CommandRuntime);
 await ctx.plugin({ name: plugin.name, inject: [...plugin.inject], apply: plugin.apply });
 
