@@ -8,6 +8,49 @@ Perform persistent operations with the Python task-state helper installed with `
 
 `TaskStore(root, read_only=False)` exposes `inspect`, `create`, `select`, `transition`, `set_mode`, `resume`, `reopen`, `protect_local_state`, `promote` and `archive` with the semantics in this reference. It also exposes the read-only `current_binding()` (actual branch, `detached:<full-sha>`, or None for a proven non-Git root), the read-only `recovery_candidates(task_id=None)` (the explicit task, the valid active bookmark, or all recorded candidates — never an mtime pick), and the confirmed `rebind(task_id, expected_branch=..., reason=..., evidence=..., confirmed=False)`. Only unconfirmed `promote` / `archive` return read-only transfer previews; ordinary writes and `rebind` raise `TaskStateError` without confirmation and perform no writes. `protect_local_state` returns a boolean indicating whether protection was added. `promote` / `archive` return a `TaskTransfer` describing status, source/target paths, files, the retained original location and the steps actually completed; failures carry the real `completed_steps` so a retry reconciles instead of duplicating events.
 
+## 节点核对与及时记录
+
+所有模式在开始任务、换会话、恢复、收到审查或决定、提交／push／开 PR 前以及退出前，先读 task.md 和实际进度。步骤成对追加「开始 X」／「完成 X＋验证结果」，带真实时间与写入者；决定到达就关闭相应等待项。每次写前重读，旧行不改写，事件与字段同次原子更新；进展、状态、事件与代码同 commit。多 PR 的中间轮只记进度。
+
+使用 `scripts/sbtd_task_sync.py` 的 `TaskSync(TaskStore(root))`，不是 CLI／后台服务；不调用 gh 等平台工具，也不把节点核对放进 CI：
+
+- `check(task_id=None, remote="origin", default_branch=None)` 返回 `ProgressCheck(task, method, differences, notes, discarded)`；省略 task_id 时读 active 引用。只检查，不写 task；A 按规则 fetch，显式只读工作不得更新引用，应报告不能执行 A，不把旧引用冒充新鲜核对。
+- `record(task_id, step=..., writer=..., completed=False, validation="", files=(), evidence_files=(), scope=None, confirmed=False)` 记录开始或完成；完成必须有验证结果，`files` 是本步改动清单，删除路径可记录，`evidence_files` 必须存在。首次开始可把 planned 转为 in-progress；非 Git 新任务 create 后立即 record 开始，不把 planned 当成已开始。`scope` 是明确的项目相对目录列表，写入 frontmatter 扩展 `sync_scope`；不改 schema。
+- 文件核对必须声明 scope；事件 evidence 内的 `sync_files` 保存范围内文件和额外改动／验收证据的 sha256、mtime_ns、size，包含 ignored 证据。task 本身不参与自引用哈希，Git 元数据与私有状态不得纳入范围。恢复读最近含文件证据的事件；清单／mtime 用于筛查，内容结论只看 sha256，也复核同尺寸同 mtime 文件。缺范围或快照记不可考，不宣称一致。
+- `record_check(result, writer=..., confirmed=False)` 重读并比对核对时的 task 原文；有差异只追加「发现未记录的改动」，不改 status／completed_at，不自动 reopen。task 已变化则拒绝并重新核对；只读或缺授权不写。差异不是自动修复命令，不能用新的开始事件覆盖尚未处理的差异。
+
+### A／B／C 判定
+
+先用 `TaskStore.current_binding()` 判断 Git／非 Git 及真实 branch，再用 `git ls-files --error-unmatch` 判断 task 是否跟踪：
+
+| 方法 | 条件 | 核对与边界 |
+|---|---|---|
+| A | lite／strict，ai/tasks 中 task 被跟踪，有远端 | fetch 后比较 `origin/<默认分支>:<task.md>` 与本地内容，不看祖先关系，squash 适用；默认分支从远端 HEAD 发现或明确传入，非 origin 远端须明确传入 |
+| B | 同上但无远端 | 仅本地 HEAD、task 记录分支和工作区；HEAD 尚无 task 记不可考，不推断丢弃 |
+| C | default、任何未跟踪 task、真正非 Git | 声明目录范围内文件清单与 sha256；额外验收证据也核对，不因 ignore 漏掉 |
+
+始终按 task 的 branch 核对，detached 使用完整 SHA；checkout 不符仍须明确重绑定才能写。A 用 `git ls-remote --heads` 查记录分支，分支不存在且默认分支 task 非 done，按已丢弃记差异交人工判断，不自动 cancelled／reopen。远端不可达、默认分支／路径缺失是不可考，不等于分支已丢弃；从未推送与已删除仅凭当前远端不可区分，按 PRD 的缺分支规则提示并保留人工判断。
+
+中途 git init 后，逐 task 明确 `rebind`，补真实 branch，旧 sha256 证据不动，不补造 commit。lite／strict 被跟踪后才切 A／B，default 继续 C。查合入用 `git log origin/<默认分支> -- <task.md>`，不把合并 SHA／时间回填 task；trailer 仅辅助。
+
+### 旧格式事件与惰性基线
+
+旧 task 原样保留，只读永不写入。不根据事件时间、Git 或合入边界猜新旧。无基线时，五列完整、`at` 为 `unknown` 或合法时间戳，但不符合当前事件 schema 的事件行算旧格式（例如状态名 `verifying`、`in_progress`），不设状态名枚举；空单元格、非法时间戳、非法行、frontmatter、重复事件节仍报普通解析错误。仅旧格式不兼容时 `TaskDocument.parse` 向 stderr 输出「旧格式事件，不追溯」，当前状态只取 frontmatter，不算未记录改动。
+
+只有确需追加新事件，`updated` 才同次先追加 `旧事件基线：...`，evidence 为 `{"rows": <旧事件行数>, "sha256": "<旧事件行原文 UTF-8 sha256>"}`，不含 frontmatter／表头，不依赖 at 或 Git。基线内行保持原样且不再语义校验；`events` 是基线起的严格后缀，`event_lines` 保留所有原文行。后缀按当前 schema 校验，回填历史 done 也必须来自 checking（done 自事件不改变状态）。哈希／行数变化由 check 报差异，再经 record_check 追加事实，不覆盖或重建基线。
+
+摘要包含落盘事件行的原始换行字节，CRLF 不归一化；若旧表恰好位于 EOF 且末行无换行，追加新行必需的分隔符同次纳入基线摘要，旧行内容字节不改。Git 内容比较同样保留原始换行，不能把换行归一化后的相等当成限定收尾 diff 的逐字保全。
+
+`旧事件基线：` 是保留的 reason 前缀，仅由基线写入使用；普通事件不要以它开头。手工写入该前缀却没有合法基线 JSON 时按普通解析错误报告，不猜测或吞掉。
+
+同目录原子替换前用 `<task.md>.sbtd-lock` 排他创建门及预期原文比较；竞争方报未持久化，重读后再执行。异常遗留标记必须先确认无写入者再人工处理，不自动抢锁。它只协调使用该库的写入者，不是锁服务；外部编辑器不遵守写入门时仍须单 writer。跨文件提升／归档不承诺事务。
+
+### checking 与 B 方案收尾
+
+新操作必须 in-progress → checking → done；历史直接 done 不追改、不补造 checking。审查期间保持 checking，退回则回 in-progress。文件核对无审查需求时，可同节点依次调用 checking、done 两次状态更新，真实 completed_at 与 done.at 一致。
+
+CLEAN 后另作只改 task.md 的收尾 commit，仅允许 status／completed_at／updated_at 的值、一条追加 done 事件及证据。证据只记 CLEAN 对应的 SHA 和 CI run，不夹带其他内容。`check_finish_commit` 校验时要求证据为 JSON `{"clean_sha": "<收尾父提交完整 SHA>", "ci_run": "<CI run 标识>"}`，目前只在测试里调用；现行手写收尾提交用文字证据，内容同样只含这两项。`check_finish_commit(task_path, commit="HEAD")` 本地验证非 merge 提交、唯一文件、文件模式、正文／旧事件逐字保全及上述候选；额外行变化要整轮重审。此检查不查询平台、不证明 CLEAN／CI 真实性：宿主须已有相应证据，Reviewy 复核限定 diff，合入仍要求 CI 全绿。不自动提交、push 或发布。
+
 ## One effective record
 
 The task's `task.md` owns mode, source, status, timestamps, body and events. Ordinary default tasks use `.sbtd/tasks/<logical-id>/task.md`; lite/strict use `ai/tasks/<logical-id>/task.md`. Explicit sharing can promote a default task without changing its mode. Switching down never deletes shared history.
@@ -51,7 +94,7 @@ Use the task body's single `## 状态事件` table, created when one of these me
 | at | from | to | reason | evidence |
 |---|---|---|---|---|
 
-Reasons and evidence must be nonempty and safe for Markdown. Escape cell delimiters/newlines without losing meaning. Missing historical evidence is `not-recorded` with an explanation, not an invented path. Private credentials, accounts or source hashes do not belong in a shared event table.
+Reasons and evidence must be nonempty and safe for Markdown. Escape cell delimiters/newlines without losing meaning. Missing historical evidence is `not-recorded` with an explanation, not an invented path. 节点事件包含写入者；文件及验收证据按上述范围记录 sha256，凭据、账号和生产数据不得进入共享事件表。
 
 - New block: validate `blockEntryEvent`, which requires an actual timestamp and from planned/in-progress/checking. Set status, blocked_reason and updated_at with that event.
 - Continuing block: update the reason/time only. Do not append a new blocked→blocked ingress or replace the saved previous phase.

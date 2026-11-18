@@ -4,13 +4,13 @@ This reference controls output only. SBTD default/lite/strict, tool permissions,
 
 ## Availability and ownership
 
-Use a visible `caveman` Skill's lite expression rules for automatic updates; the external Skill owns explicit manual modes, while this protocol owns the separate auto-lite lifecycle. Do not rewrite an external mirror, install hooks/statusline/plugins/extensions, or update a pin to enable a style. Onboard owns confirmed installation and managed payload maintenance. An installed payload does not mean a style is active.
+For automatic updates, use a light subset of the visible `caveman` Skill's voice: drop ceremony, filler and hedging while keeping articles, full sentences and every payload token. The external Skill owns explicit manual modes, while this protocol owns the separate auto-lite lifecycle. Do not rewrite an external mirror, install hooks/statusline/plugins/extensions, or update a pin to enable a style. Onboard owns confirmed installation and managed payload maintenance. An installed payload does not mean a style is active.
 
 An explicit runtime caveman `off` disables both manual and automatic activation. Absent/unexposed configuration is auto, not inferred off. Auto also requires the caveman Skill to be visible. If the required presentation rules cannot be read, do not claim automatic activation; explain the limitation once and keep clear normal output without changing execution mode or installing anything.
 
 ## Manual Caveman
 
-Enter only for an explicit request such as `/caveman`, `use caveman`, `caveman mode`, 少说一点, 减少token or 压缩输出. Unspecified intensity is full, according to the external Skill, until normal mode/stop caveman or session end. Manual activation never clears task/session auto opt-outs. Runtime off still wins.
+Enter only for an explicit request such as `/caveman`, `use caveman`, `caveman mode`, 少说一点, 减少token or 压缩输出. Manual activation follows the external Skill's default voice until normal mode/stop caveman or session end. Intensity variants are the external Skill's own aliases (`/caveman ultra` → `ultracave`, `/caveman wenyan` → `megacave`); those companion Skills are user-managed optional installs outside Onboard's managed `caveman*`/`cavecrew*` payload scope, and an alias whose target Skill is not installed degrades to the default voice. Manual activation never clears task/session auto opt-outs. Runtime off still wins.
 
 ## Auto-lite lifecycle
 
@@ -23,7 +23,7 @@ Maintain in conversation state for the same major objective:
 
 Set eligible immediately when progress count reaches3, result count reaches5, the task is clearly long/context-heavy, or automation/large review/verification has entered repeat rounds. Do not add a subjective requirement that more work must remain, and never reset eligibility within the same major goal.
 
-At the next repetitive, nonblocking intermediate update that needs no user decision and is outside a protection zone, activate auto-lite if not opted out. Announce once in that same update: “后续重复状态更新将自动使用 lite 压缩；说 normal mode 可恢复完整输出并在本任务内停用自动压缩”. Do not send a separate notice. Auto may use lite only, never full/ultra/classical variants. Required progress updates still occur, including long-running tool updates; compression is not permission to stop reporting.
+At the next repetitive, nonblocking intermediate update that needs no user decision and is outside a protection zone, activate auto-lite if not opted out. Announce once in that same update: “后续重复状态更新将自动使用 lite 压缩；说 normal mode 可恢复完整输出并在本任务内停用自动压缩”. Do not send a separate notice. Auto may use only the light subset above, never the external `ultracave`/`megacave` variants. Required progress updates still occur, including long-running tool updates; compression is not permission to stop reporting.
 
 Full-expression protection zones: installation/permission/destructive confirmations; security/privacy/keys/production-data risks; ambiguous ordered or negative instructions; final requirement choices; PRD/design/implementation review gates and task artifacts; README/AGENTS正文; failure reasons, remaining risks, final validation and final answer. User requests for clarity/detail/repetition also get clear complete output. Compression or ADHD formatting cannot remove required evidence fields.
 

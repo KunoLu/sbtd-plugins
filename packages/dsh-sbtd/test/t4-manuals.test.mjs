@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const manuals = join(pkgRoot, "manuals");
-const PIN = "1d82494d74f6df9bca7dccef2da409f87091883e";
+const PIN = "3c835303c23d59d3157ca84121a92f1bd87d4997";
 const script = join(pkgRoot, "scripts", "sync-manuals.sh");
 function whitelistFromScript(scriptPath) {
   const body = readFileSync(scriptPath, "utf8");
@@ -34,7 +34,7 @@ test("manuals whitelist and MANIFEST checksums", () => {
   const manifest = JSON.parse(readFileSync(join(manuals, "MANIFEST.json"), "utf8"));
   assert.equal(manifest.sourceRevision, PIN);
   assert.equal(manifest.source, "KunoLu/640-skills");
-  assert.equal(manifest.version, "2.0.2");
+  assert.equal(manifest.version, "2.1.0");
   const dirs = readdirSync(manuals, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
