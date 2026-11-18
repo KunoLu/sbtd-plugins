@@ -3,13 +3,29 @@ schema_version: 1
 id: dsh-sbtd-0-2-0-rc-3-pr1-manuals
 workflow_mode: strict
 mode_source: user
-mode_note: 用户要求 strict；2026-11-18 13:55 批准 PR1，14:19 本人进一步批准仅修复共享兼容 smoke 的 executor 初始化，保留全部断言并重跑三个 dsh 版本。
+mode_note: 用户要求 strict；2026-11-18 15:49 批准 PR127 的记录修正，仅 task.md 与当前 PR 正文；保持实现、断言、依赖和其他文件不变，真正 CLEAN 前不 done。
 status: checking
 branch: docs/dsh-sbtd-0.2.0-rc.3-pr1-plan
 created_at: '2026-11-18T13:49:26+08:00'
-updated_at: '2026-11-18T14:29:55+08:00'
+updated_at: '2026-11-18T15:58:48+08:00'
 completed_at: null
 ---
+
+## 当前记录修正授权（2026-11-18T15:54:04+08:00）
+
+- 用户确认 15:49 已批准本轮记录修正；Reviewy 对 `e6633202e76bb914a2b1ed6d8740b445d941a8f5` 的结论为 NOT CLEAN，反馈仅涉及模型统计、正文临时路径和 PR 状态记录。该审查结论来源为用户本轮明确转述，不冒充本会话重新执行 Reviewy。
+- 当前分支/PR 不变，入口 HEAD 为上述提交，工作树干净；没有需要清除的未提交文件，未执行 reset/stash/clean 或终止进程。已有 OMP 子进程仅观察到 broker sockets、未打开 session/仓库写文件；未发现额外 writer，不将其猜作另一实现会话。
+- 本轮只改本 task 的记录与 PR127 正文，允许当前会话 JSONL 只读统计和 ignored reports 保存脱敏证据；不改代码、断言、依赖、其他已跟踪文件、模型、会话或全局配置。不发送评论、群消息或评审请求，由用户送 Reviewy 复审。
+- 当前进入 in-progress 修正审查反馈；旧状态事件和失败历史逐字保留，原 executor 失败仍属历史，不代表已经通过三版本验证的当前实现。只有真正 CLEAN 后才能按规则推进 done。
+- 未完整调用 grill-with-docs：三个记录修正项明确，原始会话与现有验证证据可回答，无需重做需求访谈或实现门禁。提交后运行适用 CI，并将三版本结果精确绑定新 HEAD；最终进行中模型轮次放 PR 正文脚注，不为追加计数无限产生记录提交。
+
+### 本轮记录核验与单次提交约定
+
+- `TaskDocument.parse` 已通过，模型表与冻结 JSONL 前缀的脱敏投影逐项核对通过；快照 hash 一致。目标正文中的具体临时目录路径已改为自然描述，既有状态事件只追加、不改旧行。提交前安全核对仅本 task 有修改。
+- 已结束三轮统计固定入 task；当前第四轮只在 PR 正文给出“截至快照”的记录数与脚注，最终值为“无法核对”。主 assistant、顶层工具块、辅助 model_usage 和 model_change 的口径分开，不将辅助调用当作手动切模型。
+- 代码与兼容验证在 `e6633202e76bb914a2b1ed6d8740b445d941a8f5` 已成功；Reviewy NOT CLEAN 仍有效，原因是本轮待复审的记录问题。本轮不重做实现，只进行新记录提交的适用 CI。
+- 接下来只作一个 task 记录提交并推送；新 HEAD 运行既有三版本兼容及适用检查。真实 run/SHA、最终 PR 正文与进行中轮次截止快照保存于 ignored reports，并更新 PR 正文；不为追加证据再移动 HEAD。PR 原失败正文保留并明确归为历史，当前状态单独说明。
+- 只更新获准 PR 正文，不发评论、群消息或评审请求。task 保持 checking/completed_at=null，交用户送 Reviewy 复审；本轮统计还原不是独立审查 CLEAN 或发布授权。
 
 ## 当前扩围授权与恢复（2026-11-18T14:20:35+08:00）
 
@@ -71,7 +87,7 @@ completed_at: null
 
 ## 上游核验完成与实施开始（2026-11-18T13:58:43+08:00）
 
-- 在隔离目录 `/tmp/dsh-pr1-upstream.fN6coB` 使用 `--filter=blob:none --no-checkout --depth=1 --single-branch --branch v2.1.0` 克隆，只额外 fetch 旧 pin；未修改 `/Users/lusonglin/github/640-skills`，未 checkout 整棵上游。
+- 在独立创建的临时 Git 工作目录中使用 `--filter=blob:none --no-checkout --depth=1 --single-branch --branch v2.1.0` 克隆，只额外 fetch 旧 pin；未修改用户原有上游仓库，未 checkout 整棵上游。
 - tag 对象 `7390b47ba44b1d8cb138e6b82769aeb9f3a0ac2d`；peeled commit / 隔离源 HEAD 均为 `3c835303c23d59d3157ca84121a92f1bd87d4997`；旧 pin 对象可读。clone 输出 annotated tag “is not a commit” warning，随后 peeled commit/HEAD 核对成功，命令整体退出 0；不是 fetch 失败或重试。
 - 十二项白名单两端各十九文件，六个文件修改，零新增、零删除；变化技能严格等于 sbtd-task/domain-modeling/grilling/to-tickets。具体路径：`domain-modeling/SKILL.md`、`grilling/SKILL.md`、`to-tickets/SKILL.md`、`sbtd-task/SKILL.md`、`sbtd-task/references/presentation.md`、`sbtd-task/references/state.md`。其余十三文件 blob/mode/sourcePath 不变。
 - 正文已读：上游 GLOSSARY 命名、提问推荐方向、ticket 关系、task 节点核对和 presentation 规则变化均按原文镜像；不在插件内重新设计领域模型，不执行手册描述的迁移或全局操作。JSON schema blob 不变。
@@ -125,9 +141,33 @@ completed_at: null
 ## 任务身份、阶段与授权
 
 - 作者／唯一 writer：当前 Mac Orca 中的 OMP 会话（AI 计划执笔，不冒用用户身份）。
-- 模型：`openai-codex/gpt-6-astra`；effort：`high`（用户指定保留）。不切模型，不开新 OMP，不派发实现任务。
-- 当前阶段：计划草案待用户审核；PR1 尚未开始实施。`planned` 不代表任何开发或验收门禁通过。
-- 时间统一使用 Asia/Shanghai（`+08:00`）。未统计模型调用次数，不虚构 assistant messages、tool calls 或 reviewer 调用数据。
+- **模型统计：按会话记录还原。** 当前主执行模型为 `openai-codex/gpt-6-astra`；`high` 来自本会话最后一条适用的 thinking-level 记录及用户要求，不将其冒充逐请求服务端参数审计。本轮没有切模型、启动新 OMP 或派发实现子任务。
+- 只读来源为当前 OMP 主进程实际打开的原始 session JSONL，核对 session header 的项目根及四条本任务用户消息；不是按 mtime 选文件。已结束轮次按各 user message 至下一条 user message 之前划分；assistant 数只计 `type=message / role=assistant`，工具数只计其 content 中顶层 `type=toolCall` 块，不展开 eval 内调用、子进程命令或 CI 步骤。
+- 下表均为 2026-11-18、Asia/Shanghai（+08:00），开始取 user message.timestamp，结束取该轮最后一条 `stopReason=stop` 的 assistant.completedAt。JSONL 内没有重复 entry ID；这些是记录条数，不声称等于全部服务端请求、重试或计费调用数。
+
+| 已结束轮次 | 主模型 | 用户消息开始时间 | 最终 assistant 完成时间 | assistant 记录数 | 顶层 toolCall 块数 |
+|---|---|---|---|---:|---:|
+| 1：PR1 计划草案 | openai-codex/gpt-6-astra | 13:47:26.603 | 13:52:33.896 | 12 | 44 |
+| 2：手册同步与首次兼容验收 | openai-codex/gpt-6-astra | 13:56:36.815 | 14:10:51.509 | 35 | 75 |
+| 3：获批 executor 初始化修复 | openai-codex/gpt-6-astra | 14:20:17.859 | 14:34:12.963 | 35 | 66 |
+
+首三轮共 82 条主模型 assistant 记录、185 个顶层 toolCall 块。工具调用块不是模型调用轮数；三条用户消息定义三个工作轮次，不能把 82、185 混算成三轮之外的新任务。
+
+辅助模型另按原始 `type=model_usage` 的 purpose/provider/model 计数；不与主 assistant 记录相加冒充主模型轮数，也不把宿主辅助模型当作主执行模型切换：
+
+| 辅助模型 | purpose | 第 1 轮记录数 | 第 2 轮记录数 | 第 3 轮记录数 | 首三轮 stop / aborted |
+|---|---|---:|---:|---:|---|
+| typesafe/jev-latest | find | 41 | 19 | 24 | 84 / 0 |
+| openai-codex/gpt-6-astra | title | 1 | 0 | 0 | 1 / 0 |
+| cursor/composer-2.5 | title | 0 | 1 | 1 | 2 / 0 |
+| cursor/composer-2.5 | job-caption | 0 | 2 | 5 | 7 / 0 |
+| cursor/composer-2.5 | job-widget | 0 | 2 | 7 | 6 / 3 |
+
+- 会话 header 起始时间：`2026-11-16T18:06:56.701+08:00`；本任务首条 user message：`2026-11-18T13:47:26.603+08:00`；首三轮最后完成时间：`2026-11-18T14:34:12.963+08:00`。会话实际最终结束时间：**无法核对**，因为当前会话仍在进行；不能把快照末条记录时间当作会话结束。
+- 会话创建后、任务首条消息前曾出现 kimi-code/k3、cursor/composer-2.5、kimi-code/k3、openai-codex/gpt-6-astra 的 model_change。前两个模型没有对应主 assistant 执行记录；是否发生未记录请求及其次数为 **无法核对**，不能把选择事件当作已执行轮次。
+- 当前第 4 轮“记录修正”开始于 `2026-11-18T15:50:39.732+08:00`。最终 assistant 数、工具数、辅助模型总数、结束时间均为 **无法核对**（进行中）；允许的阶段快照仅放 PR 正文并注明统计截止，避免为滚动计数反复提交 task。
+- 还原快照截止 `2026-11-18T15:54:04.176755+08:00`，完整 JSONL 记录 616 行，已读 4327336 bytes；快照 SHA256 `3190191321377dd7ae7ba335931816fd7fe6a4fb2180250768684d0abed09177`。原始会话不复制入库、不输出内容或凭据；仅将脱敏统计与口径保留在 ignored reports。
+- 无法可靠核对：未落盘请求/网络重试次数、逐请求服务端实际 reasoning effort、独立 Reviewy 内部模型及调用数、provider 最终账单。以上均写 **无法核对**，不以 0 或估算值替代；本表不计算节省率、token 成本或猜测模型调用总数。
 - 本轮唯一文件产物为本 task.md；仅另建获准的本地分支。不改 active、index、handoff、developer、ignore 或全局配置。
 - 本机 OMP 为 `18.20.3`，来源为用户确认；原 omp 验收基线 `18.19.0` 单独保留。本轮不运行宿主版本命令，不升级、降级或将两个环境的证据混用。
 - 未完整调用 grill-with-docs：用户已明确四 PR 顺序、PR1 边界和计划先审门槛；本轮只依据现有脚本和配置起草，不确认尚缺的上游差异。
@@ -310,6 +350,8 @@ BDD 仅计划对齐现有 T4 场景并映射至两个 T4 测试文件；本轮�
 | 2026-11-18T14:26:41+08:00 | checking | checking | OMP 当前会话：完成本地三版本完整 smoke，开始获批修复 commit/push 与新 HEAD CI | 三 cell 均 exit 0，同 tarball SHA256 20acf48bfbc5a45bdb871c911be97ed4c8551d6889efa7a2f762692754313737；仅 smoke/task 两文件 dirty；raw+中文已保留；不对外发送评审消息 |
 | 2026-11-18T14:29:55+08:00 | checking | checking | OMP 当前会话：完成修复提交 push 与首轮真实三版本 CI，保留全部原生证据 | cc9ff936017084f737cbea080bf0ddb043a50caa；host 44251445990 三 cell success/342 单测；manuals 44251452139 6 单测；自动 omp 44251452147 success |
 | 2026-11-18T14:29:55+08:00 | checking | checking | OMP 当前会话：完成闭环记录准备，开始最终记录提交后的同范围新 HEAD CI | 只提交 task，不改 smoke/依赖；最终真实 SHA 与 CI/raw/中文交付保存 ignored reports，避免再移动已验 HEAD；Reviewy 留用户协调，不发外部消息 |
+| 2026-11-18T15:54:04+08:00 | checking | in-progress | OMP 当前会话：记录用户 15:49 授权及 Reviewy NOT CLEAN，开始仅记录修正 | 用户明确反馈仅三项记录；入口 e6633202e76bb914a2b1ed6d8740b445d941a8f5 与干净工作树；只读当前 session JSONL，不改实现或旧状态事件 |
+| 2026-11-18T15:58:48+08:00 | in-progress | checking | OMP 当前会话：完成模型记录还原与临时路径修正，开始单次记录提交及新 HEAD CI | TaskDocument.parse 与冻结前缀统计投影核对通过；前三轮 12/35/35 assistant、44/75/66 顶层工具块；仅 task dirty，旧事件保留；进行中轮次将另放 PR 脚注 |
 
 本轮只执行只读核对、分支创建与本文件写入。没有实现、测试结果、Reviewy CLEAN、CI 成功、commit、push、PR 或发布事实可报告。草案交付不将任务转 checking/done，`completed_at` 保持 null。
 
