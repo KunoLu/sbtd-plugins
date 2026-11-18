@@ -46,7 +46,9 @@ const SOURCE_LABELS: Record<WorkflowModeSource, string> = {
 };
 
 /** Human label for notices/status, e.g. `strict（来源：任务文件）`. */
-export function describeWorkflowMode(resolution: WorkflowModeResolution): string {
+export function describeWorkflowMode(
+  resolution: WorkflowModeResolution,
+): string {
   return `${resolution.mode}（来源：${SOURCE_LABELS[resolution.source]}）`;
 }
 
@@ -85,9 +87,10 @@ function parseTaskFrontmatter(text: string): {
     if (match[1] === "workflow_mode") {
       out.workflowMode = value;
     } else {
-      out.branch = !quoted && (value === "" || value === "null" || value === "~")
-        ? null
-        : value;
+      out.branch =
+        !quoted && (value === "" || value === "null" || value === "~")
+          ? null
+          : value;
     }
   }
   return seen.has("branch") ? out : {};
@@ -128,12 +131,18 @@ function resolveActiveTaskPath(cwd: string): TaskPathOutcome {
   }
   let taskPath: unknown;
   try {
-    if (!lstatSync(resolve(cwd, ".sbtd")).isDirectory() ||
-        !lstatSync(pointerPath).isFile()) {
+    if (
+      !lstatSync(resolve(cwd, ".sbtd")).isDirectory() ||
+      !lstatSync(pointerPath).isFile()
+    ) {
       return { ok: false, reason: "unsafe-path" };
     }
     const parsed: unknown = JSON.parse(readFileSync(pointerPath, "utf8"));
-    if (parsed !== null && typeof parsed === "object" && "task_path" in parsed) {
+    if (
+      parsed !== null &&
+      typeof parsed === "object" &&
+      "task_path" in parsed
+    ) {
       taskPath = parsed.task_path;
     }
   } catch {
@@ -143,9 +152,12 @@ function resolveActiveTaskPath(cwd: string): TaskPathOutcome {
     return { ok: false, reason: "missing-pointer" };
   }
   const trimmed = taskPath.trim();
-  if (isAbsolute(trimmed) || trimmed.includes("\\") ||
-      trimmed.split("/").some((part) => part === "." || part === "..") ||
-      !/^(?:ai\/tasks|\.sbtd\/tasks)\/.+\/task\.md$/.test(trimmed)) {
+  if (
+    isAbsolute(trimmed) ||
+    trimmed.includes("\\") ||
+    trimmed.split("/").some((part) => part === "." || part === "..") ||
+    !/^(?:ai\/tasks|\.sbtd\/tasks)\/.+\/task\.md$/.test(trimmed)
+  ) {
     return { ok: false, reason: "unsafe-path" };
   }
   const abs = resolve(cwd, trimmed);
@@ -206,7 +218,10 @@ export function resolveWorkflowMode(
 
   const host = parseMode(lookup.host);
   if (host.ok) {
-    const resolution: WorkflowModeResolution = { mode: host.mode, source: "host" };
+    const resolution: WorkflowModeResolution = {
+      mode: host.mode,
+      source: "host",
+    };
     if (notes.length > 0) resolution.note = notes.join("；");
     return resolution;
   }
@@ -255,7 +270,10 @@ export function resolveWorkflowMode(
     }
   }
 
-  const resolution: WorkflowModeResolution = { mode: "default", source: "default" };
+  const resolution: WorkflowModeResolution = {
+    mode: "default",
+    source: "default",
+  };
   if (notes.length > 0) resolution.note = notes.join("；");
   return resolution;
 }

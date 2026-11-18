@@ -16,20 +16,32 @@ Feature: DSH T0 stub 可安装
     And 文档不出现裸包名安装或本地路径安装
     And 文档不出现 0.1.0-rc.7 或 0.1.2-alpha
 
-  Scenario: README 安装指引不依赖版本发布状态
-    Given 用户分别打开 packages/dsh-sbtd 的 README.md 与 README.zh.md
-    Then 文档引导用户从 dist-tag next 安装
-    And 文档不宣称版本尚未发布或给出当前 dist-tag 对应版本
+  Scenario: 发布状态校验：当前版本准备态通过
+    Given 当前插件版本为 0.2.0-rc.3 且尚未发布
+    When 用户查看英文与中文 README 的当前版本状态
+    Then 准确的准备中或未发布状态通过校验
+    And 安装指引仍使用 dist-tag next
+
+  Scenario: 发布状态校验：当前版本误称已发布被拒绝
+    Given 当前插件版本为 0.2.0-rc.3 且尚未发布
+    When 当前版本被误写为已发布或同时声明准备中与已发布
+    Then 当前版本状态校验失败
+
+  Scenario: 发布状态校验：旧版发布史不误伤
+    Given 当前 0.2.0-rc.3 状态为准备中或未发布
+    And 文档保留 0.2.0-rc.2 的已发布历史
+    Then 当前版本状态校验通过
+    And 历史发布声明不被当作当前版本已发布
 
   Scenario: 双语 README 顶部语言切换钉 release tag 且章节数量一致
     Given 用户分别打开 packages/dsh-sbtd 的 README.md 与 README.zh.md
-    Then 两份文档顶部均链接到 https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/README.md
-    And 两份文档顶部均链接到 https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.2/packages/dsh-sbtd/README.zh.md
+    Then 两份文档顶部均链接到 https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.3/packages/dsh-sbtd/README.md
+    And 两份文档顶部均链接到 https://github.com/KunoLu/sbtd-plugins/blob/dsh-sbtd-v0.2.0-rc.3/packages/dsh-sbtd/README.zh.md
     And 英文与中文文档的二级标题数量相同，三级标题数量也相同
 
-  Scenario: 0.2.0-rc.2 包可发布且标记为 dsh-plugin
+  Scenario: 0.2.0-rc.3 包可发布且标记为 dsh-plugin
     Given 用户检查 packages/dsh-sbtd 的 package.json
-    Then private 为 false、version 为 0.2.0-rc.2
+    Then private 为 false、version 为 0.2.0-rc.3
     And keywords 包含 dsh-plugin
 
   @todo

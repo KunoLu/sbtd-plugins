@@ -18,8 +18,8 @@ import {
   mkdirSync,
   readFileSync,
   realpathSync,
-  writeFileSync,
   type Stats,
+  writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { optionalHostBag, optionalHostCwd } from "../host-context.js";
@@ -240,15 +240,17 @@ function lessonPathAllowed(cwd: string, absPath: string): boolean {
 }
 
 function sanitizeCell(value: string): string {
-  return value
-    .replace(/\r?\n/g, " ")
-    .replace(/\|/g, "/")
-    .replace(/##\s*LESSON-/gi, "LESSON-")
-    // Neutralize forged lessons block markers (same class as ## LESSON- R6).
-    // Otherwise a model-supplied summary/tag can embed <!-- lessons:<name>:end -->
-    // and hijack appendInNameBlock / appendIndexRowInNameBlock indexOf insertion.
-    .replace(/<!--\s*lessons:/gi, "&lt;!-- lessons:")
-    .trim();
+  return (
+    value
+      .replace(/\r?\n/g, " ")
+      .replace(/\|/g, "/")
+      .replace(/##\s*LESSON-/gi, "LESSON-")
+      // Neutralize forged lessons block markers (same class as ## LESSON- R6).
+      // Otherwise a model-supplied summary/tag can embed <!-- lessons:<name>:end -->
+      // and hijack appendInNameBlock / appendIndexRowInNameBlock indexOf insertion.
+      .replace(/<!--\s*lessons:/gi, "&lt;!-- lessons:")
+      .trim()
+  );
 }
 
 function sanitizeTags(tags: string[] | undefined): string[] {
@@ -389,8 +391,6 @@ function nextLessonId(name: string, topic: string, ids: Set<string>): string {
     n += 1;
   }
 }
-
-
 
 /** Owning split-name for a lesson heading from enclosing markers, if any. */
 function nameOwningLessonId(content: string, id: string): string | undefined {
@@ -538,7 +538,6 @@ function formatRecordSection(
   return lines.join("\n");
 }
 
-
 function topicFileHeader(topic: string): string {
   return `# ${topic}\n\n`;
 }
@@ -554,7 +553,11 @@ function indexOfLessonHeading(content: string, id: string): number {
     const after = idx + needle.length;
     const ch = after < content.length ? content[after] : undefined;
     const atHeadingEnd =
-      ch === undefined || ch === "\n" || ch === "\r" || ch === " " || ch === "\t";
+      ch === undefined ||
+      ch === "\n" ||
+      ch === "\r" ||
+      ch === " " ||
+      ch === "\t";
     if (atLineStart && atHeadingEnd) return idx;
     from = idx + 1;
   }
@@ -925,8 +928,7 @@ function recordLesson(
   const split = resolveSplitName(cwd);
   if (!split.ok) return skipped("record", split.kind, split.note);
 
-  const store =
-    resolveStore(cwd) ?? layeredStore(join(cwd, "docs", "lessons"));
+  const store = resolveStore(cwd) ?? layeredStore(join(cwd, "docs", "lessons"));
   const summary = sanitizeCell(input.summary?.trim() ?? "");
   const sanitizedTags = sanitizeTags(input.tags);
   const splitNote = `Lessons split name: ${split.name}\nSource: ${split.source}`;

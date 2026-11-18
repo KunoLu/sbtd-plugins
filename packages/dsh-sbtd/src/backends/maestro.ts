@@ -139,7 +139,10 @@ export function defaultDetectJava(): JavaProbe {
         env: process.env,
       });
       const text = `${result.stdout ?? ""}\n${result.stderr ?? ""}`.trim();
-      if (result.error && (result.error as NodeJS.ErrnoException).code === "ENOENT") {
+      if (
+        result.error &&
+        (result.error as NodeJS.ErrnoException).code === "ENOENT"
+      ) {
         continue;
       }
       if (!text && result.status !== 0) continue;
@@ -183,7 +186,10 @@ export function defaultDetectCli(): CliProbe {
       timeout: 8_000,
       env: process.env,
     });
-    if (result.error && (result.error as NodeJS.ErrnoException).code === "ENOENT") {
+    if (
+      result.error &&
+      (result.error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
       return { ok: false, detail: "maestro not found on PATH" };
     }
     const text = `${result.stdout ?? ""}\n${result.stderr ?? ""}`.trim();
@@ -233,11 +239,15 @@ export function defaultDetectDevice(options: MaestroOptions = {}): DeviceProbe {
     // Still run live device-list probe (xcrun simctl / adb devices).
     const platform = options.platform;
     if (platform !== "android") {
-      const sim = spawnSync("xcrun", ["simctl", "list", "devices", "available"], {
-        encoding: "utf8",
-        timeout: 10_000,
-        env: process.env,
-      });
+      const sim = spawnSync(
+        "xcrun",
+        ["simctl", "list", "devices", "available"],
+        {
+          encoding: "utf8",
+          timeout: 10_000,
+          env: process.env,
+        },
+      );
       const out = `${sim.stdout ?? ""}\n${sim.stderr ?? ""}`;
       if (
         sim.status === 0 &&
@@ -365,7 +375,7 @@ function buildGuidance(missing: string[], platform?: PlatformHint): string {
   if (missing.includes(MISSING_CLI)) {
     lines.push(
       "Maestro CLI is a local prerequisite. Check: `maestro --version` (never run `maestro test` during preflight).",
-      "Example install (only after DSH approval): `curl -Ls \"https://get.maestro.mobile.dev\" | bash`",
+      'Example install (only after DSH approval): `curl -Ls "https://get.maestro.mobile.dev" | bash`',
     );
   }
   if (missing.includes(MISSING_DEVICE)) {
@@ -439,9 +449,7 @@ function writeSession(
     ...(isDeclaredTruthy(options.appEnv)
       ? {
           appEnv:
-            typeof options.appEnv === "string"
-              ? options.appEnv
-              : "declared",
+            typeof options.appEnv === "string" ? options.appEnv : "declared",
         }
       : {}),
   };
@@ -461,7 +469,9 @@ export async function preflight(
     const java = await Promise.resolve(
       (options.detectJava ?? defaultDetectJava)(),
     );
-    const cli = await Promise.resolve((options.detectCli ?? defaultDetectCli)());
+    const cli = await Promise.resolve(
+      (options.detectCli ?? defaultDetectCli)(),
+    );
     const device = await Promise.resolve(
       (options.detectDevice ?? defaultDetectDevice)(options),
     );

@@ -144,9 +144,7 @@ function isValidatePhase(value: string): value is ValidatePhase {
   return (VALIDATE_PHASES as readonly string[]).includes(value);
 }
 
-function mapPreFromGraft(
-  status: AnalysisResult["status"],
-): "done" | "skipped" {
+function mapPreFromGraft(status: AnalysisResult["status"]): "done" | "skipped" {
   // Q3 clar.: skipped → pre=skipped; ok|advisory → pre=done
   if (status === "skipped") return "skipped";
   return "done";
@@ -783,9 +781,7 @@ export function createToolsMcpBridge(tools: ToolsHost["tools"]): McpClient {
     },
     callTool: async (name, args) => {
       if (typeof tools.execute !== "function") {
-        throw new Error(
-          `Graft MCP bridge: tools.execute missing for ${name}`,
-        );
+        throw new Error(`Graft MCP bridge: tools.execute missing for ${name}`);
       }
       const outer = bridgeOuterSlots.get(client) ?? {};
       const rootCallId = outer.rootCallId ?? outer.callId;

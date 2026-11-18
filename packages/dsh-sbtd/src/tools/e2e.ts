@@ -422,9 +422,10 @@ export function detectE2eConvention(
 
   if (flowOverride != null || isDir(maestroFlow)) {
     return {
-      kind: isDir(maestroFlow) || flowOverride != null
-        ? "existing-maestro-flow"
-        : "agents-default",
+      kind:
+        isDir(maestroFlow) || flowOverride != null
+          ? "existing-maestro-flow"
+          : "agents-default",
       flowRoot,
       reportRoot,
       playwrightRoot: join(cwd, "tests", "e2e"),
@@ -448,9 +449,7 @@ export function detectE2eConvention(
 
 function isSlug(target: string): boolean {
   return (
-    SAFE_SLUG_RE.test(target) &&
-    !target.includes("/") &&
-    !target.includes("\\")
+    SAFE_SLUG_RE.test(target) && !target.includes("/") && !target.includes("\\")
   );
 }
 
@@ -548,8 +547,10 @@ export function resolveE2eTargetPath(
   }
   const base = trimmed.split(/[/\\]/).pop() ?? trimmed;
   const slug =
-    base.replace(/\.(yml|yaml|spec\.(ts|js|mjs|cjs|tsx|jsx)|test\.(ts|js|mjs|cjs|tsx|jsx)|ts|js|mjs|feature)$/i, "") ||
-    "target";
+    base.replace(
+      /\.(yml|yaml|spec\.(ts|js|mjs|cjs|tsx|jsx)|test\.(ts|js|mjs|cjs|tsx|jsx)|ts|js|mjs|feature)$/i,
+      "",
+    ) || "target";
   return { ok: true, path: abs, slug };
 }
 
@@ -710,8 +711,7 @@ export async function defaultRunMaestro(
   timeoutMs: number = DEFAULT_E2E_RUN_TIMEOUT_MS,
 ): Promise<E2eRunnerResult> {
   mkdirSync(ctx.reportDir, { recursive: true });
-  const slug =
-    basename(ctx.targetPath).replace(/\.ya?ml$/i, "") || "flow";
+  const slug = basename(ctx.targetPath).replace(/\.ya?ml$/i, "") || "flow";
   const stem = reportStem("maestro", slug, ctx.cwd);
   const reportPath = join(ctx.reportDir, `${stem}.xml`);
 
@@ -786,8 +786,10 @@ export async function defaultRunPlaywright(
 ): Promise<E2eRunnerResult> {
   mkdirSync(ctx.reportDir, { recursive: true });
   const slug =
-    basename(ctx.targetPath)
-      .replace(/\.(spec|test)\.(ts|tsx|js|jsx|mjs|cjs)$/i, "") || "spec";
+    basename(ctx.targetPath).replace(
+      /\.(spec|test)\.(ts|tsx|js|jsx|mjs|cjs)$/i,
+      "",
+    ) || "spec";
   const stem = reportStem("playwright", slug, ctx.cwd);
   const reportPath = join(ctx.reportDir, `${stem}.html`);
   const tempDir = join(ctx.reportDir, ".playwright-html-current");
@@ -947,7 +949,8 @@ function blockedResult(
   if (extras.convention !== undefined) result.convention = extras.convention;
   if (extras.path !== undefined) result.path = extras.path;
   if (extras.reportPath !== undefined) result.reportPath = extras.reportPath;
-  if (extras.reportMdPath !== undefined) result.reportMdPath = extras.reportMdPath;
+  if (extras.reportMdPath !== undefined)
+    result.reportMdPath = extras.reportMdPath;
   if (extras.preflight !== undefined) result.preflight = extras.preflight;
   return result;
 }
@@ -972,9 +975,7 @@ function needsT12(surface: E2eSurface, action: E2eAction): boolean {
   // Q1B: mobile|hybrid generate/run always re-call T12; web skips.
   // action=preflight on mobile|hybrid also calls T12 (that is the action).
   if (surface === "web") return false;
-  return (
-    action === "preflight" || action === "generate" || action === "run"
-  );
+  return action === "preflight" || action === "generate" || action === "run";
 }
 
 function defaultMaestroFlowBody(
@@ -1181,7 +1182,10 @@ export async function sbtdE2e(
   }
 
   // Q6A: never steal — busy controller ⇒ blocked (web generate/run / web preflight).
-  if (surface === "web" && (action === "generate" || action === "run" || action === "preflight")) {
+  if (
+    surface === "web" &&
+    (action === "generate" || action === "run" || action === "preflight")
+  ) {
     if (await isBrowserBusy(host)) {
       return blockedResult(
         surface,
@@ -1251,7 +1255,9 @@ export async function sbtdE2e(
       {
         calledT12Preflight,
         convention: convention.kind,
-        ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+        ...(preflightResult !== undefined
+          ? { preflight: preflightResult }
+          : {}),
       },
     );
   }
@@ -1298,19 +1304,14 @@ export async function sbtdE2e(
         surface === "web"
           ? "Web generate blocked — affirmative selectors/locator facts required; will not invent fragile tests."
           : "Maestro Flow Assets: blocked — selectors/locator facts missing; will not invent fragile flow.";
-      return blockedResult(
-        surface,
-        action,
-        mode,
-        "missing-selectors",
-        reason,
-        {
-          calledT12Preflight,
-          convention: convention.kind,
-          path: targetResolved.path,
-          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
-        },
-      );
+      return blockedResult(surface, action, mode, "missing-selectors", reason, {
+        calledT12Preflight,
+        convention: convention.kind,
+        path: targetResolved.path,
+        ...(preflightResult !== undefined
+          ? { preflight: preflightResult }
+          : {}),
+      });
     }
     if (!hasAffirmativeCredentials(host, surface)) {
       return blockedResult(
@@ -1323,7 +1324,9 @@ export async function sbtdE2e(
           calledT12Preflight,
           convention: convention.kind,
           path: targetResolved.path,
-          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+          ...(preflightResult !== undefined
+            ? { preflight: preflightResult }
+            : {}),
         },
       );
     }
@@ -1343,7 +1346,9 @@ export async function sbtdE2e(
           calledT12Preflight,
           convention: convention.kind,
           path: targetResolved.path,
-          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+          ...(preflightResult !== undefined
+            ? { preflight: preflightResult }
+            : {}),
         },
       );
     }
@@ -1365,7 +1370,9 @@ export async function sbtdE2e(
           calledT12Preflight,
           convention: convention.kind,
           path: targetResolved.path,
-          ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+          ...(preflightResult !== undefined
+            ? { preflight: preflightResult }
+            : {}),
         },
       );
     }
@@ -1438,7 +1445,9 @@ export async function sbtdE2e(
         calledT12Preflight,
         convention: convention.kind,
         path: targetResolved.path,
-        ...(preflightResult !== undefined ? { preflight: preflightResult } : {}),
+        ...(preflightResult !== undefined
+          ? { preflight: preflightResult }
+          : {}),
       },
     );
   }
@@ -1519,7 +1528,6 @@ export async function sbtdE2e(
   );
 }
 
-
 export const SBTD_E2E_DESCRIPTION =
   "Preflight, generate, or run Web / Mobile / Hybrid E2E. " +
   "surface=web|mobile|hybrid; action=preflight|generate|run. " +
@@ -1559,7 +1567,8 @@ export function createE2eTool(host: E2eHostOptions = {}): E2eToolDefinition {
         platform: {
           type: "string",
           enum: ["ios", "android"],
-          description: "Optional platform hint for mobile|hybrid (model-visible only).",
+          description:
+            "Optional platform hint for mobile|hybrid (model-visible only).",
         },
       },
       required: ["surface", "action"],

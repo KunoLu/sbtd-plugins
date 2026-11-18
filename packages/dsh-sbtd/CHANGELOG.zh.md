@@ -4,6 +4,31 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，最新在前。
 英文对照：[CHANGELOG.md](CHANGELOG.md)。
 
+## [0.2.0-rc.3] - 未发布
+
+准备日期：2026-11-18（Asia/Shanghai），不是发布时间。
+
+### Changed（变更）
+
+- 纳入 [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127)：手册固定为
+  `640-skills v2.1.0` / `3c835303c23d59d3157ca84121a92f1bd87d4997`。
+  十二技能白名单与十九文件保持；正文变化仅在 `sbtd-task`、`domain-modeling`、
+  `grilling`、`to-tickets`。
+- 保留共享宿主 smoke 在需要时初始化宿主已有 native executor 的修复。
+  原断言与两个 REQUIRED 宿主（`0.2.0-rc.2`、`0.2.1-rc.2`）保持，
+  candidate `0.2.2-rc.3` 必须自身通过。
+- 对齐包身份、英中文文档与当前版本发布状态校验。允许准确的准备态，
+  拒绝当前版本误称已发布，同时保留 rc.2 的历史发布事实。
+- 现有源码仅纳入单独提交的格式与安全命名导入/导出排序修正。
+  PR2 不改变运行时逻辑、宿主范围、开发 pin、依赖、锁文件或手册 pin。
+
+### 发布边界
+
+本版本准备中，尚未发布。本次准备不包含 tag、GitHub release、npm 发布或
+`next`/`latest` 变更。未来 tag 绑定语言链接不证明 tag 已存在。
+验证记录只覆盖其精确源码 SHA；版本提升和本日期都不是发布证据。
+更早版本条目继续作为历史记录保留。
+
 ## [0.2.0-rc.2] - 2026-10-23
 
 ### Changed（变更）
