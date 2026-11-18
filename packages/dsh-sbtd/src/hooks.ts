@@ -157,9 +157,7 @@ function pathOf(args: unknown): string | undefined {
 }
 
 function relToCwd(file: string, cwd: string): string {
-  return relative(cwd, resolve(cwd, file))
-    .split(sep)
-    .join("/");
+  return relative(cwd, resolve(cwd, file)).split(sep).join("/");
 }
 
 function pathsFromBash(command: string): string[] {
@@ -438,10 +436,12 @@ export async function runPreStep(
       {
         id: "dsh-sbtd-pre-step-notice",
         role: "user",
-        content: [{
-          type: "text",
-          text: `${notice}\n${modeText}${mode.note ? `\n${mode.note}` : ""}`,
-        }],
+        content: [
+          {
+            type: "text",
+            text: `${notice}\n${modeText}${mode.note ? `\n${mode.note}` : ""}`,
+          },
+        ],
         source: {
           kind: SBTD_SOURCE_KIND,
           form: "notice",
@@ -465,5 +465,7 @@ export function registerHooks(ctx: HooksHost): void {
     }
     return decision;
   });
-  ctx.on(PRE_STEP_EVENT, async (payload, next) => runPreStep(payload, next, host));
+  ctx.on(PRE_STEP_EVENT, async (payload, next) =>
+    runPreStep(payload, next, host),
+  );
 }

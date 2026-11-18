@@ -24,15 +24,15 @@ import {
   resolveLessonsHost,
 } from "./tools/lessons.js";
 import {
+  type PlanPluginHost,
   registerPlanTool,
   resolvePlanHost,
-  type PlanPluginHost,
   type ToolsHost,
 } from "./tools/plan.js";
 import {
+  type ReviewPluginHost,
   registerReviewTool,
   resolveReviewHost,
-  type ReviewPluginHost,
 } from "./tools/review.js";
 import { registerSpecTool } from "./tools/spec.js";
 import { registerTicketsTool } from "./tools/tickets.js";
@@ -65,6 +65,10 @@ export type PluginHost = SectionHost &
     lessonsHost?: LessonsHostOptions;
   };
 
+export type {
+  CommandInvocation,
+  CommandResult,
+} from "./commands/sbtd.js";
 export {
   createSbtdCommand,
   executeSbtdCommand,
@@ -76,17 +80,13 @@ export {
   SBTD_COMMAND_DESCRIPTION,
   SBTD_COMMAND_NAME,
 } from "./commands/sbtd.js";
-export type {
-  CommandInvocation,
-  CommandResult,
-} from "./commands/sbtd.js";
 export {
+  isSbtdSource,
   LEGACY_SBTD_SOURCE_KIND,
   PRE_EXECUTE_EVENT,
   PRE_STEP_EVENT,
-  SBTD_SOURCE_KIND,
-  isSbtdSource,
   registerHooks,
+  SBTD_SOURCE_KIND,
 } from "./hooks.js";
 export {
   registerSection,

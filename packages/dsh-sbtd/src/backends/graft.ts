@@ -26,10 +26,7 @@ export type AnalysisResult = {
 /** Injectable MCP surface for Cordis/DSH tool names + calls. */
 export type McpClient = {
   listToolNames: () => Iterable<string> | Promise<Iterable<string>>;
-  callTool: (
-    name: string,
-    args: Record<string, unknown>,
-  ) => Promise<unknown>;
+  callTool: (name: string, args: Record<string, unknown>) => Promise<unknown>;
 };
 
 export type GraftOptions = {
@@ -113,9 +110,7 @@ async function listedToolSet(options: GraftOptions): Promise<Set<string>> {
  * Probe wired Graft tools for the configured server (R3 Q2 A). No fallback
  * server name: a differently-named wiring is not this plugin's backend.
  */
-export async function resolveGraftTools(
-  options: GraftOptions = {},
-): Promise<{
+export async function resolveGraftTools(options: GraftOptions = {}): Promise<{
   freshness: string | null;
   findCode: string | null;
   mcpVisible: boolean;
@@ -153,8 +148,12 @@ async function callGraftTool(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   const result = await mcp.callTool(name, args);
-  if (result !== null && typeof result === "object" &&
-      "isError" in result && result.isError === true) {
+  if (
+    result !== null &&
+    typeof result === "object" &&
+    "isError" in result &&
+    result.isError === true
+  ) {
     throw new Error(toSummary(result));
   }
   return result;
@@ -201,7 +200,10 @@ async function probeFreshness(
   if (!/\bin sync with the code\b/i.test(text)) {
     return {
       kind: "skipped",
-      result: skipped("Graft freshness probe returned no recognizable verdict.", "call-failed"),
+      result: skipped(
+        "Graft freshness probe returned no recognizable verdict.",
+        "call-failed",
+      ),
     };
   }
   return { kind: "fresh" };
@@ -324,7 +326,9 @@ export async function detectChanges(
     if (!gated.ok) return gated.result;
     if (scope !== undefined && scope.trim() !== "" && gated.findCode != null) {
       try {
-        const raw = await callGraftTool(gated.mcp, gated.findCode, { query: scope });
+        const raw = await callGraftTool(gated.mcp, gated.findCode, {
+          query: scope,
+        });
         return { status: "ok", summary: toSummary(raw) };
       } catch (err) {
         return callFailed(err, "detectChanges");

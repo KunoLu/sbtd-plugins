@@ -1,4 +1,8 @@
-import { type PlanToolExec, sessionIdFromExec, type ToolsHost } from "./plan.js";
+import {
+  type PlanToolExec,
+  sessionIdFromExec,
+  type ToolsHost,
+} from "./plan.js";
 import {
   type ArtifactInput,
   type ArtifactToolResult,
@@ -22,10 +26,16 @@ export type TicketsToolDefinition = {
     ) => Array<{ type: "text"; text: string }>;
   };
   isConcurrencySafe: (args: unknown) => false;
-  execute: (args: TicketsInput, exec: PlanToolExec) => Promise<TicketsToolResult>;
+  execute: (
+    args: TicketsInput,
+    exec: PlanToolExec,
+  ) => Promise<TicketsToolResult>;
 };
 
-export function sbtdTickets(sessionId: string, input: TicketsInput): TicketsToolResult {
+export function sbtdTickets(
+  sessionId: string,
+  input: TicketsInput,
+): TicketsToolResult {
   return runTaskArtifact(sessionId, "implement.md", input);
 }
 
@@ -42,8 +52,7 @@ export function createTicketsTool(): TicketsToolDefinition {
       properties: {
         markdown: {
           type: "string",
-          description:
-            "Tickets/slices markdown body returned as the draft.",
+          description: "Tickets/slices markdown body returned as the draft.",
         },
         body: {
           type: "string",
