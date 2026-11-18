@@ -4,10 +4,10 @@ id: dsh-sbtd-0-2-0-rc-3-pr2-release-prep
 workflow_mode: strict
 mode_source: user
 mode_note: 用户17:05批准PR2，当前消息进一步确认17:15扩围裁决，仅额外允许10个src文件的9项格式/2项安全导入排序，单独提交；其后继续原11文件，失败停报；本次只到验证/push/PR/同SHA CI，不合入或发布。
-status: in-progress
+status: checking
 branch: docs/dsh-sbtd-0.2.0-rc.3-pr2-plan
 created_at: '2026-11-18T16:52:23.411687+08:00'
-updated_at: '2026-11-18T17:45:37+08:00'
+updated_at: '2026-11-18T18:11:54+08:00'
 completed_at: null
 ---
 
@@ -34,6 +34,43 @@ completed_at: null
 - 已通过受控补丁应用十文件候选，逐文件 bytes/SHA 绑定与已证明候选一致；完整 `pnpm --filter @kunolu/dsh-sbtd lint` attempt 2 exit 0：19 文件，0 errors，原有 4 warnings/1 info 保留，`No fixes applied`。旧 attempt 1 的失败不覆盖、不追认通过。
 - 新方法正反自测、实际十文件结构/绑定/模块顺序、落盘绑定与 lint attempt 2 均已有 raw JSON 与同 stem 中文报告。它们不替代后续 typecheck/full/pack/三宿主 CI；本轮未声称这些后续门禁通过。
 - 提交前安全检查仅批准的十个 src 文件与本 task；版本、依赖/锁、手册、工作流及原 11 个业务文件尚未改变。现在只作独立 lint 修复提交（含本 task 真实过程记录），不 push，随后进入已批准 rc.3 准备。
+
+## 原 11 文件 rc.3 准备开始（2026-11-18T17:46:30+08:00）
+
+- 独立 lint 修复提交已完成：`ab506df9cc0a608c2e416ccde2813643971af334`，仅十个获批 src 的格式/安全排序与本 task；尚未 push。正式门禁 attempt 2 为完整 lint exit 0，4 warnings/1 info 保留。
+- 现在进入原 11 文件：插件自身 version 改 rc.3，宿主/peer/engines/lock/manuals/pin 不变；README 用以插件版本为键的明确状态表区分当前准备态与旧版历史。新 tag 链接只作准备，不声称已存在或已验证。
+- T0 的新保护先形成独立正反用例：当前状态准备中/未发布允许，误称已发布或准备/已发布矛盾应拒绝，rc.2 已发布历史不误伤；实际两语言 README 同样受校验。只对唯一当前版本状态行分类，不使用全文禁词；安装/版本/链接/包内容/宿主原有断言保留。
+- Legacy Change Safety Review（T0/文档范围）：characterized / normal；既有契约与批准的三场景明确，状态校验不进入产品运行时。正反 fixture 的预期拒绝是测试成功；全部文件对齐后按计划执行 build、定点、typecheck、lint、full、pack，任何实际门禁失败即停。
+
+## 11 文件准备完成，开始完整本地门禁（2026-11-18T17:54:24+08:00）
+
+- 原 11 文件已对齐：package 自身 0.2.0-rc.3；两语言包 README 使用当前版本状态表、保留旧版历史和未来 tag 未验证边界；两 CHANGELOG 为未发布准备条目；根索引只改 DSH 段；assets 索引对齐已合入的手册 pin。
+- T0 增加三个独立状态用例，并让两份实际 README 接受同一当前版本保护；误报已发布、矛盾状态、缺失/重复当前状态行均被拒绝，旧 rc.2 发布历史不误伤。原安装、版本、语言链接、包内容、宿主契约保持；FU4 仅改插件 version 预期，feature 对齐三场景与自身 rc.3。
+- 工具过程记录：一次 T0 编辑锚点引用未展示且行号不正确，被 edit 拒绝，文件未变；回读准确行后应用。此为编辑工具拒绝，不是产品测试失败或隐瞒的测试重跑。
+- 当前 working diff 仅上述 11 文件加本 task；已提交的十文件 lint 修复未再次变更。现在转 checking，顺序执行 build、定点、typecheck、完整 lint（attempt 3）、full 包、dry-run/真实 pack 与字节/保护项验证；新失败立即停报。
+
+## 本地完整验收通过与 PR 准备（2026-11-18T18:11:54+08:00）
+
+- 本轮真实新结果：build exit0；T0/FU4/T4 定点 22 passed / 0 failed / 0 skipped；typecheck exit0；完整 lint attempt3 exit0（原4 warnings/1 info保留）；full 包 345 passed / 0 failed / 0 skipped。T0 三个正反/历史场景及两份实际 README 状态保护均实际执行，未复用 PR1 342 计数。
+- dry-run 与真实 pack 命令各执行一次、exit0。首次内容读取器误把 npm 原生包名键控对象当作数组，产生 KeyError:0；原始错误报告 `pr2-pack-integrity-20261118-180017.json` 保留。只读核对原生 JSON 结构后按实际包名提取，对同一 tarball 作完整 attempt2 内容检查，exit0；没有重跑打包、修改产物、忽略不匹配或伪造通过。
+- 实际 tarball 103 文件，与 dry-run 文件集合完全一致；package JSON 对象等于当前元数据，其他包文件逐字节等于工作树；19 manuals/12技能 checksum、v2.1.0 完整 pin、task-data.schema.json 定义及字节核对成功。tarball SHA256：`961a8888b0d26b66f19c350767837ca8b4cc120f4e179485dbe6af4b6fe21c9f`。
+- 八个受保护输入（cordis patch、lock、MANIFEST、三个 workflow、共享 smoke、AGENTS）与基线 SHA256 一致；不生成 SBOM。双语包 README、根 README、CHANGELOG 的版本/完整 SHA 标识集合一致；包三段及根四段代码块逐字相同。该静态核对加主会话语义对照不冒充独立 Reviewy。
+- Code Readability / ponytail-review：T0 用唯一当前版本状态行明确区分准备与发布，正反 fixture 覆盖误报、混合/重复状态与历史共存，无产品运行时 helper/新依赖；十文件 lint 提交已隔离，不再混入准备提交。无新增实现或工作流改动。
+- 本地 raw/同 stem 中文报告均在 `reports/pr2-*`，所有失败/工具读取错误保留。以上属于 dirty developer-local 证据；准备提交之后须对实际 HEAD 运行三宿主/manuals/自动 Host Event CI，不把本地结果当作远端成功。
+- 当前安全核对只剩原11文件+task working diff；远端 main 仍为基线，目标分支无既有 open PR。开始普通准备提交/push/创建 PR；最终 CI、PR URL/attempt/模型截止快照写 PR 正文与 ignored reports，避免为证据再次移动已验 HEAD。任务保持 checking/completed_at=null，独立 Reviewy由用户协调，不请求他人、不合入发布。
+
+### 按会话记录还原的 PR2 轮次
+
+来源为当前原始 OMP JSONL 的只读脱敏投影 `reports/pr2-session-before-release-commit-20261118.json`，截止 `2026-11-18T18:07:59.721691+08:00`。下表为 2026-11-18 Asia/Shanghai；主模型均 openai-codex/gpt-6-astra，high 为会话配置/用户要求而非服务端逐请求审计。
+
+| 已结束工作轮 | user 开始 | 最终 assistant 完成 | assistant 记录数 | 顶层 toolCall 块数 |
+|---|---|---|---:|---:|
+| 计划 | 16:42:55.466 | 16:58:05.747 | 11 | 40 |
+| 计划修订 | 17:02:30.993 | 17:05:11.607 | 5 | 8 |
+| lint 基线阻塞 | 17:06:49.852 | 17:14:12.802 | 11 | 13 |
+| 旧 checker 阻塞 | 17:17:07.770 | 17:29:49.336 | 12 | 28 |
+
+辅助 model_usage 按 purpose/provider/model/stopReason 单列在原始报告，不与主记录混算；model_change 不算执行次数。当前第5轮起于 `2026-11-18T17:31:05.416+08:00`，最终主/辅助计数、结束时间及会话最终结束均“无法核对：进行中”；最后阶段快照仅放 PR 脚注，不记录假最终数、不循环提交。会话 header 起始仍为 `2026-11-16T18:06:56.701+08:00`，未更换会话或模型。
 
 ## 17:15 扩围裁决与恢复（记录于 2026-11-18T17:17:22+08:00）
 
@@ -222,9 +259,9 @@ gh workflow run dsh-manuals-pin.yml --repo KunoLu/sbtd-plugins --ref docs/dsh-sb
 |---|---|---|
 | book-ddd-distilled-modeling | 未完整 grill；无新领域模型或术语歧义 | not-required；若后续完整 grill 则按共同规则先做独立 DDD |
 | book-ddia-data-design | 不变 schema、数据所有权、持久存储或迁移 | not-required |
-| book-legacy-change-safety | 将全局禁词约束改为当前插件版本正反状态校验；实施前锁定历史不误伤与原有安装/版本等契约 | planned；不删除准备状态检查，不借机修改产品行为 |
-| book-refactoring-pass | 推荐范围无既有生产实现编辑，仅元数据/文档/契约测试 | not-required；若需改 src/同步算法即超范围停报 |
-| book-release-readiness | 包版本/文档/真实 tarball 一致性；适用测试后、准备交付前 | planned；结论最多覆盖准备范围，不是发布授权 |
+| book-legacy-change-safety | 格式/安全排序与当前版本状态保护的保留契约已明确，原失败保留 | passed；characterized / normal；方法自测10/10、十文件结构/模块/type-only证明、T0三场景及完整本地回归已通过 |
+| book-refactoring-pass | 获批十文件既有源码格式/安全排序，首次应用前已审查 | passed；proceed / normal；仅声明绑定映射与格式，实际模块/初始化顺序保持，无额外重构 |
+| book-release-readiness | 本地版本/双语/真实tarball一致性已通过，仍需精确HEAD CI与外部strict审查 | running；本地准备门禁完成，不冒称CI/CLEAN/done或发布授权 |
 
 ## 7. 模型、会话与证据口径
 
@@ -255,3 +292,6 @@ gh workflow run dsh-manuals-pin.yml --repo KunoLu/sbtd-plugins --ref docs/dsh-sb
 | 2026-11-18T17:31:25+08:00 | blocked | in-progress | OMP 当前会话：记录本次明确 checker 纠正授权，恢复既有范围 | 保留原失败/取证时间；先独立正反样例与十文件模块/type-only证明，再允许源码补丁和lint attempt2；不扩产品范围、不合入发布 |
 | 2026-11-18T17:39:01+08:00 | in-progress | in-progress | OMP 当前会话：完成 checker v2 独立自测与十文件证明，开始应用限定格式/排序补丁 | self-test 10/10（预期阴性7项正确拒绝）；十文件4项结构/模块/type-only比较全同；index/lessons 人工核对安全；原失败未覆盖；随后 lint attempt2 |
 | 2026-11-18T17:45:37+08:00 | in-progress | in-progress | OMP 当前会话：完成十文件格式/安全排序及lint attempt2，开始独立lint提交 | 十文件与已证明候选逐字节一致；完整 lint exit0，19文件/0errors/4warnings/1info；仅10个src+task；版本仍rc.2，后续全部门禁未冒称通过 |
+| 2026-11-18T17:46:30+08:00 | in-progress | in-progress | OMP 当前会话：完成独立lint提交，开始原11文件rc.3准备与T0正反契约 | lint SHA ab506df9cc0a608c2e416ccde2813643971af334；未push；只动插件版本/获批文档与测试feature，不改依赖/手册/工作流 |
+| 2026-11-18T17:54:24+08:00 | in-progress | checking | OMP 当前会话：完成获批11文件rc.3准备，开始完整本地门禁 | package/双语文档/根索引/assets/T0/FU4/feature对齐；仅11文件+task working diff；独立lint提交未混改；尚未预填任何新测试结果 |
+| 2026-11-18T18:11:54+08:00 | checking | checking | OMP 当前会话：完成本地全门禁与真实pack内容证明，开始准备提交/push/PR及同SHA CI | build/typecheck/lint exit0；定点22/0/0、full345/0/0；dry-run/pack exit0；103文件/19手册/12技能/schema/保护项通过；首次JSON读取器错误保留，未重打包；独立lint SHA已记录 |

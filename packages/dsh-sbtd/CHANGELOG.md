@@ -4,6 +4,35 @@ All notable changes to `@kunolu/dsh-sbtd` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); newest
 first. Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
+## [0.2.0-rc.3] - Unreleased
+
+Preparation date: 2026-11-18 (Asia/Shanghai), not a publication date.
+
+### Changed
+
+- Include [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127): manuals pinned to
+  `640-skills v2.1.0` / `3c835303c23d59d3157ca84121a92f1bd87d4997`.
+  The twelve-skill whitelist and nineteen files remain; text changes are limited
+  to `sbtd-task`, `domain-modeling`, `grilling`, and `to-tickets`.
+- Retain the shared host smoke's initialization of the host-provided native
+  executor where required. Existing assertions and the two REQUIRED hosts
+  (`0.2.0-rc.2`, `0.2.1-rc.2`) remain; candidate `0.2.2-rc.3` must itself pass.
+- Prepare matching package identity, English/Chinese documentation, and
+  current-version release-state checks. Correct preparation text is allowed;
+  a false current-version publication claim is rejected without rejecting
+  historical rc.2 publication facts.
+- Apply only the separately committed formatting and safe named-import/export
+  ordering corrections to existing source. No runtime logic, host range,
+  development pin, dependency, lockfile, or manuals pin changes in PR2.
+
+### Release boundary
+
+This version is in preparation and not yet published. No tag, GitHub release,
+npm publication, or `next`/`latest` change is part of this preparation. Future
+tag-bound language links are not evidence that a tag exists. Validation records
+belong to their exact source SHA; a version bump or this date is not publication
+evidence. Earlier release entries remain historical records.
+
 ## [0.2.0-rc.2] - 2026-10-23
 
 ### Changed
