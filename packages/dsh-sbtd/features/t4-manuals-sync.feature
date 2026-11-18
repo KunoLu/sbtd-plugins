@@ -1,9 +1,9 @@
 Feature: DSH T4 manuals 同步
-  把 640-skills v2.0.2 白名单 skill 的 SKILL.md 与该 skill 自己的 references/ 只读同步进 manuals/，
+  把 640-skills v2.1.0 白名单 skill 的 SKILL.md 与该 skill 自己的 references/ 只读同步进 manuals/，
   用 MANIFEST.json 记录 sourcePath、sha256 与 sourceRevision。不拷 skill-root markdown、安装器或整棵源树。
 
   Scenario: 白名单 skill 全部落在 manuals/<skill-id>/
-    Given 源 revision 为 1d82494d74f6df9bca7dccef2da409f87091883e
+    Given 源 revision 为 3c835303c23d59d3157ca84121a92f1bd87d4997
     When 运行 scripts/sync-manuals.sh
     Then manuals 含 12 个白名单目录且各有 SKILL.md
     And 包含 grill-with-docs 等 external-skills 下的 skill

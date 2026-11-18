@@ -9,6 +9,8 @@ Use host-native tools to carry out the user's task. This Skill supplies task rul
 
 ## Route before work
 
+每个工作流节点先按 [状态核对](references/state.md#节点核对与及时记录) 读取 task.md 与实际进度：开始／换会话／恢复、收到审查结论或决定、提交／push／开 PR 前、结束会话前均适用。先追加差异或关闭已解决等待项，再做后续动作；步骤成对记「开始 X」／「完成 X＋验证结果」，写入者与时间不可省略。进展、状态、事件与代码同 commit；多 PR 中间轮次只更新进度，不提前完成或回填上一 PR 的合入信息。
+
 1. Identify the task, authorized project root, branch, and read-only constraints using only necessary reads. An existing task's branch mismatch pauses business and metadata writes: offer its correct worktree, explicitly authorized rebinding, or read-only inspection. "Continue" or choosing a mode does not authorize rebinding.
 2. Mode precedence: the user's current explicit choice; otherwise the same task's confirmed/effective record; otherwise `default` for a genuinely new task. A missing, invalid, or ambiguous old record is not a new task: ask which task or mode to use. Do not choose by mtime. A valid task outranks an old handoff.
 3. Assess fit without implementing first. If another mode is preferable, explain the current mode, recommendation and reason, and the option to keep the current mode; pause substantive work for the user's decision. Upgrades and downgrades use the same confirmation rule. Never infer a mode from output compression, installed tools, task complexity, or an existing task directory.

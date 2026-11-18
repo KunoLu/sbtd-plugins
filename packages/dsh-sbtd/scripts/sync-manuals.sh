@@ -3,8 +3,8 @@
 # Usage: sync-manuals.sh [SOURCE]
 set -euo pipefail
 
-PINNED_REVISION="1d82494d74f6df9bca7dccef2da409f87091883e"
-PINNED_VERSION="2.0.2"
+PINNED_REVISION="3c835303c23d59d3157ca84121a92f1bd87d4997"
+PINNED_VERSION="2.1.0"
 SOURCE_REPO="https://github.com/KunoLu/640-skills.git"
 SOURCE_ID="KunoLu/640-skills"
 
