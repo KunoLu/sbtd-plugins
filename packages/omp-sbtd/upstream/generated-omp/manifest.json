@@ -12,13 +12,13 @@
   },
   "projection": {
     "policyVersion": 1,
-    "policySha256": "607d9c19a6c3750d6f3f4ece8e1a2f9bc7675491ce512b5dde814b4776dc0e8d",
-    "decisionsSha256": "49d4df8c9b65caad67e730d8e26502af0d790202993441bd1f8b72c82f5de180",
-    "generatedSha256": "5abfc6683dc065a407f89df6369d43764294e0b690806d601a238f8638819432",
+    "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+    "decisionsSha256": "bbed74b7f811f728585c7c03b30abc3172e9b37382a405a0e8806344275f5146",
+    "generatedSha256": "b1e4bab0fa5bc30f874329773b099b486efed9eeec795022a904c5a65dd7dbf3",
     "counts": {
-      "included": 262,
+      "included": 261,
       "omitted": 81,
-      "replaced": 9
+      "replaced": 10
     }
   },
   "overlayDigests": {
@@ -28,6 +28,7 @@
     "onboard/runtime/catalog.schema.json": "f787490acf0209c8d09d260a0dd2c9ed3d20842d956ccab1a3095e0599c5489a",
     "onboard/runtime/templates/project/gitignore.template": "4972b0fbb303c99a05f060b3a43c3860c8b88ff4ad9d32a9b1b27e07eb9fb2b9",
     "onboard/runtime/templates/skills/gherkin-bdd/SKILL.md": "e5cf2a13a5a1b04d82bff09781f75cfef1663685e61093316e0eb6b4a1598435",
+    "onboard/runtime/templates/skills/sbtd-task/references/presentation.md": "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5",
     "onboard/runtime/templates/skills/seo-geo/references/schema-templates.md": "25a876cbce2ab441e5f66eeac7b3d745fc6730c94287220bf6659ea0f8b1bbb4",
     "onboard/runtime/templates/skills/web-ui-autotest-generator/README.md": "58fc8fffbef881b0769b8fe2e9dbe5dc3919951b320e7459fd6278b38b3cbb8b",
     "onboard/runtime/templates/skills/web-ui-autotest-generator/README.zh-CN.md": "7f5e1aff2090739fdd358787e2ec68ddb5240d2f330a859fb62ee65f9d2cea7b"
@@ -264,7 +265,7 @@
     "onboard/runtime/templates/skills/sbtd-task/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4",
     "onboard/runtime/templates/skills/sbtd-task/references/handoff.md": "c0925015eb44a412f7a6f3e321d60ddc45bfec64576e5249373324868e79d985",
     "onboard/runtime/templates/skills/sbtd-task/references/methods.md": "3ed050225ea79da299109302cb317b3872de3092793d1340319174346f02e190",
-    "onboard/runtime/templates/skills/sbtd-task/references/presentation.md": "7b94d7f632ab71bd5500a538f676cd1602f050a2a3a4ae02238a25d5a92fa4b4",
+    "onboard/runtime/templates/skills/sbtd-task/references/presentation.md": "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5",
     "onboard/runtime/templates/skills/sbtd-task/references/state.md": "d9a7ac589d17061bdfa12cc93cb1143e6bafb1bd548964cf19433bfacafc26d7",
     "onboard/runtime/templates/skills/sbtd-task/references/strict.md": "4e65ea7252d909e0b60f1585d51575aa949d0bbb6ab07ff07619abee0942543f",
     "onboard/runtime/templates/skills/sbtd-task/references/task-data.schema.json": "fe7ef99baab8d9da506be2c3d2d986b16958c3d09a9e04995318f2dc885a8fd6",

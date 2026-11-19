@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "runtime": "omp",
   "counts": {
-    "included": 262,
+    "included": 261,
     "omitted": 81,
-    "replaced": 9
+    "replaced": 10
   },
   "decisions": [
     {
@@ -1822,8 +1822,8 @@
     {
       "path": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md",
       "owner": "kpi",
-      "policy": "include",
-      "detail": "kpi"
+      "policy": "replace-with-overlay",
+      "detail": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md"
     },
     {
       "path": "onboard/runtime/templates/skills/sbtd-task/references/state.md",
@@ -2120,11 +2120,11 @@
       "detail": "third-party"
     }
   ],
-  "policySha256": "607d9c19a6c3750d6f3f4ece8e1a2f9bc7675491ce512b5dde814b4776dc0e8d",
-  "decisionsSha256": "49d4df8c9b65caad67e730d8e26502af0d790202993441bd1f8b72c82f5de180",
+  "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+  "decisionsSha256": "bbed74b7f811f728585c7c03b30abc3172e9b37382a405a0e8806344275f5146",
   "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
   "retainedProvenanceManifestSha256": "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257",
-  "generatedSha256": "5abfc6683dc065a407f89df6369d43764294e0b690806d601a238f8638819432",
+  "generatedSha256": "b1e4bab0fa5bc30f874329773b099b486efed9eeec795022a904c5a65dd7dbf3",
   "forbiddenTokenScan": {
     "scannedPaths": 276,
     "scannedFiles": 276,

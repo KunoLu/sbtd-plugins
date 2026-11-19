@@ -1087,7 +1087,9 @@ decisions:
     policy: include
   - path: onboard/runtime/templates/skills/sbtd-task/references/presentation.md
     owner: kpi
-    policy: include
+    policy: replace-with-overlay
+    overlay: onboard/runtime/templates/skills/sbtd-task/references/presentation.md
+    reason: "KPi-owned Apache-2.0 presentation overlay from https://github.com/KunoLu/640-skills@3c835303c23d59d3157ca84121a92f1bd87d4997/sbtd-workflow-onboard/templates/skills/sbtd-task/references/presentation.md; blob=b4e12e1775c98915b816a69a082557d466166245; sha256=3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5; canonical whole-tree pin unchanged"
   - path: onboard/runtime/templates/skills/sbtd-task/references/state.md
     owner: kpi
     policy: include
