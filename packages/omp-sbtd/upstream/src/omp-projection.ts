@@ -28,6 +28,35 @@ const STABLE_SKILLS_PREFIX =
   "onboard/runtime/assets/external-skills/stable/skills/";
 const STABLE_LICENSES_PREFIX =
   "onboard/runtime/assets/external-skills/stable/licenses/";
+const PHOSPHOR_METADATA_PATH = `${STABLE_SKILLS_PREFIX}ui-ux-pro-max/data/phosphor-icons-upstream.json`;
+const PHOSPHOR_METADATA_SHA256 =
+  "2399325233b277b5c97a80e6a5e8941154f5d057beee4e7613db87c87d700236";
+// Exact package/LICENSE bytes from @phosphor-icons/core@2.1.1.
+// CRLF preservation is the byte contract, not a license interpretation.
+const PHOSPHOR_CORE_LICENSE = [
+  "MIT License",
+  "",
+  "Copyright (c) 2023 Phosphor Icons",
+  "",
+  "Permission is hereby granted, free of charge, to any person obtaining a copy",
+  'of this software and associated documentation files (the "Software"), to deal',
+  "in the Software without restriction, including without limitation the rights",
+  "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
+  "copies of the Software, and to permit persons to whom the Software is",
+  "furnished to do so, subject to the following conditions:",
+  "",
+  "The above copyright notice and this permission notice shall be included in all",
+  "copies or substantial portions of the Software.",
+  "",
+  'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR',
+  "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
+  "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
+  "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
+  "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
+  "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
+  "SOFTWARE.",
+  "",
+].join("\r\n");
 const AGENTS_TARGETS = [
   "AGENTS.global.md",
   "AGENTS.project-root.md",
@@ -756,7 +785,7 @@ async function writeSnapshot(
       ].join("\n"),
     )
     .join("\n\n");
-  const topLevelNotices = [
+  let topLevelNotices = [
     "# Third-Party Notices",
     "",
     "## SBTD Workflow Onboard",
@@ -771,6 +800,34 @@ async function writeSnapshot(
     stableNoticeEntries,
     "",
   ].join("\n");
+  const phosphorMetadata = retainedAssets.get(PHOSPHOR_METADATA_PATH);
+  if (phosphorMetadata !== undefined) {
+    const actualSha256 = sha256(phosphorMetadata);
+    if (actualSha256 !== PHOSPHOR_METADATA_SHA256) {
+      throw projectionError(
+        "PROJECTION_LEGAL_INVENTORY",
+        "retained Phosphor metadata differs from the reviewed attribution source",
+        {
+          path: PHOSPHOR_METADATA_PATH,
+          expectedSha256: PHOSPHOR_METADATA_SHA256,
+          actualSha256,
+        },
+      );
+    }
+    topLevelNotices += [
+      "",
+      "## Retained metadata attribution",
+      "",
+      "### @phosphor-icons/core@2.1.1",
+      "",
+      `- Applies to npm package member (relative to package root): kit/${PHOSPHOR_METADATA_PATH}`,
+      "- Scope: 1512 metadata records; no SVG assets.",
+      "- Source archive: https://registry.npmjs.org/@phosphor-icons/core/-/core-2.1.1.tgz",
+      "- Source archive SHA256: 313332be6190b724da24107addd781799b48bf76b13963f24501112ffe1baadd",
+      "",
+      PHOSPHOR_CORE_LICENSE,
+    ].join("\n");
+  }
   retainedAssets.set(
     EMBEDDED_STABLE_MANIFEST_PATH,
     retainedStableManifestBytes,

@@ -26,6 +26,35 @@ const STABLE_MANIFEST_ASSET =
   "onboard/runtime/assets/external-skills/stable/MANIFEST.json";
 const STABLE_NOTICES_ASSET =
   "onboard/runtime/assets/external-skills/stable/THIRD_PARTY_NOTICES.md";
+const PHOSPHOR_METADATA_ASSET =
+  "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/phosphor-icons-upstream.json";
+const EXPECTED_PHOSPHOR_SCOPE =
+  "- Applies to npm package member (relative to package root): kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/phosphor-icons-upstream.json";
+// Independent package/LICENSE fixture from @phosphor-icons/core@2.1.1.
+// SHA256: ddbe6082ec3cf979db47e5af549d2849c5d6182b3e005ef91ce1dbb9eb122f11.
+const EXPECTED_PHOSPHOR_LICENSE = Buffer.from(
+  "TUlUIExpY2Vuc2UNCg0KQ29weXJpZ2h0IChjKSAyMDIzIFBob3NwaG9yIEljb25zDQoNClBlcm1p" +
+    "c3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9i" +
+    "dGFpbmluZyBhIGNvcHkNCm9mIHRoaXMgc29mdHdhcmUgYW5kIGFzc29jaWF0ZWQgZG9jdW1lbnRh" +
+    "dGlvbiBmaWxlcyAodGhlICJTb2Z0d2FyZSIpLCB0byBkZWFsDQppbiB0aGUgU29mdHdhcmUgd2l0" +
+    "aG91dCByZXN0cmljdGlvbiwgaW5jbHVkaW5nIHdpdGhvdXQgbGltaXRhdGlvbiB0aGUgcmlnaHRz" +
+    "DQp0byB1c2UsIGNvcHksIG1vZGlmeSwgbWVyZ2UsIHB1Ymxpc2gsIGRpc3RyaWJ1dGUsIHN1Ymxp" +
+    "Y2Vuc2UsIGFuZC9vciBzZWxsDQpjb3BpZXMgb2YgdGhlIFNvZnR3YXJlLCBhbmQgdG8gcGVybWl0" +
+    "IHBlcnNvbnMgdG8gd2hvbSB0aGUgU29mdHdhcmUgaXMNCmZ1cm5pc2hlZCB0byBkbyBzbywgc3Vi" +
+    "amVjdCB0byB0aGUgZm9sbG93aW5nIGNvbmRpdGlvbnM6DQoNClRoZSBhYm92ZSBjb3B5cmlnaHQg" +
+    "bm90aWNlIGFuZCB0aGlzIHBlcm1pc3Npb24gbm90aWNlIHNoYWxsIGJlIGluY2x1ZGVkIGluIGFs" +
+    "bA0KY29waWVzIG9yIHN1YnN0YW50aWFsIHBvcnRpb25zIG9mIHRoZSBTb2Z0d2FyZS4NCg0KVEhF" +
+    "IFNPRlRXQVJFIElTIFBST1ZJREVEICJBUyBJUyIsIFdJVEhPVVQgV0FSUkFOVFkgT0YgQU5ZIEtJ" +
+    "TkQsIEVYUFJFU1MgT1INCklNUExJRUQsIElOQ0xVRElORyBCVVQgTk9UIExJTUlURUQgVE8gVEhF" +
+    "IFdBUlJBTlRJRVMgT0YgTUVSQ0hBTlRBQklMSVRZLA0KRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFS" +
+    "IFBVUlBPU0UgQU5EIE5PTklORlJJTkdFTUVOVC4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFDQpBVVRI" +
+    "T1JTIE9SIENPUFlSSUdIVCBIT0xERVJTIEJFIExJQUJMRSBGT1IgQU5ZIENMQUlNLCBEQU1BR0VT" +
+    "IE9SIE9USEVSDQpMSUFCSUxJVFksIFdIRVRIRVIgSU4gQU4gQUNUSU9OIE9GIENPTlRSQUNULCBU" +
+    "T1JUIE9SIE9USEVSV0lTRSwgQVJJU0lORyBGUk9NLA0KT1VUIE9GIE9SIElOIENPTk5FQ1RJT04g" +
+    "V0lUSCBUSEUgU09GVFdBUkUgT1IgVEhFIFVTRSBPUiBPVEhFUiBERUFMSU5HUyBJTiBUSEUNClNP" +
+    "RlRXQVJFLg0K",
+  "base64",
+).toString("utf8");
 const _AGENTS_TARGET_PATHS = [
   "AGENTS.global.md",
   "AGENTS.project-root.md",
@@ -229,6 +258,35 @@ async function scanForForbiddenToken(
   };
   await walk(root, "");
   return { pathMatches, payloadMatches };
+}
+
+function assertPhosphorAttribution(
+  topLevelNotices: string,
+  metadataBytes: Buffer,
+): void {
+  expect(topLevelNotices).toContain(EXPECTED_PHOSPHOR_SCOPE);
+  expect(topLevelNotices).toContain(
+    "- Scope: 1512 metadata records; no SVG assets.",
+  );
+  expect(topLevelNotices).toContain(EXPECTED_PHOSPHOR_LICENSE);
+  expect(topLevelNotices.split(EXPECTED_PHOSPHOR_LICENSE)).toHaveLength(2);
+  const licenseStart = topLevelNotices.indexOf(EXPECTED_PHOSPHOR_LICENSE);
+  const licenseBytes = Buffer.from(
+    topLevelNotices.slice(licenseStart, licenseStart + 1092),
+    "utf8",
+  );
+  expect(createHash("sha256").update(licenseBytes).digest("hex")).toBe(
+    "ddbe6082ec3cf979db47e5af549d2849c5d6182b3e005ef91ce1dbb9eb122f11",
+  );
+  expect(createHash("sha256").update(metadataBytes).digest("hex")).toBe(
+    "2399325233b277b5c97a80e6a5e8941154f5d057beee4e7613db87c87d700236",
+  );
+  const metadata = JSON.parse(metadataBytes.toString("utf8")) as {
+    iconCount: number;
+    icons: unknown[];
+  };
+  expect(metadata.iconCount).toBe(1512);
+  expect(metadata.icons).toHaveLength(1512);
 }
 
 afterEach(async () => {
@@ -826,6 +884,206 @@ describe("OMP Distribution Projection", () => {
     expect(topLevelNotices).toContain("# Third-Party Notices");
     expect(topLevelNotices).toContain("SBTD Workflow Onboard");
     expect(topLevelNotices).not.toContain("impeccable");
+    const metadataBytes = await readFile(
+      join(outputDirectory, PHOSPHOR_METADATA_ASSET),
+    );
+    assertPhosphorAttribution(topLevelNotices, metadataBytes);
+  });
+
+  it.each([
+    {
+      name: "缺失完整许可",
+      corrupt: (text: string) => text.replace(EXPECTED_PHOSPHOR_LICENSE, ""),
+    },
+    {
+      name: "许可截断",
+      corrupt: (text: string) =>
+        text.replace(
+          EXPECTED_PHOSPHOR_LICENSE,
+          EXPECTED_PHOSPHOR_LICENSE.slice(0, 128),
+        ),
+    },
+    {
+      name: "错误版权主体",
+      corrupt: (text: string) =>
+        text.replace(
+          "Copyright (c) 2023 Phosphor Icons",
+          "Copyright (c) 2024 Next Level Builder",
+        ),
+    },
+    {
+      name: "错误适用成员",
+      corrupt: (text: string) =>
+        text.replace(
+          EXPECTED_PHOSPHOR_SCOPE,
+          EXPECTED_PHOSPHOR_SCOPE.replace(
+            "phosphor-icons-upstream.json",
+            "google-fonts.csv",
+          ),
+        ),
+    },
+    {
+      name: "原文CRLF被归一化",
+      corrupt: (text: string) =>
+        text.replace(
+          EXPECTED_PHOSPHOR_LICENSE,
+          EXPECTED_PHOSPHOR_LICENSE.replaceAll("\r\n", "\n"),
+        ),
+    },
+  ])("Scenario: Phosphor通知损坏时check失败：$name", async ({ corrupt }) => {
+    const root = await fixtureRoot();
+    const options = {
+      packageRoot,
+      canonicalDirectory: join(packageRoot, "generated"),
+      outputDirectory: join(root, "generated-omp"),
+    };
+    await generateOmpProjection(options);
+    const noticePath = join(options.outputDirectory, "THIRD_PARTY_NOTICES.md");
+    const notice = await readFile(noticePath, "utf8");
+    const corrupted = corrupt(notice);
+    expect(corrupted).not.toBe(notice);
+    await writeFile(noticePath, corrupted);
+    const error = await expectKitError(
+      () => checkOmpProjection(options),
+      "GENERATED_DRIFT",
+    );
+    expect(error.details).toMatchObject({ target: "THIRD_PARTY_NOTICES.md" });
+  });
+
+  it("Scenario: 通知与manifest/report摘要同步篡改仍不满足独立归属验收", async () => {
+    const root = await fixtureRoot();
+    const outputDirectory = join(root, "generated-omp");
+    await generateOmpProjection({
+      packageRoot,
+      canonicalDirectory: join(packageRoot, "generated"),
+      outputDirectory,
+    });
+    const noticePath = join(outputDirectory, "THIRD_PARTY_NOTICES.md");
+    const manifestPath = join(outputDirectory, "manifest.json");
+    const reportPath = join(outputDirectory, "projection-report.json");
+    const notice = await readFile(noticePath, "utf8");
+    const metadataBytes = await readFile(
+      join(outputDirectory, PHOSPHOR_METADATA_ASSET),
+    );
+    assertPhosphorAttribution(notice, metadataBytes);
+    const manifest = ompProjectionManifestSchema.parse(
+      JSON.parse(await readFile(manifestPath, "utf8")),
+    );
+    const report = JSON.parse(await readFile(reportPath, "utf8")) as {
+      generatedSha256: string;
+    };
+
+    for (const corruptedNotice of [
+      notice.replace(
+        EXPECTED_PHOSPHOR_LICENSE,
+        EXPECTED_PHOSPHOR_LICENSE.slice(0, 128),
+      ),
+      notice.replace(
+        EXPECTED_PHOSPHOR_SCOPE,
+        EXPECTED_PHOSPHOR_SCOPE.replace(
+          "phosphor-icons-upstream.json",
+          "google-fonts.csv",
+        ),
+      ),
+    ]) {
+      expect(corruptedNotice).not.toBe(notice);
+      const assets = {
+        ...manifest.assets,
+        "THIRD_PARTY_NOTICES.md": createHash("sha256")
+          .update(corruptedNotice)
+          .digest("hex"),
+      };
+      const generatedSha256 = createHash("sha256")
+        .update(
+          [
+            ...Object.entries(assets)
+              .sort(([left], [right]) => left.localeCompare(right))
+              .map(([path, digest]) => `${path}\0${digest}`),
+            ...Object.entries(manifest.overlayDigests)
+              .sort(([left], [right]) => left.localeCompare(right))
+              .map(([path, digest]) => `overlay:${path}\0${digest}`),
+          ].join("\n"),
+        )
+        .digest("hex");
+      await Promise.all([
+        writeFile(noticePath, corruptedNotice),
+        writeFile(
+          manifestPath,
+          `${JSON.stringify(
+            {
+              ...manifest,
+              assets,
+              projection: { ...manifest.projection, generatedSha256 },
+            },
+            null,
+            2,
+          )}\n`,
+        ),
+        writeFile(
+          reportPath,
+          `${JSON.stringify({ ...report, generatedSha256 }, null, 2)}\n`,
+        ),
+      ]);
+      const storedNotice = await readFile(noticePath, "utf8");
+      const storedManifest = ompProjectionManifestSchema.parse(
+        JSON.parse(await readFile(manifestPath, "utf8")),
+      );
+      const storedReport = JSON.parse(await readFile(reportPath, "utf8")) as {
+        generatedSha256: string;
+      };
+      expect(storedManifest.assets["THIRD_PARTY_NOTICES.md"]).toBe(
+        createHash("sha256").update(storedNotice).digest("hex"),
+      );
+      expect(storedManifest.projection.generatedSha256).toBe(generatedSha256);
+      expect(storedReport.generatedSha256).toBe(generatedSha256);
+      expect(() =>
+        assertPhosphorAttribution(storedNotice, metadataBytes),
+      ).toThrow();
+    }
+  });
+
+  it("Scenario: 未保留Phosphor数据时不虚报该归属", async () => {
+    const { kitRoot, canonicalDirectory, outputDirectory } =
+      await syntheticFixture({});
+    await generateOmpProjection({
+      packageRoot: kitRoot,
+      canonicalDirectory,
+      outputDirectory,
+    });
+    const notice = await readFile(
+      join(outputDirectory, "THIRD_PARTY_NOTICES.md"),
+      "utf8",
+    );
+    expect(notice).not.toContain("@phosphor-icons/core");
+    expect(notice).not.toContain("Copyright (c) 2023 Phosphor Icons");
+  });
+
+  it("Scenario: 未核实的Phosphor数据字节不能复用固定归属", async () => {
+    const { kitRoot, canonicalDirectory, outputDirectory } =
+      await syntheticFixture({
+        extraAssets: { [PHOSPHOR_METADATA_ASSET]: "{}\n" },
+        extraDecisions: [
+          {
+            path: PHOSPHOR_METADATA_ASSET,
+            owner: "third-party",
+            policy: "include",
+          },
+        ],
+      });
+    const error = await expectKitError(
+      () =>
+        generateOmpProjection({
+          packageRoot: kitRoot,
+          canonicalDirectory,
+          outputDirectory,
+        }),
+      "PROJECTION_LEGAL_INVENTORY",
+    );
+    expect(error.details).toMatchObject({
+      path: PHOSPHOR_METADATA_ASSET,
+      expectedSha256:
+        "2399325233b277b5c97a80e6a5e8941154f5d057beee4e7613db87c87d700236",
+    });
   });
 
   it("Scenario: stable Skill 部分保留或孤儿 license 阻断 projection", async () => {
