@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "scope": "domain-modeling-only",
+  "owner": "third-party",
+  "supplier": {
+    "repository": "https://github.com/KunoLu/640-skills",
+    "revision": "3c835303c23d59d3157ca84121a92f1bd87d4997",
+    "path": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling"
+  },
+  "origin": {
+    "repository": "https://github.com/mattpocock/skills.git",
+    "sourceSubpath": "skills/engineering/domain-modeling",
+    "license": "MIT"
+  },
+  "base": {
+    "canonicalRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
+    "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+    "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+    "repositoryKey": "mattpocock-skills",
+    "repositoryRevision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+    "treeSha256": "731ecd11825453ec3d813ac26e7a082bb458bc332781c6dba18d7004468139d7",
+    "absent": ["GLOSSARY-FORMAT.md"]
+  },
+  "target": {
+    "repositoryKey": "mattpocock-skills-domain-modeling",
+    "repositoryRevision": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+    "treeSha256": "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2",
+    "absent": ["CONTEXT-FORMAT.md"]
+  },
+  "license": {
+    "path": "licenses/mattpocock-skills-LICENSE",
+    "blob": "f1dd2c09108dde1a5f56097cee8461b3ea834499",
+    "mode": "100644",
+    "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+    "bytes": 1068
+  },
+  "files": [
+    {
+      "path": "ADR-FORMAT.md",
+      "operation": "keep",
+      "before": {
+        "blob": "d7e61f30a9fd8ca70d9ee68f019c2a9ebf2d13f7",
+        "mode": "100644",
+        "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0",
+        "bytes": 2733
+      },
+      "target": {
+        "blob": "d7e61f30a9fd8ca70d9ee68f019c2a9ebf2d13f7",
+        "mode": "100644",
+        "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0",
+        "bytes": 2733
+      }
+    },
+    {
+      "path": "CONTEXT-FORMAT.md",
+      "operation": "delete",
+      "before": {
+        "blob": "79bbb32f6fda55758b377c980f72a6cb2b8c670e",
+        "mode": "100644",
+        "sha256": "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13",
+        "bytes": 2290
+      },
+      "target": null
+    },
+    {
+      "path": "GLOSSARY-FORMAT.md",
+      "operation": "add",
+      "before": null,
+      "target": {
+        "blob": "9c0b4c7a2e8507c23cbb5e0baa66d81699321cc6",
+        "mode": "100644",
+        "sha256": "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801",
+        "bytes": 2300
+      }
+    },
+    {
+      "path": "SKILL.md",
+      "operation": "replace",
+      "before": {
+        "blob": "9b97707e19ef1f590aada356f2b3f6bb881f91be",
+        "mode": "100644",
+        "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
+        "bytes": 3331
+      },
+      "target": {
+        "blob": "a4438c6879c517d1a08e2b5fbca049b632688dfe",
+        "mode": "100644",
+        "sha256": "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3",
+        "bytes": 3346
+      }
+    },
+    {
+      "path": "agents/openai.yaml",
+      "operation": "keep",
+      "before": {
+        "blob": "7f1522d2f11506ee205275ab7c282aa52366ecf6",
+        "mode": "100644",
+        "sha256": "f6bf2aa996c6e6f53fdd0708e18a0d16a56aed8322cca59fedbe3c0d2c75f06b",
+        "bytes": 101
+      },
+      "target": {
+        "blob": "7f1522d2f11506ee205275ab7c282aa52366ecf6",
+        "mode": "100644",
+        "sha256": "f6bf2aa996c6e6f53fdd0708e18a0d16a56aed8322cca59fedbe3c0d2c75f06b",
+        "bytes": 101
+      }
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import {
+  chmod,
+  cp,
   mkdir,
   mkdtemp,
   readdir,
@@ -11,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { stringify as stringifyYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { KitError, sha256 } from "../src/index.ts";
 import {
   checkOmpProjection,
@@ -1279,5 +1281,385 @@ describe("OMP Distribution Projection", () => {
       ).toString(),
     );
     expect(JSON.stringify(schema)).not.toContain("codex");
+  });
+});
+
+describe("domain-only third-party source selection", () => {
+  const prefix =
+    "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/";
+  const capsule = "omp-source-selections/domain-modeling";
+  const newRepository = "mattpocock-skills-domain-modeling";
+  interface Identity {
+    blob: string;
+    mode: string;
+    sha256: string;
+    bytes: number;
+  }
+  interface SelectionFixture {
+    owner: string;
+    supplier: { revision: string };
+    target: { repositoryRevision: string; absent: string[] };
+    files: {
+      path: string;
+      operation: string;
+      before: Identity | null;
+      target: Identity | null;
+    }[];
+  }
+  async function selectedFixture() {
+    const root = await fixtureRoot();
+    const kitRoot = join(root, "package");
+    await mkdir(kitRoot);
+    await cp(
+      join(packageRoot, "omp-distribution-map.yaml"),
+      join(kitRoot, "omp-distribution-map.yaml"),
+    );
+    await cp(join(packageRoot, "omp-overlays"), join(kitRoot, "omp-overlays"), {
+      recursive: true,
+    });
+    await cp(join(packageRoot, capsule), join(kitRoot, capsule), {
+      recursive: true,
+    });
+    return {
+      kitRoot,
+      options: {
+        packageRoot: kitRoot,
+        canonicalDirectory: join(packageRoot, "generated"),
+        outputDirectory: join(root, "output"),
+        sourceSelection: "domain-modeling" as const,
+      },
+    };
+  }
+  async function changeRecord(
+    kitRoot: string,
+    change: (record: SelectionFixture) => void,
+  ) {
+    const filename = join(kitRoot, capsule, "selection.json");
+    const record: SelectionFixture = JSON.parse(
+      await readFile(filename, "utf8"),
+    );
+    change(record);
+    await writeFile(filename, `${JSON.stringify(record, null, 2)}\n`);
+  }
+
+  it("keeps the old default output even when an unused capsule is invalid", async () => {
+    const fixture = await selectedFixture();
+    await changeRecord(fixture.kitRoot, (record) => {
+      record.owner = "kpi";
+    });
+    await generateOmpProjection({
+      packageRoot: fixture.kitRoot,
+      canonicalDirectory: fixture.options.canonicalDirectory,
+      outputDirectory: fixture.options.outputDirectory,
+    });
+    for (const filename of ["manifest.json", "projection-report.json"]) {
+      expect(
+        await readFile(join(fixture.options.outputDirectory, filename)),
+      ).toEqual(await readFile(join(packageRoot, "generated-omp", filename)));
+    }
+  });
+
+  it("ships exact D/A/M, MIT and a domain-only ledger while preserving ten old identities", async () => {
+    const fixture = await selectedFixture();
+    const { manifest, report } = await generateOmpProjection(fixture.options);
+    const root = fixture.options.outputDirectory;
+    expect(
+      Object.keys(manifest.assets)
+        .filter((p) => p.startsWith(prefix))
+        .map((p) => p.slice(prefix.length))
+        .sort(),
+    ).toEqual([
+      "ADR-FORMAT.md",
+      "GLOSSARY-FORMAT.md",
+      "SKILL.md",
+      "agents/openai.yaml",
+    ]);
+    expect(manifest.assets[`${prefix}GLOSSARY-FORMAT.md`]).toBe(
+      "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801",
+    );
+    expect(manifest.assets[`${prefix}SKILL.md`]).toBe(
+      "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3",
+    );
+    const stableBytes = await readFile(join(root, STABLE_MANIFEST_ASSET));
+    const stable = JSON.parse(stableBytes.toString("utf8"));
+    const old = ompProjectionManifestSchema.parse(
+      JSON.parse(
+        await readFile(
+          join(packageRoot, "generated-omp", "manifest.json"),
+          "utf8",
+        ),
+      ),
+    );
+    expect(manifest.canonical).toEqual(old.canonical);
+    expect(stable.stableSet).toBe("2026-09-14.6");
+    expect(stable.promotedAt).toBe("2026-09-14");
+    expect(stable.sourceSelection).toMatchObject({
+      kind: "mixed-source",
+      scope: "domain-modeling-only",
+      base: {
+        canonicalRevision: "1d82494d74f6df9bca7dccef2da409f87091883e",
+        canonicalManifestSha256:
+          "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+        policySha256:
+          "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+        stableSet: "2026-09-14.6",
+        promotedAt: "2026-09-14",
+      },
+      record: {
+        owner: "third-party",
+        supplier: { revision: "3c835303c23d59d3157ca84121a92f1bd87d4997" },
+        target: {
+          repositoryRevision: "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+          absent: ["CONTEXT-FORMAT.md"],
+        },
+      },
+    });
+    expect(
+      stable.sourceSelection.record.files.find(
+        (f: { path: string }) => f.path === "CONTEXT-FORMAT.md",
+      ),
+    ).toMatchObject({
+      operation: "delete",
+      before: {
+        blob: "79bbb32f6fda55758b377c980f72a6cb2b8c670e",
+        sha256:
+          "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13",
+        mode: "100644",
+      },
+      target: null,
+    });
+    expect(manifest.retainedProvenance.manifestSha256).toBe(
+      sha256(stableBytes),
+    );
+    expect(manifest.assets[STABLE_MANIFEST_ASSET]).toBe(sha256(stableBytes));
+    expect(manifest.retainedProvenance.skills["domain-modeling"]).toMatchObject(
+      {
+        repository: newRepository,
+        treeSha256:
+          "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2",
+      },
+    );
+    expect(
+      manifest.retainedProvenance.repositories[newRepository],
+    ).toMatchObject({
+      url: "https://github.com/mattpocock/skills.git",
+      revision: "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+      license: "MIT",
+    });
+    expect(
+      manifest.retainedProvenance.repositories["mattpocock-skills"],
+    ).toEqual(old.retainedProvenance.repositories["mattpocock-skills"]);
+    const otherSkills = Object.entries(old.retainedProvenance.skills).filter(
+      ([name, skill]) =>
+        name !== "domain-modeling" && skill.repository === "mattpocock-skills",
+    );
+    expect(otherSkills.map(([name]) => name).sort()).toEqual([
+      "codebase-design",
+      "diagnosing-bugs",
+      "grill-me",
+      "grill-with-docs",
+      "grilling",
+      "handoff",
+      "tdd",
+      "to-spec",
+      "to-tickets",
+      "writing-for-agents",
+    ]);
+    for (const [name, skill] of otherSkills)
+      expect(manifest.retainedProvenance.skills[name]).toEqual(skill);
+    const licensePath =
+      "onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE";
+    expect(sha256(await readFile(join(root, licensePath)))).toBe(
+      "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+    );
+    expect(report.sourceSelection).toMatchObject({
+      scope: "domain-modeling-only",
+      countsAndDecisions: "base-canonical-policy",
+      ledgerAssetPath: STABLE_MANIFEST_ASSET,
+      added: [`${prefix}GLOSSARY-FORMAT.md`],
+      removed: [`${prefix}CONTEXT-FORMAT.md`],
+      replaced: [`${prefix}SKILL.md`],
+    });
+    expect(report.sourceSelection?.inputSha256).toBe(
+      sha256(await readFile(join(fixture.kitRoot, capsule, "selection.json"))),
+    );
+    const notices = await readFile(
+      join(root, "THIRD_PARTY_NOTICES.md"),
+      "utf8",
+    );
+    expect(notices).toContain(
+      "https://github.com/mattpocock/skills.git@4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+    );
+    expect(notices).toContain(
+      "https://github.com/mattpocock/skills.git@3cca18b368ae95cdbdebbff572ccafa662551015",
+    );
+    assertPhosphorAttribution(
+      notices,
+      await readFile(join(root, PHOSPHOR_METADATA_ASSET)),
+    );
+    await checkOmpProjection(fixture.options);
+    stable.sourceSelection.record.owner = "kpi";
+    await writeFile(join(root, STABLE_MANIFEST_ASSET), JSON.stringify(stable));
+    await expectKitError(
+      () => checkOmpProjection(fixture.options),
+      "GENERATED_DRIFT",
+    );
+  });
+
+  it.each([
+    {
+      name: "伪KPI",
+      mutate: (r: SelectionFixture) => {
+        r.owner = "kpi";
+      },
+    },
+    {
+      name: "错误供应快照",
+      mutate: (r: SelectionFixture) => {
+        r.supplier.revision = "0".repeat(40);
+      },
+    },
+    {
+      name: "错误原仓revision",
+      mutate: (r: SelectionFixture) => {
+        r.target.repositoryRevision = "0".repeat(40);
+      },
+    },
+    {
+      name: "逃逸路径",
+      mutate: (r: SelectionFixture) => {
+        const f = r.files[0];
+        if (f) f.path = "../../escape.md";
+      },
+    },
+    {
+      name: "部分树",
+      mutate: (r: SelectionFixture) => {
+        r.files = r.files.filter((f) => f.path !== "ADR-FORMAT.md");
+      },
+    },
+    {
+      name: "删除目标仍存在",
+      mutate: (r: SelectionFixture) => {
+        r.target.absent = [];
+      },
+    },
+    {
+      name: "过期删除前像",
+      mutate: (r: SelectionFixture) => {
+        const f = r.files.find((f) => f.operation === "delete");
+        if (f?.before) f.before.sha256 = "0".repeat(64);
+      },
+    },
+    {
+      name: "错误blob",
+      mutate: (r: SelectionFixture) => {
+        const f = r.files.find((f) => f.operation === "add");
+        if (f?.target) f.target.blob = "0".repeat(40);
+      },
+    },
+  ])("rejects $name without replacing prior output", async ({ mutate }) => {
+    const fixture = await selectedFixture();
+    await changeRecord(fixture.kitRoot, mutate);
+    await writeTree(fixture.options.outputDirectory, {
+      "keep.txt": "existing-output\n",
+    });
+    await expectKitError(
+      () => generateOmpProjection(fixture.options),
+      "PROJECTION_POLICY_INVALID",
+    );
+    expect(
+      await readFile(join(fixture.options.outputDirectory, "keep.txt"), "utf8"),
+    ).toBe("existing-output\n");
+  });
+
+  it.each([
+    "hash",
+    "mode",
+    "symlink",
+    "missing",
+    "extra",
+  ])("rejects source file %s drift", async (kind) => {
+    const fixture = await selectedFixture();
+    const filename = join(fixture.kitRoot, capsule, "GLOSSARY-FORMAT.md");
+    if (kind === "hash") await writeFile(filename, "tampered\n");
+    if (kind === "mode") await chmod(filename, 0o755);
+    if (kind === "symlink") {
+      await rm(filename);
+      await symlink(join(packageRoot, capsule, "GLOSSARY-FORMAT.md"), filename);
+    }
+    if (kind === "missing") await rm(filename);
+    if (kind === "extra")
+      await writeFile(
+        join(fixture.kitRoot, capsule, "extra.md"),
+        "unexpected\n",
+      );
+    await expectKitError(
+      () => generateOmpProjection(fixture.options),
+      "PROJECTION_POLICY_INVALID",
+    );
+  });
+
+  it("rejects forged per-file hashes against the independently fixed whole-tree anchor", async () => {
+    const fixture = await selectedFixture();
+    const filename = join(fixture.kitRoot, capsule, "SKILL.md");
+    const bytes = Buffer.concat([
+      await readFile(filename),
+      Buffer.from("\nforged\n"),
+    ]);
+    await writeFile(filename, bytes);
+    await changeRecord(fixture.kitRoot, (record) => {
+      const row = record.files.find((f) => f.path === "SKILL.md");
+      if (!row?.target) throw new Error("fixture target missing");
+      row.target.bytes = bytes.length;
+      row.target.sha256 = sha256(bytes);
+      row.target.blob = createHash("sha1")
+        .update(`blob ${bytes.length}\0`)
+        .update(bytes)
+        .digest("hex");
+    });
+    await expectKitError(
+      () => generateOmpProjection(fixture.options),
+      "PROJECTION_POLICY_INVALID",
+    );
+  });
+
+  it.each([
+    "fake-owner",
+    "partial-tree",
+  ])("rejects altered base policy %s before replacing output", async (kind) => {
+    const fixture = await selectedFixture();
+    const filename = join(fixture.kitRoot, "omp-distribution-map.yaml");
+    const map: {
+      decisions: {
+        path: string;
+        owner: string;
+        policy: string;
+        reason?: string;
+      }[];
+    } = parseYaml(await readFile(filename, "utf8"));
+    const decision = map.decisions.find(
+      (entry) => entry.path === `${prefix}ADR-FORMAT.md`,
+    );
+    if (!decision) throw new Error("fixture domain decision missing");
+    if (kind === "fake-owner") {
+      decision.owner = "kpi";
+    } else {
+      decision.policy = "omit";
+      decision.reason = "negative partial-tree fixture";
+    }
+    await writeFile(filename, stringifyYaml(map));
+    await writeTree(fixture.options.outputDirectory, {
+      "keep.txt": "existing-output\n",
+    });
+    await expectKitError(
+      () => generateOmpProjection(fixture.options),
+      kind === "fake-owner"
+        ? "PROJECTION_POLICY_INVALID"
+        : "PROJECTION_LEGAL_INVENTORY",
+    );
+    expect(
+      await readFile(join(fixture.options.outputDirectory, "keep.txt"), "utf8"),
+    ).toBe("existing-output\n");
   });
 });

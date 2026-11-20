@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { Stats } from "node:fs";
 import {
   lstat,
@@ -216,6 +216,7 @@ export interface OmpProjectionReport {
     readonly matches: 0;
     readonly canonicalRuntimeMatches: number;
   };
+  readonly sourceSelection?: DomainSelectionSummary;
 }
 
 export interface GeneratedOmpProjection {
@@ -227,6 +228,7 @@ export interface GenerateOmpProjectionOptions {
   readonly packageRoot: string;
   readonly canonicalDirectory: string;
   readonly outputDirectory: string;
+  readonly sourceSelection?: "domain-modeling";
 }
 
 interface CanonicalStableSkill {
@@ -285,6 +287,375 @@ const canonicalStableManifestSchema = z
     ),
   })
   .strict();
+
+const DOMAIN_SOURCE_ROOT = "omp-source-selections/domain-modeling";
+const DOMAIN_SKILL_PREFIX = `${STABLE_SKILLS_PREFIX}domain-modeling/`;
+const DOMAIN_BASE_MANIFEST_SHA256 =
+  "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404";
+const DOMAIN_BASE_POLICY_SHA256 =
+  "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f";
+const domainFileIdentitySchema = z
+  .object({
+    blob: z.string().regex(/^[0-9a-f]{40}$/),
+    mode: z.literal("100644"),
+    sha256: sha256HexSchema,
+    bytes: z.number().int().nonnegative(),
+  })
+  .strict();
+const domainSelectionSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    scope: z.literal("domain-modeling-only"),
+    owner: z.literal("third-party"),
+    supplier: z
+      .object({
+        repository: z.literal("https://github.com/KunoLu/640-skills"),
+        revision: z.literal("3c835303c23d59d3157ca84121a92f1bd87d4997"),
+        path: z.literal(
+          "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling",
+        ),
+      })
+      .strict(),
+    origin: z
+      .object({
+        repository: z.literal("https://github.com/mattpocock/skills.git"),
+        sourceSubpath: z.literal("skills/engineering/domain-modeling"),
+        license: z.literal("MIT"),
+      })
+      .strict(),
+    base: z
+      .object({
+        canonicalRevision: z.literal(
+          "1d82494d74f6df9bca7dccef2da409f87091883e",
+        ),
+        canonicalManifestSha256: z.literal(DOMAIN_BASE_MANIFEST_SHA256),
+        policySha256: z.literal(DOMAIN_BASE_POLICY_SHA256),
+        repositoryKey: z.literal("mattpocock-skills"),
+        repositoryRevision: z.literal(
+          "3cca18b368ae95cdbdebbff572ccafa662551015",
+        ),
+        treeSha256: z.literal(
+          "731ecd11825453ec3d813ac26e7a082bb458bc332781c6dba18d7004468139d7",
+        ),
+        absent: z.tuple([z.literal("GLOSSARY-FORMAT.md")]),
+      })
+      .strict(),
+    target: z
+      .object({
+        repositoryKey: z.literal("mattpocock-skills-domain-modeling"),
+        repositoryRevision: z.literal(
+          "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+        ),
+        treeSha256: z.literal(
+          "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2",
+        ),
+        absent: z.tuple([z.literal("CONTEXT-FORMAT.md")]),
+      })
+      .strict(),
+    license: domainFileIdentitySchema.extend({
+      path: z.literal("licenses/mattpocock-skills-LICENSE"),
+      blob: z.literal("f1dd2c09108dde1a5f56097cee8461b3ea834499"),
+      sha256: z.literal(
+        "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+      ),
+      bytes: z.literal(1068),
+    }),
+    files: z
+      .array(
+        z
+          .object({
+            path: z.enum([
+              "ADR-FORMAT.md",
+              "CONTEXT-FORMAT.md",
+              "GLOSSARY-FORMAT.md",
+              "SKILL.md",
+              "agents/openai.yaml",
+            ]),
+            operation: z.enum(["keep", "delete", "add", "replace"]),
+            before: domainFileIdentitySchema.nullable(),
+            target: domainFileIdentitySchema.nullable(),
+          })
+          .strict(),
+      )
+      .length(5),
+  })
+  .strict();
+type DomainSelectionRecord = z.infer<typeof domainSelectionSchema>;
+interface DomainSelectionReceipt {
+  readonly kind: "mixed-source";
+  readonly scope: "domain-modeling-only";
+  readonly base: {
+    readonly canonicalRevision: string;
+    readonly canonicalManifestSha256: string;
+    readonly policySha256: string;
+    readonly stableSet: string;
+    readonly promotedAt: string;
+  };
+  readonly inputPath: string;
+  readonly inputSha256: string;
+  readonly record: DomainSelectionRecord;
+}
+interface DomainSelectionSummary {
+  readonly scope: "domain-modeling-only";
+  readonly countsAndDecisions: "base-canonical-policy";
+  readonly ledgerAssetPath: string;
+  readonly inputSha256: string;
+  readonly added: readonly string[];
+  readonly removed: readonly string[];
+  readonly replaced: readonly string[];
+}
+
+function requireDomainSource(
+  condition: unknown,
+  reason: string,
+): asserts condition {
+  if (!condition) {
+    throw projectionError(
+      "PROJECTION_POLICY_INVALID",
+      "domain-modeling source selection is invalid",
+      { selection: "domain-modeling", reason },
+    );
+  }
+}
+
+async function readDomainSourceFile(
+  packageRoot: string,
+  relativePath: string,
+): Promise<Buffer> {
+  let current = packageRoot;
+  const segments = relativePath.split("/");
+  for (let index = -1; index < segments.length; index++) {
+    if (index >= 0) current = join(current, segments[index] ?? "");
+    const info = await lstat(current).catch(() => undefined);
+    const last = index === segments.length - 1;
+    requireDomainSource(
+      info !== undefined &&
+        !info.isSymbolicLink() &&
+        (last ? info.isFile() : info.isDirectory()),
+      `non-regular or missing source: ${relativePath}`,
+    );
+    if (last) {
+      requireDomainSource(
+        (info.mode & 0o7777) === 0o644,
+        `source mode differs: ${relativePath}`,
+      );
+    }
+  }
+  return readFile(current);
+}
+
+function verifyDomainIdentity(
+  bytes: Buffer,
+  expected: z.infer<typeof domainFileIdentitySchema>,
+  path: string,
+): void {
+  const blob = createHash("sha1")
+    .update(`blob ${bytes.length}\0`)
+    .update(bytes)
+    .digest("hex");
+  requireDomainSource(
+    bytes.length === expected.bytes &&
+      sha256(bytes) === expected.sha256 &&
+      blob === expected.blob,
+    `file identity differs: ${path}`,
+  );
+}
+
+// Same path-segment ordering and length framing as index.ts's stable tree hash.
+function domainTreeDigest(files: ReadonlyMap<string, Buffer>): string {
+  const hash = createHash("sha256");
+  const length = Buffer.alloc(8);
+  const paths = [...files.keys()].sort((left, right) => {
+    const a = left.split("/");
+    const b = right.split("/");
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if ((a[i] ?? "") < (b[i] ?? "")) return -1;
+      if ((a[i] ?? "") > (b[i] ?? "")) return 1;
+    }
+    return a.length - b.length;
+  });
+  for (const path of paths) {
+    const content = files.get(path);
+    requireDomainSource(content !== undefined, "incomplete selected tree");
+    const pathBytes = Buffer.from(path);
+    length.writeBigUInt64BE(BigInt(pathBytes.length));
+    hash.update(length).update(pathBytes);
+    length.writeBigUInt64BE(BigInt(content.length));
+    hash.update(length).update(content);
+  }
+  return hash.digest("hex");
+}
+
+async function selectDomainModelingSource(
+  packageRoot: string,
+  canonicalRoot: string,
+  stable: CanonicalStableManifest,
+  assets: Map<string, Buffer>,
+  repositories: Readonly<Record<string, CanonicalStableRepository>>,
+  skills: Readonly<Record<string, CanonicalStableSkill>>,
+): Promise<{
+  repositories: Readonly<Record<string, CanonicalStableRepository>>;
+  skills: Readonly<Record<string, CanonicalStableSkill>>;
+  receipt: DomainSelectionReceipt;
+}> {
+  const inputPath = `${DOMAIN_SOURCE_ROOT}/selection.json`;
+  const inputBytes = await readDomainSourceFile(packageRoot, inputPath);
+  let json: unknown;
+  try {
+    json = JSON.parse(inputBytes.toString("utf8"));
+  } catch {
+    requireDomainSource(false, "selection.json is not JSON");
+  }
+  const parsed = domainSelectionSchema.safeParse(json);
+  requireDomainSource(
+    parsed.success,
+    "selection record violates fixed contract",
+  );
+  const record = parsed.data;
+  const capsuleNames = (await readdir(join(packageRoot, DOMAIN_SOURCE_ROOT)))
+    .sort()
+    .join("\0");
+  requireDomainSource(
+    capsuleNames ===
+      ["GLOSSARY-FORMAT.md", "SKILL.md", "selection.json"].join("\0"),
+    "unexpected or missing capsule member",
+  );
+  const oldSkill = skills["domain-modeling"];
+  const oldRepository = repositories[record.base.repositoryKey];
+  requireDomainSource(
+    oldSkill !== undefined &&
+      oldSkill.repository === record.base.repositoryKey &&
+      oldSkill.sourceSubpath === record.origin.sourceSubpath &&
+      oldSkill.stablePath === "skills/domain-modeling" &&
+      oldSkill.treeSha256 === record.base.treeSha256 &&
+      oldRepository !== undefined &&
+      oldRepository.url === record.origin.repository &&
+      oldRepository.revision === record.base.repositoryRevision &&
+      oldRepository.license === "MIT" &&
+      repositories[record.target.repositoryKey] === undefined,
+    "stale or conflicting base source identity",
+  );
+  requireDomainSource(
+    oldRepository.licenseFiles.length === 1 &&
+      oldRepository.licenseFiles[0]?.source === "LICENSE" &&
+      oldRepository.licenseFiles[0]?.stablePath === record.license.path,
+    "MIT license declaration differs",
+  );
+  const licensePath = `${STABLE_LICENSES_PREFIX}mattpocock-skills-LICENSE`;
+  const licenseBytes = assets.get(licensePath);
+  requireDomainSource(licenseBytes !== undefined, "MIT notice is not retained");
+  verifyDomainIdentity(licenseBytes, record.license, licensePath);
+  const expectedOperations = {
+    "ADR-FORMAT.md": "keep",
+    "CONTEXT-FORMAT.md": "delete",
+    "GLOSSARY-FORMAT.md": "add",
+    "SKILL.md": "replace",
+    "agents/openai.yaml": "keep",
+  } as const;
+  const seen = new Set<string>();
+  const before = new Map<string, Buffer>();
+  const target = new Map<string, Buffer>();
+  for (const file of record.files) {
+    requireDomainSource(
+      !seen.has(file.path) && file.operation === expectedOperations[file.path],
+      "duplicate or unexpected selection operation",
+    );
+    seen.add(file.path);
+    const old = assets.get(`${DOMAIN_SKILL_PREFIX}${file.path}`);
+    if (file.operation === "add") {
+      requireDomainSource(
+        file.before === null && old === undefined,
+        "add preimage exists",
+      );
+    } else {
+      requireDomainSource(
+        file.before !== null && old !== undefined,
+        "missing preimage",
+      );
+      verifyDomainIdentity(old, file.before, file.path);
+      const info = await lstat(
+        join(canonicalRoot, DOMAIN_SKILL_PREFIX, file.path),
+      );
+      requireDomainSource(
+        info.isFile() && (info.mode & 0o7777) === 0o644,
+        "base file mode differs",
+      );
+      before.set(file.path, old);
+    }
+    if (file.operation === "delete") {
+      requireDomainSource(file.target === null, "deleted path still in target");
+    } else {
+      requireDomainSource(file.target !== null, "target identity missing");
+      const bytes =
+        file.operation === "keep"
+          ? old
+          : await readDomainSourceFile(
+              packageRoot,
+              `${DOMAIN_SOURCE_ROOT}/${file.path}`,
+            );
+      requireDomainSource(bytes !== undefined, "kept source missing");
+      verifyDomainIdentity(bytes, file.target, file.path);
+      target.set(file.path, bytes);
+    }
+  }
+  const retainedDomainPaths = [...assets.keys()].filter((path) =>
+    path.startsWith(DOMAIN_SKILL_PREFIX),
+  );
+  requireDomainSource(
+    retainedDomainPaths.length === before.size &&
+      before.size === 4 &&
+      target.size === 4 &&
+      !before.has(record.base.absent[0]) &&
+      !target.has(record.target.absent[0]) &&
+      domainTreeDigest(before) === record.base.treeSha256 &&
+      domainTreeDigest(target) === record.target.treeSha256,
+    "selected whole tree or absence proof differs",
+  );
+  const nextSkills: Record<string, CanonicalStableSkill> = {
+    ...skills,
+    "domain-modeling": {
+      ...oldSkill,
+      repository: record.target.repositoryKey,
+      treeSha256: record.target.treeSha256,
+    },
+  };
+  const nextRepositories: Record<string, CanonicalStableRepository> = {
+    ...repositories,
+    [record.target.repositoryKey]: {
+      ...oldRepository,
+      revision: record.target.repositoryRevision,
+    },
+  };
+  if (
+    !Object.values(nextSkills).some(
+      (skill) => skill.repository === record.base.repositoryKey,
+    )
+  ) {
+    delete nextRepositories[record.base.repositoryKey];
+  }
+  // All source/whole-tree checks precede mutation; no generated files exist yet.
+  for (const path of retainedDomainPaths) assets.delete(path);
+  for (const [path, bytes] of target)
+    assets.set(`${DOMAIN_SKILL_PREFIX}${path}`, bytes);
+  return {
+    repositories: nextRepositories,
+    skills: nextSkills,
+    receipt: {
+      kind: "mixed-source",
+      scope: "domain-modeling-only",
+      base: {
+        canonicalRevision: record.base.canonicalRevision,
+        canonicalManifestSha256: DOMAIN_BASE_MANIFEST_SHA256,
+        policySha256: DOMAIN_BASE_POLICY_SHA256,
+        stableSet: stable.stableSet,
+        promotedAt: stable.promotedAt,
+      },
+      inputPath,
+      inputSha256: sha256(inputBytes),
+      record,
+    },
+  };
+}
 
 function projectionError(
   code:
@@ -735,7 +1106,7 @@ async function writeSnapshot(
       legalViolations.push(name);
     }
   }
-  const { repositories: retainedRepositories, skills: retainedSkills } =
+  let { repositories: retainedRepositories, skills: retainedSkills } =
     retainedStableSelection(canonicalStable, outputPaths);
   for (const [repositoryId, repository] of Object.entries(
     canonicalStable.repositories,
@@ -757,11 +1128,35 @@ async function writeSnapshot(
     );
   }
 
+  let sourceSelection: DomainSelectionReceipt | undefined;
+  if (options.sourceSelection === "domain-modeling") {
+    requireDomainSource(
+      canonicalManifestSha256 === DOMAIN_BASE_MANIFEST_SHA256 &&
+        policySha256 === DOMAIN_BASE_POLICY_SHA256 &&
+        sha256(canonicalStableBytes) ===
+          canonicalManifest.assets[EMBEDDED_STABLE_MANIFEST_PATH],
+      "canonical base or policy differs from the pinned preimage",
+    );
+    const selected = await selectDomainModelingSource(
+      packageRoot,
+      canonicalRoot,
+      canonicalStable,
+      retainedAssets,
+      retainedRepositories,
+      retainedSkills,
+    );
+    retainedRepositories = selected.repositories;
+    retainedSkills = selected.skills;
+    sourceSelection = selected.receipt;
+  }
   // Derived KPi-owned outputs bind the retained decision set.
-  const retainedStableManifest: CanonicalStableManifest = {
+  const retainedStableManifest: CanonicalStableManifest & {
+    sourceSelection?: DomainSelectionReceipt;
+  } = {
     schemaVersion: 1,
     stableSet: canonicalStable.stableSet,
     promotedAt: canonicalStable.promotedAt,
+    ...(sourceSelection === undefined ? {} : { sourceSelection }),
     repositories: retainedRepositories,
     skills: retainedSkills,
   };
@@ -964,6 +1359,19 @@ async function writeSnapshot(
     canonicalManifestSha256,
     retainedProvenanceManifestSha256: retainedProvenance.manifestSha256,
     generatedSha256,
+    ...(sourceSelection === undefined
+      ? {}
+      : {
+          sourceSelection: {
+            scope: sourceSelection.scope,
+            countsAndDecisions: "base-canonical-policy" as const,
+            ledgerAssetPath: EMBEDDED_STABLE_MANIFEST_PATH,
+            inputSha256: sourceSelection.inputSha256,
+            added: [`${DOMAIN_SKILL_PREFIX}GLOSSARY-FORMAT.md`],
+            removed: [`${DOMAIN_SKILL_PREFIX}CONTEXT-FORMAT.md`],
+            replaced: [`${DOMAIN_SKILL_PREFIX}SKILL.md`],
+          },
+        }),
     forbiddenTokenScan: {
       scannedPaths: retainedAssets.size + 2,
       scannedFiles: retainedAssets.size + 2,
@@ -1067,6 +1475,11 @@ async function writeSnapshot(
 export async function generateOmpProjection(
   options: GenerateOmpProjectionOptions,
 ): Promise<GeneratedOmpProjection> {
+  requireDomainSource(
+    options.sourceSelection === undefined ||
+      options.sourceSelection === "domain-modeling",
+    "unsupported source selection",
+  );
   const outputDirectory = resolve(options.outputDirectory);
   const outputParent = dirname(outputDirectory);
   await mkdir(outputParent, { recursive: true });
