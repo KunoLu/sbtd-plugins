@@ -13,6 +13,7 @@ await checkOmpProjection({
   packageRoot,
   canonicalDirectory: `${packageRoot}/generated`,
   outputDirectory: `${packageRoot}/generated-omp`,
+  sourceSelection: "r1-manuals",
 });
 await checkAgentPluginProjection({
   packageRoot,

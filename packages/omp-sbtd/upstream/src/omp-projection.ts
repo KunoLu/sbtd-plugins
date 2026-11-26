@@ -216,7 +216,7 @@ export interface OmpProjectionReport {
     readonly matches: 0;
     readonly canonicalRuntimeMatches: number;
   };
-  readonly sourceSelection?: DomainSelectionSummary;
+  readonly sourceSelection?: DomainSelectionSummary | R1ManualsSummary;
 }
 
 export interface GeneratedOmpProjection {
@@ -228,7 +228,7 @@ export interface GenerateOmpProjectionOptions {
   readonly packageRoot: string;
   readonly canonicalDirectory: string;
   readonly outputDirectory: string;
-  readonly sourceSelection?: "domain-modeling";
+  readonly sourceSelection?: "domain-modeling" | "r1-manuals";
 }
 
 interface CanonicalStableSkill {
@@ -405,15 +405,141 @@ interface DomainSelectionSummary {
   readonly replaced: readonly string[];
 }
 
+const R1_SOURCE_ROOT = "omp-source-selections/r1-manuals";
+const R1_PRESENTATION_PATH =
+  "onboard/runtime/templates/skills/sbtd-task/references/presentation.md";
+// Fixed before trees from the canonical manifest and target trees from the
+// supplier MANIFEST at 3c835303, independently matched to Matt's 4ae2317 bytes.
+const R1_MANUAL_TREES = {
+  grilling: {
+    sourceSubpath: "skills/productivity/grilling",
+    before: "b0af4cb93507011cab704853dc540ae142dec2a1256d374a38f4f196a04f7b50",
+    target: "3a7559839f45dfa4491f045d56647148c2b90f0e5ce0b5355301ef0e6d1bc428",
+  },
+  "to-tickets": {
+    sourceSubpath: "skills/engineering/to-tickets",
+    before: "7d82d3f4b50f4f57bafc8e361cdf6b06fde6f3b940bbd13199a184e98f0d34c4",
+    target: "98422855972ffb35bf33ce3eee1c1255f58e81cf801d6d3fc0185bb8e0351839",
+  },
+} as const;
+const r1ManualsSelectionSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    scope: z.literal("r1-manuals"),
+    owner: domainSelectionSchema.shape.owner,
+    supplier: domainSelectionSchema.shape.supplier.extend({
+      path: z.literal("sbtd-workflow-onboard/assets/external-skills/stable"),
+    }),
+    origin: domainSelectionSchema.shape.origin.omit({ sourceSubpath: true }),
+    base: domainSelectionSchema.shape.base.omit({
+      treeSha256: true,
+      absent: true,
+    }),
+    target: domainSelectionSchema.shape.target
+      .omit({ treeSha256: true, absent: true })
+      .extend({ repositoryKey: z.literal("mattpocock-skills-r1-manuals") }),
+    domainSelection: z
+      .object({
+        inputPath: z.literal(
+          "omp-source-selections/domain-modeling/selection.json",
+        ),
+        inputSha256: z.literal(
+          "6cb1e695b18e76aa771be1ab052085878763a96197205bc4a0f5874384814684",
+        ),
+      })
+      .strict(),
+    license: domainSelectionSchema.shape.license,
+    skills: z
+      .array(
+        z
+          .object({
+            name: z.enum(["grilling", "to-tickets"]),
+            sourceSubpath: z.enum([
+              "skills/productivity/grilling",
+              "skills/engineering/to-tickets",
+            ]),
+            beforeTreeSha256: sha256HexSchema,
+            targetTreeSha256: sha256HexSchema,
+            files: z.tuple([
+              z
+                .object({
+                  path: z.literal("SKILL.md"),
+                  operation: z.literal("replace"),
+                  before: domainFileIdentitySchema,
+                  target: domainFileIdentitySchema,
+                })
+                .strict(),
+              z
+                .object({
+                  path: z.literal("agents/openai.yaml"),
+                  operation: z.literal("keep"),
+                  before: domainFileIdentitySchema,
+                  target: domainFileIdentitySchema,
+                })
+                .strict(),
+            ]),
+          })
+          .strict(),
+      )
+      .length(2),
+    presentation: z
+      .object({
+        path: z.literal(R1_PRESENTATION_PATH),
+        supplierPath: z.literal(
+          "sbtd-workflow-onboard/templates/skills/sbtd-task/references/presentation.md",
+        ),
+        owner: z.literal("kpi"),
+        license: z.literal("Apache-2.0"),
+        operation: z.literal("replace"),
+        target: domainFileIdentitySchema.extend({
+          blob: z.literal("b4e12e1775c98915b816a69a082557d466166245"),
+          sha256: z.literal(
+            "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5",
+          ),
+          bytes: z.literal(6271),
+        }),
+      })
+      .strict(),
+  })
+  .strict();
+type R1ManualsRecord = z.infer<typeof r1ManualsSelectionSchema>;
+interface R1SourceOperation {
+  readonly path: string;
+  readonly operation: "add" | "delete" | "replace";
+  readonly source: "domain-modeling" | "r1-manuals" | "omp-overlay";
+  readonly targetSha256: string | null;
+}
+type R1FinalOwnership = Record<
+  string,
+  "mattpocock-skills" | "mattpocock-skills-r1-manuals"
+>;
+interface R1ManualsReceipt
+  extends Omit<DomainSelectionReceipt, "scope" | "record"> {
+  readonly scope: "r1-manuals";
+  readonly domain: {
+    readonly role: "validated-component-input";
+    readonly receipt: DomainSelectionReceipt;
+  };
+  readonly record: R1ManualsRecord;
+  readonly sourceOperations: readonly R1SourceOperation[];
+  readonly finalOwnership: Readonly<R1FinalOwnership>;
+}
+interface R1ManualsSummary extends Omit<DomainSelectionSummary, "scope"> {
+  readonly scope: "r1-manuals";
+  readonly sourceOperations: readonly R1SourceOperation[];
+  readonly finalOwnership: Readonly<R1FinalOwnership>;
+}
+
 function requireDomainSource(
   condition: unknown,
   reason: string,
+  selection: "domain-modeling" | "r1-manuals" = "domain-modeling",
 ): asserts condition {
   if (!condition) {
     throw projectionError(
       "PROJECTION_POLICY_INVALID",
-      "domain-modeling source selection is invalid",
-      { selection: "domain-modeling", reason },
+      `${selection} source selection is invalid`,
+      { selection, reason },
     );
   }
 }
@@ -421,6 +547,7 @@ function requireDomainSource(
 async function readDomainSourceFile(
   packageRoot: string,
   relativePath: string,
+  selection: "domain-modeling" | "r1-manuals" = "domain-modeling",
 ): Promise<Buffer> {
   let current = packageRoot;
   const segments = relativePath.split("/");
@@ -433,11 +560,13 @@ async function readDomainSourceFile(
         !info.isSymbolicLink() &&
         (last ? info.isFile() : info.isDirectory()),
       `non-regular or missing source: ${relativePath}`,
+      selection,
     );
     if (last) {
       requireDomainSource(
         (info.mode & 0o7777) === 0o644,
         `source mode differs: ${relativePath}`,
+        selection,
       );
     }
   }
@@ -448,6 +577,7 @@ function verifyDomainIdentity(
   bytes: Buffer,
   expected: z.infer<typeof domainFileIdentitySchema>,
   path: string,
+  selection: "domain-modeling" | "r1-manuals" = "domain-modeling",
 ): void {
   const blob = createHash("sha1")
     .update(`blob ${bytes.length}\0`)
@@ -458,6 +588,7 @@ function verifyDomainIdentity(
       sha256(bytes) === expected.sha256 &&
       blob === expected.blob,
     `file identity differs: ${path}`,
+    selection,
   );
 }
 
@@ -653,6 +784,222 @@ async function selectDomainModelingSource(
       inputPath,
       inputSha256: sha256(inputBytes),
       record,
+    },
+  };
+}
+
+async function selectR1ManualsSource(
+  packageRoot: string,
+  canonicalRoot: string,
+  assets: Map<string, Buffer>,
+  repositories: Readonly<Record<string, CanonicalStableRepository>>,
+  skills: Readonly<Record<string, CanonicalStableSkill>>,
+  domain: DomainSelectionReceipt,
+): Promise<{
+  repositories: Readonly<Record<string, CanonicalStableRepository>>;
+  skills: Readonly<Record<string, CanonicalStableSkill>>;
+  receipt: R1ManualsReceipt;
+}> {
+  const requireR1 = (condition: unknown, reason: string) =>
+    requireDomainSource(condition, reason, "r1-manuals");
+  const inputPath = `${R1_SOURCE_ROOT}/selection.json`;
+  const inputBytes = await readDomainSourceFile(
+    packageRoot,
+    inputPath,
+    "r1-manuals",
+  );
+  let json: unknown;
+  try {
+    json = JSON.parse(inputBytes.toString("utf8"));
+  } catch {
+    requireR1(false, "selection.json is not JSON");
+  }
+  const parsed = r1ManualsSelectionSchema.safeParse(json);
+  requireDomainSource(
+    parsed.success,
+    "selection record violates fixed contract",
+    "r1-manuals",
+  );
+  const record = parsed.data;
+  requireR1(
+    (await readdir(join(packageRoot, R1_SOURCE_ROOT))).sort().join("\0") ===
+      ["grilling", "selection.json", "to-tickets"].join("\0"),
+    "unexpected or missing capsule member",
+  );
+  requireR1(
+    domain.inputPath === record.domainSelection.inputPath &&
+      domain.inputSha256 === record.domainSelection.inputSha256,
+    "domain selection dependency differs",
+  );
+  const oldRepository = repositories[record.base.repositoryKey];
+  const domainSkill = skills["domain-modeling"];
+  requireDomainSource(
+    oldRepository !== undefined &&
+      oldRepository.url === record.origin.repository &&
+      oldRepository.revision === record.base.repositoryRevision &&
+      oldRepository.license === record.origin.license &&
+      oldRepository.licenseFiles.length === 1 &&
+      oldRepository.licenseFiles[0]?.source === "LICENSE" &&
+      oldRepository.licenseFiles[0]?.stablePath === record.license.path &&
+      repositories[record.target.repositoryKey] === undefined &&
+      domainSkill !== undefined &&
+      domainSkill.repository === domain.record.target.repositoryKey &&
+      domainSkill.treeSha256 === domain.record.target.treeSha256 &&
+      Object.values(skills).filter(
+        (skill) => skill.repository === domain.record.target.repositoryKey,
+      ).length === 1,
+    "stale or conflicting source or MIT identity",
+    "r1-manuals",
+  );
+  const licensePath = `${STABLE_LICENSES_PREFIX}mattpocock-skills-LICENSE`;
+  verifyDomainIdentity(
+    await readDomainSourceFile(canonicalRoot, licensePath, "r1-manuals"),
+    record.license,
+    licensePath,
+    "r1-manuals",
+  );
+  const presentation = await readDomainSourceFile(
+    packageRoot,
+    `${OMP_OVERLAY_ROOT}/${R1_PRESENTATION_PATH}`,
+    "r1-manuals",
+  );
+  verifyDomainIdentity(
+    presentation,
+    record.presentation.target,
+    R1_PRESENTATION_PATH,
+    "r1-manuals",
+  );
+  requireR1(
+    assets.get(R1_PRESENTATION_PATH)?.equals(presentation),
+    "presentation is not the fixed existing overlay",
+  );
+  const replacements = new Map<string, Buffer>();
+  const nextSkills: Record<string, CanonicalStableSkill> = {
+    ...skills,
+    "domain-modeling": {
+      ...domainSkill,
+      repository: record.target.repositoryKey,
+    },
+  };
+  const seen = new Set<string>();
+  for (const skill of record.skills) {
+    const pinned = R1_MANUAL_TREES[skill.name];
+    const oldSkill = skills[skill.name];
+    const prefix = `${STABLE_SKILLS_PREFIX}${skill.name}/`;
+    requireDomainSource(
+      !seen.has(skill.name) &&
+        skill.sourceSubpath === pinned.sourceSubpath &&
+        skill.beforeTreeSha256 === pinned.before &&
+        skill.targetTreeSha256 === pinned.target &&
+        oldSkill !== undefined &&
+        oldSkill.repository === record.base.repositoryKey &&
+        oldSkill.sourceSubpath === pinned.sourceSubpath &&
+        oldSkill.stablePath === `skills/${skill.name}` &&
+        oldSkill.treeSha256 === pinned.before &&
+        [...assets.keys()].filter((path) => path.startsWith(prefix)).length ===
+          2,
+      "stale, duplicate or partial manual tree",
+      "r1-manuals",
+    );
+    seen.add(skill.name);
+    requireR1(
+      (await readdir(join(packageRoot, R1_SOURCE_ROOT, skill.name))).join(
+        "\0",
+      ) === "SKILL.md",
+      "unexpected or missing manual capsule member",
+    );
+    const before = new Map<string, Buffer>();
+    const target = new Map<string, Buffer>();
+    for (const file of skill.files) {
+      const path = `${prefix}${file.path}`;
+      const old = await readDomainSourceFile(canonicalRoot, path, "r1-manuals");
+      requireR1(
+        assets.get(path)?.equals(old),
+        "manual preimage is not retained",
+      );
+      verifyDomainIdentity(old, file.before, path, "r1-manuals");
+      before.set(file.path, old);
+      const bytes =
+        file.operation === "keep"
+          ? old
+          : await readDomainSourceFile(
+              packageRoot,
+              `${R1_SOURCE_ROOT}/${skill.name}/${file.path}`,
+              "r1-manuals",
+            );
+      verifyDomainIdentity(bytes, file.target, path, "r1-manuals");
+      target.set(file.path, bytes);
+      if (file.operation === "replace") replacements.set(path, bytes);
+    }
+    requireR1(
+      domainTreeDigest(before) === pinned.before &&
+        domainTreeDigest(target) === pinned.target,
+      "selected whole manual tree differs from fixed source",
+    );
+    nextSkills[skill.name] = {
+      ...oldSkill,
+      repository: record.target.repositoryKey,
+      treeSha256: pinned.target,
+    };
+  }
+  const nextRepositories: Record<string, CanonicalStableRepository> = {
+    ...repositories,
+    [record.target.repositoryKey]: {
+      ...oldRepository,
+      revision: record.target.repositoryRevision,
+    },
+  };
+  delete nextRepositories[domain.record.target.repositoryKey];
+  const finalOwnership: R1FinalOwnership = {};
+  for (const [name, skill] of Object.entries(nextSkills)) {
+    if (
+      skill.repository === record.target.repositoryKey ||
+      skill.repository === record.base.repositoryKey
+    ) {
+      finalOwnership[name] = skill.repository;
+    }
+  }
+  // The domain selection and both complete manual trees are verified before writes.
+  for (const [path, bytes] of replacements) assets.set(path, bytes);
+  const sourceOperations: R1SourceOperation[] = [
+    ...domain.record.files.flatMap((file) =>
+      file.operation === "keep"
+        ? []
+        : [
+            {
+              path: `${DOMAIN_SKILL_PREFIX}${file.path}`,
+              operation: file.operation,
+              source: "domain-modeling" as const,
+              targetSha256: file.target?.sha256 ?? null,
+            },
+          ],
+    ),
+    ...record.skills.map((skill) => ({
+      path: `${STABLE_SKILLS_PREFIX}${skill.name}/SKILL.md`,
+      operation: "replace" as const,
+      source: "r1-manuals" as const,
+      targetSha256: skill.files[0].target.sha256,
+    })),
+    {
+      path: R1_PRESENTATION_PATH,
+      operation: "replace",
+      source: "omp-overlay",
+      targetSha256: record.presentation.target.sha256,
+    },
+  ];
+  return {
+    repositories: nextRepositories,
+    skills: nextSkills,
+    receipt: {
+      kind: "mixed-source",
+      scope: "r1-manuals",
+      base: domain.base,
+      inputPath,
+      inputSha256: sha256(inputBytes),
+      domain: { role: "validated-component-input", receipt: domain },
+      record,
+      sourceOperations,
+      finalOwnership,
     },
   };
 }
@@ -1128,8 +1475,8 @@ async function writeSnapshot(
     );
   }
 
-  let sourceSelection: DomainSelectionReceipt | undefined;
-  if (options.sourceSelection === "domain-modeling") {
+  let sourceSelection: DomainSelectionReceipt | R1ManualsReceipt | undefined;
+  if (options.sourceSelection !== undefined) {
     requireDomainSource(
       canonicalManifestSha256 === DOMAIN_BASE_MANIFEST_SHA256 &&
         policySha256 === DOMAIN_BASE_POLICY_SHA256 &&
@@ -1148,10 +1495,23 @@ async function writeSnapshot(
     retainedRepositories = selected.repositories;
     retainedSkills = selected.skills;
     sourceSelection = selected.receipt;
+    if (options.sourceSelection === "r1-manuals") {
+      const manuals = await selectR1ManualsSource(
+        packageRoot,
+        canonicalRoot,
+        retainedAssets,
+        retainedRepositories,
+        retainedSkills,
+        selected.receipt,
+      );
+      retainedRepositories = manuals.repositories;
+      retainedSkills = manuals.skills;
+      sourceSelection = manuals.receipt;
+    }
   }
   // Derived KPi-owned outputs bind the retained decision set.
   const retainedStableManifest: CanonicalStableManifest & {
-    sourceSelection?: DomainSelectionReceipt;
+    sourceSelection?: DomainSelectionReceipt | R1ManualsReceipt;
   } = {
     schemaVersion: 1,
     stableSet: canonicalStable.stableSet,
@@ -1164,8 +1524,7 @@ async function writeSnapshot(
     `${JSON.stringify(retainedStableManifest, null, 2)}\n`,
     "utf8",
   );
-  const retainedStableNotices =
-    renderRetainedStableNotices(retainedRepositories);
+  let retainedStableNotices = renderRetainedStableNotices(retainedRepositories);
   const stableNoticeEntries = Object.entries(retainedRepositories)
     .map(([name, repository]) =>
       [
@@ -1209,7 +1568,7 @@ async function writeSnapshot(
         },
       );
     }
-    topLevelNotices += [
+    const phosphorAttribution = [
       "",
       "## Retained metadata attribution",
       "",
@@ -1222,6 +1581,8 @@ async function writeSnapshot(
       "",
       PHOSPHOR_CORE_LICENSE,
     ].join("\n");
+    topLevelNotices += phosphorAttribution;
+    retainedStableNotices += phosphorAttribution;
   }
   retainedAssets.set(
     EMBEDDED_STABLE_MANIFEST_PATH,
@@ -1344,6 +1705,31 @@ async function writeSnapshot(
       (total, [, content]) => total + countForbiddenTokenOccurrences(content),
       0,
     );
+  let sourceSummary: DomainSelectionSummary | R1ManualsSummary | undefined;
+  if (sourceSelection !== undefined) {
+    sourceSummary = {
+      scope: "domain-modeling-only",
+      countsAndDecisions: "base-canonical-policy",
+      ledgerAssetPath: EMBEDDED_STABLE_MANIFEST_PATH,
+      inputSha256: sourceSelection.inputSha256,
+      added: [`${DOMAIN_SKILL_PREFIX}GLOSSARY-FORMAT.md`],
+      removed: [`${DOMAIN_SKILL_PREFIX}CONTEXT-FORMAT.md`],
+      replaced: [`${DOMAIN_SKILL_PREFIX}SKILL.md`],
+    };
+    if (sourceSelection.scope === "r1-manuals") {
+      sourceSummary = {
+        ...sourceSummary,
+        scope: "r1-manuals",
+        replaced: [
+          ...sourceSummary.replaced,
+          `${STABLE_SKILLS_PREFIX}grilling/SKILL.md`,
+          `${STABLE_SKILLS_PREFIX}to-tickets/SKILL.md`,
+        ],
+        sourceOperations: sourceSelection.sourceOperations,
+        finalOwnership: sourceSelection.finalOwnership,
+      };
+    }
+  }
   const report: OmpProjectionReport = {
     schemaVersion: 1,
     runtime: "omp",
@@ -1359,19 +1745,7 @@ async function writeSnapshot(
     canonicalManifestSha256,
     retainedProvenanceManifestSha256: retainedProvenance.manifestSha256,
     generatedSha256,
-    ...(sourceSelection === undefined
-      ? {}
-      : {
-          sourceSelection: {
-            scope: sourceSelection.scope,
-            countsAndDecisions: "base-canonical-policy" as const,
-            ledgerAssetPath: EMBEDDED_STABLE_MANIFEST_PATH,
-            inputSha256: sourceSelection.inputSha256,
-            added: [`${DOMAIN_SKILL_PREFIX}GLOSSARY-FORMAT.md`],
-            removed: [`${DOMAIN_SKILL_PREFIX}CONTEXT-FORMAT.md`],
-            replaced: [`${DOMAIN_SKILL_PREFIX}SKILL.md`],
-          },
-        }),
+    ...(sourceSummary === undefined ? {} : { sourceSelection: sourceSummary }),
     forbiddenTokenScan: {
       scannedPaths: retainedAssets.size + 2,
       scannedFiles: retainedAssets.size + 2,
@@ -1477,7 +1851,8 @@ export async function generateOmpProjection(
 ): Promise<GeneratedOmpProjection> {
   requireDomainSource(
     options.sourceSelection === undefined ||
-      options.sourceSelection === "domain-modeling",
+      options.sourceSelection === "domain-modeling" ||
+      options.sourceSelection === "r1-manuals",
     "unsupported source selection",
   );
   const outputDirectory = resolve(options.outputDirectory);

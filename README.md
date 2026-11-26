@@ -20,12 +20,12 @@ SBTD host-plugin monorepo: OMP and DSH host adapters, with the OMP workflow kit 
 
 | Package | Path | Role |
 | --- | --- | --- |
-| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Published **0.2.0-rc.2** on npm dist-tags `next` and `latest`. |
+| `@kunolu/omp-sbtd` | [`packages/omp-sbtd`](packages/omp-sbtd/README.md) | OMP SBTD workflow plugin. Provides `/sbtd`, an embedded kit, `doctor`, and `onboard`. Repository candidate **0.2.0-rc.3** is unpublished; **0.2.0-rc.2** is the recorded historical release. |
 | `@kunolu/dsh-sbtd` | [`packages/dsh-sbtd`](packages/dsh-sbtd/README.md) | DSH SBTD adapter: sbtd section, in-process state, `sbtd_plan`, `sbtd_review`, hooks, and `manuals/`. Repository version **0.2.0-rc.3** is in preparation, not yet published. Historical release: **0.2.0-rc.2**. Host pin `@deepseek-ai/dsh@0.2.0-rc.2`. |
 
 ## Install
 
-`@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on 2026-10-23 20:44:10 +08:00; dist-tags `next` and `latest` point to it. The command below pins that release. This version requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x version.
+The repository prepares **OMP 0.2.0-rc.3**, not yet published. Registry availability, current dist-tags and an rc.3 tag/release are not verified. Historical `@kunolu/omp-sbtd@0.2.0-rc.2` was published on 2026-10-23 20:44:10 +08:00, with `next` and `latest` pointing to it in that record. The command below retains that historical pin; it is not rc.3 installation evidence.
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
@@ -33,9 +33,9 @@ omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
 
 Prefer the exact RC over a moving dist-tag such as `@latest` for reproducibility. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-For 0.2.0-rc.2, the host peer is `@oh-my-pi/pi-coding-agent` `>=18 <19`; the development pin is `18.11.1`.
+The rc.3 candidate retains peer `@oh-my-pi/pi-coding-agent` `>=18 <19` and development pin `18.11.1`. Official 18.11.1 requires **Bun >=1.3.14** and its platform-native dependencies; Node/npm installation tooling is separate. Authorized candidate installation must use the exact reviewed local rc.3 tgz, not an assumed Registry version or source-directory link.
 
-> No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
+> Prior 18.11.1 evidence belongs to rc.2, including the local `0375a386…` tarball's SDK/RPC four-command result. Its CLI attempt stopped at the default-model preflight. None of this establishes rc.3 Host/CLI/TUI, model or trusted §4 acceptance. Historical D11 on 2026-10-19 recorded upstream latest 18.12.2; omp 17.x remains unsupported.
 
 DSH host pin: @deepseek-ai/dsh@0.2.0-rc.2.
 
@@ -64,7 +64,7 @@ Optional notes: [docs/assets/omp/sbtd-workflow-onboard-to-omp-plugin-sync.md](do
 
 This repository ships **two host plugins** only: `omp-sbtd` and `dsh-sbtd`.
 
-- **omp-sbtd** `0.2.0-rc.2` is published on npm dist-tags `next` and `latest`, with GitHub prerelease [`omp-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/omp-sbtd-v0.2.0-rc.2). The embedded kit is locked to **640-skills v2.0.2**. Sync, projection, and generation now live in `packages/omp-sbtd`; the former private kit workspace package was removed. Compatibility certification is decoupled from publish.
+- **omp-sbtd** `0.2.0-rc.3` is an unpublished candidate: R1 comprises **six file operations across four Skills**, not a whole-upstream upgrade. Canonical vendor/lock stays at **640-skills v2.0.2** (`1d82494d74f6df9bca7dccef2da409f87091883e`), with the closed `r1-manuals` partial selection. Historical rc.2 release: [`omp-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/omp-sbtd-v0.2.0-rc.2). Local build/pack results do not replace trusted `omp-section4-publish-gate` evidence for the same full artifact digest from immutable main; publication remains separately authorized. Compatibility certification stays decoupled from publication.
 - **dsh-sbtd** `0.2.0-rc.3` is in preparation: it includes [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127), with manuals at **640-skills v2.1.0** and the shared native-executor smoke fix. No rc.3 tag/release/npm publication is claimed. Historical `0.2.0-rc.2` release: [`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2). Shell plugin scheme **2a**, **T0–T5**, and the completed [0.2.0-rc.1/rc.2 task rows 0–G](docs/prd/dsh-sbtd-0.2.0-rc.1.md#3-任务表) remain documented history. Earlier technical design: [`v1.2`](docs/prd/dsh-sbtd-technical-design-and-task-breakdown.v1.2.md).
 - **session_compact** shipped in `omp-sbtd 0.2.0-rc.2`: PRD [#120](https://github.com/KunoLu/sbtd-plugins/pull/120) (`67465db`), decisions [#122](https://github.com/KunoLu/sbtd-plugins/pull/122) (`6843878`), and code [#123](https://github.com/KunoLu/sbtd-plugins/pull/123) (`008cea7`) are merged. It is a required event under `omp-extension-v2` / `omp-host-events-v2`; handoff proof requires a correlated event with `compactionEntry.method === "handoff"`.
 

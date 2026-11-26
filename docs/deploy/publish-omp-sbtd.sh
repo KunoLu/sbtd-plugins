@@ -11,7 +11,7 @@ Usage: publish-omp-sbtd.sh <package.tgz> [--tag next]
 
 Publishes one already-built @kunolu/omp-sbtd prerelease tarball to the public
 npm registry under the next dist-tag. Before running this command, complete the
-authoritative local exact-tarball four-command acceptance procedure.
+trusted §4 exact-tarball four-command gate for the same full artifact digest.
 
 Credential source, in priority order:
   1. <repository-root>/.env: a non-empty NPM_TOKEN=<token> assignment

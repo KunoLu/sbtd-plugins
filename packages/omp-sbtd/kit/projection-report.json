@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "runtime": "omp",
   "counts": {
-    "included": 262,
+    "included": 261,
     "omitted": 81,
-    "replaced": 9
+    "replaced": 10
   },
   "decisions": [
     {
@@ -1822,8 +1822,8 @@
     {
       "path": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md",
       "owner": "kpi",
-      "policy": "include",
-      "detail": "kpi"
+      "policy": "replace-with-overlay",
+      "detail": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md"
     },
     {
       "path": "onboard/runtime/templates/skills/sbtd-task/references/state.md",
@@ -2120,11 +2120,79 @@
       "detail": "third-party"
     }
   ],
-  "policySha256": "607d9c19a6c3750d6f3f4ece8e1a2f9bc7675491ce512b5dde814b4776dc0e8d",
-  "decisionsSha256": "49d4df8c9b65caad67e730d8e26502af0d790202993441bd1f8b72c82f5de180",
+  "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+  "decisionsSha256": "bbed74b7f811f728585c7c03b30abc3172e9b37382a405a0e8806344275f5146",
   "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
-  "retainedProvenanceManifestSha256": "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257",
-  "generatedSha256": "03d3bee1e85b505843d4acee2ff2d040021d7986ff6112fd0959454061a0db23",
+  "retainedProvenanceManifestSha256": "4eed938088d7415f2dbcac7a2a576baa9cbbc179184fca484493f54ef60e13ad",
+  "generatedSha256": "871756771756195451b3c2343e05a3cdf5c04c0d8033a1352f59584b03212e63",
+  "sourceSelection": {
+    "scope": "r1-manuals",
+    "countsAndDecisions": "base-canonical-policy",
+    "ledgerAssetPath": "onboard/runtime/assets/external-skills/stable/MANIFEST.json",
+    "inputSha256": "290bdc6379f3f55376ac24ac660598c3013408f376834d6d96ca92b739cd90c4",
+    "added": [
+      "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/GLOSSARY-FORMAT.md"
+    ],
+    "removed": [
+      "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/CONTEXT-FORMAT.md"
+    ],
+    "replaced": [
+      "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
+      "onboard/runtime/assets/external-skills/stable/skills/grilling/SKILL.md",
+      "onboard/runtime/assets/external-skills/stable/skills/to-tickets/SKILL.md"
+    ],
+    "sourceOperations": [
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/CONTEXT-FORMAT.md",
+        "operation": "delete",
+        "source": "domain-modeling",
+        "targetSha256": null
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/GLOSSARY-FORMAT.md",
+        "operation": "add",
+        "source": "domain-modeling",
+        "targetSha256": "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801"
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
+        "operation": "replace",
+        "source": "domain-modeling",
+        "targetSha256": "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3"
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/grilling/SKILL.md",
+        "operation": "replace",
+        "source": "r1-manuals",
+        "targetSha256": "a146842ed93ca43d833550fa9adf02e58cb63c83fea9d4b4522995b82242d4e2"
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/to-tickets/SKILL.md",
+        "operation": "replace",
+        "source": "r1-manuals",
+        "targetSha256": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995"
+      },
+      {
+        "path": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md",
+        "operation": "replace",
+        "source": "omp-overlay",
+        "targetSha256": "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5"
+      }
+    ],
+    "finalOwnership": {
+      "diagnosing-bugs": "mattpocock-skills",
+      "tdd": "mattpocock-skills",
+      "grill-me": "mattpocock-skills",
+      "grill-with-docs": "mattpocock-skills",
+      "grilling": "mattpocock-skills-r1-manuals",
+      "domain-modeling": "mattpocock-skills-r1-manuals",
+      "codebase-design": "mattpocock-skills",
+      "handoff": "mattpocock-skills",
+      "writing-for-agents": "mattpocock-skills",
+      "to-spec": "mattpocock-skills",
+      "to-tickets": "mattpocock-skills-r1-manuals"
+    }
+  },
   "forbiddenTokenScan": {
     "scannedPaths": 276,
     "scannedFiles": 276,

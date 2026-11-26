@@ -14,13 +14,16 @@ import { gunzipSync } from "node:zlib";
 import { z } from "zod";
 import {
   type EmbeddedKitManifestV2,
+  isStrictPosixRelativePath,
   verifyEmbeddedKitManifest,
 } from "../../src/kit/manifest.ts";
+import { reviewedR1ReleaseProfile } from "./reviewed-r1-release-profile.ts";
 import {
   hasForbiddenLocalPath,
   hasSensitiveFieldName,
   hasSensitiveText,
 } from "./sanitization.ts";
+import { getStagedOldLegalProfile } from "./staged-old-legal-profile.ts";
 
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
 const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9-]{2,127}$/;
@@ -550,7 +553,7 @@ type ParsedJsonNode =
 
 function parseJsonSource(source: string, context: string): ParsedJsonNode {
   let index = 0;
-  const fail = (message: string): never => {
+  const fail: (message: string) => never = (message) => {
     throw new P0ValidationError(
       "CANDIDATE_EQUIVALENCE_INVALID",
       `${context} is not a strictly parseable JSON payload: ${message}`,
@@ -2673,8 +2676,8 @@ function deterministicShuffle<T>(seed: string, values: readonly T[]): T[] {
 
 export interface DeterministicValueStudySchedule {
   readonly seed: string;
-  readonly arms: readonly z.infer<typeof randomizedArmSchema>[];
-  readonly judgments: readonly z.infer<typeof randomizedJudgeSchema>[];
+  readonly arms: z.infer<typeof randomizedArmSchema>[];
+  readonly judgments: z.infer<typeof randomizedJudgeSchema>[];
 }
 
 export function deterministicValueStudySchedule(
@@ -4288,7 +4291,7 @@ const rootPackageMetadataSchema = z
 export interface SbomFile {
   readonly path: string;
   readonly sha256: string;
-  readonly license?: "Apache-2.0" | "Apache-2.0";
+  readonly license?: "Apache-2.0" | "MIT";
 }
 
 export function renderPluginSpdxSbom(
@@ -4301,7 +4304,13 @@ export function renderPluginSpdxSbom(
   const files = [...input.files]
     .sort((left, right) => left.path.localeCompare(right.path))
     .map((file, index) => {
-      const license = file.license ?? "Apache-2.0";
+      const license = file.license;
+      if (license !== "Apache-2.0" && license !== "MIT")
+        throw new P0ValidationError(
+          "LICENSE_MISMATCH",
+          `SPDX file has no reviewed license classification: ${file.path}`,
+          "Classify every file from verified release provenance before rendering SPDX.",
+        );
       return {
         SPDXID: `SPDXRef-File-${String(index + 1).padStart(4, "0")}`,
         fileName: `./${file.path}`,
@@ -4688,9 +4697,9 @@ function summarizeExecution(
 ): Readonly<{
   status: "completed" | "failed" | "blocked";
   outcome: z.infer<typeof attemptOutcomeSchema>;
-  observedRequiredGates: readonly z.infer<typeof requiredGateSchema>[];
+  observedRequiredGates: z.infer<typeof requiredGateSchema>[];
   actualRouteCost: z.infer<typeof routeCostSchema> | undefined;
-  severeWorkflowOmissions: readonly string[];
+  severeWorkflowOmissions: string[];
   usage: Readonly<{ turns: number; tokenCount: number }>;
 }> {
   const terminalEvents = execution.events.filter(
@@ -5319,8 +5328,634 @@ export async function verifyEmbeddedKitReleaseIntegrity(
   return manifest;
 }
 
-function isVendoredOnboardFile(path: string): boolean {
-  return path.startsWith("kit/onboard/runtime/");
+const releaseApacheLicenseSha256 =
+  "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30";
+const releaseStableRoot = "onboard/runtime/assets/external-skills/stable";
+const releaseDomainRepository = "mattpocock-skills-domain-modeling";
+
+// Reviewed source identities, not a license default for a directory name.
+const releaseMitSources: Readonly<
+  Record<
+    string,
+    Readonly<{
+      url: string;
+      revision: string;
+      licensePath: string;
+      licenseSha256: string;
+    }>
+  >
+> = {
+  "mattpocock-skills": {
+    url: "https://github.com/mattpocock/skills.git",
+    revision: "3cca18b368ae95cdbdebbff572ccafa662551015",
+    licensePath: "licenses/mattpocock-skills-LICENSE",
+    licenseSha256:
+      "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+  },
+  "mattpocock-skills-domain-modeling": {
+    url: "https://github.com/mattpocock/skills.git",
+    revision: "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+    licensePath: "licenses/mattpocock-skills-LICENSE",
+    licenseSha256:
+      "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+  },
+  "ui-ux-pro-max-skill": {
+    url: "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git",
+    revision: "7f69fed6a2717900085f1bc3b263721f8ba025e2",
+    licensePath: "licenses/ui-ux-pro-max-skill-LICENSE",
+    licenseSha256:
+      "738f69dfa83db5c347c678fb9d90e560877059f0de93a327c39001bff92dc014",
+  },
+  ponytail: {
+    url: "https://github.com/DietrichGebert/ponytail.git",
+    revision: "356918eba965ee1eac64bd3a7f0dd02108350de5",
+    licensePath: "licenses/ponytail-LICENSE",
+    licenseSha256:
+      "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
+  },
+};
+
+// These Apache overlays have reviewed bytes; a new overlay needs its own review.
+const releaseApacheOverlays: Readonly<Record<string, string>> = {
+  "AGENTS.global.md":
+    "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
+  "AGENTS.project-root.md":
+    "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
+  "onboard/runtime/catalog.json":
+    "7f3bb2adff0d9f5fc5509b79190036fa34227ec2a987a01421ce327245f95e73",
+  "onboard/runtime/catalog.schema.json":
+    "f787490acf0209c8d09d260a0dd2c9ed3d20842d956ccab1a3095e0599c5489a",
+  "onboard/runtime/templates/project/gitignore.template":
+    "4972b0fbb303c99a05f060b3a43c3860c8b88ff4ad9d32a9b1b27e07eb9fb2b9",
+  "onboard/runtime/templates/skills/gherkin-bdd/SKILL.md":
+    "e5cf2a13a5a1b04d82bff09781f75cfef1663685e61093316e0eb6b4a1598435",
+  "onboard/runtime/templates/skills/sbtd-task/references/presentation.md":
+    "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5",
+  "onboard/runtime/templates/skills/seo-geo/references/schema-templates.md":
+    "25a876cbce2ab441e5f66eeac7b3d745fc6730c94287220bf6659ea0f8b1bbb4",
+  "onboard/runtime/templates/skills/web-ui-autotest-generator/README.md":
+    "58fc8fffbef881b0769b8fe2e9dbe5dc3919951b320e7459fd6278b38b3cbb8b",
+  "onboard/runtime/templates/skills/web-ui-autotest-generator/README.zh-CN.md":
+    "7f5e1aff2090739fdd358787e2ec68ddb5240d2f330a859fb62ee65f9d2cea7b",
+};
+
+function rejectReleaseLicense(reason: string): never {
+  throw new P0ValidationError(
+    "LICENSE_MISMATCH",
+    reason,
+    "Restore the reviewed source identity, retained license/notice and exact asset mapping; do not guess a file license.",
+  );
+}
+
+async function reviewedR1KitLicenses(
+  pluginRoot: string,
+  manifest: EmbeddedKitManifestV2,
+  files: P0FileSystem,
+): Promise<ReadonlyMap<string, "Apache-2.0" | "MIT">> {
+  const profile = reviewedR1ReleaseProfile;
+  const { generatedSha256, ...projectionContract } = manifest.projection;
+  if (
+    stableJson(manifest.canonical) !== stableJson(profile.canonical) ||
+    stableJson(projectionContract) !== stableJson(profile.projection)
+  )
+    rejectReleaseLicense(
+      "The R1 canonical source or projection contract is not the exact reviewed identity.",
+    );
+
+  const ledgerPath = `${releaseStableRoot}/MANIFEST.json`;
+  let ledgerBytes: Uint8Array;
+  let rawLedger: unknown;
+  try {
+    ledgerBytes = await readReleaseKitFile(
+      join(pluginRoot, "kit"),
+      ledgerPath,
+      files,
+    );
+    rawLedger = JSON.parse(Buffer.from(ledgerBytes).toString("utf8"));
+  } catch {
+    rejectReleaseLicense("The retained source license ledger is unavailable.");
+  }
+  const semanticLedger = stableJson(rawLedger);
+  if (
+    digest(semanticLedger) !== profile.semanticLedgerSha256 ||
+    semanticLedger !== stableJson(profile.ledger)
+  )
+    rejectReleaseLicense(
+      "The complete retained source ledger is not the reviewed R1 identity.",
+    );
+
+  // Semantic identity selects this one overlay profile, never the candidate root.
+  // Coherent unknown roots and raw reserializations must reach the paired gate.
+  if (
+    stableJson(manifest.overlayDigests) !== stableJson(profile.overlays) ||
+    Object.entries(profile.overlays).some(
+      ([path, sha256]) => manifest.assets[path] !== sha256,
+    )
+  )
+    rejectReleaseLicense(
+      "The R1 overlay set is not the exact reviewed first-party identity.",
+    );
+  if (
+    digest(ledgerBytes) !== profile.rawLedgerSha256 ||
+    manifest.retainedProvenance.manifestSha256 !== profile.rawLedgerSha256 ||
+    manifest.assets[ledgerPath] !== profile.rawLedgerSha256 ||
+    generatedSha256 !== profile.rootSha256
+  )
+    rejectReleaseLicense(
+      "The complete asset/overlay identity is not paired with its reviewed ledger/profile.",
+    );
+
+  // MH binds every declared byte; the paired root fixes their complete hashes.
+  // This explicit path map supplies licenses, never a directory-prefix default.
+  const result = new Map<string, "Apache-2.0" | "MIT">(
+    Object.entries(profile.assetLicenses),
+  );
+  if (
+    Object.keys(manifest.assets).length !== result.size ||
+    Object.keys(manifest.assets).some((path) => !result.has(path))
+  )
+    rejectReleaseLicense(
+      "The R1 asset set has no exact reviewed source-to-license mapping.",
+    );
+  return result;
+}
+
+async function releaseKitLicenses(
+  pluginRoot: string,
+  manifest: EmbeddedKitManifestV2,
+  files: P0FileSystem,
+): Promise<ReadonlyMap<string, "Apache-2.0" | "MIT">> {
+  if (
+    manifest.canonical.canonicalSourceUri !==
+      "https://github.com/KunoLu/640-skills" ||
+    manifest.canonical.resolvedRevision !==
+      "1d82494d74f6df9bca7dccef2da409f87091883e" ||
+    manifest.assets.LICENSE !== releaseApacheLicenseSha256 ||
+    manifest.assets["onboard/runtime/LICENSE"] !== releaseApacheLicenseSha256 ||
+    manifest.assets["onboard/runtime/NOTICE"] !==
+      "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4" ||
+    (await digestFile(join(pluginRoot, "LICENSE"), files)) !==
+      releaseApacheLicenseSha256
+  )
+    rejectReleaseLicense(
+      "The first-party Apache source or retained license/notice is not the reviewed identity.",
+    );
+  if (
+    Object.hasOwn(
+      manifest.retainedProvenance.repositories,
+      reviewedR1ReleaseProfile.repository,
+    )
+  )
+    return reviewedR1KitLicenses(pluginRoot, manifest, files);
+
+  for (const [path, sha256] of Object.entries(manifest.overlayDigests)) {
+    if (
+      releaseApacheOverlays[path] !== sha256 ||
+      manifest.assets[path] !== sha256
+    )
+      rejectReleaseLicense(
+        `Overlay has no reviewed first-party license identity: ${path}`,
+      );
+  }
+
+  // Validate existing ledger fields locally; no persisted manifest schema changes.
+  const ledgerSchema = z
+    .object({
+      repositories: z.record(
+        z.string(),
+        z
+          .object({
+            licenseFiles: z
+              .array(
+                z
+                  .object({
+                    source: z.literal("LICENSE"),
+                    stablePath: z.string().min(1),
+                  })
+                  .strict(),
+              )
+              .length(1),
+          })
+          .passthrough(),
+      ),
+      sourceSelection: z
+        .object({
+          kind: z.literal("mixed-source"),
+          scope: z.literal("domain-modeling-only"),
+          base: z.record(z.string(), z.unknown()),
+          inputPath: z.literal(
+            "omp-source-selections/domain-modeling/selection.json",
+          ),
+          inputSha256: z.string(),
+          record: z.record(z.string(), z.unknown()),
+        })
+        .passthrough()
+        .optional(),
+    })
+    .passthrough();
+  let rawLedger: unknown;
+  try {
+    rawLedger = JSON.parse(
+      Buffer.from(
+        await readReleaseKitFile(
+          join(pluginRoot, "kit"),
+          `${releaseStableRoot}/MANIFEST.json`,
+          files,
+        ),
+      ).toString("utf8"),
+    );
+  } catch {
+    rejectReleaseLicense("The retained source license ledger is unavailable.");
+  }
+  const parsed = ledgerSchema.safeParse(rawLedger);
+  if (!parsed.success)
+    rejectReleaseLicense(
+      "The retained source license declarations are missing or invalid.",
+    );
+  const ledger = parsed.data;
+  // MH has already re-read every declared asset and recomputed assets+overlays.
+  // Pair that result with a trusted complete profile, not merely a known label.
+  const ledgerIdentity = digest(stableJson(rawLedger));
+  let trustedLedgerSha256: string;
+  let trustedProjectionMatches: boolean;
+  switch (ledgerIdentity) {
+    case "8eeb60753243cb780a55cbec0b5e39542aa652218d959ecc06c9b443f93a4f2f":
+      trustedLedgerSha256 =
+        "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257";
+      trustedProjectionMatches =
+        manifest.projection.generatedSha256 ===
+        "b1e4bab0fa5bc30f874329773b099b486efed9eeec795022a904c5a65dd7dbf3";
+      break;
+    case "1aa91bbeb371031be63b91f37d0e96163d3ae0ce9940d62188c4ca436258a823":
+      trustedLedgerSha256 =
+        "de7bccb8d8742b79b6fe43c43f4aae975d570189f49bfa983c71db89ec332022";
+      trustedProjectionMatches =
+        manifest.projection.generatedSha256 ===
+          "03da9a165797514c0e8856e86cdeb4dd603bdcc1efe281e0f41a42561de2fa3f" ||
+        manifest.projection.generatedSha256 ===
+          "38346247b16b399889dd630b3eb89d5baf5206f4c8f36221ee6add31bfddf058";
+      break;
+    default:
+      rejectReleaseLicense(
+        "The complete retained source ledger is not a reviewed old or domain-only identity.",
+      );
+  }
+  if (
+    manifest.retainedProvenance.manifestSha256 !== trustedLedgerSha256 ||
+    manifest.assets[`${releaseStableRoot}/MANIFEST.json`] !==
+      trustedLedgerSha256 ||
+    !trustedProjectionMatches
+  )
+    rejectReleaseLicense(
+      "The complete asset/overlay identity is not paired with its reviewed ledger/profile.",
+    );
+  const provenance = manifest.retainedProvenance;
+  if (provenance.stableSet !== "2026-09-14.6")
+    rejectReleaseLicense("The stable source set is not the reviewed base.");
+  const selection = ledger.sourceSelection;
+  if (Object.hasOwn(provenance.repositories, releaseDomainRepository)) {
+    if (
+      selection === undefined ||
+      selection.inputSha256 !==
+        "6cb1e695b18e76aa771be1ab052085878763a96197205bc4a0f5874384814684" ||
+      digest(stableJson(selection.record)) !==
+        "c8c1666f2bbb5999973ae332083a848819bf5341dc6def91423f67e269f91ec5" ||
+      digest(stableJson(selection.base)) !==
+        "8ba1ae9f34d9c4c1a432e50307f3c21b8b03634e83c20dc14d9ce9210f6e4caa" ||
+      provenance.skills["domain-modeling"]?.repository !==
+        releaseDomainRepository ||
+      provenance.skills["domain-modeling"]?.treeSha256 !==
+        "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2"
+    )
+      rejectReleaseLicense(
+        "The mixed-source domain ledger conflicts with its reviewed selection input.",
+      );
+  } else if (selection !== undefined) {
+    rejectReleaseLicense(
+      "A domain selection ledger is present without its independent source identity.",
+    );
+  }
+  const noticePath = `${releaseStableRoot}/THIRD_PARTY_NOTICES.md`;
+  if (!Object.hasOwn(manifest.assets, noticePath))
+    rejectReleaseLicense(
+      "The retained source notice is not bound by the Kit manifest.",
+    );
+  const notices = Buffer.from(
+    await readReleaseKitFile(join(pluginRoot, "kit"), noticePath, files),
+  ).toString("utf8");
+  const licenseAssets = new Set<string>();
+  for (const [key, repository] of Object.entries(provenance.repositories)) {
+    const reviewed = releaseMitSources[key];
+    const declared = ledger.repositories[key]?.licenseFiles[0];
+    if (
+      reviewed === undefined ||
+      repository.url !== reviewed.url ||
+      repository.revision !== reviewed.revision ||
+      repository.license !== "MIT" ||
+      declared?.stablePath !== reviewed.licensePath ||
+      manifest.assets[`${releaseStableRoot}/${reviewed.licensePath}`] !==
+        reviewed.licenseSha256 ||
+      !notices.includes(`\`${reviewed.licensePath}\``)
+    )
+      rejectReleaseLicense(
+        `Unknown, missing or conflicting retained license source: ${key}`,
+      );
+    licenseAssets.add(`${releaseStableRoot}/${reviewed.licensePath}`);
+  }
+  const skillPrefixes: string[] = [];
+  for (const [name, skill] of Object.entries(provenance.skills)) {
+    if (
+      !Object.hasOwn(provenance.repositories, skill.repository) ||
+      !isStrictPosixRelativePath(skill.stablePath) ||
+      !isStrictPosixRelativePath(skill.sourceSubpath) ||
+      skill.stablePath !== `skills/${name}` ||
+      (skill.repository === releaseDomainRepository &&
+        (name !== "domain-modeling" ||
+          skill.sourceSubpath !== "skills/engineering/domain-modeling"))
+    )
+      rejectReleaseLicense(
+        `Retained skill has an ambiguous or missing source: ${name}`,
+      );
+    skillPrefixes.push(`${releaseStableRoot}/${skill.stablePath}/`);
+  }
+  const apacheMetadata = new Set([
+    "AGENTS.global.md",
+    "AGENTS.project-root.md",
+    "AGENTS.project-omp.md",
+    "catalog.json",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "third-party/sbtd-workflow-onboard/LICENSE",
+    "third-party/sbtd-workflow-onboard/NOTICE",
+    `${releaseStableRoot}/MANIFEST.json`,
+    noticePath,
+    // Exact first-party runtime assets covered by the retained Apache license.
+    "onboard/runtime/assets/graft-build-policy.json",
+    "onboard/runtime/assets/graft-hook-entry.mjs",
+    "onboard/runtime/assets/graft-instructions.txt",
+    "onboard/runtime/assets/migration-legacy-ownership.json",
+    "onboard/runtime/assets/migration-local-ignore.txt",
+    "onboard/runtime/assets/migration-paused-agents.txt",
+    "onboard/runtime/assets/routing-approval.pub",
+    "onboard/runtime/assets/runtime-lineage.json",
+    "onboard/runtime/assets/runtime-lineage.pub",
+  ]);
+  const result = new Map<string, "Apache-2.0" | "MIT">();
+  for (const path of Object.keys(manifest.assets)) {
+    const owners = skillPrefixes.filter((prefix) => path.startsWith(prefix));
+    if (owners.length > 1)
+      rejectReleaseLicense(
+        `Multiple source scopes claim the same Kit asset: ${path}`,
+      );
+    if (licenseAssets.has(path) || owners.length === 1) {
+      result.set(path, "MIT");
+    } else if (
+      apacheMetadata.has(path) ||
+      (path.startsWith("onboard/runtime/") &&
+        !path.startsWith("onboard/runtime/assets/"))
+    ) {
+      if (
+        path.endsWith("/LICENSE") &&
+        manifest.assets[path] !== releaseApacheLicenseSha256
+      )
+        rejectReleaseLicense(
+          `Apache asset has a conflicting retained license: ${path}`,
+        );
+      result.set(path, "Apache-2.0");
+    } else {
+      rejectReleaseLicense(
+        `Kit asset has no reviewed source-to-license mapping: ${path}`,
+      );
+    }
+  }
+  return result;
+}
+
+async function verifyStagedPackageNotice(
+  pluginRoot: string,
+  kitNotice: string,
+  files: P0FileSystem,
+): Promise<void> {
+  const expected = kitNotice
+    .replaceAll(
+      "Retained license: onboard/runtime/",
+      "Retained license: kit/onboard/runtime/",
+    )
+    .replaceAll(
+      "Retained notice: onboard/runtime/",
+      "Retained notice: kit/onboard/runtime/",
+    );
+  const bytes = await readReleaseKitFile(
+    pluginRoot,
+    "THIRD_PARTY_NOTICES.md",
+    files,
+  );
+  if (
+    !Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).equals(
+      Buffer.from(expected),
+    )
+  )
+    rejectReleaseLicense(
+      "The staged root notice is not the exact embedded Kit attribution.",
+    );
+}
+
+async function stagedKitLicenses(
+  pluginRoot: string,
+  manifest: EmbeddedKitManifestV2,
+  files: P0FileSystem,
+): Promise<ReadonlyMap<string, "Apache-2.0" | "MIT">> {
+  if (
+    Object.hasOwn(
+      manifest.retainedProvenance.repositories,
+      releaseDomainRepository,
+    ) ||
+    Object.hasOwn(
+      manifest.retainedProvenance.repositories,
+      reviewedR1ReleaseProfile.repository,
+    )
+  ) {
+    const result = await releaseKitLicenses(pluginRoot, manifest, files);
+    const bytes = await readReleaseKitFile(
+      join(pluginRoot, "kit"),
+      "THIRD_PARTY_NOTICES.md",
+      files,
+    );
+    await verifyStagedPackageNotice(
+      pluginRoot,
+      Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString(
+        "utf8",
+      ),
+      files,
+    );
+    return result;
+  }
+
+  // Stage admits only this closed old legal profile, not new release roots.
+  // MH has verified candidate bytes; inventory re-reads them before any write.
+  const profile = getStagedOldLegalProfile();
+  if (
+    manifest.canonical.sourceId !== profile.canonical.sourceId ||
+    manifest.canonical.canonicalSourceUri !==
+      profile.canonical.canonicalSourceUri ||
+    manifest.canonical.transformVersion !==
+      profile.canonical.transformVersion ||
+    !/^[0-9a-f]{40}$/.test(manifest.canonical.resolvedRevision) ||
+    manifest.projection.policyVersion !== profile.projection.policyVersion ||
+    stableJson(manifest.projection.counts) !==
+      stableJson(profile.projection.counts)
+  )
+    rejectReleaseLicense(
+      "The staged canonical source or projection contract is not the reviewed old legal profile.",
+    );
+
+  const reviewedAssets = Object.entries(profile.assets);
+  if (Object.keys(manifest.assets).length !== reviewedAssets.length)
+    rejectReleaseLicense(
+      "The staged asset set is not the complete reviewed old legal profile.",
+    );
+  for (const [path, asset] of reviewedAssets) {
+    if (
+      !Object.hasOwn(manifest.assets, path) ||
+      (asset.sha256 !== undefined && manifest.assets[path] !== asset.sha256)
+    )
+      rejectReleaseLicense(
+        `Staged asset has no matching reviewed legal identity: ${path}`,
+      );
+  }
+  if (
+    Object.keys(manifest.overlayDigests).length !== profile.overlayPaths.length
+  )
+    rejectReleaseLicense(
+      "The staged overlay set is not the reviewed first-party path set.",
+    );
+  for (const path of profile.overlayPaths) {
+    if (
+      !Object.hasOwn(manifest.overlayDigests, path) ||
+      manifest.overlayDigests[path] !== manifest.assets[path]
+    )
+      rejectReleaseLicense(
+        `Staged overlay is not bound to its known first-party asset: ${path}`,
+      );
+  }
+  if (
+    (await digestFile(join(pluginRoot, "LICENSE"), files)) !==
+    profile.assets.LICENSE?.sha256
+  )
+    rejectReleaseLicense(
+      "The staged root license is not the reviewed first-party Apache license.",
+    );
+
+  const kitRoot = join(pluginRoot, "kit");
+  const ledgerPath = `${releaseStableRoot}/MANIFEST.json`;
+  let ledgerBytes: Uint8Array;
+  let rawLedger: unknown;
+  try {
+    ledgerBytes = await readReleaseKitFile(kitRoot, ledgerPath, files);
+    rawLedger = JSON.parse(
+      Buffer.from(
+        ledgerBytes.buffer,
+        ledgerBytes.byteOffset,
+        ledgerBytes.byteLength,
+      ).toString("utf8"),
+    );
+  } catch {
+    rejectReleaseLicense("The staged retained source ledger is unavailable.");
+  }
+  const ledgerSha256 = digest(ledgerBytes);
+  if (
+    ledgerSha256 !== manifest.assets[ledgerPath] ||
+    ledgerSha256 !== manifest.retainedProvenance.manifestSha256
+  )
+    rejectReleaseLicense(
+      "The staged retained source ledger differs from its verified declarations.",
+    );
+  const displayValue = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$/);
+  const parsed = z
+    .object({ stableSet: displayValue, promotedAt: displayValue })
+    .passthrough()
+    .safeParse(rawLedger);
+  if (!parsed.success)
+    rejectReleaseLicense(
+      "The staged retained source display metadata is invalid.",
+    );
+  const { stableSet, promotedAt } = parsed.data;
+  const expectedLedger = {
+    schemaVersion: profile.ledger.schemaVersion,
+    stableSet,
+    promotedAt,
+    repositories: profile.ledger.repositories,
+    skills: profile.ledger.skills,
+  };
+  if (
+    !Buffer.from(
+      ledgerBytes.buffer,
+      ledgerBytes.byteOffset,
+      ledgerBytes.byteLength,
+    ).equals(Buffer.from(`${JSON.stringify(expectedLedger, null, 2)}\n`))
+  )
+    rejectReleaseLicense(
+      "The staged retained source ledger contains unreviewed legal facts or bytes.",
+    );
+  const reviewedRepositories = Object.fromEntries(
+    Object.entries(profile.ledger.repositories).map(
+      ([name, { url, revision, license }]) => [
+        name,
+        { url, revision, license },
+      ],
+    ),
+  );
+  if (
+    manifest.retainedProvenance.stableSet !== stableSet ||
+    stableJson(manifest.retainedProvenance.repositories) !==
+      stableJson(reviewedRepositories) ||
+    stableJson(manifest.retainedProvenance.skills) !==
+      stableJson(profile.ledger.skills)
+  )
+    rejectReleaseLicense(
+      "The staged retained provenance conflicts with the reviewed legal projection.",
+    );
+
+  const topNotice =
+    profile.topNoticeParts.beforeRevision +
+    manifest.canonical.resolvedRevision +
+    profile.topNoticeParts.betweenRevisionAndStableSet +
+    stableSet +
+    profile.topNoticeParts.afterStableSet;
+  for (const [path, expected] of [
+    ["THIRD_PARTY_NOTICES.md", topNotice],
+    [`${releaseStableRoot}/THIRD_PARTY_NOTICES.md`, profile.stableNotice],
+  ] as const) {
+    const bytes = await readReleaseKitFile(kitRoot, path, files);
+    if (
+      !Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).equals(
+        Buffer.from(expected),
+      )
+    )
+      rejectReleaseLicense(
+        `Staged notice differs from the reviewed legal template: ${path}`,
+      );
+  }
+  await verifyStagedPackageNotice(pluginRoot, topNotice, files);
+  const result = new Map<string, "Apache-2.0" | "MIT">();
+  for (const [path, asset] of reviewedAssets) result.set(path, asset.license);
+  return result;
+}
+
+function pluginSbomSourceDigest(
+  plugin: z.infer<typeof packageMetadataSchema>,
+  manifest: EmbeddedKitManifestV2,
+  inventory: readonly SbomFile[],
+): string {
+  // PRD R6 identity stays unchanged; the classified file inventory is shared by
+  // writer and verifier, including each file's explicit SPDX license.
+  return digest(
+    stableJson({
+      plugin: { name: plugin.name, version: plugin.version },
+      kit: { generatedSha256: manifest.projection.generatedSha256 },
+      files: inventory,
+    }),
+  );
 }
 
 export type PluginReleaseRoot = "source-package" | "staged-promotion";
@@ -5329,6 +5964,7 @@ async function inventoryDeclaredPackageContent(
   pluginRoot: string,
   files: P0FileSystem,
   releaseRoot: PluginReleaseRoot,
+  manifest: EmbeddedKitManifestV2,
 ): Promise<readonly SbomFile[]> {
   const declaredPaths = [
     "dist",
@@ -5343,6 +5979,13 @@ async function inventoryDeclaredPackageContent(
     "THIRD_PARTY_NOTICES.md",
     "validation/p0/compatibility.v2.json",
   ];
+  const kitLicenses =
+    releaseRoot === "staged-promotion"
+      ? await stagedKitLicenses(pluginRoot, manifest, files)
+      : await releaseKitLicenses(pluginRoot, manifest, files);
+  const firstPartyPaths = new Set(
+    declaredPaths.filter((path) => path !== "kit"),
+  );
   const inventory: SbomFile[] = [];
   for (const declaredPath of declaredPaths) {
     const path = join(pluginRoot, declaredPath);
@@ -5371,19 +6014,31 @@ async function inventoryDeclaredPackageContent(
     inventory.push({
       path: declaredPath,
       sha256: await digestFile(path, files),
-      license: declaredPath.startsWith("kit/third-party/")
-        ? "Apache-2.0"
-        : "Apache-2.0",
+      license: "Apache-2.0",
     });
   }
   return inventory
-    .map((file) => ({
-      ...file,
-      license:
-        isVendoredOnboardFile(file.path) || file.path.startsWith("skills/")
-          ? ("Apache-2.0" as const)
-          : ("Apache-2.0" as const),
-    }))
+    .map((file): SbomFile => {
+      if (
+        firstPartyPaths.has(file.path) ||
+        file.path.startsWith("dist/") ||
+        file.path.startsWith("skills/")
+      )
+        return { ...file, license: "Apache-2.0" };
+      if (!file.path.startsWith("kit/"))
+        rejectReleaseLicense(
+          `File is outside the declared first-party and verified Kit scopes: ${file.path}`,
+        );
+      const path = file.path.slice("kit/".length);
+      if (path === "manifest.json" || path === "projection-report.json")
+        return { ...file, license: "Apache-2.0" };
+      const license = kitLicenses.get(path);
+      if (license === undefined || manifest.assets[path] !== file.sha256)
+        rejectReleaseLicense(
+          `Inventoried Kit file is unbound or differs from its classified asset: ${path}`,
+        );
+      return { ...file, license };
+    })
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 
@@ -5406,18 +6061,12 @@ export async function writePluginSpdxSbom(
     input.pluginRoot,
     files,
     input.releaseRoot ?? "source-package",
+    kitManifest,
   );
-  // PRD R6: the kit package identity no longer exists after the move, so the
-  // digest input is exactly plugin name/version, kit generatedSha256, and the
-  // file inventory; documentNamespace changes accordingly.
-  const sourceTreeSha256 = digest(
-    stableJson({
-      plugin: { name: metadata.plugin.name, version: metadata.plugin.version },
-      kit: {
-        generatedSha256: kitManifest.projection.generatedSha256,
-      },
-      files: inventory,
-    }),
+  const sourceTreeSha256 = pluginSbomSourceDigest(
+    metadata.plugin,
+    kitManifest,
+    inventory,
   );
   const sbom = renderPluginSpdxSbom({
     plugin: metadata.plugin,
@@ -5655,11 +6304,11 @@ export function countCaseInsensitiveTokenOccurrences(
   const last = haystack.length - needle.length;
   for (let index = 0; index <= last; index += 1) {
     let position = 0;
-    while (
-      position < needle.length &&
-      (haystack[index + position] | 0x20) === needle[position]
-    )
+    while (position < needle.length) {
+      const byte = haystack[index + position];
+      if (byte === undefined || (byte | 0x20) !== needle[position]) break;
       position += 1;
+    }
     if (position === needle.length) matches += 1;
   }
   return matches;
@@ -6212,18 +6861,12 @@ export async function verifyPluginReleaseArtifacts(
     input.pluginRoot,
     files,
     "source-package",
+    kitManifest,
   );
-  // PRD R6: the kit package identity no longer exists after the move, so the
-  // digest input is exactly plugin name/version, kit generatedSha256, and the
-  // file inventory; documentNamespace changes accordingly.
-  const sourceTreeSha256 = digest(
-    stableJson({
-      plugin: { name: metadata.plugin.name, version: metadata.plugin.version },
-      kit: {
-        generatedSha256: kitManifest.projection.generatedSha256,
-      },
-      files: inventory,
-    }),
+  const sourceTreeSha256 = pluginSbomSourceDigest(
+    metadata.plugin,
+    kitManifest,
+    inventory,
   );
   const regenerated = renderPluginSpdxSbom({
     plugin: metadata.plugin,

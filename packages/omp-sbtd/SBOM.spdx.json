@@ -9,13 +9,13 @@
   "documentDescribes": [
     "SPDXRef-Package-kunolu-omp-sbtd"
   ],
-  "documentNamespace": "https://kpi.local/spdx/8a6bf2cc7640fe55cda562dfe0094b327d683fa75a4d9a4e43b85782554139f8",
+  "documentNamespace": "https://kpi.local/spdx/58eb90c4e6e2fe6502572da0b87c55cb61d3e0b2e2e3e9caa597c021f088b47f",
   "files": [
     {
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "8e9a9cfcbff581ddce6c69d8f61b8944acb1339278fdbc1ee73c70d040f9b3e1"
+          "checksumValue": "819061f6127728e3b54934a1e00761bbcd810ad05c77926f8af9c8e6da6f21dd"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -1410,7 +1410,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea"
+          "checksumValue": "dc69bc818bc2eefc20fe00e50afc571adef164b8340f67741e10070ff75a3e3c"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -1485,7 +1485,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "bf037deacb75019c401990b86a7c31abb9d45e572850378aac4ce43d583a6a89"
+          "checksumValue": "86d4e5cfd8b1b0e4d5c4046c95587ba3d3a92fa3e3a39fa6df36b906e98d0347"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -1505,9 +1505,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0100"
     },
@@ -1520,9 +1520,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0101"
     },
@@ -1535,9 +1535,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/licenses/ui-ux-pro-max-skill-LICENSE",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0102"
     },
@@ -1545,7 +1545,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257"
+          "checksumValue": "4eed938088d7415f2dbcac7a2a576baa9cbbc179184fca484493f54ef60e13ad"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -1565,9 +1565,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/codebase-design/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0104"
     },
@@ -1580,9 +1580,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/codebase-design/DEEPENING.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0105"
     },
@@ -1595,9 +1595,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/codebase-design/DESIGN-IT-TWICE.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0106"
     },
@@ -1610,9 +1610,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/codebase-design/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0107"
     },
@@ -1625,9 +1625,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/diagnosing-bugs/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0108"
     },
@@ -1640,9 +1640,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0109"
     },
@@ -1655,9 +1655,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/diagnosing-bugs/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0110"
     },
@@ -1670,9 +1670,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/domain-modeling/ADR-FORMAT.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0111"
     },
@@ -1685,9 +1685,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/domain-modeling/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0112"
     },
@@ -1695,14 +1695,14 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13"
+          "checksumValue": "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801"
         }
       ],
       "copyrightText": "NOASSERTION",
-      "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/domain-modeling/CONTEXT-FORMAT.md",
-      "licenseConcluded": "Apache-2.0",
+      "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0113"
     },
@@ -1710,14 +1710,14 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+          "checksumValue": "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3"
         }
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0114"
     },
@@ -1730,9 +1730,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/grill-me/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0115"
     },
@@ -1745,9 +1745,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/grill-me/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0116"
     },
@@ -1760,9 +1760,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/grill-with-docs/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0117"
     },
@@ -1775,9 +1775,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/grill-with-docs/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0118"
     },
@@ -1790,9 +1790,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/grilling/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0119"
     },
@@ -1800,14 +1800,14 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "10ff989e7498b23b5acb49d5048f11dcd906757d2f79c5cdf8a00001381296f2"
+          "checksumValue": "a146842ed93ca43d833550fa9adf02e58cb63c83fea9d4b4522995b82242d4e2"
         }
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/grilling/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0120"
     },
@@ -1820,9 +1820,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/handoff/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0121"
     },
@@ -1835,9 +1835,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/handoff/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0122"
     },
@@ -1850,9 +1850,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ponytail-audit/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0123"
     },
@@ -1865,9 +1865,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ponytail-debt/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0124"
     },
@@ -1880,9 +1880,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ponytail-review/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0125"
     },
@@ -1895,9 +1895,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ponytail/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0126"
     },
@@ -1910,9 +1910,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/tdd/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0127"
     },
@@ -1925,9 +1925,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/tdd/mocking.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0128"
     },
@@ -1940,9 +1940,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/tdd/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0129"
     },
@@ -1955,9 +1955,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/tdd/tests.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0130"
     },
@@ -1970,9 +1970,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/to-spec/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0131"
     },
@@ -1985,9 +1985,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/to-spec/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0132"
     },
@@ -2000,9 +2000,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/to-tickets/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0133"
     },
@@ -2010,14 +2010,14 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "5c9fba69845c2519b9b35b9af42ae5142c21f8ca15ac2123dc2722002c8058ae"
+          "checksumValue": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995"
         }
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/to-tickets/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0134"
     },
@@ -2030,9 +2030,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/app-interface.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0135"
     },
@@ -2045,9 +2045,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/catalog-summary.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0136"
     },
@@ -2060,9 +2060,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/charts.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0137"
     },
@@ -2075,9 +2075,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/colors.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0138"
     },
@@ -2090,9 +2090,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/data-provenance.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0139"
     },
@@ -2105,9 +2105,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/google-font-licenses.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0140"
     },
@@ -2120,9 +2120,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/google-fonts.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0141"
     },
@@ -2135,9 +2135,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/icons.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0142"
     },
@@ -2150,9 +2150,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/landing.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0143"
     },
@@ -2165,9 +2165,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/motion.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0144"
     },
@@ -2180,9 +2180,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/phosphor-icons-upstream.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0145"
     },
@@ -2195,9 +2195,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/products.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0146"
     },
@@ -2210,9 +2210,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/react-performance.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0147"
     },
@@ -2225,9 +2225,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/angular.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0148"
     },
@@ -2240,9 +2240,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/astro.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0149"
     },
@@ -2255,9 +2255,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/avalonia.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0150"
     },
@@ -2270,9 +2270,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/flutter.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0151"
     },
@@ -2285,9 +2285,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/html-tailwind.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0152"
     },
@@ -2300,9 +2300,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/javafx.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0153"
     },
@@ -2315,9 +2315,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/jetpack-compose.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0154"
     },
@@ -2330,9 +2330,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/laravel.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0155"
     },
@@ -2345,9 +2345,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/nextjs.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0156"
     },
@@ -2360,9 +2360,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/nuxt-ui.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0157"
     },
@@ -2375,9 +2375,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/nuxtjs.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0158"
     },
@@ -2390,9 +2390,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/react-native.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0159"
     },
@@ -2405,9 +2405,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/react.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0160"
     },
@@ -2420,9 +2420,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/shadcn.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0161"
     },
@@ -2435,9 +2435,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/svelte.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0162"
     },
@@ -2450,9 +2450,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/swiftui.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0163"
     },
@@ -2465,9 +2465,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/threejs.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0164"
     },
@@ -2480,9 +2480,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/uno.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0165"
     },
@@ -2495,9 +2495,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/uwp.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0166"
     },
@@ -2510,9 +2510,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/vue.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0167"
     },
@@ -2525,9 +2525,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/winui.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0168"
     },
@@ -2540,9 +2540,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/stacks/wpf.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0169"
     },
@@ -2555,9 +2555,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/styles.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0170"
     },
@@ -2570,9 +2570,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/typography.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0171"
     },
@@ -2585,9 +2585,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/ui-reasoning.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0172"
     },
@@ -2600,9 +2600,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/ux-guidelines.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0173"
     },
@@ -2615,9 +2615,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/references/pro-rules.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0174"
     },
@@ -2630,9 +2630,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/references/quick-reference.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0175"
     },
@@ -2645,9 +2645,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/core.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0176"
     },
@@ -2660,9 +2660,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/design_system.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0177"
     },
@@ -2675,9 +2675,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/reasoning_contract.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0178"
     },
@@ -2690,9 +2690,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/search.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0179"
     },
@@ -2705,9 +2705,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-api.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0180"
     },
@@ -2720,9 +2720,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-catalog.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0181"
     },
@@ -2735,9 +2735,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-existing.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0182"
     },
@@ -2750,9 +2750,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-metadata.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0183"
     },
@@ -2765,9 +2765,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-overrides.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0184"
     },
@@ -2780,9 +2780,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/icons-curated.csv",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0185"
     },
@@ -2795,9 +2795,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-core.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0186"
     },
@@ -2810,9 +2810,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-package.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0187"
     },
@@ -2825,9 +2825,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-exports.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0188"
     },
@@ -2840,9 +2840,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-package.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0189"
     },
@@ -2855,9 +2855,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-baseline.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0190"
     },
@@ -2870,9 +2870,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-cases.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0191"
     },
@@ -2885,9 +2885,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-thresholds.json",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0192"
     },
@@ -2900,9 +2900,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_refresh.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0193"
     },
@@ -2915,9 +2915,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_catalog_summary_line_endings.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0194"
     },
@@ -2930,9 +2930,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_core_data_quality.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0195"
     },
@@ -2945,9 +2945,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_core.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0196"
     },
@@ -2960,9 +2960,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_data_contracts.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0197"
     },
@@ -2975,9 +2975,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_design_system_mode.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0198"
     },
@@ -2990,9 +2990,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_design_system_stack.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0199"
     },
@@ -3005,9 +3005,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_native_desktop_stack_freshness.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0200"
     },
@@ -3020,9 +3020,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_relevance_evaluator.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0201"
     },
@@ -3035,9 +3035,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_skill_script_paths.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0202"
     },
@@ -3050,9 +3050,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_style_taxonomy.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0203"
     },
@@ -3065,9 +3065,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_text_layout_resilience.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0204"
     },
@@ -3080,9 +3080,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/tests/test_web_stack_freshness.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0205"
     },
@@ -3095,9 +3095,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/scripts/validate_data.py",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0206"
     },
@@ -3110,9 +3110,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0207"
     },
@@ -3125,9 +3125,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/writing-for-agents/agents/openai.yaml",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0208"
     },
@@ -3140,9 +3140,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/writing-for-agents/SKILL-MECHANICS.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0209"
     },
@@ -3155,9 +3155,9 @@
       ],
       "copyrightText": "NOASSERTION",
       "fileName": "./kit/onboard/runtime/assets/external-skills/stable/skills/writing-for-agents/SKILL.md",
-      "licenseConcluded": "Apache-2.0",
+      "licenseConcluded": "MIT",
       "licenseInfoInFiles": [
-        "Apache-2.0"
+        "MIT"
       ],
       "SPDXID": "SPDXRef-File-0210"
     },
@@ -3165,7 +3165,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3273fbf062b2b8a58f35882ff6360df09e17948961c2355f28dbe9bc9dd7b5ee"
+          "checksumValue": "5db58b7845482994c721366e7e3369119291c3137b3d628bd5203e01dedfd74b"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -4800,7 +4800,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "7b94d7f632ab71bd5500a538f676cd1602f050a2a3a4ae02238a25d5a92fa4b4"
+          "checksumValue": "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5490,7 +5490,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "2bf8c7e6e05b2a4f278e0e72d1d2255ea965dce421a2e8543e7dabf56fb89fdb"
+          "checksumValue": "07c689383e2bae90555b2c2a699c482ddbf37aebc51691a0ce3aef464cac8fac"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5505,7 +5505,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "9f3d304a42a92913d4ca37547ab59e11aaa842d58b1fb4d3fd31be4cf157a4cd"
+          "checksumValue": "977e5950681755cfeaf80938f32ea4c4577d330291e509c7fb585d9cd4c06f49"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5565,7 +5565,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3f0c6cf21dbc138d232db423d37a596dcfd705142362d2c86607f569b9880602"
+          "checksumValue": "af5e86476c17b44ab0eab61f6c1a51530c73ba4084c83aa9ed6be31564ccf9f0"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5580,7 +5580,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "f2550dc04cb80a4fb0e5f4e4772fd84c7c69f75a9fa8fadd12d33a20f21a6b3c"
+          "checksumValue": "bef103e5c0179d2f524e252ddb1e475da3d6ba4a851cf94db5dcc9157e44a3d7"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -5595,7 +5595,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "ea844b57e7d281cba91e57b59d479bc58d11a81f342a527bf681179bb5e227ea"
+          "checksumValue": "f8059c5e07716b053404ad46999bf233952ea6808ab0d7557d52e63eefcad3c6"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -7035,7 +7035,7 @@
       "checksums": [
         {
           "algorithm": "SHA256",
-          "checksumValue": "3ba1ff5b6df7d93d432856e9ac59dd22c91a394b32a4bf20c5a4328735582f4a"
+          "checksumValue": "7d2281ddb7b08cba64101aa15a7f3480a2f2f7262141feb08131f555714bce10"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -7062,7 +7062,7 @@
       "SPDXID": "SPDXRef-File-0470"
     }
   ],
-  "name": "@kunolu/omp-sbtd-0.2.0-rc.2",
+  "name": "@kunolu/omp-sbtd-0.2.0-rc.3",
   "packages": [
     {
       "copyrightText": "NOASSERTION",
@@ -7072,7 +7072,7 @@
       "licenseDeclared": "Apache-2.0",
       "name": "@kunolu/omp-sbtd",
       "SPDXID": "SPDXRef-Package-kunolu-omp-sbtd",
-      "versionInfo": "0.2.0-rc.2"
+      "versionInfo": "0.2.0-rc.3"
     }
   ],
   "relationships": [

@@ -279,11 +279,22 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 
 职责划分：`AGENTS.md` 优先保存常驻上下文必须知道的路由、触发条件、硬性安全边界和最终报告要求；可延迟加载的详细流程、命令参数、检查清单和专项判断，应优先放入对应 Skill，并由 `AGENTS.md` 指向何时调用。
 
+### 选取版 Skill 的术语与交接
+
+- 先读取实际可见的 Skill 与随附 reference，不凭包版本、Skill 名或 `640-skills` tag 推断整套已升级。当前 `domain-modeling` 随附 `GLOSSARY-FORMAT.md` 时，`GLOSSARY.md` 是领域词汇的规范来源，技术实现上下文与其分开；规格、任务状态、实现方案不进入 glossary。既有 `CONTEXT.md` 可能是旧版 glossary，也可能是技术上下文或项目事实，须先读内容，不能一概重解释为技术文档。项目指定路径优先，否则按该 reference 使用根 `GLOSSARY.md`，多上下文先读 `GLOSSARY-MAP.md`；只在首个词条确定后懒创建。没有 `GLOSSARY-FORMAT.md` 的旧 profile 继续原有 CONTEXT 词汇约定，不因本规则自动迁移。
+- 在上述 GLOSSARY 契约下，未升级的 `tdd`、`diagnosing-bugs`、`codebase-design` 等外部 Skill 即使仍写“从 CONTEXT 读取词汇”，也须从项目的 GLOSSARY 读取领域词汇，并另读确有需要的技术 CONTEXT。保留第三方原文和项目既有文档；旧 CONTEXT 中的词条先按内容核对，迁移须另获确认，不覆盖原件、不把实现细节复制进 GLOSSARY，也不把旧消费者伪称新版。
+- `domain-modeling` 负责挑战术语、确认后即时记录领域词条，并仅对难逆转、有真实权衡、缺上下文会令人意外的决策提出 ADR；ADR 路径沿用项目约定。`grill-with-docs` 组合 `grilling` 与 `domain-modeling`，访谈建模不能替代下述独立 DDD 边界审核。
+- 实际加载的 `grilling` 采用 frontier rounds 时，每轮只问所有前置已确定的问题，逐题编号并给推荐答案，等待用户回答后重算 frontier；依赖同轮未决答案的问题留到后轮。环境事实由 Agent 查证，未完成探索保持为未决前置；决策由用户作出。frontier 清空且用户确认共同理解后才能据此行动，不能把“已读 Skill”当作访谈或确认完成；旧版仍按其已加载的访谈契约执行。
+- `to-spec` 合成已经讨论清楚的理解，不重开访谈；使用已确认的领域词汇与 ADR。`to-tickets` 保持 `disable-model-invocation: true`，只在用户明确请求拆票时调用，不能因已有 spec 自动触发。新版票据是可独立验证的端到端 vertical slices，逐票声明真实 blocking edges，向用户展示并迭代至批准；执行 frontier 只含所有 blockers 已完成的票，票据状态不替代 `sbtd-task` 的任务生命周期。
+- 上游 `/setup-matt-pocock-skills` 不是本 OMP Plugin 安装的命令。遇到该指针，先核对已配置 tracker 与标签词汇；未配置时请用户选择已有 tracker 或本地文件，不自动安装或调用假定存在的 setup。新版选择本地文件时按原 per-ticket 模板写 `.scratch/<feature-slug>/issues/<NN>-<slug>.md`：每票一文件、从 `01` 按依赖顺序编号，保留 `What to build`、`Blocked by`、`Status: ready-for-agent` 和验收项；项目另有明确路径则沿用，并保留一票一文件与依赖语义。旧版既有 Trellis task 约定继续适用。外部 tracker 的发帖和 blocking links 必须另有明确授权，不自动发布、关闭或修改 parent issue。
+- 交接引用已存在的 glossary、技术 context、ADR、spec 和逐票文件，不复制成第二事实源；记录未决 frontier、用户确认状态、blockers、实际可用 Skill 和下一步。输出样式只影响表达，按已加载 `sbtd-task/references/presentation.md` 保留同目标的资格锁存、退出状态和首次提示状态，不改变任务模式、工具权限、确认或验证门禁。
+
+
 ### grill-with-docs 使用状态透明度
 
 在准备开始开发需求、进入 PRD / Trellis task、需求最终确认、PRD / design / implement review gate、或询问是否开始实现前，必须对 `grill-with-docs` 的使用状态做用户可见说明：
 
-- 如果已完整执行 `grill-with-docs` 的逐问题澄清流程，明确说明“已调用 `grill-with-docs`”，并简述已解决的关键产品 / 领域边界。
+- 如果已完整执行 `grill-with-docs` 所加载版本的访谈流程，明确说明“已调用 `grill-with-docs`”，并简述已解决的关键产品 / 领域边界。
 - 如果只读取了 `grill-with-docs` Skill 文件、只借用了其中 evidence-first 原则，或仅通过代码 / 文档自行判断，不得声称已调用；必须明确说明“未完整调用 `grill-with-docs`”。
 - 未完整调用时，必须给出具体原因，例如：需求不涉及项目领域模型或长期术语；问题可完全由现有文档 / 代码回答；只是 Trellis 启动实现的 review gate；Skill 不可用 / 不可读取；用户明确要求跳过。
 - 只有调用与跳过之间存在会实质改变需求、领域边界或实现决策的权衡时，才询问用户是否先完整调用；如果现有项目事实已消除歧义，说明未调用原因后直接推进，不得仅为状态透明度制造确认门。
@@ -293,7 +304,7 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 - 无论是 Agent 自发调用还是用户主动调用，每次完整执行 `grill-with-docs` 结束后，必须立即调用 `book-ddd-distilled-modeling` 做独立的二次边界审核；调用来源和 Agent 是否认为需求已足够清晰都不构成跳过理由。
 - `grill-with-docs` 内嵌的 external `domain-modeling` dependency 已运行也不得替代这次后置审核。前者负责访谈中的主动建模和长期术语沉淀，后者必须重新读取本次澄清结果与项目事实，检查统一语言、bounded context、业务不变量、子域归属、术语混用和未决冲突。
 - 二次审核必须向用户输出独立的 `DDD Boundary Review`，状态只能是 `confirmed` / `needs-clarification` / `blocked`，并列出统一语言、bounded context、业务不变量、子域判断、对 `grill-with-docs` 结果的修正以及未决问题；不得只说“已审核”或把结果隐含在需求摘要中。
-- 状态为 `needs-clarification` 时，必须先回到逐问题澄清，解决发现后重新运行 `book-ddd-distilled-modeling`；Skill 不可用、不可读取或证据不足时输出 `blocked` 和原因。未达到 `confirmed` 不得进入需求确认、PRD、design、Trellis task 或实现。
+- 状态为 `needs-clarification` 时，必须先按所加载的访谈契约返回澄清，解决发现后重新运行 `book-ddd-distilled-modeling`；Skill 不可用、不可读取或证据不足时输出 `blocked` 和原因。未达到 `confirmed` 不得进入需求确认、PRD、design、Trellis task 或实现。
 - 如果没有调用 `grill-with-docs`，仍按任务自身的业务术语、领域规则和模型歧义判断是否独立调用 `book-ddd-distilled-modeling`；本后置门禁不把所有普通任务强制改为 DDD 流程。
 
 ### book-derived 开发阶段强制门禁
@@ -326,14 +337,14 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
 | `diagnosing-bugs` | 诊断 bug、测试失败、运行时错误、性能回归、日志异常、线上问题或数据不一致 | 问题根因不清或需要系统化排障时 |
 | `tdd` | 测试先行、回归测试、复杂逻辑验证、高风险修改 | 需要用测试固化行为再实现时；依赖 `codebase-design` |
 | `grill-me` | 通用需求澄清、方案质询、计划压力测试 | 用户希望先打磨计划、决策或设计时；依赖 `grilling` |
-| `grill-with-docs` | 结合项目文档澄清需求、术语、领域模型和 ADR / CONTEXT 沉淀 | 项目内需求或方案进入 PRD / Trellis 前；依赖 `grilling` 和 `domain-modeling` |
-| `grilling` | 可复用逐问题访谈循环 | 作为 `grill-me` / `grill-with-docs` 的底层依赖 |
-| `domain-modeling` | 项目语言、glossary、CONTEXT.md / ADR 建模辅助 | `grill-with-docs` 需要维护项目语言或长期上下文时 |
+| `grill-with-docs` | 结合项目文档澄清需求、术语、领域模型和 ADR | 项目内需求或方案进入 PRD / Trellis 前；依赖 `grilling` 和 `domain-modeling`，按上文版本化术语契约交接 |
+| `grilling` | 访谈循环；新版按依赖 frontier 分轮 | 作为 `grill-me` / `grill-with-docs` 的底层依赖，行动前等待用户确认 |
+| `domain-modeling` | 领域词汇与 ADR 建模 | 需要维护项目统一语言时；GLOSSARY / 旧 CONTEXT 的职责按上文实际源契约判定 |
 | `codebase-design` | 模块、接口、seam、adapter 和测试面设计 | `tdd`、陌生模块理解或结构性修改前 |
 | `handoff` | 长会话交接、上下文压缩、跨会话继续任务 | `/clear`、新会话、Trellis 暂停或多会话交接前 |
 | `writing-for-agents` | 创建或维护 Agent 消费的 Skill、AGENTS、CLAUDE 或指针文档 | 用户要求新增、改造或沉淀这些文档时 |
 | `to-spec` | 将当前对话和代码库理解整理为 Markdown spec / PRD | 需求需要沉淀为 spec 或 PRD 时 |
-| `to-tickets` | 将 spec、PRD、plan 拆成实现任务 | 需要 Trellis-ready Markdown task、tickets 或 vertical slices 时 |
+| `to-tickets` | 将已确认 spec、PRD、plan 拆成有 blocking edges 的实现票据 | 仅在用户明确请求拆票时调用；遵守 `disable-model-invocation: true` 与上文 tracker / 本地文件边界 |
 | `ui-ux-pro-max` | UI/UX 初稿计划、修改前设计判断和体验质量检查 | 涉及 UI/UX 的需求进入实现或 Trellis 任务设计前 |
 | `impeccable` | 前端 UI/UX 塑形、审计、打磨、反模板化和视觉质量收尾 | `ui-ux-pro-max` 明确初稿方向后按条件前置 `shape` / `craft`，或实现后的 `audit` / `critique` / `polish` 阶段；仅在 Skill 可用且上下文可用时 |
 | `shadcn` | shadcn/ui 项目组件、registry、preset、CLI 和组件组合规则 | 项目存在 `components.json`、使用 / 初始化 shadcn/ui，或需要 `shadcn init/add/search/view/docs/diff/info/migrate/preset`、registry 组件、preset、Base / Radix 差异、表单 / 图标 / chat primitives 等 shadcn 规则时 |
@@ -376,14 +387,14 @@ Skill 不替代项目规范、任务产物、测试和人工判断。
     - `tdd` 适用于 bug 修复、核心业务逻辑、算法行为、数据转换、导入 / 导出 / 同步逻辑和高风险修改；这些场景必须主动判定是否使用 `tdd`，跳过时说明原因。不要强制用于简单文案、样式、配置说明或一次性脚本。`tdd` 依赖 `codebase-design`。
     - `grill-me` 用于通用计划、设计和决策的质询；如果问题可通过读取当前项目文件回答，先探索项目文件。`grill-me` 依赖 `grilling`。
     - `grill-with-docs`：
-        - 用于项目内需求澄清、领域术语对齐、CONTEXT.md 或 ADR 沉淀；需求进入 PRD / Trellis 前优先使用；先读项目文档和代码，能从项目事实回答的问题不要反问用户；长期领域上下文默认写入 `docs/CONTEXT.md`，ADR 默认写入 `docs/adr/*.md`，多上下文项目使用 `docs/contexts/<context>/CONTEXT.md` 和 `docs/contexts/<context>/adr/*.md`；不要新建根目录 `CONTEXT.md`，除非项目已采用该路径或项目级规则明确指定；不要把 CONTEXT.md 写成临时规格书。`grill-with-docs` 依赖 `grilling` 和 `domain-modeling`。
+        - 用于项目内需求澄清、领域术语对齐和 ADR 沉淀；先读项目文档和代码，能从事实回答的问题不要反问用户。术语与技术上下文按上文“选取版 Skill 的术语与交接”分工。没有 GLOSSARY-FORMAT 的旧 profile 保留 `docs/CONTEXT.md`、多上下文 `docs/contexts/<context>/CONTEXT.md` 的旧约定（项目已指定其他路径则优先）；ADR 沿用 `docs/adr/*.md` 或上下文内 `adr/*.md`。`grill-with-docs` 依赖 `grilling` 和 `domain-modeling`。
         - 使用状态必须遵守上文“grill-with-docs 使用状态透明度”；读取 Skill 文件或只按 evidence-first 原则自行判断，不等于完整调用。
         - 每次完整执行结束后都必须遵守“grill-with-docs 后置 DDD 边界审核”，立即调用 bundled `book-ddd-distilled-modeling` 并向用户输出独立审核结果；`grill-with-docs` 内嵌的 external `domain-modeling` dependency 不构成替代。
-    - `handoff` 交接内容应包含当前目标、已完成工作、关键决策、文件 / 产物、已尝试命令、开放问题、建议下一步 Skill、不要重复事项和敏感信息脱敏说明。
+    - `handoff` 是显式请求的会话交接，不负责重建任务状态；其外部原文要求写入系统临时目录、包含 suggested skills、引用既有产物并脱敏。`sbtd-task` 的持久交接另按其 reference 和项目约定执行；两者都应保留当前目标、已完成工作、关键决策、实际命令、未决问题、下一步及不要重复事项。
     - `writing-for-agents` 用于创建或维护 Agent 消费的文档；Skill 使用 `SKILL.md` 作为入口，按需把 Skill 机制拆到 reference，确定性操作优先脚本化，description 和文档指针必须写清触发分支。环境中的配置、命令和目录是事实源，文档只缓存无法直接查到的约定、理由或陷阱。
     - `zoom-out` 已从 mattpocock/skills 上游移除；陌生模块理解默认通过代码阅读、`codebase-design`、GitNexus exploring / impact-analysis 和按需 `book-refactoring-pass` 完成。
     - `to-spec` 默认输出 Markdown spec / PRD；在 Trellis 项目中，最终 spec / PRD 应写入或更新 `.trellis/tasks/<task>/prd.md`，未确定 task 路径前只保留为对话草稿或用户明确指定的临时文件；不要发布到 GitHub、Linear 或任何 issue tracker，除非用户明确要求。
-    - `to-tickets` 中的 ticket 视为通用实现任务；在 Trellis 项目中，vertical slices 应落为 `.trellis/tasks/<task>/...` 下的 parent / child task artifacts，标注 AFK / HITL、依赖顺序、验收标准和测试策略；不要默认在 `docs/` 下维护最终 ticket / task Markdown，也不要自动发布到 issue tracker。
+    - `to-tickets` 的触发、依赖 frontier、逐票格式和 tracker 授权统一遵守上文“选取版 Skill 的术语与交接”；它不是自动开启实现、创建 `sbtd-task` 状态或发布外部 issue 的授权。
 
 ### Skill 不可用时
 

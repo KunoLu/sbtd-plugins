@@ -17,7 +17,7 @@
 // and persists only sanitized records: digests, booleans, stable reason
 // codes. Raw command text is bounded, sensitive-checked and hashed; the text
 // itself never reaches the run record.
-import { spawn } from "node:child_process";
+import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync, realpathSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -32,6 +32,10 @@ import {
 import { ompExtensionV2Inventory } from "../../../src/runtime/omp-extension-v2.ts";
 import { P0ValidationError } from "../release-validator.ts";
 import { hasSensitiveText } from "../sanitization.ts";
+import {
+  assertLoadedInstallationUnchanged,
+  snapshotLoadedInstallation,
+} from "./loaded-installation.ts";
 import {
   assertPackedControllerFailClosed,
   assertSubjectTarballSeam,
@@ -404,6 +408,335 @@ export function consumeNotifyMessage(message: string): {
   return { planNotification: undefined, recordAsText: true };
 }
 
+/** Runs the cell protocol and closes its already-spawned child before returning. */
+export async function runCommandSurfaceSession(
+  child: ChildProcessWithoutNullStreams,
+  timeoutMs = 180_000,
+  modelRequestObserved: () => boolean = () => false,
+): Promise<
+  Pick<
+    CommandSurfaceRunRecord,
+    | "commands"
+    | "sbtdCommandRegistered"
+    | "unexpectedUiRequests"
+    | "sanitizationViolations"
+    | "driverError"
+  >
+> {
+  const deadline = Date.now() + timeoutMs;
+  const ready = Promise.withResolvers<void>();
+  const closed = Promise.withResolvers<{
+    code: number | null;
+    signal: NodeJS.Signals | null;
+  }>();
+  const pending = new Map<
+    string,
+    {
+      readonly type: string;
+      readonly resolve: (value: unknown) => void;
+      readonly reject: (error: Error) => void;
+      readonly content?: () => boolean;
+      acknowledged: boolean;
+      terminal: boolean;
+    }
+  >();
+  let driverError: string | undefined;
+  let closing = false;
+  let stdoutEnded = false;
+  let stderrEnded = false;
+  let nextId = 0;
+  let buffer = "";
+  const texts: string[] = [];
+  let capturedBytes = 0;
+  let sanitizationViolations = 0;
+  let unexpectedUiRequests = 0;
+  let planNotification: unknown;
+  const commandResults: CommandSurfaceRunRecord["commands"] = [];
+  let sbtdCommandRegistered = false;
+
+  const fail = (code: string): void => {
+    driverError ??= code;
+    const error = new Error(driverError);
+    ready.reject(error);
+    for (const entry of pending.values()) entry.reject(error);
+    pending.clear();
+  };
+  child.once("close", (code, signal) => {
+    closed.resolve({ code, signal });
+    if (!closing) fail("HOST_CLOSED_EARLY");
+  });
+  child.on("error", () => fail("HOST_PROCESS_ERROR"));
+  child.stdin.on("error", () => fail("HOST_STDIN_ERROR"));
+  child.stdout.on("error", () => fail("HOST_STDOUT_ERROR"));
+  child.stderr.on("error", () => fail("HOST_STDERR_ERROR"));
+  child.stdout.once("end", () => {
+    stdoutEnded = true;
+    if (buffer.trim().length > 0) fail("RPC_TRUNCATED_FRAME");
+  });
+  child.stderr.once("end", () => {
+    stderrEnded = true;
+  });
+  child.stderr.resume();
+
+  const send = (value: unknown): void => {
+    try {
+      child.stdin.write(`${JSON.stringify(value)}\n`, (error) => {
+        if (error) fail("RPC_WRITE_FAILED");
+      });
+    } catch {
+      fail("RPC_WRITE_FAILED");
+    }
+  };
+  const command = (
+    type: string,
+    payload: Readonly<Record<string, unknown>> = {},
+    content?: () => boolean,
+  ): Promise<unknown> => {
+    if (driverError !== undefined)
+      return Promise.reject(new Error(driverError));
+    const id = `cert-cell-${++nextId}`;
+    const request = Promise.withResolvers<unknown>();
+    pending.set(id, {
+      type,
+      resolve: request.resolve,
+      reject: request.reject,
+      acknowledged: false,
+      terminal: false,
+      ...(content === undefined ? {} : { content }),
+    });
+    // One shared deadline covers ACK, terminal and content, in any arrival order.
+    const timer = setTimeout(
+      () => fail("RPC_COMMAND_TIMEOUT"),
+      Math.max(
+        0,
+        Math.min(type === "prompt" ? 60_000 : 30_000, deadline - Date.now()),
+      ),
+    );
+    send({ id, type, ...payload });
+    return request.promise.finally(() => clearTimeout(timer));
+  };
+  const completePrompts = (): void => {
+    for (const [id, entry] of pending) {
+      if (entry.acknowledged && entry.terminal && entry.content?.()) {
+        pending.delete(id);
+        entry.resolve(undefined);
+      }
+    }
+  };
+  const recordText = (text: string): void => {
+    capturedBytes += Buffer.byteLength(text, "utf8");
+    if (
+      hasSensitiveText(text) ||
+      Buffer.byteLength(text, "utf8") > MAX_RENDERED_SBTD_REPORT_BYTES ||
+      capturedBytes > MAX_TOTAL_CAPTURED_TEXT_BYTES
+    ) {
+      sanitizationViolations += 1;
+      fail("RPC_SANITIZATION_FAILED");
+      return;
+    }
+    texts.push(text);
+  };
+  const receive = (frame: Record<string, unknown>): void => {
+    const type = frame.type;
+    if (type === "ready") {
+      ready.resolve();
+      return;
+    }
+    if (
+      type === "extension_error" ||
+      type === "error" ||
+      type === "auto_retry_start" ||
+      (typeof type === "string" &&
+        /^(agent_|turn_|message_|tool_execution_|model_)/.test(type))
+    ) {
+      fail("RPC_AGENT_OR_EXTENSION_ERROR");
+      return;
+    }
+    if (type === "response" || type === "prompt_result") {
+      if (frame.success === false || frame.error !== undefined) {
+        fail("RPC_COMMAND_FAILED");
+        return;
+      }
+      const id = typeof frame.id === "string" ? frame.id : undefined;
+      const entry = id === undefined ? undefined : pending.get(id);
+      if (entry === undefined || id === undefined) {
+        if (type === "prompt_result") fail("RPC_UNEXPECTED_TERMINAL");
+        return;
+      }
+      if (type === "response") {
+        if (frame.command !== entry.type || frame.success !== true) {
+          fail("RPC_ACK_INVALID");
+          return;
+        }
+        if (entry.type !== "prompt") {
+          pending.delete(id);
+          entry.resolve(frame.data);
+          return;
+        }
+        const data = frame.data;
+        if (
+          frame.agentInvoked === true ||
+          (typeof data === "object" &&
+            data !== null &&
+            "agentInvoked" in data &&
+            data.agentInvoked === true)
+        ) {
+          fail("RPC_AGENT_INVOKED");
+          return;
+        }
+        entry.acknowledged = true;
+      } else {
+        if (
+          entry.type !== "prompt" ||
+          entry.terminal ||
+          frame.status !== "completed" ||
+          frame.sessionSettled !== true ||
+          frame.agentInvoked !== false
+        ) {
+          fail("RPC_TERMINAL_REJECTED");
+          return;
+        }
+        entry.terminal = true;
+      }
+      completePrompts();
+      return;
+    }
+    if (type === "extension_ui_request") {
+      if (frame.method === "notify" && typeof frame.message === "string") {
+        const consumed = consumeNotifyMessage(frame.message);
+        if (consumed.planNotification !== undefined)
+          planNotification = consumed.planNotification;
+        if (consumed.recordAsText) recordText(frame.message);
+        completePrompts();
+        return;
+      }
+      if (frame.method === "setStatus" || frame.method === "setWidget") return;
+      unexpectedUiRequests += 1;
+      if (typeof frame.id === "string")
+        send({ type: "extension_ui_response", id: frame.id, cancelled: true });
+      fail("RPC_UNEXPECTED_UI");
+    }
+  };
+  child.stdout.setEncoding("utf8");
+  child.stdout.on("data", (chunk) => {
+    if (driverError !== undefined) return; // Continue draining, never retain failed text.
+    buffer += String(chunk);
+    if (Buffer.byteLength(buffer, "utf8") > MAX_TOTAL_CAPTURED_TEXT_BYTES) {
+      buffer = "";
+      fail("RPC_CAPTURE_LIMIT");
+      return;
+    }
+    for (;;) {
+      const nl = buffer.indexOf("\n");
+      if (nl < 0) break;
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (line.length === 0) continue;
+      try {
+        const parsed: unknown = JSON.parse(line);
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          Array.isArray(parsed)
+        )
+          throw new Error();
+        receive(parsed as Record<string, unknown>);
+      } catch {
+        fail("RPC_FRAME_INVALID");
+      }
+      if (driverError !== undefined) break;
+    }
+  });
+
+  const readyTimer = setTimeout(
+    () => fail("RPC_READY_TIMEOUT"),
+    Math.max(0, Math.min(30_000, deadline - Date.now())),
+  );
+  try {
+    await ready.promise;
+    clearTimeout(readyTimer);
+    await command("set_auto_retry", { enabled: false });
+    const available = (await command("get_available_commands")) as
+      | { commands?: { name?: string }[] }
+      | undefined;
+    sbtdCommandRegistered = (available?.commands ?? []).some(
+      (entry) => entry.name === "sbtd",
+    );
+    for (const name of COMMAND_ORDER) {
+      planNotification = undefined;
+      const since = texts.length;
+      const content = () =>
+        commandContentValidated(
+          name,
+          texts.slice(since).join("\n"),
+          planNotification,
+        );
+      await command("prompt", { message: `/sbtd ${name}` }, content);
+      commandResults.push({
+        command: name,
+        agentInvoked: false,
+        contentValidated: content(),
+        outputSha256: sha256Hex(texts.slice(since).join("\n")),
+      });
+    }
+  } catch {
+    fail(driverError ?? "RPC_SESSION_FAILED");
+  } finally {
+    clearTimeout(readyTimer);
+    closing = true;
+    try {
+      child.stdin.end();
+    } catch {
+      fail("HOST_STDIN_ERROR");
+    }
+    const waitClose = async () => {
+      const grace = Promise.withResolvers<undefined>();
+      const timer = setTimeout(() => grace.resolve(undefined), 3_000);
+      try {
+        return await Promise.race([closed.promise, grace.promise]);
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+    let exit = await waitClose();
+    if (exit === undefined) {
+      fail("HOST_CLOSE_TIMEOUT");
+      try {
+        if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
+        else child.kill("SIGKILL");
+      } catch {
+        fail("HOST_KILL_FAILED");
+      }
+      exit = await waitClose();
+    }
+    if (exit === undefined) {
+      fail("HOST_NOT_CLOSED");
+      child.stdin.destroy();
+      child.stdout.destroy();
+      child.stderr.destroy();
+    } else {
+      if (exit.signal !== null) fail("HOST_EXIT_SIGNAL");
+      else if (exit.code !== 0) fail("HOST_EXIT_NONZERO");
+      if (!stdoutEnded || !stderrEnded) fail("HOST_CAPTURE_INCOMPLETE");
+    }
+  }
+  if (modelRequestObserved()) fail("RPC_MODEL_CALL");
+  return {
+    commands: commandResults,
+    sbtdCommandRegistered,
+    unexpectedUiRequests,
+    sanitizationViolations,
+    ...(driverError === undefined ? {} : { driverError }),
+  };
+}
+
+export function assertRequestedHostVersion(
+  observed: string,
+  requested: string,
+): void {
+  if (observed !== requested) throw new Error("OMP_TARGET_VERSION_MISMATCH");
+}
+
 export async function runCommandSurfaceCell(
   options: CommandSurfaceCellOptions,
 ): Promise<CommandSurfaceCellResult> {
@@ -442,6 +775,14 @@ export async function runCommandSurfaceCell(
     hostIdentity.packageJsonSha256 === undefined
   )
     return blocked("OMP_PACKAGE_IDENTITY_UNAVAILABLE");
+  try {
+    assertRequestedHostVersion(
+      hostIdentity.packageVersion,
+      options.targetOmpVersion,
+    );
+  } catch {
+    return blocked("OMP_TARGET_VERSION_MISMATCH");
+  }
 
   const outDir = join(runDir, "out");
   const homeDir = join(runDir, "home");
@@ -476,6 +817,13 @@ export async function runCommandSurfaceCell(
   } catch (error) {
     return blocked(subjectStaleBlockedReason(error));
   }
+  const loadedRoot = join(agentDir, "plugins");
+  let loadedBaseline: ReadonlyMap<string, string>;
+  try {
+    loadedBaseline = await snapshotLoadedInstallation(loadedRoot);
+  } catch {
+    return blocked("LOADED_INSTALLATION_DRIFT");
+  }
 
   // Compatibility-only provider overlay (spec: P0 Compatibility-Only OMP
   // Provider Overlay — exact payload) plus the loopback-only deterministic
@@ -485,7 +833,11 @@ export async function runCommandSurfaceCell(
     "disabledProviders:\n  - ollama\n  - llama.cpp\n  - lm-studio\n",
     { encoding: "utf8", mode: 0o600 },
   );
+  const probeLogPath = join(outDir, "capabilities.jsonl");
+  const recordPath = join(outDir, "command-surface.json");
+  let modelRequestObserved = false;
   const stub = createServer((req, res) => {
+    modelRequestObserved = true;
     if (req.method === "POST" && req.url?.startsWith("/v1/chat/completions")) {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(
@@ -510,297 +862,101 @@ export async function runCommandSurfaceCell(
   });
   const listen = Promise.withResolvers<void>();
   stub.listen(0, "127.0.0.1", listen.resolve);
-  await listen.promise;
-  const address = stub.address();
-  const stubPort =
-    typeof address === "object" && address !== null ? address.port : 0;
-  await writeFile(
-    join(agentDir, "models.yml"),
-    [
-      "providers:",
-      "  spike:",
-      `    baseUrl: http://127.0.0.1:${stubPort}/v1`,
-      "    api: openai-completions",
-      "    auth: none",
-      "    models:",
-      "      - id: spike-1",
-      "        name: Spike Deterministic",
-      "        supportsTools: true",
-      "        contextWindow: 128000",
-      "        maxTokens: 4096",
-      "        input: [text]",
-      "        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }",
-      "",
-    ].join("\n"),
-    { encoding: "utf8", mode: 0o600 },
-  );
-
-  const probeLogPath = join(outDir, "capabilities.jsonl");
-  const recordPath = join(outDir, "command-surface.json");
-  await writeFile(probeLogPath, "", "utf8");
-
-  const child = spawn(
-    ompBin,
-    [
-      "--mode",
-      "rpc-ui",
-      "--cwd",
-      projectDir,
-      "--no-tools",
-      "--no-skills",
-      "--no-rules",
-      "--no-pty",
-      "--no-title",
-      "--extension",
-      pluginExt,
-      "--extension",
-      PROBE_EXT,
-    ],
-    {
-      cwd: projectDir,
-      detached: true,
-      env: {
-        PATH: process.env.PATH ?? "",
-        HOME: homeDir,
-        XDG_CACHE_HOME: join(homeDir, ".cache"),
-        XDG_CONFIG_HOME: join(homeDir, ".config"),
-        XDG_DATA_HOME: join(homeDir, ".local", "share"),
-        PI_CODING_AGENT_DIR: agentDir,
-        CI: "1",
-        NO_COLOR: "1",
-        CAPABILITY_PROBE_LOG: probeLogPath,
-        CAPABILITY_PROBE_NAMES: JSON.stringify({
-          required: [...ompExtensionV2Inventory.requiredCapabilities],
-          optional: [...ompExtensionV2Inventory.optionalCapabilities],
-        }),
-        HOST_EVENT_RUN_ID: runId,
-      },
-      stdio: ["pipe", "pipe", "pipe"],
-    },
-  );
-  let stderrTail = "";
-  child.stderr.setEncoding("utf8");
-  child.stderr.on("data", (chunk) => {
-    stderrTail = (stderrTail + String(chunk)).slice(-2048);
-  });
-
-  const pending = new Map<
-    string,
-    {
-      readonly type: string;
-      readonly resolve: (value: unknown) => void;
-      readonly reject: (error: Error) => void;
-    }
-  >();
-  let nextId = 0;
-  let buffer = "";
-  let ready = false;
-  let childClosed = false;
-  const textWaiters: {
-    readonly matches: () => boolean;
-    readonly resolve: () => void;
-    readonly reject: (error: Error) => void;
-  }[] = [];
-  const texts: string[] = [];
-  let capturedBytes = 0;
-  let sanitizationViolations = 0;
-  let unexpectedUiRequests = 0;
-  let planNotification: unknown;
-
-  const failAll = (error: Error): void => {
-    for (const [, entry] of pending) entry.reject(error);
-    pending.clear();
-    for (const waiter of textWaiters.splice(0)) waiter.reject(error);
-  };
-  child.on("close", () => {
-    childClosed = true;
-    failAll(new Error("omp closed early"));
-  });
-  const send = (value: unknown): void => {
-    child.stdin.write(`${JSON.stringify(value)}\n`);
-  };
-  const command = (
-    type: string,
-    payload: Readonly<Record<string, unknown>> = {},
-    timeout = 30_000,
-  ): Promise<unknown> => {
-    const id = `cert-cell-${++nextId}`;
-    const {
-      promise,
-      resolve: resolvePending,
-      reject,
-    } = Promise.withResolvers<unknown>();
-    pending.set(id, { type, resolve: resolvePending, reject });
-    send({ id, type, ...payload });
-    const timer = setTimeout(() => {
-      if (pending.delete(id)) reject(new Error(`timeout waiting ${type}`));
-    }, timeout);
-    return promise.finally(() => clearTimeout(timer));
-  };
-  const recordText = (text: string): void => {
-    if (
-      hasSensitiveText(text) ||
-      Buffer.byteLength(text, "utf8") > MAX_RENDERED_SBTD_REPORT_BYTES
-    ) {
-      sanitizationViolations += 1;
-      return;
-    }
-    capturedBytes += Buffer.byteLength(text, "utf8");
-    if (capturedBytes > MAX_TOTAL_CAPTURED_TEXT_BYTES) {
-      sanitizationViolations += 1;
-      return;
-    }
-    texts.push(text);
-    for (const waiter of textWaiters.splice(0)) {
-      if (waiter.matches()) waiter.resolve();
-      else textWaiters.push(waiter);
-    }
-  };
-
-  child.stdout.setEncoding("utf8");
-  child.stdout.on("data", (chunk) => {
-    buffer += String(chunk);
-    for (;;) {
-      const nl = buffer.indexOf("\n");
-      if (nl < 0) break;
-      const line = buffer.slice(0, nl).trim();
-      buffer = buffer.slice(nl + 1);
-      if (line.length === 0) continue;
-      let frame: Record<string, unknown>;
-      try {
-        frame = JSON.parse(line) as Record<string, unknown>;
-      } catch {
-        continue;
-      }
-      const type = frame.type;
-      if (type === "ready") {
-        ready = true;
-        continue;
-      }
-      if (type === "response" || type === "prompt_result") {
-        const id = typeof frame.id === "string" ? frame.id : undefined;
-        const entry = id === undefined ? undefined : pending.get(id);
-        if (entry === undefined || id === undefined) continue;
-        pending.delete(id);
-        if (frame.success === false)
-          entry.reject(new Error(`${entry.type} failed`));
-        else if (entry.type === "prompt")
-          entry.resolve({ agentInvoked: frame.agentInvoked === true });
-        else entry.resolve(frame.data);
-        continue;
-      }
-      if (type === "extension_ui_request") {
-        const id = typeof frame.id === "string" ? frame.id : undefined;
-        if (frame.method === "notify" && typeof frame.message === "string") {
-          const consumed = consumeNotifyMessage(frame.message);
-          if (consumed.planNotification !== undefined)
-            planNotification = consumed.planNotification;
-          if (consumed.recordAsText) recordText(frame.message);
-          continue;
-        }
-        if (frame.method === "setStatus" || frame.method === "setWidget")
-          continue;
-        // confirm/select or any other interactive request is unexpected in
-        // the read-only four-command profile: deny and fail closed.
-        unexpectedUiRequests += 1;
-        if (id !== undefined)
-          send({ type: "extension_ui_response", id, cancelled: true });
-      }
-      // All other streaming frames are intentionally ignored.
-    }
-  });
-
-  const waitReady = async (timeout = 30_000): Promise<void> => {
-    const start = Date.now();
-    while (!ready) {
-      if (childClosed) throw new Error("omp closed before ready");
-      if (Date.now() - start > timeout)
-        throw new Error("omp did not become ready");
-      await new Promise((resolveWait) => setTimeout(resolveWait, 25));
-    }
-  };
-  const waitForContent = (
-    matches: () => boolean,
-    timeout = 30_000,
-  ): Promise<void> => {
-    const {
-      promise,
-      resolve: resolveWait,
-      reject,
-    } = Promise.withResolvers<void>();
-    const waiter = { matches, resolve: resolveWait, reject };
-    const timer = setTimeout(() => {
-      const index = textWaiters.indexOf(waiter);
-      if (index >= 0) textWaiters.splice(index, 1);
-      reject(new Error("timeout waiting command output"));
-    }, timeout);
-    textWaiters.push(waiter);
-    return promise.finally(() => clearTimeout(timer));
-  };
-
-  const commandResults: CommandSurfaceRunRecord["commands"][number][] = [];
-  let driverError: string | undefined;
-  let sbtdCommandRegistered = false;
-  const deadline = Date.now() + timeoutMs;
+  stub.once("error", listen.reject);
+  let session: Awaited<ReturnType<typeof runCommandSurfaceSession>>;
   try {
-    await waitReady();
-    await command("set_auto_retry", { enabled: false });
-    const available = (await command("get_available_commands")) as
-      | { commands?: { name?: string }[] }
-      | undefined;
-    sbtdCommandRegistered = (available?.commands ?? []).some(
-      (entry) => entry.name === "sbtd",
+    await listen.promise;
+    const address = stub.address();
+    const stubPort =
+      typeof address === "object" && address !== null ? address.port : 0;
+    await writeFile(
+      join(agentDir, "models.yml"),
+      [
+        "providers:",
+        "  spike:",
+        `    baseUrl: http://127.0.0.1:${stubPort}/v1`,
+        "    api: openai-completions",
+        "    auth: none",
+        "    models:",
+        "      - id: spike-1",
+        "        name: Spike Deterministic",
+        "        supportsTools: true",
+        "        contextWindow: 128000",
+        "        maxTokens: 4096",
+        "        input: [text]",
+        "        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }",
+        "",
+      ].join("\n"),
+      { encoding: "utf8", mode: 0o600 },
     );
-    for (const name of COMMAND_ORDER) {
-      if (Date.now() > deadline) throw new Error("cell timeout");
-      planNotification = undefined;
-      const since = texts.length;
-      const ack = (await command(
-        "prompt",
-        { message: `/sbtd ${name}` },
-        60_000,
-      )) as { agentInvoked?: boolean } | undefined;
-      const agentInvoked = ack?.agentInvoked === true;
-      if (!agentInvoked) {
-        const remaining = Math.max(5_000, deadline - Date.now());
-        await waitForContent(
-          () =>
-            commandContentValidated(
-              name,
-              texts.slice(since).join("\n"),
-              planNotification,
-            ),
-          Math.min(30_000, remaining),
-        ).catch(() => undefined);
-      }
-      const output = texts.slice(since).join("\n");
-      commandResults.push({
-        command: name,
-        agentInvoked,
-        contentValidated:
-          !agentInvoked &&
-          commandContentValidated(name, output, planNotification),
-        outputSha256: sha256Hex(output),
-      });
-    }
-  } catch (error) {
-    driverError = error instanceof Error ? error.name : "unknown";
+
+    await writeFile(probeLogPath, "", "utf8");
+
+    const child = spawn(
+      ompBin,
+      [
+        "--mode",
+        "rpc-ui",
+        "--cwd",
+        projectDir,
+        "--no-tools",
+        "--no-skills",
+        "--no-rules",
+        "--no-pty",
+        "--no-title",
+        "--extension",
+        pluginExt,
+        "--extension",
+        PROBE_EXT,
+      ],
+      {
+        cwd: projectDir,
+        detached: true,
+        env: {
+          PATH: process.env.PATH ?? "",
+          HOME: homeDir,
+          XDG_CACHE_HOME: join(homeDir, ".cache"),
+          XDG_CONFIG_HOME: join(homeDir, ".config"),
+          XDG_DATA_HOME: join(homeDir, ".local", "share"),
+          PI_CODING_AGENT_DIR: agentDir,
+          CI: "1",
+          NO_COLOR: "1",
+          CAPABILITY_PROBE_LOG: probeLogPath,
+          CAPABILITY_PROBE_NAMES: JSON.stringify({
+            required: [...ompExtensionV2Inventory.requiredCapabilities],
+            optional: [...ompExtensionV2Inventory.optionalCapabilities],
+          }),
+          HOST_EVENT_RUN_ID: runId,
+        },
+        stdio: ["pipe", "pipe", "pipe"],
+      },
+    );
+    session = await runCommandSurfaceSession(
+      child,
+      timeoutMs,
+      () => modelRequestObserved,
+    );
+  } catch {
+    return blocked("DRIVER_SETUP_FAILED");
   } finally {
-    try {
-      child.stdin.end();
-    } catch {
-      // already closed
-    }
-    const killer = setTimeout(() => {
-      try {
-        if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
-      } catch {
-        // already gone
-      }
-    }, 3_000);
-    child.once("close", () => clearTimeout(killer));
+    const stopped = Promise.withResolvers<void>();
+    stub.close(() => stopped.resolve());
+    stub.closeAllConnections();
+    await stopped.promise;
   }
-  stub.close();
+  const {
+    commands: commandResults,
+    sbtdCommandRegistered,
+    unexpectedUiRequests,
+    sanitizationViolations,
+  } = session;
+  let driverError = session.driverError;
+  if (modelRequestObserved) driverError ??= "RPC_MODEL_CALL";
+  try {
+    await assertLoadedInstallationUnchanged(loadedRoot, loadedBaseline);
+  } catch {
+    driverError ??= "LOADED_INSTALLATION_DRIFT";
+  }
 
   if (commandResults.length === 0)
     return blocked(

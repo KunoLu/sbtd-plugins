@@ -1,3 +1,4 @@
+/// <reference path="./observer-sanitize.d.ts" />
 // Slice 5 contract tests for 08-20-omp-plugin-compatibility-decoupling.
 //
 // Always-on (inside the 30s default budget): sanitizer, evidence schema and
@@ -789,7 +790,7 @@ describe("Feature: Host Event Surface — observer reason/toolName sanitization"
       // Query-suffixed specifier: distinct module instance so the env
       // captured at module top level is the one set above. Must be a
       // static literal — vite cannot rewrite variable dynamic imports.
-      const mod: { default: (pi: unknown) => void } = await import(
+      const mod = await import(
         "../scripts/p0/host-event/observer.mjs?case=sanitize"
       );
       const handlers = new Map<
@@ -907,6 +908,40 @@ describe("Feature: Host Event Surface — evidence bundle and content addressing
     expect(second.wrote).toBe(false);
     expect(second.dir).toBe(first.dir);
   });
+
+  it("serializes frozen verdict arrays without mutation and retains conflict rejection", async () => {
+    const verdict = validateBase(baseRecords());
+    Object.freeze(verdict.requiredEventsObserved);
+    Object.freeze(verdict.optionalEventsObserved);
+    Object.freeze(verdict.reasonCodes);
+    Object.freeze(verdict.diagnostics);
+    const bundle = buildLocalObservationBundle({
+      verdict,
+      expectation: EXPECTED,
+      sources: {
+        observerLogSha256: d("observer-log"),
+        driverLogSha256: d("driver-log"),
+        scenarioSha256: d("scenario"),
+      },
+    });
+    const unchanged = JSON.stringify(bundle);
+    const root = await mkdtemp(join(tmpdir(), "host-event-readonly-"));
+    const first = await writeLocalObservationEvidence(root, bundle);
+    const file = join(first.dir, "evidence.json");
+    const bytes = await readFile(file, "utf8");
+    expect(d(bytes)).toBe(first.digest);
+    expect(JSON.parse(bytes)).toEqual(JSON.parse(unchanged));
+    expect((await writeLocalObservationEvidence(root, bundle)).wrote).toBe(
+      false,
+    );
+    expect(JSON.stringify(bundle)).toBe(unchanged);
+
+    await writeFile(file, "conflicting evidence\n", "utf8");
+    await expect(writeLocalObservationEvidence(root, bundle)).rejects.toThrow(
+      "EVIDENCE_CONTENT_CONFLICT",
+    );
+    expect(await readFile(file, "utf8")).toBe("conflicting evidence\n");
+  });
 });
 
 describe("Feature: Host Event Surface — driver-side Host identity recomputation", () => {
@@ -921,6 +956,23 @@ describe("Feature: Host Event Surface — driver-side Host identity recomputatio
     const identity = recomputeHostIdentity(join(distDir, "cli.js"));
     expect(identity.packageVersion).toBe("18.11.1");
     expect(identity.entrypointSha256).toBe(d("// fake omp cli\n"));
+    expect(identity.packageJsonSha256).toBe(d(manifest));
+  });
+
+  it("omits an unavailable package version without losing either digest", async () => {
+    const root = await mkdtemp(join(tmpdir(), "host-event-no-version-"));
+    const dist = join(root, "dist");
+    await mkdir(dist);
+    const manifest = JSON.stringify({ name: "@oh-my-pi/pi-coding-agent" });
+    await writeFile(join(root, "package.json"), manifest, "utf8");
+    await writeFile(
+      join(dist, "cli.js"),
+      "// inert identity fixture\n",
+      "utf8",
+    );
+    const identity = recomputeHostIdentity(join(dist, "cli.js"));
+    expect(identity).not.toHaveProperty("packageVersion");
+    expect(identity.entrypointSha256).toBe(d("// inert identity fixture\n"));
     expect(identity.packageJsonSha256).toBe(d(manifest));
   });
 });
@@ -1184,10 +1236,11 @@ describe.skipIf(!liveEnabled)(
       async () => {
         if (typeof liveOmpBin !== "string" || typeof liveTarball !== "string")
           return;
+        const runsRoot = process.env.HOST_EVENT_RUNS_ROOT;
         const result = await runLiveCell({
           ompBin: liveOmpBin,
           pluginTarball: liveTarball,
-          runsRoot: process.env.HOST_EVENT_RUNS_ROOT,
+          ...(runsRoot === undefined ? {} : { runsRoot }),
         });
         if (result.outcome === "blocked") {
           // Environment/trigger unavailable: recorded, never faked.

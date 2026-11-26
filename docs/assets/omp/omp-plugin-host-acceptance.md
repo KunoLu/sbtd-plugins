@@ -103,18 +103,18 @@ shasum -a 256 "$TARBALL"
 - 仅 `workflow_dispatch`，仅 `KunoLu/sbtd-plugins` + `refs/heads/main`；其他仓库、ref 或事件 fail closed。
 - workflow 从不可变 main commit **恰好 pack 一次**，全部后续 job 只消费这一份 artifact 并复核 digest；本机 `.tmp` 包不是云端输入。
 - `lock-and-cache` job 用 npm 生成诊断 `package-lock.json`（`integrity` 为 npm 写入的 SRI，禁止手写内容 SHA-256）并物化 content-addressed cache；`pluginTarballSha256` 独立于 lock SRI 记录。
-- `section4` job 只用共享 npm-offline-v1 安装器（`npm ci --offline --ignore-scripts --no-audit`）安装 subject——禁止 bun、禁止无 lock 的 `npm install --offline`——随后通过共享 command-surface cell driver 对钉死的 OMP `18.11.1` `dist/cli.js` 非交互执行四命令，并以 Host 前后 SHA-256 清单做诊断写入对照（`section-4-write-check=passed`）。
+- `section4` job 只用共享 npm-offline-v1 安装器（`npm ci --offline --ignore-scripts --no-audit`）安装 subject——禁止用 bun 作为安装器、禁止无 lock 的 `npm install --offline`——随后通过共享 command-surface cell driver 对钉死的 OMP `18.11.1` `dist/cli.js` 非交互执行四命令，并以 Host 前后 SHA-256 清单做诊断写入对照（`section-4-write-check=passed`）。Host 解释器须与精确实物及已批准 job 合同相符；本文不自动修改现有冻结配置。
 - Host 无法 provision 或四命令未通过时，workflow 以明确 blockedReason fail closed；任何 job 都不许伪造通过。
 - commit status `omp-section4-publish-gate` 绑定 commit SHA + tarball digest + 钉死 OMP + `installerGeneration`。
 - 该 workflow **没有** publish job；发布仍是第 5 节的人工 HITL 流程，且只能发布 digest 通过的同一份 tarball 字节。
 
-认证流水线的 Command Surface（或任何其他 CI 结果）**不是**第 4 节替代品，不参与 npm 发布授权。本机 TUI（第 4.1 节）只是可选对照，不能代替受信 Gate。本 Gate 也不宣称 OMP 18 兼容：18 属于新 Plugin 身份 + 加宽 peer 之后的另一条矩阵。
+认证流水线的 Command Surface（或任何其他 CI 结果）**不是**第 4 节替代品，不参与 npm 发布授权。本机 TUI（第 4.1 节）只是可选对照，不能代替受信 Gate。旧17.x Gate 结果不能移作18验收；18须以自身 Plugin 身份、peer 范围及精确官方入口取得新的受信证据。
 
 不要对从 `.tgz` 解出的目录执行 `omp plugin link`。该命令只创建 link/manifest，不解析 `package.json` 生产依赖；`omp plugin list` 和 `omp plugin doctor` 也不会导入扩展，因而不能证明 `/sbtd` 已注册。
 
 ### 4.1 本机 TUI 可选对照
 
-本机 TUI 对照不复用受信 Gate 的结论；它只是发布负责人的本地交叉检查。在一次性隔离目录中，用与受信 Gate 同一 npm-offline-v1 安装器契约安装 subject：tarball 置于固定相对路径 `plugin.tgz`，诊断 `package-lock.json` 由 npm 生成（SRI 禁止手写内容 SHA-256），安装只跑 `npm ci --offline --ignore-scripts --no-audit`；禁止 bun，禁止无 lock 的 `npm install --offline`。
+本机 TUI 对照不复用受信 Gate 的结论；它只是发布负责人的本地交叉检查。在一次性隔离目录中，用与受信 Gate 同一 npm-offline-v1 安装器契约安装 subject：tarball 置于固定相对路径 `plugin.tgz`，诊断 `package-lock.json` 由 npm 生成（SRI 禁止手写内容 SHA-256），安装只跑 `npm ci --offline --ignore-scripts --no-audit`；禁止用 bun 作为安装器，禁止无 lock 的 `npm install --offline`。
 
 ```bash
 DIAGNOSTIC_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/kpi-omp-package-diagnostic.XXXXXX")"
@@ -164,13 +164,26 @@ test -s "$AUDIT_DIR/pre-tui.manifest"
 
 在**操作者自己的终端**用下面的隔离环境启动 TUI。`HOME` / XDG / `PI_CODING_AGENT_DIR` 已指进诊断根，写入证明只覆盖该进程可见的诊断根；不要快照、读取或哈希真实 `~/.omp`（§2 禁止保留 profile）。监督仓库的 Agent/Orca 会话不要代跑这条 TUI，以免它改写真实 profile。
 
+精确 `18.11.1` 的官方 npm 包声明 `engines.bun: >=1.3.14`，`dist/cli.js` 使用 Bun shebang；不要用开发主会话的 OMP 19 或 Node 代替它。先确认以下路径确实来自已核定的 SDK 安装，且既有 Bun 满足 engines；不满足时停止，不自动安装/升级全局工具。Plugin 的 `npm-offline-v1` 安装器约束不等于禁止 Host 所需解释器；现有冻结流程若冲突，必须另行处理。
+
 ```bash
-HOME="$DIAGNOSTIC_ROOT/home" \
-XDG_CACHE_HOME="$DIAGNOSTIC_ROOT/cache" \
-XDG_CONFIG_HOME="$DIAGNOSTIC_ROOT/config" \
-XDG_DATA_HOME="$DIAGNOSTIC_ROOT/data" \
-PI_CODING_AGENT_DIR="$DIAGNOSTIC_ROOT/agent" \
-omp --cwd "$PROJECT_ROOT" --extension "$EXT"
+HOST_CLI="$PLUGIN_ROOT/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+BUN_EXECUTABLE="$(command -v bun)"
+test -n "$BUN_EXECUTABLE" && test -f "$HOST_CLI"
+(
+  export HOME="$DIAGNOSTIC_ROOT/home"
+  export XDG_CACHE_HOME="$DIAGNOSTIC_ROOT/cache"
+  export XDG_CONFIG_HOME="$DIAGNOSTIC_ROOT/config"
+  export XDG_DATA_HOME="$DIAGNOSTIC_ROOT/data"
+  export PI_CODING_AGENT_DIR="$DIAGNOSTIC_ROOT/agent"
+  "$BUN_EXECUTABLE" --version
+  HOST_VERSION="$("$BUN_EXECUTABLE" "$HOST_CLI" --version)"
+  [ "$HOST_VERSION" = "omp/18.11.1" ] || {
+    printf '宿主不是精确18.11.1，停止\n' >&2
+    exit 1
+  }
+  "$BUN_EXECUTABLE" "$HOST_CLI" --cwd "$PROJECT_ROOT" --extension "$EXT"
+)
 ```
 
 在启动的 OMP TUI 中只输入四条命令。全部出现并完成时，确认：
@@ -239,6 +252,19 @@ unset DIAGNOSTIC_ROOT PLUGIN_ROOT PROJECT_ROOT EXT AUDIT_DIR
 ```
 
 不要把 profile、原始 transcript、模型输出或诊断目录纳入候选证据。对照失败时不发布；修复后必须生成新的 tarball 并重新走受信 Gate。
+
+### 4.2 普通云端隔离真实会话验证（非受信发布 Gate）
+
+经用户明确授权，可在新隔离目录复用同一 SHA-256 tarball 的已核安装副本验证本节原定四命令；不得以 repository link、重打包或修改后的包替代。复制安装树须物理独立，保留旧证据，核对完整文件向量。HOME、agent、XDG、cache、临时项目与会话存储均指向新隔离范围，不复制真实 profile、凭据或历史会话。
+
+- **解释器事实**：官方 `18.11.1` 要求 Bun `>=1.3.14` 与对应平台 native。记录实际入口/版本；只读探测或普通安装成功不等于四命令完成。其他版本（包括19）不能继承此结论。
+- **CLI 前置**：按该精确版本 `--help` 选择参数，不照搬19选项。18.11.1 的无凭据非交互 CLI 可在默认模型检查处退出；应记为“尚未调度命令”，不得写假 API key、伪造模型或把无输出 exit0 当通过。
+- **真实 session API 边界**：若只读命令不需要模型，可使用官方 `createAgentSession`、官方 `SessionManager.inMemory` 和官方 `runRpcMode`。必须由官方初始化流程绑定 runtime/UI、发出 session_start，再由原生 RPC / `session.prompt` 调度；不手工调用 handler 或构造 mock context，不用 factory 注册替代真实会话。CLI 与 SDK/RPC 的覆盖分别报告，不能互相冒名。
+- **RPC 完成**：普通 prompt response 可能只是接收确认。逐条发送并等待对应原生 `prompt_result`（`status: completed`、`agentInvoked: false`、`sessionSettled: true`），或协议明确的同步本地完成响应；随后仍须检查该命令的实际输出和 extension_error。不要批量发送后立即 EOF、仅凭四个 success ACK 宣称四命令执行。
+- **输出断言**：help 应展示原命令帮助；status/report 应如实呈现当前 Kit、环境和 Provider 不可用等事实，不把 `needs-onboard` 改写为已安装就绪；plan 应返回有效 digest/targets，并明确需要 Apply 的审批。计划中列出 write/install/blocked 是预览，不得执行 Apply、安装依赖或创建外部任务。
+- **写入与保密**：核对安装副本既有文件不变、临时项目仍空、拟写 targets 未生成；SDK 的会话/缓存写入与命令业务写入分开记录。只保留必要命令协议/消毒结果，不归档凭据或完整会话历史。额外账号/平台审批或越界写入只阻断相应步骤，其余安全检查继续。
+
+这种普通 Linux 结果不等于受信 CI §4、原 Mac G1、历史92产物等价、完整宿主/模型行为或发布。文档入口更正不修改旧冻结白名单；与实物冲突的冻结流程仍须独立解决。即使四条只读 handler 均完成，也不自动允许合并/发布或扩展 peer 范围。
 
 ## 5. 发布 RC 到 `next`
 

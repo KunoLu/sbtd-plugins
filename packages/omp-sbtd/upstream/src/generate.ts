@@ -14,6 +14,7 @@ const [projection, agentPluginProjection] = await Promise.all([
     packageRoot,
     canonicalDirectory: `${packageRoot}/generated`,
     outputDirectory: `${packageRoot}/generated-omp`,
+    sourceSelection: "r1-manuals",
   }),
   generateAgentPluginProjection({
     packageRoot,

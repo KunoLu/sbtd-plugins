@@ -36,7 +36,13 @@ async function packPlugin(): Promise<string> {
   await mkdir(extractedRoot, { recursive: true });
   const { stdout } = await runProcess(
     packageManager,
-    ["pack", "--pack-destination", packedRoot, "--json"],
+    [
+      "--config.verify-deps-before-run=error",
+      "pack",
+      "--pack-destination",
+      packedRoot,
+      "--json",
+    ],
     { cwd: pluginRoot },
   );
   const packed = JSON.parse(stdout) as { filename: string };
@@ -64,10 +70,15 @@ function dependencySpec(
   manifest: unknown,
   section: "peerDependencies" | "devDependencies",
 ): unknown {
-  if (!manifest || typeof manifest !== "object" || !(section in manifest)) {
-    return undefined;
-  }
-  const entries: unknown = manifest[section];
+  if (!manifest || typeof manifest !== "object") return undefined;
+  const entries: unknown =
+    section === "peerDependencies"
+      ? "peerDependencies" in manifest
+        ? manifest.peerDependencies
+        : undefined
+      : "devDependencies" in manifest
+        ? manifest.devDependencies
+        : undefined;
   if (
     !entries ||
     typeof entries !== "object" ||
@@ -94,7 +105,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       "version" in packedPackage
         ? packedPackage.version
         : undefined;
-    expect(packedVersion).toBe("0.2.0-rc.2");
+    expect(packedVersion).toBe("0.2.0-rc.3");
     // Tarball-bound identity: the packed manifest must carry the widened
     // peer range and the exact development pin (Slice 3 candidate contract).
     expect(dependencySpec(packedPackage, "peerDependencies")).toBe(">=18 <19");
@@ -111,7 +122,10 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
     expect(packedSkills).toEqual([...agentPluginManifest.certified].sort());
     expect(packedSkills.length).toBe(agentPluginManifest.certifiedCount);
     for (const name of agentPluginManifest.certified) {
-      const expectedFiles = agentPluginManifest.skills[name].files;
+      const skill = agentPluginManifest.skills[name];
+      if (skill === undefined)
+        throw new Error(`Certified skill is missing from manifest: ${name}`);
+      const expectedFiles = skill.files;
       for (const [path, digest] of Object.entries(expectedFiles)) {
         const bytes = await readFile(join(skillsRoot, name, path));
         expect(
