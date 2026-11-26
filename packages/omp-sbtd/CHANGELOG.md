@@ -44,11 +44,19 @@ Full Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
   guidance with official 18.11.1's Bun requirement and the trusted same-digest
   §4 publication gate.
 
-This is an unpublished partial-source candidate, not a whole-upstream upgrade
-or frozen-artifact acceptance record. Peer `>=18 <19`, development pin
+This candidate was merged via [#132](https://github.com/KunoLu/sbtd-plugins/pull/132)
+as `1f188641c594bb51e701c51b6d2692be65218214` (`1f18864`), but remains an
+unpublished partial-source candidate, not a whole-upstream upgrade or
+frozen-artifact acceptance record. Peer `>=18 <19`, development pin
 `18.11.1` and dependency locks are unchanged. Prior local rc.2 package/SDK
-evidence does not transfer to the new rc.3 artifact. No rc.3 Registry,
-tag/release, trusted §4 or full-Host success is claimed.
+evidence does not transfer to the new rc.3 artifact. The 2026-11-26 15:47
+pack tarball was deleted by the authorized afterEach hook, leaving no
+publishable package identity from that run;
+`91f8ecf51ce89152874b0427f99ac7b9214bbb8b9fa8039f26be87c6b781158c` (or any
+CI probe pack hash) must not be treated as a release identity. No rc.3
+Registry, tag/release, trusted §4 or full-Host success is claimed; future
+publication requires a new verifiable pack and separate authorization
+(item 5).
 
 ## [0.2.0-rc.2] - 2026-10-23
 

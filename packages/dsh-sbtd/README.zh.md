@@ -12,15 +12,15 @@ DSH 宿主上的 SBTD workflow 适配器，提供短中文 sbtd section、hooks�
 
 | 插件版本 | 发布状态 |
 | --- | --- |
-| `0.2.0-rc.3` | 准备中（尚未发布） |
+| `0.2.0-rc.3` | 已于 2026-11-18 发布 |
 | `0.2.0-rc.2` | 已于 2026-10-23 发布（历史） |
 
-顶部语言链接指向计划中的 `dsh-sbtd-v0.2.0-rc.3` tag。本次准备不创建该 tag，也不声明链接已核验可访问。合入、tag、GitHub release、npm 发布及 dist-tag 变更分别需要独立授权。
+顶部语言链接指向已存在的 annotated tag `dsh-sbtd-v0.2.0-rc.3` 及其 GitHub prerelease。
 
 ## 环境要求
 
 - 目标与开发宿主：`@deepseek-ai/dsh@0.2.0-rc.2`。
-- `peerDependencies` 与 `engines.dsh` 均声明 `>=0.2.0-rc.2 <0.3.0-0`；本次发版准备不改变该范围。
+- `peerDependencies` 与 `engines.dsh` 均声明 `>=0.2.0-rc.2 <0.3.0-0`；本次发布不改变该范围。
 - MCP 可选，缺失时降级。Graft 查询走已接线的 managed launcher；插件不初始化 Graft，也不写 MCP 配置。
 
 搭配 `@deepseek-ai/dsh@0.2.1-rc.2` 时，npm 默认 peer 解析不包含跨 patch 预发布版本，可能报 `ERESOLVE`。推荐 pnpm 或 dsh 插件管理器；详见 [CHANGELOG.zh.md 的部署边界](CHANGELOG.zh.md#部署边界)。
@@ -29,10 +29,10 @@ DSH 宿主上的 SBTD workflow 适配器，提供短中文 sbtd section、hooks�
 
 从 dist-tag `next` 安装。
 
-历史版本：`0.2.0-rc.2` 已于 2026-10-23 17:08:50 +08:00 发布到 npm。
-当日记录的查询发现 `next` 与 `latest` 均指向该版本；这不是本次重新查询 registry 的结果。
-GitHub prerelease：[`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2)。
-现有 `@next` 安装指引保持不变；它不能证明准备中的 rc.3 tarball 已发布或已安装。
+当前版本：`0.2.0-rc.3` 已于 2026-11-18 20:28:55 +08:00 发布到 npm；GitHub prerelease [`dsh-sbtd-v0.2.0-rc.3`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.3) 发布于 2026-11-18 20:41:17 +08:00。
+2026-11-26 查询发现 `next` 与 `latest` 均指向 `0.2.0-rc.3`。
+历史版本：`0.2.0-rc.2` 已于 2026-10-23 17:08:50 +08:00 发布到 npm；当日记录的查询发现 `next` 与 `latest` 均指向该版本。
+历史 GitHub prerelease：[`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2)。
 
 使用 `@next`，不要使用裸包名、`@latest` 或 GitHub 路径：
 
@@ -97,9 +97,9 @@ await sbtd_review({
 
 ### 手册
 
-`manuals/` 是 [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127) 从 `KunoLu/640-skills` **v2.1.0**（sourceRevision `3c835303c23d59d3157ca84121a92f1bd87d4997`）只读同步的 skill 正文。本次准备保留十二项白名单与十九个文件。每个 skill 只拷贝 `SKILL.md` 与该 skill 自己的 `references/`。不要手改 manuals 正文。
+`manuals/` 是 [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127) 从 `KunoLu/640-skills` **v2.1.0**（sourceRevision `3c835303c23d59d3157ca84121a92f1bd87d4997`）只读同步的 skill 正文。本版本保留十二项白名单与十九个文件。每个 skill 只拷贝 `SKILL.md` 与该 skill 自己的 `references/`。不要手改 manuals 正文。
 
-将来另行获准更新手册时，可提供 HEAD 等于 pin 的 SOURCE 目录，或省略参数让脚本 clone 到该 pin。本次 rc.3 准备不重新同步或修改 pin：
+将来另行获准更新手册时，可提供 HEAD 等于 pin 的 SOURCE 目录，或省略参数让脚本 clone 到该 pin。本版本不重新同步或修改 pin：
 
 ```bash
 packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
@@ -113,11 +113,11 @@ packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
 
 ## 发布 RC 版本
 
-本次仅准备 `@kunolu/dsh-sbtd@0.2.0-rc.3`。计划中的 annotated tag 名称为 `dsh-sbtd-v0.2.0-rc.3`，不声明它已存在或两个语言链接已可访问。合入与发布分别获批后，发布负责人仍须核对最终提交、tag 绑定链接及双语发布说明。
+`@kunolu/dsh-sbtd@0.2.0-rc.3` 已发布：annotated tag `dsh-sbtd-v0.2.0-rc.3`，GitHub prerelease 发布时间 2026-11-18 20:41:17 +08:00，npm 发布时间 2026-11-18 20:28:55 +08:00；2026-11-26 查询 `next` 与 `latest` 均指向 `0.2.0-rc.3`。顶部语言链接绑定该 tag。将来的 RC 在合入与发布分别获批后，发布负责人仍须核对最终提交、tag 绑定链接及双语发布说明。
 
-任何另行获准的发布之前，都要运行包测试、lint、typecheck、`npm pack --dry-run` 与真实 tarball 校验。同一 tarball 必须分别通过两个 REQUIRED 宿主（`0.2.0-rc.2`、`0.2.1-rc.2`）及 candidate `0.2.2-rc.3` 自身的 smoke；advisory 顶层 success 不能掩盖失败的 cell。共享 smoke 在需要时使用宿主已有 native executor，不改变宿主 pin 或断言。本次准备不授权 tag、GitHub release、npm publish 或 `next`/`latest` 变更。双语说明见 [CHANGELOG.md](CHANGELOG.md) 与 [CHANGELOG.zh.md](CHANGELOG.zh.md)。
+任何另行获准的发布之前，都要运行包测试、lint、typecheck、`npm pack --dry-run` 与真实 tarball 校验。同一 tarball 必须分别通过两个 REQUIRED 宿主（`0.2.0-rc.2`、`0.2.1-rc.2`）及 candidate `0.2.2-rc.3` 自身的 smoke；advisory 顶层 success 不能掩盖失败的 cell。共享 smoke 在需要时使用宿主已有 native executor，不改变宿主 pin 或断言。将来 RC 的 tag、GitHub release、npm publish 或 `next`/`latest` 变更须各自另行授权。双语说明见 [CHANGELOG.md](CHANGELOG.md) 与 [CHANGELOG.zh.md](CHANGELOG.zh.md)。
 
-历史发布补记（2026-10-23；查询时间 22:10 +08:00）：`@kunolu/dsh-sbtd@0.2.0-rc.2` 已发布。保留该有日期记录作为历史，不代表 rc.3 的发布状态或当前发布授权。Annotated tag `dsh-sbtd-v0.2.0-rc.2`（对象 `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e`，目标提交 `548a0bf125e3b3fe1407de11094409e55c2e779e`）创建于 2026-10-23 17:55:10 +08:00；GitHub prerelease（`isPrerelease=true`）创建于 2026-10-23 17:55:10 +08:00，发布于同日 17:55:13 +08:00。npm 记录的发布时间为 2026-10-23 17:08:50.745 +08:00。在上述查询时点，dist-tag `next` 与 `latest` 均指向 `0.2.0-rc.2`；“`latest` 保持不动”不代表实测 registry 状态。来源：`git for-each-ref`、`gh release view dsh-sbtd-v0.2.0-rc.2 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease`，以及 `npm view @kunolu/dsh-sbtd time --json` / `npm view @kunolu/dsh-sbtd dist-tags --json`。
+历史发布补记（2026-10-23；查询时间 22:10 +08:00）：`@kunolu/dsh-sbtd@0.2.0-rc.2` 已发布。保留该有日期记录作为历史。Annotated tag `dsh-sbtd-v0.2.0-rc.2`（对象 `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e`，目标提交 `548a0bf125e3b3fe1407de11094409e55c2e779e`）创建于 2026-10-23 17:55:10 +08:00；GitHub prerelease（`isPrerelease=true`）创建于 2026-10-23 17:55:10 +08:00，发布于同日 17:55:13 +08:00。npm 记录的发布时间为 2026-10-23 17:08:50.745 +08:00。在上述查询时点，dist-tag `next` 与 `latest` 均指向 `0.2.0-rc.2`；“`latest` 保持不动”不代表实测 registry 状态。来源：`git for-each-ref`、`gh release view dsh-sbtd-v0.2.0-rc.2 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease`，以及 `npm view @kunolu/dsh-sbtd time --json` / `npm view @kunolu/dsh-sbtd dist-tags --json`。
 
 ## 支持
 
@@ -133,7 +133,7 @@ packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
 
 1. 通过安装时使用的 DSH profile/plugin 配置移除或禁用插件的 `sbtd` 条目，然后重启宿主。
 2. 重启清除插件进程内状态；宿主管理的快照另行处理。保留已生成的 features、tests、reports 与 lessons，除非明确选择删除——卸载插件不会删除这些内容。
-3. 回滚时通过 DSH 插件管理器恢复前一插件版本，并使用兼容宿主。旧 0.1.x 的宿主与工作流契约不同，须查阅对应 CHANGELOG，不要假定可直接降级。本次发版准备不引入数据迁移。
+3. 回滚时通过 DSH 插件管理器恢复前一插件版本，并使用兼容宿主。旧 0.1.x 的宿主与工作流契约不同，须查阅对应 CHANGELOG，不要假定可直接降级。本次发布不引入数据迁移。
 
 ## 许可证
 

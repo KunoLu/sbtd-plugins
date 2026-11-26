@@ -4,9 +4,7 @@
 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，最新在前。
 英文对照：[CHANGELOG.md](CHANGELOG.md)。
 
-## [0.2.0-rc.3] - 未发布
-
-准备日期：2026-11-18（Asia/Shanghai），不是发布时间。
+## [0.2.0-rc.3] - 2026-11-18
 
 ### Changed（变更）
 
@@ -22,12 +20,9 @@
 - 现有源码仅纳入单独提交的格式与安全命名导入/导出排序修正。
   PR2 不改变运行时逻辑、宿主范围、开发 pin、依赖、锁文件或手册 pin。
 
-### 发布边界
+### 发布
 
-本版本准备中，尚未发布。本次准备不包含 tag、GitHub release、npm 发布或
-`next`/`latest` 变更。未来 tag 绑定语言链接不证明 tag 已存在。
-验证记录只覆盖其精确源码 SHA；版本提升和本日期都不是发布证据。
-更早版本条目继续作为历史记录保留。
+- Annotated tag `dsh-sbtd-v0.2.0-rc.3`；GitHub prerelease 发布时间 2026-11-18 20:41:17 +08:00；npm 发布时间 2026-11-18 20:28:55 +08:00；2026-11-26 查询 dist-tag `next` 与 `latest` 均指向 `0.2.0-rc.3`。
 
 ## [0.2.0-rc.2] - 2026-10-23
 

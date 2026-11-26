@@ -4,9 +4,7 @@ All notable changes to `@kunolu/dsh-sbtd` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); newest
 first. Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
-## [0.2.0-rc.3] - Unreleased
-
-Preparation date: 2026-11-18 (Asia/Shanghai), not a publication date.
+## [0.2.0-rc.3] - 2026-11-18
 
 ### Changed
 
@@ -25,13 +23,9 @@ Preparation date: 2026-11-18 (Asia/Shanghai), not a publication date.
   ordering corrections to existing source. No runtime logic, host range,
   development pin, dependency, lockfile, or manuals pin changes in PR2.
 
-### Release boundary
+### Released
 
-This version is in preparation and not yet published. No tag, GitHub release,
-npm publication, or `next`/`latest` change is part of this preparation. Future
-tag-bound language links are not evidence that a tag exists. Validation records
-belong to their exact source SHA; a version bump or this date is not publication
-evidence. Earlier release entries remain historical records.
+- Annotated tag `dsh-sbtd-v0.2.0-rc.3`; GitHub prerelease published 2026-11-18 20:41:17 +08:00; npm publish 2026-11-18 20:28:55 +08:00; the 2026-11-26 lookup found dist-tags `next` and `latest` pointing to `0.2.0-rc.3`.
 
 ## [0.2.0-rc.2] - 2026-10-23
 
