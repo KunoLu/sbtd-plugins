@@ -12,15 +12,15 @@ DSH-hosted SBTD workflow adapter with a short Chinese sbtd section, hooks, nine 
 
 | Plugin version | Release state |
 | --- | --- |
-| `0.2.0-rc.3` | Preparation — not yet published |
+| `0.2.0-rc.3` | Published on 2026-11-18 |
 | `0.2.0-rc.2` | Published on 2026-10-23 (historical) |
 
-The language links target the planned `dsh-sbtd-v0.2.0-rc.3` tag. This preparation does not create that tag or verify its links. Merge, tagging, GitHub release, npm publication, and dist-tag changes each require separate authorization.
+The language links target the existing annotated tag `dsh-sbtd-v0.2.0-rc.3` and its GitHub prerelease.
 
 ## Requirements
 
 - Target and development host: `@deepseek-ai/dsh@0.2.0-rc.2`.
-- `peerDependencies` and `engines.dsh` both declare `>=0.2.0-rc.2 <0.3.0-0`; this release preparation does not change that range.
+- `peerDependencies` and `engines.dsh` both declare `>=0.2.0-rc.2 <0.3.0-0`; this release does not change that range.
 - MCP is optional and degrades when unavailable. Graft queries use an already-wired managed launcher; the plugin does not initialize Graft or write MCP configuration.
 
 With `@deepseek-ai/dsh@0.2.1-rc.2`, npm can report `ERESOLVE` because its default peer resolution does not include cross-patch prereleases. Prefer pnpm or the dsh plugin manager; see the [deployment boundary in CHANGELOG.md](CHANGELOG.md#deployment-boundary).
@@ -29,10 +29,10 @@ With `@deepseek-ai/dsh@0.2.1-rc.2`, npm can report `ERESOLVE` because its defaul
 
 Install from dist-tag `next`.
 
-Historical release: `0.2.0-rc.2` was published to npm on 2026-10-23 17:08:50 +08:00.
-The recorded lookup on that date found both `next` and `latest` pointing to it; this is not a fresh registry check.
-GitHub prerelease: [`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2).
-The existing `@next` installation guidance is unchanged; it is not evidence that the prepared rc.3 tarball has been published or installed.
+Current release: `0.2.0-rc.3` was published to npm on 2026-11-18 20:28:55 +08:00; GitHub prerelease [`dsh-sbtd-v0.2.0-rc.3`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.3) was published on 2026-11-18 20:41:17 +08:00.
+The 2026-11-26 lookup found both `next` and `latest` pointing to `0.2.0-rc.3`.
+Historical release: `0.2.0-rc.2` was published to npm on 2026-10-23 17:08:50 +08:00; the recorded lookup on that date found both `next` and `latest` pointing to it.
+Historical GitHub prerelease: [`dsh-sbtd-v0.2.0-rc.2`](https://github.com/KunoLu/sbtd-plugins/releases/tag/dsh-sbtd-v0.2.0-rc.2).
 
 Use `@next`, not the bare package name, `@latest`, or a GitHub path:
 
@@ -97,9 +97,9 @@ await sbtd_review({
 
 ### Manuals
 
-`manuals/` contains read-only skill text synced from `KunoLu/640-skills` **v2.1.0** (sourceRevision `3c835303c23d59d3157ca84121a92f1bd87d4997`) by [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127). The twelve-skill whitelist and nineteen files are retained in this release preparation. Each skill contributes only `SKILL.md` and its own `references/`. Do not edit manual text by hand.
+`manuals/` contains read-only skill text synced from `KunoLu/640-skills` **v2.1.0** (sourceRevision `3c835303c23d59d3157ca84121a92f1bd87d4997`) by [PR127](https://github.com/KunoLu/sbtd-plugins/pull/127). The twelve-skill whitelist and nineteen files are retained in this release. Each skill contributes only `SKILL.md` and its own `references/`. Do not edit manual text by hand.
 
-For a separately authorized future manuals update, supply a SOURCE directory at the pinned SHA, or omit it to clone that pin. The rc.3 preparation does not resync or change the pin:
+For a separately authorized future manuals update, supply a SOURCE directory at the pinned SHA, or omit it to clone that pin. This release does not resync or change the pin:
 
 ```bash
 packages/dsh-sbtd/scripts/sync-manuals.sh /path/to/640-skills
@@ -113,11 +113,11 @@ The package declares no `os` or `cpu` restriction. Runtime support depends on th
 
 ## Publishing an RC release
 
-This change prepares `@kunolu/dsh-sbtd@0.2.0-rc.3` only. The planned annotated tag is `dsh-sbtd-v0.2.0-rc.3`; its existence and the availability of the two language links are not asserted. After separate merge and publication approvals, the release owner must verify the final commit, tag-bound links, and bilingual release notes.
+`@kunolu/dsh-sbtd@0.2.0-rc.3` is released: annotated tag `dsh-sbtd-v0.2.0-rc.3`, GitHub prerelease published 2026-11-18 20:41:17 +08:00, npm publish 2026-11-18 20:28:55 +08:00; the 2026-11-26 lookup found `next` and `latest` pointing to `0.2.0-rc.3`. The language links above are bound to that tag. For a future RC, after separate merge and publication approvals, the release owner must verify the final commit, tag-bound links, and bilingual release notes.
 
-Run package tests, lint, typecheck, `npm pack --dry-run`, and actual-tarball checks before any separately approved publication. The same tarball must pass the two REQUIRED host cells (`0.2.0-rc.2`, `0.2.1-rc.2`) and the candidate `0.2.2-rc.3` cell itself; a top-level advisory success cannot hide a failed cell. The shared smoke uses the host's existing native executor when required, without changing the host pins or assertions. No tag, GitHub release, npm publish, or `next`/`latest` change is authorized by this preparation. See [CHANGELOG.md](CHANGELOG.md) and [CHANGELOG.zh.md](CHANGELOG.zh.md).
+Run package tests, lint, typecheck, `npm pack --dry-run`, and actual-tarball checks before any separately approved publication. The same tarball must pass the two REQUIRED host cells (`0.2.0-rc.2`, `0.2.1-rc.2`) and the candidate `0.2.2-rc.3` cell itself; a top-level advisory success cannot hide a failed cell. The shared smoke uses the host's existing native executor when required, without changing the host pins or assertions. A future RC's tag, GitHub release, npm publish, or `next`/`latest` change requires its own authorization. See [CHANGELOG.md](CHANGELOG.md) and [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
-Historical publication update (2026-10-23; lookup at 22:10 +08:00): `@kunolu/dsh-sbtd@0.2.0-rc.2` is published. This dated record is retained as history, not as the rc.3 release state or current publication authorization. Annotated tag `dsh-sbtd-v0.2.0-rc.2` (object `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e`, target commit `548a0bf125e3b3fe1407de11094409e55c2e779e`) was created at 2026-10-23 17:55:10 +08:00; the GitHub prerelease (`isPrerelease=true`) was created at 17:55:10 and published at 17:55:13 on 2026-10-23 +08:00. npm records publication at 2026-10-23 17:08:50.745 +08:00. At the lookup above, both dist-tags `next` and `latest` pointed to `0.2.0-rc.2`; “leave `latest` untouched” is not a claim about the observed registry state. Sources: `git for-each-ref`, `gh release view dsh-sbtd-v0.2.0-rc.2 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease`, and `npm view @kunolu/dsh-sbtd time --json` / `npm view @kunolu/dsh-sbtd dist-tags --json`.
+Historical publication update (2026-10-23; lookup at 22:10 +08:00): `@kunolu/dsh-sbtd@0.2.0-rc.2` is published. This dated record is retained as history. Annotated tag `dsh-sbtd-v0.2.0-rc.2` (object `43798d6518d6c7fd2a8bfdbe8b7e1a3839ae983e`, target commit `548a0bf125e3b3fe1407de11094409e55c2e779e`) was created at 2026-10-23 17:55:10 +08:00; the GitHub prerelease (`isPrerelease=true`) was created at 17:55:10 and published at 17:55:13 on 2026-10-23 +08:00. npm records publication at 2026-10-23 17:08:50.745 +08:00. At the lookup above, both dist-tags `next` and `latest` pointed to `0.2.0-rc.2`; “leave `latest` untouched” is not a claim about the observed registry state. Sources: `git for-each-ref`, `gh release view dsh-sbtd-v0.2.0-rc.2 --repo KunoLu/sbtd-plugins --json createdAt,publishedAt,isPrerelease`, and `npm view @kunolu/dsh-sbtd time --json` / `npm view @kunolu/dsh-sbtd dist-tags --json`.
 
 ## Support
 
@@ -133,7 +133,7 @@ Optional MCP tools and invoked project tests, Playwright, or Maestro may access 
 
 1. Remove or disable this plugin's `sbtd` entry using the DSH profile/plugin configuration that installed it, then restart the host.
 2. Restarting clears the plugin's in-process state; host-managed snapshots are separate. Preserve generated features, tests, reports, and lessons unless you explicitly choose to remove them—unloading the plugin does not delete them.
-3. For rollback, restore the previous plugin version through the DSH plugin manager with a compatible host. Older 0.1.x releases have different host and workflow contracts; consult their changelog rather than assuming a drop-in downgrade. This release preparation introduces no data migration.
+3. For rollback, restore the previous plugin version through the DSH plugin manager with a compatible host. Older 0.1.x releases have different host and workflow contracts; consult their changelog rather than assuming a drop-in downgrade. This release introduces no data migration.
 
 ## License
 
