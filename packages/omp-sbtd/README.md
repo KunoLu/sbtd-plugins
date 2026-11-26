@@ -37,25 +37,31 @@ omp --version
 
 ## Install
 
-Historical release: `@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on
+The commands below are the installation pins prepared for `0.2.0-rc.3`.
+Publication has **not** happened yet: the 2026-11-26 lookup found `latest` and
+`next` still pointing to `0.2.0-rc.2`, and moving `latest`/`next` to
+`0.2.0-rc.3` has not happened either, so do not treat the moving
+`@latest`/`@next` tags as this version. Historical release:
+`@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on
 2026-10-23 20:44:10 +08:00; `next` and `latest` pointed to it in that record.
-Current Registry tags are not rechecked here. The commands below retain that
-published pin, **not** an installation of the unpublished rc.3 candidate.
-It requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x.
+The pins below require omp `>=18 <19`; omp 17.x users must explicitly pin an
+older 0.1.x.
 
-For authorized rc.3 candidate testing, use the exact reviewed local
-`kunolu-omp-sbtd-0.2.0-rc.3.tgz` through an isolated npm tarball installation
-workflow, not a source-directory link or an assumed Registry `@0.2.0-rc.3`.
-This candidate preparation does not itself install the package.
+For authorized rc.3 candidate testing before publication, use the exact
+reviewed local `kunolu-omp-sbtd-0.2.0-rc.3.tgz` through an isolated npm
+tarball installation workflow, not a source-directory link or an assumed
+Registry `@0.2.0-rc.3`. This candidate preparation does not itself install the
+package, and the pins below apply only once `0.2.0-rc.3` is actually
+published.
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.3
 ```
 
 OMP installs to user scope by default. To install only for the current project:
 
 ```bash
-omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.2
+omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.3
 ```
 
 Open a new OMP session after installation, then verify the plugin and command registry:
@@ -145,6 +151,11 @@ before it can call `npm publish`.
 The operator must separately verify the trusted run, source SHA and full
 artifact digest: the helper does not verify §4 evidence itself. An authorized
 publish also requires a fresh, explicit Registry-availability result.
+
+The authorized follow-up release plan for `0.2.0-rc.3` is to publish the
+package with the helper to `next` and then also point `latest` (and `next`) at
+`0.2.0-rc.3`; the helper itself still only accepts `--tag next`, and this
+plan has not been executed yet.
 
 `NPM_TOKEN` must be an npm access token with **Read and write** permission for
 `@kunolu/omp-sbtd` or its scope. If the account or organization requires 2FA,
