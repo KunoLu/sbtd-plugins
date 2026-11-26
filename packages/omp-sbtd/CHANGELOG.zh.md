@@ -3,7 +3,7 @@
 `@kunolu/omp-sbtd` 所有重要变更的完整中文对照，最新在前。
 完整英文镜像：[CHANGELOG.md](CHANGELOG.md)。
 
-## [0.2.0-rc.3] — 未发布候选
+## [0.2.0-rc.3] - 2026-11-26
 
 ### Changed（变更）
 

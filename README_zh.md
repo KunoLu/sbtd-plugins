@@ -25,15 +25,15 @@ SBTD 宿主插件 monorepo：OMP / DSH 宿主适配器，OMP workflow kit 内嵌
 
 ## 安装
 
-**OMP 0.2.0-rc.3** 候选已由 [PR132](https://github.com/KunoLu/sbtd-plugins/pull/132) 合入为 `1f18864`，但仍未发布：2026-11-26 查询 `latest` 与 `next` 仍指向 `0.2.0-rc.2`。历史`@kunolu/omp-sbtd@0.2.0-rc.2`于2026-10-23 20:44:10 +08:00发布，当时记录的`next`与`latest`指向它。以下命令保留该历史pin，不是rc.3安装证据。
+**OMP 0.2.0-rc.3** 候选已由 [PR132](https://github.com/KunoLu/sbtd-plugins/pull/132) 合入为 `1f18864`，但仍未发布：2026-11-26 查询 `latest` 与 `next` 仍指向 `0.2.0-rc.2`。历史`@kunolu/omp-sbtd@0.2.0-rc.2`于2026-10-23 20:44:10 +08:00发布，当时记录的`next`与`latest`指向它。以下命令是准备用于 `0.2.0-rc.3` 的安装钉；发布以及把 `latest`/`next` 指到 `0.2.0-rc.3` 都还没有发生，因此不要把会移动的 `@latest`/`@next` 当作这个版本。
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.3
 ```
 
 为便于复现，建议优先固定精确 RC 版本，而不是使用 `@latest` 等会移动的 dist-tag。**published** 不是 **installable** 不是 **certified**。兼容性认证与发布解耦。
 
-rc.3候选仍声明peer `@oh-my-pi/pi-coding-agent` `>=18 <19`，开发pin为`18.11.1`。官方18.11.1要求 **Bun >=1.3.14** 及对应平台native依赖；Node/npm安装工具另计。经授权安装候选时须用精确受审本地rc.3 tgz，不得以假定Registry版本或源码目录链接替代。
+rc.3候选仍声明peer `@oh-my-pi/pi-coding-agent` `>=18 <19`，开发pin为`18.11.1`。官方18.11.1要求 **Bun >=1.3.14** 及对应平台native依赖；Node/npm安装工具另计。发布发生前，经授权安装候选仍须用精确受审本地rc.3 tgz，不得以假定Registry版本或源码目录链接替代；上面的钉版仅在 `0.2.0-rc.3` 实际发布后适用，2026-11-26 查询中会移动的 `@latest`/`@next` 仍指向 `0.2.0-rc.2`。
 
 > 此前18.11.1证据属于rc.2，包括本地`0375a386…`包的SDK/RPC四命令结果；CLI尝试停在默认模型前置。它们不证明rc.3 Host/CLI/TUI、模型或受信§4通过。历史2026-10-19 D11记录上游最新为18.12.2；omp 17.x仍不支持。
 

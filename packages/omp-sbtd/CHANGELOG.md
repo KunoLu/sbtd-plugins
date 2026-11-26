@@ -5,7 +5,7 @@ follows Keep a Changelog; versions are release candidates until promotion.
 
 Full Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
-## [0.2.0-rc.3] — Unreleased candidate
+## [0.2.0-rc.3] - 2026-11-26
 
 ### Changed
 
