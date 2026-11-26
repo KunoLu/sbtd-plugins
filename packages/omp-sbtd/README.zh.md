@@ -34,23 +34,26 @@ omp --version
 
 ## 安装
 
-历史发布：`@kunolu/omp-sbtd@0.2.0-rc.2` 于2026-10-23 20:44:10 +08:00
-发布到npm，当时记录的`next`与`latest`指向它；此处不重新查询当前Registry。
-以下命令保留该已发布pin，**不是**安装尚未发布的rc.3候选。
-它要求omp `>=18 <19`；omp 17.x用户须显式钉旧0.1.x。
+以下命令是为 `0.2.0-rc.3` 准备的安装钉。发布**尚未**发生：2026-11-26
+查询发现 `latest` 与 `next` 仍指向 `0.2.0-rc.2`，把 `latest`/`next` 指到
+`0.2.0-rc.3` 也尚未执行，因此不要把变动的 `@latest`/`@next` 标签当作本
+版本。历史发布：`@kunolu/omp-sbtd@0.2.0-rc.2` 于2026-10-23 20:44:10
++08:00发布到npm，当时记录的`next`与`latest`指向它。以下钉版要求omp
+`>=18 <19`；omp 17.x用户须显式钉旧0.1.x。
 
-后续经授权验证rc.3候选时，应在隔离npm tarball安装流程中使用精确受审的
-`kunolu-omp-sbtd-0.2.0-rc.3.tgz`，不得以源码目录链接或假定Registry
-`@0.2.0-rc.3`替代。本轮候选准备本身不安装插件。
+在实际发布前，经授权验证rc.3候选时，应在隔离npm tarball安装流程中使用
+精确受审的 `kunolu-omp-sbtd-0.2.0-rc.3.tgz`，不得以源码目录链接或假定
+Registry `@0.2.0-rc.3`替代。本轮候选准备本身不安装插件，且以下钉版仅在
+`0.2.0-rc.3` 实际发布后适用。
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.3
 ```
 
 OMP 默认安装到用户范围。若只为当前项目安装：
 
 ```bash
-omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.2
+omp plugin install --scope project @kunolu/omp-sbtd@0.2.0-rc.3
 ```
 
 安装后打开新的 OMP 会话，然后验证插件与命令注册：
@@ -131,6 +134,10 @@ docs/deploy/publish-omp-sbtd.sh /absolute/path/kunolu-omp-sbtd-<version>.tgz --t
 其他 dist-tag、已占用的版本，以及未知的 Registry 可用性结果。
 操作人还须独立核对受信run、source SHA与完整artifact digest：helper自身
 不验证§4证据。实际获授权发布还要求新鲜且明确的Registry可用性结果。
+
+已授权的本次 `0.2.0-rc.3` 后续发布计划是：先用 helper 把包发到 `next`，
+随后再把 `latest`（以及 `next`）指到 `0.2.0-rc.3`；helper 自身今天仍只
+接受 `--tag next`，且该计划尚未执行。
 
 `NPM_TOKEN` 必须是对 `@kunolu/omp-sbtd` 或其 scope 具有 **Read and write**
 权限的 npm access token。若账号或组织要求 2FA，请为 token 配置

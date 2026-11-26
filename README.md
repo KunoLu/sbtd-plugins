@@ -25,15 +25,15 @@ SBTD host-plugin monorepo: OMP and DSH host adapters, with the OMP workflow kit 
 
 ## Install
 
-The **OMP 0.2.0-rc.3** candidate was merged via [PR132](https://github.com/KunoLu/sbtd-plugins/pull/132) as `1f18864`, but remains unpublished: the 2026-11-26 lookup found `latest` and `next` still pointing to `0.2.0-rc.2`. Historical `@kunolu/omp-sbtd@0.2.0-rc.2` was published on 2026-10-23 20:44:10 +08:00, with `next` and `latest` pointing to it in that record. The command below retains that historical pin; it is not rc.3 installation evidence.
+The **OMP 0.2.0-rc.3** candidate was merged via [PR132](https://github.com/KunoLu/sbtd-plugins/pull/132) as `1f18864`, but remains unpublished: the 2026-11-26 lookup found `latest` and `next` still pointing to `0.2.0-rc.2`. Historical `@kunolu/omp-sbtd@0.2.0-rc.2` was published on 2026-10-23 20:44:10 +08:00, with `next` and `latest` pointing to it in that record. The command below is the installation pin prepared for `0.2.0-rc.3`; publication and moving `latest`/`next` to `0.2.0-rc.3` have not happened yet, so do not treat the moving `@latest`/`@next` tags as this version.
 
 ```bash
-omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
+omp plugin install @kunolu/omp-sbtd@0.2.0-rc.3
 ```
 
 Prefer the exact RC over a moving dist-tag such as `@latest` for reproducibility. **published** is not **installable** is not **certified**. Compatibility certification is decoupled from publish.
 
-The rc.3 candidate retains peer `@oh-my-pi/pi-coding-agent` `>=18 <19` and development pin `18.11.1`. Official 18.11.1 requires **Bun >=1.3.14** and its platform-native dependencies; Node/npm installation tooling is separate. Authorized candidate installation must use the exact reviewed local rc.3 tgz, not an assumed Registry version or source-directory link.
+The rc.3 candidate retains peer `@oh-my-pi/pi-coding-agent` `>=18 <19` and development pin `18.11.1`. Official 18.11.1 requires **Bun >=1.3.14** and its platform-native dependencies; Node/npm installation tooling is separate. Until publication happens, authorized candidate installation still requires the exact reviewed local rc.3 tgz, not an assumed Registry version or source-directory link; the pin above applies only once `0.2.0-rc.3` is actually published, and the 2026-11-26 lookup still found the moving `@latest`/`@next` pointing to `0.2.0-rc.2`.
 
 > Prior 18.11.1 evidence belongs to rc.2, including the local `0375a386…` tarball's SDK/RPC four-command result. Its CLI attempt stopped at the default-model preflight. None of this establishes rc.3 Host/CLI/TUI, model or trusted §4 acceptance. Historical D11 on 2026-10-19 recorded upstream latest 18.12.2; omp 17.x remains unsupported.
 
