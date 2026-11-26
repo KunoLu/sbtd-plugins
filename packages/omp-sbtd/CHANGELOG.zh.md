@@ -3,6 +3,37 @@
 `@kunolu/omp-sbtd` 所有重要变更的完整中文对照，最新在前。
 完整英文镜像：[CHANGELOG.md](CHANGELOG.md)。
 
+## [0.2.0-rc.3] — 未发布候选
+
+### Changed（变更）
+
+- 保留精确受审的 old、mixed、domain-only 投影/账本配对，并新增唯一闭合 R1 身份，
+  绑定完整账本、选择记录、来源归属和 overlay 集合。R1 stage 委托严格 release 身份校验，
+  旧 stage 可变第一方法律 profile 保持不变。
+  未知根和未分类资产继续失败关闭；逐文件 SPDX 许可保留 MIT 与 Apache-2.0 的区别。
+- 完整冻结历史测试输入（含包外层 metadata），独立于当前 generated/embedded Kit；
+  原 release 与 promotion 断言不再依赖会变化的 live-output fallback。
+- generation/check 入口配置为闭合的 `r1-manuals` 选择：在已选领域 glossary
+  和 presentation reference 之外纳入逐字节原始 `grilling`、`to-tickets`。R1 是四个 Skill 的六项源操作，
+  不是整个 `640-skills` v2.1.0 同步；canonical vendor/lock 仍钉
+  `1d82494d74f6df9bca7dccef2da409f87091883e`。
+- 在既有 OMP 全局 overlay 明确版本化术语与交接职责：GLOSSARY 只存领域词汇，
+  技术 CONTEXT 单独保留，没有 GLOSSARY-FORMAT 的旧 profile 沿用原约定。
+  frontier 分轮须经用户确认；拆票只由用户显式触发，保留依赖边与本地一票一文件。
+  上游 setup 命令不是 OMP 已安装命令；配置、安装与外部发帖仍需各自授权。
+- 保留第三方逐字节原文，以及两份通知中的完整Phosphor原始MIT文本和归属。
+  R1投影/账本身份保持在既有闭合release profile内；源采纳与bundle加载
+  不等于发布验收，也不证明真实Agent对话或tracker交接。
+- 加固四命令driver：同request ACK、completed/settled/no-agent terminal及
+  正文必须共同完成；在Host前后核实际加载安装树，等待有界关闭/排空，
+  精确比较requested Host版本。共享optional/readonly证据类型保留既有schema和拒绝guard。
+- 包/plugin metadata准备为`0.2.0-rc.3`，双语运行指引对齐官方18.11.1的
+  Bun要求及受信同digest §4发布门。
+
+这是尚未发布的部分源候选，不是整套上游升级或冻结产物验收记录。
+Peer `>=18 <19`、开发pin `18.11.1`及依赖锁保持不变。此前本地rc.2包/SDK
+证据不能转借给新rc.3产物；不声明rc.3 Registry、tag/release、受信§4或完整宿主已通过。
+
 ## [0.2.0-rc.2] - 2026-10-23
 
 ### Breaking（破坏性变更）

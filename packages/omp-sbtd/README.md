@@ -1,20 +1,28 @@
 <p align="center">
-  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.md">EN</a>
+  <a href="./README.md">EN</a>
   ·
-  <a href="https://github.com/KunoLu/sbtd-plugins/blob/omp-sbtd-v0.2.0-rc.2/packages/omp-sbtd/README.zh.md">中文</a>
+  <a href="./README.zh.md">中文</a>
 </p>
 
 # @kunolu/omp-sbtd
 
 OMP-hosted SBTD workflow plugin for KPi. It provides `/sbtd` commands and a fixed, read-only SBTD Kit snapshot; it does not silently install global tools or modify a project during plugin installation.
 
+**Current source candidate: `0.2.0-rc.3`, not published.** Registry availability,
+dist-tags and an rc.3 release/tag have not been verified. Local build/package
+checks do not establish publication readiness or trusted §4 acceptance.
+
 ## Requirements
 
-- `0.2.0-rc.2` declares peer `@oh-my-pi/pi-coding-agent`
-  `>=18 <19`; the development dependency is pinned to **18.11.1**.
-- An authenticated OMP provider profile for commands that need a provider.
+- `0.2.0-rc.3` declares peer `@oh-my-pi/pi-coding-agent`
+  `>=18 <19`; the development dependency remains pinned to **18.11.1**.
+- Official OMP **18.11.1** runs `dist/cli.js` with **Bun >=1.3.14** and its
+  platform-native dependencies. Node.js/npm installation tooling is separate
+  from the Host interpreter; do not launch this CLI with Node.
+- Commands requiring a provider need the corresponding configured provider
+  profile; CLI startup may require a default model even for local commands.
 
-> No longer supports omp 17.x; tested only on 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2
+> Historical D11/rc.2 note: no omp 17.x support; prior testing targeted 18.11.1; as of the D11 lock on 2026-10-19, upstream latest was 18.12.2. This is not rc.3 Host evidence.
 
 Peer range only decides *installable*. Installation and npm publication do
 not certify host compatibility: `published`, `installable`, and `certified`
@@ -29,12 +37,16 @@ omp --version
 
 ## Install
 
-`@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on
-2026-10-23 20:44:10 +08:00; dist-tags `next` and `latest` point to it.
-The commands below pin that release. It requires omp `>=18 <19` and was
-tested on `18.11.1`; omp 17.x users must explicitly pin an older 0.1.x version.
+Historical release: `@kunolu/omp-sbtd@0.2.0-rc.2` was published to npm on
+2026-10-23 20:44:10 +08:00; `next` and `latest` pointed to it in that record.
+Current Registry tags are not rechecked here. The commands below retain that
+published pin, **not** an installation of the unpublished rc.3 candidate.
+It requires omp `>=18 <19`; omp 17.x users must explicitly pin an older 0.1.x.
 
-Prefer the exact RC over a moving dist-tag such as `@latest` for a reproducible installation:
+For authorized rc.3 candidate testing, use the exact reviewed local
+`kunolu-omp-sbtd-0.2.0-rc.3.tgz` through an isolated npm tarball installation
+workflow, not a source-directory link or an assumed Registry `@0.2.0-rc.3`.
+This candidate preparation does not itself install the package.
 
 ```bash
 omp plugin install @kunolu/omp-sbtd@0.2.0-rc.2
@@ -57,12 +69,23 @@ omp plugin doctor
 /sbtd help
 ```
 
+Prior cloud installation/session evidence used local **rc.2** tarball SHA256
+`0375a386b98d3f79aa512681e842ecc8b62539a2c4b1320d6ea6d4031f347610`
+with official 18.11.1/Bun. Four commands completed through the official SDK/RPC
+session; the CLI attempt stopped before dispatch because no default model was
+configured. Neither result transfers to the new rc.3 tarball or proves trusted
+§4, CLI/TUI, model or full-Host acceptance.
+
 ## Embedded workflow
 
-The kit is pinned to **640-skills v2.0.2**
+The canonical vendor/lock base remains **640-skills v2.0.2**
 (`1d82494d74f6df9bca7dccef2da409f87091883e`), with transform version
-`p0-v4`. Sync, projection, and generation live in this package; the former
-private kit workspace package was removed. Supply-chain source ID
+`p0-v4`. The closed `r1-manuals` partial selection comprises **six file
+operations across four Skills**: domain-modeling's SKILL update, CONTEXT-FORMAT
+removal and GLOSSARY-FORMAT addition; grilling and to-tickets SKILL updates;
+and sbtd-task's presentation reference update. This is not a whole-upstream
+v2.1.0 upgrade. Exact source/license identities remain in the Kit provenance.
+Sync, projection and generation live in this package; supply-chain source ID
 `sbtd-workflow-kit-upstream` is unchanged.
 
 The bundle includes all 33 upstream Python scripts, nine runtime assets,
@@ -90,10 +113,10 @@ host-event certification.
 
 ## Platform support
 
-This package declares no `os` or `cpu` restriction and contains no native binary dependency. Its runtime support therefore follows the installed OMP host and Node.js environment, rather than the npm package itself.
+This package declares no `os` or `cpu` restriction and contains no native binary dependency of its own. Runtime support follows the official OMP Host, including its Bun interpreter and platform-native dependencies; Node.js/npm installation tooling is a separate requirement.
 
 - **macOS and Linux:** no package-level restriction is declared.
-- **Windows:** the plugin may be installed where OMP and its required Node.js runtime are supported. The bundled `/sbtd onboard` bootstrap does not automate native-Windows Node.js/npm installation; install Node.js/npm first (for example with nvm-windows, nvs, or an approved equivalent).
+- **Windows:** installation requires a supported official OMP/Bun/native environment; no Windows acceptance is claimed here. The bundled `/sbtd onboard` bootstrap does not automate native-Windows Node.js/npm installation; install Node.js/npm first (for example with nvm-windows, nvs, or an approved equivalent).
 - **Publish helper:** `docs/deploy/publish-omp-sbtd.sh` is the only approved Registry writer. Run it from Bash on macOS, Linux, WSL, or Git Bash—not directly in `/bin/sh` or PowerShell. Windows users must use that helper from a Bash-capable shell; do not substitute a direct `npm publish` command.
 
 ## Publishing an RC release
@@ -101,11 +124,13 @@ This package declares no `os` or `cpu` restriction and contains no native binary
 Published npm tarballs are immutable. Build and pack one new prerelease tarball;
 do not reuse a tarball that has already been published.
 
-Before publishing, run the repository handbook's isolated exact-tarball
-four-command acceptance: `/sbtd help`, `/sbtd status`, `/sbtd report`, and
-`/sbtd onboard plan`. The commands must complete without a Provider request,
-approval, or unexpected write. The detailed procedure and cleanup boundary are
-in [`docs/assets/omp/omp-plugin-host-acceptance.md`](../../docs/assets/omp/omp-plugin-host-acceptance.md).
+Publication requires the trusted `omp-section4-publish-gate` workflow to build
+and pack from an immutable `main` SHA and pass the four-command acceptance for
+that **same full tarball digest**: `/sbtd help`, `/sbtd status`, `/sbtd report`,
+and `/sbtd onboard plan`, without a Provider request, approval or unexpected
+write. Local SDK/API tests, build checks or a locally packed candidate do not
+substitute for this trusted run. See the repository
+[`handbook §3/§4`](../../docs/assets/omp/omp-plugin-host-acceptance.md).
 
 The repository helper then publishes that same tarball only to `next`:
 
@@ -117,6 +142,9 @@ docs/deploy/publish-omp-sbtd.sh /absolute/path/kunolu-omp-sbtd-<version>.tgz --t
 The helper rejects a stable version, another package, `latest` or any other
 dist-tag, an occupied version, and an unknown Registry availability result
 before it can call `npm publish`.
+The operator must separately verify the trusted run, source SHA and full
+artifact digest: the helper does not verify §4 evidence itself. An authorized
+publish also requires a fresh, explicit Registry-availability result.
 
 `NPM_TOKEN` must be an npm access token with **Read and write** permission for
 `@kunolu/omp-sbtd` or its scope. If the account or organization requires 2FA,

@@ -471,8 +471,12 @@ if (isMain) {
   const result = await runLiveCell({
     ompBin,
     pluginTarball,
-    runsRoot: process.env.HOST_EVENT_RUNS_ROOT,
-    targetOmpVersion: process.env.HOST_EVENT_TARGET_VERSION,
+    ...(process.env.HOST_EVENT_RUNS_ROOT === undefined
+      ? {}
+      : { runsRoot: process.env.HOST_EVENT_RUNS_ROOT }),
+    ...(process.env.HOST_EVENT_TARGET_VERSION === undefined
+      ? {}
+      : { targetOmpVersion: process.env.HOST_EVENT_TARGET_VERSION }),
     ...(process.env.HOST_EVENT_INSTALLER_LOCK_FILE === undefined
       ? {}
       : { installerLockFile: process.env.HOST_EVENT_INSTALLER_LOCK_FILE }),

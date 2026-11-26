@@ -27,6 +27,12 @@
 - License: MIT
 - Retained license: onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE
 
+### mattpocock-skills-r1-manuals
+
+- Source: https://github.com/mattpocock/skills.git@4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
+- License: MIT
+- Retained license: onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE
+
 ## Retained metadata attribution
 
 ### @phosphor-icons/core@2.1.1

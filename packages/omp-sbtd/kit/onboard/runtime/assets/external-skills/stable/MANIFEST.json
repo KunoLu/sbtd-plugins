@@ -2,6 +2,330 @@
   "schemaVersion": 1,
   "stableSet": "2026-09-14.6",
   "promotedAt": "2026-09-14",
+  "sourceSelection": {
+    "kind": "mixed-source",
+    "scope": "r1-manuals",
+    "base": {
+      "canonicalRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
+      "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+      "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+      "stableSet": "2026-09-14.6",
+      "promotedAt": "2026-09-14"
+    },
+    "inputPath": "omp-source-selections/r1-manuals/selection.json",
+    "inputSha256": "290bdc6379f3f55376ac24ac660598c3013408f376834d6d96ca92b739cd90c4",
+    "domain": {
+      "role": "validated-component-input",
+      "receipt": {
+        "kind": "mixed-source",
+        "scope": "domain-modeling-only",
+        "base": {
+          "canonicalRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
+          "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+          "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+          "stableSet": "2026-09-14.6",
+          "promotedAt": "2026-09-14"
+        },
+        "inputPath": "omp-source-selections/domain-modeling/selection.json",
+        "inputSha256": "6cb1e695b18e76aa771be1ab052085878763a96197205bc4a0f5874384814684",
+        "record": {
+          "schemaVersion": 1,
+          "scope": "domain-modeling-only",
+          "owner": "third-party",
+          "supplier": {
+            "repository": "https://github.com/KunoLu/640-skills",
+            "revision": "3c835303c23d59d3157ca84121a92f1bd87d4997",
+            "path": "sbtd-workflow-onboard/assets/external-skills/stable/skills/domain-modeling"
+          },
+          "origin": {
+            "repository": "https://github.com/mattpocock/skills.git",
+            "sourceSubpath": "skills/engineering/domain-modeling",
+            "license": "MIT"
+          },
+          "base": {
+            "canonicalRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
+            "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+            "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+            "repositoryKey": "mattpocock-skills",
+            "repositoryRevision": "3cca18b368ae95cdbdebbff572ccafa662551015",
+            "treeSha256": "731ecd11825453ec3d813ac26e7a082bb458bc332781c6dba18d7004468139d7",
+            "absent": [
+              "GLOSSARY-FORMAT.md"
+            ]
+          },
+          "target": {
+            "repositoryKey": "mattpocock-skills-domain-modeling",
+            "repositoryRevision": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+            "treeSha256": "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2",
+            "absent": [
+              "CONTEXT-FORMAT.md"
+            ]
+          },
+          "license": {
+            "blob": "f1dd2c09108dde1a5f56097cee8461b3ea834499",
+            "mode": "100644",
+            "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+            "bytes": 1068,
+            "path": "licenses/mattpocock-skills-LICENSE"
+          },
+          "files": [
+            {
+              "path": "ADR-FORMAT.md",
+              "operation": "keep",
+              "before": {
+                "blob": "d7e61f30a9fd8ca70d9ee68f019c2a9ebf2d13f7",
+                "mode": "100644",
+                "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0",
+                "bytes": 2733
+              },
+              "target": {
+                "blob": "d7e61f30a9fd8ca70d9ee68f019c2a9ebf2d13f7",
+                "mode": "100644",
+                "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0",
+                "bytes": 2733
+              }
+            },
+            {
+              "path": "CONTEXT-FORMAT.md",
+              "operation": "delete",
+              "before": {
+                "blob": "79bbb32f6fda55758b377c980f72a6cb2b8c670e",
+                "mode": "100644",
+                "sha256": "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13",
+                "bytes": 2290
+              },
+              "target": null
+            },
+            {
+              "path": "GLOSSARY-FORMAT.md",
+              "operation": "add",
+              "before": null,
+              "target": {
+                "blob": "9c0b4c7a2e8507c23cbb5e0baa66d81699321cc6",
+                "mode": "100644",
+                "sha256": "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801",
+                "bytes": 2300
+              }
+            },
+            {
+              "path": "SKILL.md",
+              "operation": "replace",
+              "before": {
+                "blob": "9b97707e19ef1f590aada356f2b3f6bb881f91be",
+                "mode": "100644",
+                "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
+                "bytes": 3331
+              },
+              "target": {
+                "blob": "a4438c6879c517d1a08e2b5fbca049b632688dfe",
+                "mode": "100644",
+                "sha256": "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3",
+                "bytes": 3346
+              }
+            },
+            {
+              "path": "agents/openai.yaml",
+              "operation": "keep",
+              "before": {
+                "blob": "7f1522d2f11506ee205275ab7c282aa52366ecf6",
+                "mode": "100644",
+                "sha256": "f6bf2aa996c6e6f53fdd0708e18a0d16a56aed8322cca59fedbe3c0d2c75f06b",
+                "bytes": 101
+              },
+              "target": {
+                "blob": "7f1522d2f11506ee205275ab7c282aa52366ecf6",
+                "mode": "100644",
+                "sha256": "f6bf2aa996c6e6f53fdd0708e18a0d16a56aed8322cca59fedbe3c0d2c75f06b",
+                "bytes": 101
+              }
+            }
+          ]
+        }
+      }
+    },
+    "record": {
+      "schemaVersion": 1,
+      "scope": "r1-manuals",
+      "owner": "third-party",
+      "supplier": {
+        "repository": "https://github.com/KunoLu/640-skills",
+        "revision": "3c835303c23d59d3157ca84121a92f1bd87d4997",
+        "path": "sbtd-workflow-onboard/assets/external-skills/stable"
+      },
+      "origin": {
+        "repository": "https://github.com/mattpocock/skills.git",
+        "license": "MIT"
+      },
+      "base": {
+        "canonicalRevision": "1d82494d74f6df9bca7dccef2da409f87091883e",
+        "canonicalManifestSha256": "97c71dddf82415b936ae07314e8057183a1a8d0e17e32b02cbc6626fc6f49404",
+        "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
+        "repositoryKey": "mattpocock-skills",
+        "repositoryRevision": "3cca18b368ae95cdbdebbff572ccafa662551015"
+      },
+      "target": {
+        "repositoryKey": "mattpocock-skills-r1-manuals",
+        "repositoryRevision": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d"
+      },
+      "domainSelection": {
+        "inputPath": "omp-source-selections/domain-modeling/selection.json",
+        "inputSha256": "6cb1e695b18e76aa771be1ab052085878763a96197205bc4a0f5874384814684"
+      },
+      "license": {
+        "blob": "f1dd2c09108dde1a5f56097cee8461b3ea834499",
+        "mode": "100644",
+        "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+        "bytes": 1068,
+        "path": "licenses/mattpocock-skills-LICENSE"
+      },
+      "skills": [
+        {
+          "name": "grilling",
+          "sourceSubpath": "skills/productivity/grilling",
+          "beforeTreeSha256": "b0af4cb93507011cab704853dc540ae142dec2a1256d374a38f4f196a04f7b50",
+          "targetTreeSha256": "3a7559839f45dfa4491f045d56647148c2b90f0e5ce0b5355301ef0e6d1bc428",
+          "files": [
+            {
+              "path": "SKILL.md",
+              "operation": "replace",
+              "before": {
+                "blob": "8ca78c6d8f901aab0c5a1f896034b70e666ff2a3",
+                "mode": "100644",
+                "sha256": "10ff989e7498b23b5acb49d5048f11dcd906757d2f79c5cdf8a00001381296f2",
+                "bytes": 1987
+              },
+              "target": {
+                "blob": "d2f09a18e6a6c65c55f1271ba08dfeaf06f0bed3",
+                "mode": "100644",
+                "sha256": "a146842ed93ca43d833550fa9adf02e58cb63c83fea9d4b4522995b82242d4e2",
+                "bytes": 2077
+              }
+            },
+            {
+              "path": "agents/openai.yaml",
+              "operation": "keep",
+              "before": {
+                "blob": "ddbdb96139c0c1dfe6bca698f39d0465674b8a39",
+                "mode": "100644",
+                "sha256": "1411d7df7d99b7e621a1ff8283c8133cc2464be63d064e52d8ce169c6800ee9b",
+                "bytes": 113
+              },
+              "target": {
+                "blob": "ddbdb96139c0c1dfe6bca698f39d0465674b8a39",
+                "mode": "100644",
+                "sha256": "1411d7df7d99b7e621a1ff8283c8133cc2464be63d064e52d8ce169c6800ee9b",
+                "bytes": 113
+              }
+            }
+          ]
+        },
+        {
+          "name": "to-tickets",
+          "sourceSubpath": "skills/engineering/to-tickets",
+          "beforeTreeSha256": "7d82d3f4b50f4f57bafc8e361cdf6b06fde6f3b940bbd13199a184e98f0d34c4",
+          "targetTreeSha256": "98422855972ffb35bf33ce3eee1c1255f58e81cf801d6d3fc0185bb8e0351839",
+          "files": [
+            {
+              "path": "SKILL.md",
+              "operation": "replace",
+              "before": {
+                "blob": "e868c831fcfb1e124e010bcdf84a429ec879160f",
+                "mode": "100644",
+                "sha256": "5c9fba69845c2519b9b35b9af42ae5142c21f8ca15ac2123dc2722002c8058ae",
+                "bytes": 5671
+              },
+              "target": {
+                "blob": "9b77a01db9460c99c22d03c910c349f890f12c0e",
+                "mode": "100644",
+                "sha256": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995",
+                "bytes": 5812
+              }
+            },
+            {
+              "path": "agents/openai.yaml",
+              "operation": "keep",
+              "before": {
+                "blob": "24605a5db64e4fc750b999aa94aea126bee814ee",
+                "mode": "100644",
+                "sha256": "21bc6215fffcd7614e9f772bb1760e87cc5fc7dcc707e7d282bc9414267a6090",
+                "bytes": 146
+              },
+              "target": {
+                "blob": "24605a5db64e4fc750b999aa94aea126bee814ee",
+                "mode": "100644",
+                "sha256": "21bc6215fffcd7614e9f772bb1760e87cc5fc7dcc707e7d282bc9414267a6090",
+                "bytes": 146
+              }
+            }
+          ]
+        }
+      ],
+      "presentation": {
+        "path": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md",
+        "supplierPath": "sbtd-workflow-onboard/templates/skills/sbtd-task/references/presentation.md",
+        "owner": "kpi",
+        "license": "Apache-2.0",
+        "operation": "replace",
+        "target": {
+          "blob": "b4e12e1775c98915b816a69a082557d466166245",
+          "mode": "100644",
+          "sha256": "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5",
+          "bytes": 6271
+        }
+      }
+    },
+    "sourceOperations": [
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/CONTEXT-FORMAT.md",
+        "operation": "delete",
+        "source": "domain-modeling",
+        "targetSha256": null
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/GLOSSARY-FORMAT.md",
+        "operation": "add",
+        "source": "domain-modeling",
+        "targetSha256": "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801"
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/SKILL.md",
+        "operation": "replace",
+        "source": "domain-modeling",
+        "targetSha256": "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3"
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/grilling/SKILL.md",
+        "operation": "replace",
+        "source": "r1-manuals",
+        "targetSha256": "a146842ed93ca43d833550fa9adf02e58cb63c83fea9d4b4522995b82242d4e2"
+      },
+      {
+        "path": "onboard/runtime/assets/external-skills/stable/skills/to-tickets/SKILL.md",
+        "operation": "replace",
+        "source": "r1-manuals",
+        "targetSha256": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995"
+      },
+      {
+        "path": "onboard/runtime/templates/skills/sbtd-task/references/presentation.md",
+        "operation": "replace",
+        "source": "omp-overlay",
+        "targetSha256": "3a9be511b307210f9ed3a4d5f793a9ed07854652871e05deac07bdab745cf7f5"
+      }
+    ],
+    "finalOwnership": {
+      "diagnosing-bugs": "mattpocock-skills",
+      "tdd": "mattpocock-skills",
+      "grill-me": "mattpocock-skills",
+      "grill-with-docs": "mattpocock-skills",
+      "grilling": "mattpocock-skills-r1-manuals",
+      "domain-modeling": "mattpocock-skills-r1-manuals",
+      "codebase-design": "mattpocock-skills",
+      "handoff": "mattpocock-skills",
+      "writing-for-agents": "mattpocock-skills",
+      "to-spec": "mattpocock-skills",
+      "to-tickets": "mattpocock-skills-r1-manuals"
+    }
+  },
   "repositories": {
     "mattpocock-skills": {
       "url": "https://github.com/mattpocock/skills.git",
@@ -35,6 +359,17 @@
           "stablePath": "licenses/ponytail-LICENSE"
         }
       ]
+    },
+    "mattpocock-skills-r1-manuals": {
+      "url": "https://github.com/mattpocock/skills.git",
+      "revision": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+      "license": "MIT",
+      "licenseFiles": [
+        {
+          "source": "LICENSE",
+          "stablePath": "licenses/mattpocock-skills-LICENSE"
+        }
+      ]
     }
   },
   "skills": {
@@ -63,16 +398,16 @@
       "treeSha256": "04ba6a6139df57e6a011eb79311212fa5f3dc47ec6177845d1defea19c68bb60"
     },
     "grilling": {
-      "repository": "mattpocock-skills",
+      "repository": "mattpocock-skills-r1-manuals",
       "sourceSubpath": "skills/productivity/grilling",
       "stablePath": "skills/grilling",
-      "treeSha256": "b0af4cb93507011cab704853dc540ae142dec2a1256d374a38f4f196a04f7b50"
+      "treeSha256": "3a7559839f45dfa4491f045d56647148c2b90f0e5ce0b5355301ef0e6d1bc428"
     },
     "domain-modeling": {
-      "repository": "mattpocock-skills",
+      "repository": "mattpocock-skills-r1-manuals",
       "sourceSubpath": "skills/engineering/domain-modeling",
       "stablePath": "skills/domain-modeling",
-      "treeSha256": "731ecd11825453ec3d813ac26e7a082bb458bc332781c6dba18d7004468139d7"
+      "treeSha256": "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2"
     },
     "codebase-design": {
       "repository": "mattpocock-skills",
@@ -99,10 +434,10 @@
       "treeSha256": "b913e4b0bdffff43ea38fc6874d238663039eb8ab73755fc300a541df877d1a9"
     },
     "to-tickets": {
-      "repository": "mattpocock-skills",
+      "repository": "mattpocock-skills-r1-manuals",
       "sourceSubpath": "skills/engineering/to-tickets",
       "stablePath": "skills/to-tickets",
-      "treeSha256": "7d82d3f4b50f4f57bafc8e361cdf6b06fde6f3b940bbd13199a184e98f0d34c4"
+      "treeSha256": "98422855972ffb35bf33ce3eee1c1255f58e81cf801d6d3fc0185bb8e0351839"
     },
     "ui-ux-pro-max": {
       "repository": "ui-ux-pro-max-skill",

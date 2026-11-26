@@ -5,6 +5,51 @@ follows Keep a Changelog; versions are release candidates until promotion.
 
 Full Chinese mirror: [CHANGELOG.zh.md](CHANGELOG.zh.md).
 
+## [0.2.0-rc.3] — Unreleased candidate
+
+### Changed
+
+- Retain the exact reviewed old, mixed and domain-only projection/ledger
+  pairings and add one closed R1 identity with its complete ledger, selection,
+  source ownership and overlay set. R1 stage validation delegates to the strict
+  release identity; the mutable old stage legal profile is unchanged.
+  Unknown roots and unclassified assets remain fail-closed; per-file SPDX
+  licenses preserve MIT versus Apache-2.0.
+- Freeze complete historical test inputs, including outer package metadata,
+  independently of the current generated/embedded Kit. Old release and
+  promotion assertions no longer depend on a changing live-output fallback.
+- Configure the generation/check entrypoints for the closed `r1-manuals`
+  source selection with exact upstream `grilling` and `to-tickets` originals
+  alongside the selected domain glossary and presentation reference.
+  R1 is six source operations across four Skills,
+  not a whole `640-skills` v2.1.0 sync; the canonical vendor/lock stays pinned
+  to `1d82494d74f6df9bca7dccef2da409f87091883e`.
+- Clarify the existing OMP global overlay's version-aware vocabulary and
+  handoff roles: GLOSSARY holds domain terms, technical CONTEXT stays separate,
+  and legacy profiles without GLOSSARY-FORMAT retain their convention.
+  Frontier rounds require user confirmation; ticket generation remains
+  explicit-user-only, with dependency edges and one local file per ticket.
+  The upstream setup command is not an installed OMP command; configuration,
+  installation and external posting still require their own authorization.
+- Preserve exact third-party originals and the full original Phosphor MIT
+  text and attribution in both notices. The R1 projection/ledger identity
+  remains fixed in the existing closed release profile; source adoption and
+  bundle loading are not publication acceptance or live agent/tracker proof.
+- Harden the four-command driver: same-request ACK plus completed, settled,
+  no-agent terminal and content are required; validate the actual loaded
+  installation before/after the Host, await bounded close/drain, and compare
+  the requested exact Host version. Shared optional/readonly evidence types
+  retain the existing schema and rejection guards.
+- Prepare package/plugin metadata for `0.2.0-rc.3` and align bilingual runtime
+  guidance with official 18.11.1's Bun requirement and the trusted same-digest
+  §4 publication gate.
+
+This is an unpublished partial-source candidate, not a whole-upstream upgrade
+or frozen-artifact acceptance record. Peer `>=18 <19`, development pin
+`18.11.1` and dependency locks are unchanged. Prior local rc.2 package/SDK
+evidence does not transfer to the new rc.3 artifact. No rc.3 Registry,
+tag/release, trusted §4 or full-Host success is claimed.
+
 ## [0.2.0-rc.2] - 2026-10-23
 
 ### Breaking

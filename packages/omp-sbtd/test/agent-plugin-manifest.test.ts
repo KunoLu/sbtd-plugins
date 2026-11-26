@@ -32,10 +32,15 @@ function dependencySpec(
   manifest: unknown,
   section: "peerDependencies" | "devDependencies",
 ): unknown {
-  if (!manifest || typeof manifest !== "object" || !(section in manifest)) {
-    return undefined;
-  }
-  const entries: unknown = manifest[section];
+  if (!manifest || typeof manifest !== "object") return undefined;
+  const entries: unknown =
+    section === "peerDependencies"
+      ? "peerDependencies" in manifest
+        ? manifest.peerDependencies
+        : undefined
+      : "devDependencies" in manifest
+        ? manifest.devDependencies
+        : undefined;
   if (
     !entries ||
     typeof entries !== "object" ||
@@ -57,7 +62,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
       ),
     ]);
     const packageVersion = (packageManifest as { version: unknown }).version;
-    expect(packageVersion).toBe("0.2.0-rc.2");
+    expect(packageVersion).toBe("0.2.0-rc.3");
     // Candidate identity: the widened tarball-bound peer range with the exact
     // development pin retained (Slice 3 contract; rc.12 stays exact-peer).
     expect(dependencySpec(packageManifest, "peerDependencies")).toBe(
@@ -69,7 +74,7 @@ describe("Feature: Hybrid Plugin M2 组包", () => {
         expectedVersion: packageVersion as string,
       }),
     ).not.toThrow();
-    expect(manifest).toMatchObject({ version: "0.2.0-rc.2" });
+    expect(manifest).toMatchObject({ version: "0.2.0-rc.3" });
   });
 
   const invalidShapes: ReadonlyArray<{

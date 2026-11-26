@@ -2,7 +2,7 @@
 
 ## 目的与适用范围
 
-本文说明如何把上游 `640-skills` 仓库中 `sbtd-workflow-onboard/` 的已提交版本，安全、可重建地同步到当前仓库，并通过本仓库 `packages/sbtd-workflow-kit` 投影后嵌入 `packages/omp-sbtd`。
+本文说明如何把上游 `640-skills` 仓库中 `sbtd-workflow-onboard/` 的已提交版本，安全、可重建地同步到当前仓库，并通过本仓库 `packages/omp-sbtd/upstream` 投影后嵌入 `packages/omp-sbtd`。
 
 本文适用于以下场景：
 
@@ -17,6 +17,85 @@
 - 扩大 OMP host 兼容声明、修改 peer dependency 或执行 host certification；
 - 安装 Plugin、修改用户 AGENTS/Profile、同步外部自动化或写入生产凭据；
 - 在 sbtd-plugins 中维护第二份上游 Onboard 或 external Skills 事实源。
+
+## R1 部分源选取与交接边界
+
+当前 R1 不是下文整树 promotion 的一次完整 v2.1.0 升级。转换与选取入口位于
+`packages/omp-sbtd/upstream/`，`sourceSelection: "r1-manuals"` 只承载已批准的
+六项源操作（四个 Skill，M4/A1/D1）：
+
+本轮现有 `generate` / `check-generated` 入口配置为该 R1 选择：
+
+```sh
+pnpm --dir packages/omp-sbtd/upstream run generate
+pnpm --dir packages/omp-sbtd/upstream run check-generated
+```
+
+这不是新增 `--profile` 参数；旧/default、domain-only 仍是既有 API 分支，
+不能把它们的单元覆盖称为旧 profile CLI 已运行。生成成功也不表示新 release
+身份已经获准；实际 build/SBOM 可能被未批准的 overlay/ledger/root 拒绝。
+
+| Skill | 源操作 | 交接内容 |
+|---|---|---|
+| `domain-modeling` | 修改 `SKILL.md`；删除 `CONTEXT-FORMAT.md`；新增 `GLOSSARY-FORMAT.md` | 领域词汇与 ADR 的职责 |
+| `grilling` | 修改 `SKILL.md` | 按依赖 frontier 分轮，等待用户回答及最终共同理解确认 |
+| `to-tickets` | 修改 `SKILL.md` | 显式用户触发、blocking edges、依赖 frontier、本地逐票格式 |
+| `sbtd-task` | 修改 `references/presentation.md` | 只控制表达，不改变任务模式、权限或验证门禁 |
+
+这不是最终仓库文件数量。canonical vendor 与整树 lock 保持
+`1d82494d74f6df9bca7dccef2da409f87091883e`；选取来源固定为供应快照
+`3c835303c23d59d3157ca84121a92f1bd87d4997`，选中的 Matt 原文来源固定为
+`4ae2317ddb22b046e26455e4f9c9b3aaaf62212d`。逐项来源与完整技能树由选取账本、
+manifest 和 retained provenance 绑定；未选技能保持原来源，不改写原文来消除语义差异。
+`sbtd-task/SKILL.md`、`state.md` 与 TaskSync 不在 R1 内。
+
+### 运行时可见的第一方解释
+
+解释只写入既有 `packages/omp-sbtd/upstream/omp-overlays/AGENTS.global.md`，
+由既有投影路径进入 generated-omp / embedded Kit 的 `AGENTS.global.md`，
+再由 Kit loader 的 `templates.global` 交给 Onboard 的 `global` role。
+不新增 adapter 资产路径、distribution-map 条目或 handoff executor，也不覆盖第三方 Skill。
+
+- 以实际加载的 `domain-modeling` 和 `GLOSSARY-FORMAT.md` 判定新契约，不按包版本猜测。
+  新契约的 GLOSSARY 只存领域词汇，技术实现资料与其分开；既有 CONTEXT 可能是
+  旧 glossary、技术上下文或项目事实，先读内容，明确核对旧词条并经确认迁移，
+  不能一概重解释为技术文档。项目路径优先，否则沿用所载 GLOSSARY reference 的
+  根文件 / map 约定。没有该 reference 的旧 profile 继续旧 CONTEXT 词汇约定。
+  已有项目文档不自动移动、改名或覆盖。
+- 旧 `tdd`、`diagnosing-bugs`、`codebase-design` 仍可能从 CONTEXT 请求词汇；
+  在新契约下把这项消费指向 GLOSSARY，技术资料仍按需读 CONTEXT。
+  不向 GLOSSARY 填入实现细节，不声称未选第三方消费者已升级。
+- `grill-with-docs` 实际组合 `grilling` 与 `domain-modeling`：前者推进已解锁问题，
+  后者确认并即时记录术语，必要时提出 ADR；完整访谈后仍需独立 DDD 边界审核。
+  `to-spec` 合成已经讨论的理解，不重开访谈。`to-tickets` 保留
+  `disable-model-invocation: true`，只在用户明确请求时拆票，批准 breakdown 后才生成。
+- 上游 `/setup-matt-pocock-skills` 不是 OMP Plugin 已安装命令。遇到它应核对已配置
+  tracker / 标签，缺少配置时让用户选择已有 tracker 或本地文件；不自动安装或外部发帖。
+  新版本地输出为 `.scratch/<feature-slug>/issues/<NN>-<slug>.md`，从 `01` 按依赖
+  顺序，一票一文件；保留 `What to build`、`Blocked by`、`Status: ready-for-agent`
+  与验收项。项目明确路径可优先，但不合并为单文件或抹去 blocking edges。
+  只有 blockers 全部完成的票进入执行 frontier；票据状态不替代 `sbtd-task` 状态。
+- 外部 `handoff` 是显式会话摘要：按原契约写系统临时目录、列 suggested skills、
+  引用既有产物并脱敏；`sbtd-task` 的持久交接另有路径与状态所有权。
+  续接保留未决 frontier、用户确认、票据依赖及 presentation 的退出/资格状态，
+  不把摘要、压缩输出或 bundle 可加载当作行为已经执行。
+
+### 验证与版本措辞
+
+`test/r1-handoff.test.ts` 使用真实临时生成结果和现有 Kit loader、Skill 读取、
+只读 Onboard plan 接口，覆盖交付输入的路径、链接、frontmatter 与 role 一致性；
+它不模拟模型推理、不调用 tracker、不安装到真实全局环境。实际测试结果须以本轮
+原生运行报告为准，不能复用旧通过数。真实 OMP host / LLM 是否遵守分轮确认、
+术语消费和逐票交接，在没有另行授权的实测时保持未证明。
+
+早期 PR3 历史快照中，包仍为 `0.2.0-rc.2`、不升版本，双语 changelog 记在
+`Unreleased`，当时新的 R1 projection / ledger root 尚待独立发布评议。
+当前源码已是**未发布的 `0.2.0-rc.3` 候选**：严格 release validator 只登记了
+精确受审的 R1 profile 身份与配对，任意未受审根仍拒绝。生成、嵌入、静态一致
+或消费者加载均不会自动增加 release trust；精确 profile 登记也不等于最终
+main 身份、真实 Host、受信 CI/发布验收通过。不得表述为 rc.3 已发布、
+整个 v2.1.0 已同步或冻结产物验收完成。
+
 
 ## 核心结论
 
@@ -252,6 +331,17 @@ pnpm --filter @kunolu/sbtd-workflow-kit exec tsx src/sync-upstream.ts \
 - `stagedPluginValidated: true`；
 - `dirtyPreflight.dirty` 和 `dirtyPreflight.conflictingPaths`；
 - `planDigest`。
+
+`stagedPluginValidated` 仅表示真实暂存树通过 metadata、MH 全量完整性、
+固定法律 profile 与 SPDX 库存检查，不表示新 revision/root 已获得最终发布信任。
+普通 `staged-promotion` 目前只扩展已审 old retained 法律来源：完整路径集、
+第三方来源/归属/pin/正文和法律原件固定；已知 first-party 正文/overlay 以及
+`stableSet`、`promotedAt` 的受限显示位置可变化。notice 按固定模板及真实
+manifest 校验，账本仍绑定实际 raw/semantic 身份，不忽略任意法律文本。
+既有 domain-only/mixed 完整身份只能通过原严格 release 校验，不因此获得
+通用 stage 放行。默认 writer/verifier 的完整 release 配对不变；
+新 stage 结果不会注册为可信 release root。planDigest、stale/dirty 检查及
+真实备份/回滚事务不变。新增法律来源或路径须先获得独立法律 profile 评审。
 
 提取 digest：
 

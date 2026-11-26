@@ -14,6 +14,11 @@ import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import {
+  inspectPackageMetadata,
+  verifyEmbeddedKitReleaseIntegrity,
+  verifyPluginReleaseArtifacts,
+} from "../../scripts/p0/release-validator.ts";
+import {
   type AgentPluginAuditReport,
   checkAgentPluginProjection,
   generateAgentPluginProjection,
@@ -1307,6 +1312,122 @@ describe("Feature: 三目标 AGENTS 转换", () => {
         (file) => file.fileName === "./kit/onboard/runtime/catalog.json",
       ),
     ).toBe(true);
+    // The real plan -> stage writer -> apply chain produces a usable stage
+    // SBOM, but does not add this new Git revision to final release trust.
+    expect(plan.stagedPluginValidated).toBe(true);
+    expect(applied.stagedPluginValidated).toBe(true);
+    const releaseInput = {
+      workspaceRoot: new URL("../../../../", import.meta.url).pathname,
+      pluginRoot: promotion.pluginRoot,
+      upstreamRoot: promotion.kitRoot,
+    };
+    await expect(inspectPackageMetadata(releaseInput)).resolves.toMatchObject({
+      plugin: { license: "Apache-2.0" },
+    });
+    await expect(
+      verifyEmbeddedKitReleaseIntegrity({
+        kitRoot: join(promotion.pluginRoot, "kit"),
+      }),
+    ).resolves.toMatchObject({
+      canonical: { resolvedRevision: promotion.revision },
+      projection: { generatedSha256: applied.projection.generatedSha256 },
+    });
+    const beforeReleaseCheck = await promotionState(
+      promotion.kitRoot,
+      promotion.pluginRoot,
+    );
+    await expect(
+      verifyPluginReleaseArtifacts(releaseInput),
+    ).rejects.toMatchObject({
+      code: "LICENSE_MISMATCH",
+      message:
+        "The first-party Apache source or retained license/notice is not the reviewed identity.",
+    });
+    expect(
+      await promotionState(promotion.kitRoot, promotion.pluginRoot),
+    ).toEqual(beforeReleaseCheck);
+  }, 30_000);
+
+  it.each([
+    "third-party pin",
+    "retained Onboard NOTICE",
+  ])("Scenario: 真实候选 %s 攻击在 stage 法律门被拒绝且不替换目的地", async (attack) => {
+    const promotion = await promotionFixture();
+    const plan = await syncUpstream({
+      mode: "plan",
+      packageRoot: promotion.kitRoot,
+      pluginRoot: promotion.pluginRoot,
+      sourceRoot: promotion.sourceRoot,
+      revision: promotion.revision,
+    });
+    expect(plan.stagedPluginValidated).toBe(true);
+    if (attack === "third-party pin") {
+      const manifestPath = join(promotion.sourceRoot, STABLE_MANIFEST_PATH);
+      const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+        repositories: Record<string, { revision: string }>;
+      };
+      const repository = manifest.repositories["mattpocock-skills"];
+      if (repository === undefined)
+        throw new Error("fixture repository missing");
+      repository.revision = "2222222222222222222222222222222222222222";
+      await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    } else {
+      const noticePath = join(
+        promotion.sourceRoot,
+        "sbtd-workflow-onboard/NOTICE",
+      );
+      await writeFile(
+        noticePath,
+        `${await readFile(noticePath, "utf8")}\nUnreviewed attribution change.\n`,
+      );
+    }
+    await execFileAsync("git", ["-C", promotion.sourceRoot, "add", "."]);
+    await execFileAsync("git", [
+      "-C",
+      promotion.sourceRoot,
+      "commit",
+      "-m",
+      `legal attack: ${attack}`,
+    ]);
+    const { stdout } = await execFileAsync("git", [
+      "-C",
+      promotion.sourceRoot,
+      "rev-parse",
+      "HEAD",
+    ]);
+    const before = await promotionState(
+      promotion.kitRoot,
+      promotion.pluginRoot,
+    );
+    const mutations: string[] = [];
+    const rejected = await syncUpstream({
+      mode: "apply",
+      packageRoot: promotion.kitRoot,
+      pluginRoot: promotion.pluginRoot,
+      sourceRoot: promotion.sourceRoot,
+      revision: stdout.trim(),
+      planDigest: plan.planDigest,
+      backupPath: async (source, destination) => {
+        mutations.push(`backup:${destination}`);
+        await rename(source, destination);
+      },
+      replacePath: async (source, destination) => {
+        mutations.push(`replace:${destination}`);
+        await rename(source, destination);
+      },
+    }).then(
+      () => undefined,
+      (cause: unknown) => cause,
+    );
+    expect(rejected).toMatchObject({
+      code: "STAGED_PLUGIN_INVALID",
+      message: "staged Plugin SBOM is invalid",
+      details: { cause: expect.stringContaining("LICENSE_MISMATCH") },
+    });
+    expect(mutations).toEqual([]);
+    expect(
+      await promotionState(promotion.kitRoot, promotion.pluginRoot),
+    ).toEqual(before);
   }, 30_000);
 
   it("Scenario: destination 备份失败时保留 Kit 与 Plugin", async () => {

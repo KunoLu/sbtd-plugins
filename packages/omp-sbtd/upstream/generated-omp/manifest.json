@@ -14,7 +14,7 @@
     "policyVersion": 1,
     "policySha256": "1dfe7f19f6118b4303484163cca691589dd79dac3d33ebe11ce04dec2d331a6f",
     "decisionsSha256": "bbed74b7f811f728585c7c03b30abc3172e9b37382a405a0e8806344275f5146",
-    "generatedSha256": "b1e4bab0fa5bc30f874329773b099b486efed9eeec795022a904c5a65dd7dbf3",
+    "generatedSha256": "871756771756195451b3c2343e05a3cdf5c04c0d8033a1352f59584b03212e63",
     "counts": {
       "included": 261,
       "omitted": 81,
@@ -22,7 +22,7 @@
     }
   },
   "overlayDigests": {
-    "AGENTS.global.md": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
+    "AGENTS.global.md": "dc69bc818bc2eefc20fe00e50afc571adef164b8340f67741e10070ff75a3e3c",
     "AGENTS.project-root.md": "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
     "onboard/runtime/catalog.json": "7f3bb2adff0d9f5fc5509b79190036fa34227ec2a987a01421ce327245f95e73",
     "onboard/runtime/catalog.schema.json": "f787490acf0209c8d09d260a0dd2c9ed3d20842d956ccab1a3095e0599c5489a",
@@ -34,13 +34,13 @@
     "onboard/runtime/templates/skills/web-ui-autotest-generator/README.zh-CN.md": "7f5e1aff2090739fdd358787e2ec68ddb5240d2f330a859fb62ee65f9d2cea7b"
   },
   "targets": {
-    "AGENTS.global.md": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
+    "AGENTS.global.md": "dc69bc818bc2eefc20fe00e50afc571adef164b8340f67741e10070ff75a3e3c",
     "AGENTS.project-root.md": "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
     "AGENTS.project-omp.md": "80206a600a10391ff32a7517d457418cd2f0f7ddc4c78a1cf075631edd7aca62"
   },
   "profileCatalogSha256": "a04a5d1705b374ffde6e7c19f642e32043e5ab9597a2ccb50e3d4097a5369bed",
   "assets": {
-    "AGENTS.global.md": "7c21a5989aaa8bf3b658c3c28d56e30862ead5e70a2ad72520a95a23bd2694ea",
+    "AGENTS.global.md": "dc69bc818bc2eefc20fe00e50afc571adef164b8340f67741e10070ff75a3e3c",
     "AGENTS.project-omp.md": "80206a600a10391ff32a7517d457418cd2f0f7ddc4c78a1cf075631edd7aca62",
     "AGENTS.project-root.md": "06784deffc181524fe555cc110be69fa8047494ebf926a60dc68340f00c71631",
     "catalog.json": "a04a5d1705b374ffde6e7c19f642e32043e5ab9597a2ccb50e3d4097a5369bed",
@@ -48,7 +48,7 @@
     "onboard/runtime/assets/external-skills/stable/licenses/mattpocock-skills-LICENSE": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
     "onboard/runtime/assets/external-skills/stable/licenses/ponytail-LICENSE": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
     "onboard/runtime/assets/external-skills/stable/licenses/ui-ux-pro-max-skill-LICENSE": "738f69dfa83db5c347c678fb9d90e560877059f0de93a327c39001bff92dc014",
-    "onboard/runtime/assets/external-skills/stable/MANIFEST.json": "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257",
+    "onboard/runtime/assets/external-skills/stable/MANIFEST.json": "4eed938088d7415f2dbcac7a2a576baa9cbbc179184fca484493f54ef60e13ad",
     "onboard/runtime/assets/external-skills/stable/skills/codebase-design/agents/openai.yaml": "edebc9e4fcfe102114012575eaa9600b9b5fd08c311664f389c36e7bc717740f",
     "onboard/runtime/assets/external-skills/stable/skills/codebase-design/DEEPENING.md": "f3dd099ce99289bd213914d8ee3e2429b78309c3957ca4583f7659551b1d53c1",
     "onboard/runtime/assets/external-skills/stable/skills/codebase-design/DESIGN-IT-TWICE.md": "8e740bf98446dbd4dfdc132ac4346d9a7eedaf93de6a495889171cf7f99f16bd",
@@ -58,14 +58,14 @@
     "onboard/runtime/assets/external-skills/stable/skills/diagnosing-bugs/SKILL.md": "77f3cf31bc99b2f49af943222526531fcc9fc41d047626d3640e875e85af3e84",
     "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/ADR-FORMAT.md": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0",
     "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/agents/openai.yaml": "f6bf2aa996c6e6f53fdd0708e18a0d16a56aed8322cca59fedbe3c0d2c75f06b",
-    "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/CONTEXT-FORMAT.md": "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13",
-    "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/SKILL.md": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
+    "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/GLOSSARY-FORMAT.md": "21dcc40cdec8e151a829b98ab1517c1867bc444e3665134a98c6983411996801",
+    "onboard/runtime/assets/external-skills/stable/skills/domain-modeling/SKILL.md": "7b925d7b1e341a2eeae33ad68a8a8c0ab889a38ddd22a7598e4c240e5a7556a3",
     "onboard/runtime/assets/external-skills/stable/skills/grill-me/agents/openai.yaml": "c061e39c3e0f9d865fb1b97556d485704af2a8a58f4b8221a8917a5c2074a32b",
     "onboard/runtime/assets/external-skills/stable/skills/grill-me/SKILL.md": "caaf8b8de1684f96e26b28f3c29189db5c89cce4b73e1c93d86164f66ef88637",
     "onboard/runtime/assets/external-skills/stable/skills/grill-with-docs/agents/openai.yaml": "94cd0ab161fb468a836349f5ed482ba58ce8e709a05c57ce533d739dbd35cca9",
     "onboard/runtime/assets/external-skills/stable/skills/grill-with-docs/SKILL.md": "7de372c13488f1ee96cc11cd8907b56b6809cc93eef776eeddd37de6b6cbe3fe",
     "onboard/runtime/assets/external-skills/stable/skills/grilling/agents/openai.yaml": "1411d7df7d99b7e621a1ff8283c8133cc2464be63d064e52d8ce169c6800ee9b",
-    "onboard/runtime/assets/external-skills/stable/skills/grilling/SKILL.md": "10ff989e7498b23b5acb49d5048f11dcd906757d2f79c5cdf8a00001381296f2",
+    "onboard/runtime/assets/external-skills/stable/skills/grilling/SKILL.md": "a146842ed93ca43d833550fa9adf02e58cb63c83fea9d4b4522995b82242d4e2",
     "onboard/runtime/assets/external-skills/stable/skills/handoff/agents/openai.yaml": "5c479fd562c691851690e8b18c8501045bef0943c10743d636b2fae26add1d28",
     "onboard/runtime/assets/external-skills/stable/skills/handoff/SKILL.md": "7c62de979fdc7ac32fb5ddb2146156c917f80ee070d30fadc9d40343c4b6ed25",
     "onboard/runtime/assets/external-skills/stable/skills/ponytail-audit/SKILL.md": "5560b8e383dbe2ddfddc873a1e2bf2e586e23e0cd7d995537482b2315331f6d1",
@@ -79,7 +79,7 @@
     "onboard/runtime/assets/external-skills/stable/skills/to-spec/agents/openai.yaml": "1c5b4d1e3d8e52287ef19cc2742fdbbfae1914ac75d33af3e4c8174f08cc55bb",
     "onboard/runtime/assets/external-skills/stable/skills/to-spec/SKILL.md": "43ad9cf318e5e7d3d1fa360253a37021796dc87a0c2e595ad262661a10f85088",
     "onboard/runtime/assets/external-skills/stable/skills/to-tickets/agents/openai.yaml": "21bc6215fffcd7614e9f772bb1760e87cc5fc7dcc707e7d282bc9414267a6090",
-    "onboard/runtime/assets/external-skills/stable/skills/to-tickets/SKILL.md": "5c9fba69845c2519b9b35b9af42ae5142c21f8ca15ac2123dc2722002c8058ae",
+    "onboard/runtime/assets/external-skills/stable/skills/to-tickets/SKILL.md": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995",
     "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/app-interface.csv": "331e7cf2c0b222d80c566c5f255c63cb339f65bfd02e471a720f28e4864a9f08",
     "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/catalog-summary.json": "a257ccd1f85ff5e59f566a069d4c8ba91c90db3f88fc6bc7323a1cb4e9e37421",
     "onboard/runtime/assets/external-skills/stable/skills/ui-ux-pro-max/data/charts.csv": "4115cf1120680f2cedef0676cb648f30c7ef4699e2a947535d4113e71ed3b12a",
@@ -156,7 +156,7 @@
     "onboard/runtime/assets/external-skills/stable/skills/writing-for-agents/agents/openai.yaml": "eacb24b2a618cfb81dacb0416f4fdd75ddf3a8060f8ddb99aae1b1e301907e4b",
     "onboard/runtime/assets/external-skills/stable/skills/writing-for-agents/SKILL-MECHANICS.md": "c768e6307c7c10728c401c213f2c4ba71c542127eeb7ad2956aabd15a0fa0059",
     "onboard/runtime/assets/external-skills/stable/skills/writing-for-agents/SKILL.md": "551adca942227b44192edba88acd4e8db911f0121ce58ad16944ccf6a896a74a",
-    "onboard/runtime/assets/external-skills/stable/THIRD_PARTY_NOTICES.md": "3273fbf062b2b8a58f35882ff6360df09e17948961c2355f28dbe9bc9dd7b5ee",
+    "onboard/runtime/assets/external-skills/stable/THIRD_PARTY_NOTICES.md": "5db58b7845482994c721366e7e3369119291c3137b3d628bd5203e01dedfd74b",
     "onboard/runtime/assets/graft-build-policy.json": "70cc0ada685fe417bce093470339ac96445d4a130a1c61968e57c97249bd4d6d",
     "onboard/runtime/assets/graft-hook-entry.mjs": "dfa8d1859cdfea944030c5a373038c8845079891fb46726430f1d1aac0bd42a2",
     "onboard/runtime/assets/graft-instructions.txt": "da4816e172821613ea72ba52231a106cf840c437bf872849293e460ffd328bf5",
@@ -311,13 +311,13 @@
     "onboard/runtime/templates/skills/web-ui-autotest-generator/scripts/generate_manifest.py": "ee142f0cd7f33f96db5a3b7dcbf6eddf3e6ea9c07b933f33ef12e62ea2edaa17",
     "onboard/runtime/templates/skills/web-ui-autotest-generator/SKILL.md": "ea9a25fc4f92d8ce916826b7f81e389491ed671ae5bc2930f1fe7cd9098625f0",
     "onboard/runtime/upgrade.schema.json": "ad5b452c69220785fcf49e95349f08de232e44004fb7858df3769fe83eeccbf8",
-    "THIRD_PARTY_NOTICES.md": "05be994233a0eda13f3b321741233a05665ea75ec67b3026d154fef32640591f",
+    "THIRD_PARTY_NOTICES.md": "977e5950681755cfeaf80938f32ea4c4577d330291e509c7fb585d9cd4c06f49",
     "third-party/sbtd-workflow-onboard/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "third-party/sbtd-workflow-onboard/NOTICE": "8eba762aba6bfaea156420944c443c487ed36ea2471099f42dd834121f9545e4"
   },
   "retainedProvenance": {
     "stableSet": "2026-09-14.6",
-    "manifestSha256": "b502153cbb7e6bb4fa06fd3bc1459a4e2b586858cd22b53e6ffcf0f8f7c9d257",
+    "manifestSha256": "4eed938088d7415f2dbcac7a2a576baa9cbbc179184fca484493f54ef60e13ad",
     "repositories": {
       "mattpocock-skills": {
         "url": "https://github.com/mattpocock/skills.git",
@@ -332,6 +332,11 @@
       "ponytail": {
         "url": "https://github.com/DietrichGebert/ponytail.git",
         "revision": "356918eba965ee1eac64bd3a7f0dd02108350de5",
+        "license": "MIT"
+      },
+      "mattpocock-skills-r1-manuals": {
+        "url": "https://github.com/mattpocock/skills.git",
+        "revision": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
         "license": "MIT"
       }
     },
@@ -361,16 +366,16 @@
         "treeSha256": "04ba6a6139df57e6a011eb79311212fa5f3dc47ec6177845d1defea19c68bb60"
       },
       "grilling": {
-        "repository": "mattpocock-skills",
+        "repository": "mattpocock-skills-r1-manuals",
         "sourceSubpath": "skills/productivity/grilling",
         "stablePath": "skills/grilling",
-        "treeSha256": "b0af4cb93507011cab704853dc540ae142dec2a1256d374a38f4f196a04f7b50"
+        "treeSha256": "3a7559839f45dfa4491f045d56647148c2b90f0e5ce0b5355301ef0e6d1bc428"
       },
       "domain-modeling": {
-        "repository": "mattpocock-skills",
+        "repository": "mattpocock-skills-r1-manuals",
         "sourceSubpath": "skills/engineering/domain-modeling",
         "stablePath": "skills/domain-modeling",
-        "treeSha256": "731ecd11825453ec3d813ac26e7a082bb458bc332781c6dba18d7004468139d7"
+        "treeSha256": "c0bd13ce078a3c8eb5507fc9067165dad89b10f11b33b26e29a5c62f9c840bd2"
       },
       "codebase-design": {
         "repository": "mattpocock-skills",
@@ -397,10 +402,10 @@
         "treeSha256": "b913e4b0bdffff43ea38fc6874d238663039eb8ab73755fc300a541df877d1a9"
       },
       "to-tickets": {
-        "repository": "mattpocock-skills",
+        "repository": "mattpocock-skills-r1-manuals",
         "sourceSubpath": "skills/engineering/to-tickets",
         "stablePath": "skills/to-tickets",
-        "treeSha256": "7d82d3f4b50f4f57bafc8e361cdf6b06fde6f3b940bbd13199a184e98f0d34c4"
+        "treeSha256": "98422855972ffb35bf33ce3eee1c1255f58e81cf801d6d3fc0185bb8e0351839"
       },
       "ui-ux-pro-max": {
         "repository": "ui-ux-pro-max-skill",

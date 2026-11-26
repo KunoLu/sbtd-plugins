@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { readReleaseFixture } from "../../test/fixtures/release-fixtures.ts";
 import { KitError, sha256 } from "../src/index.ts";
 import {
   checkOmpProjection,
@@ -57,6 +58,17 @@ const EXPECTED_PHOSPHOR_LICENSE = Buffer.from(
     "RlRXQVJFLg0K",
   "base64",
 ).toString("utf8");
+// Frozen pre-change stable notice prefixes; no future output/root is predicted.
+const EXPECTED_STABLE_NOTICE_PREFIXES = {
+  old: Buffer.from(
+    "IyBTdGFibGUgRXh0ZXJuYWwgU2tpbGxzCgpUaGlzIGRpcmVjdG9yeSBjb250YWlucyB1bm1vZGlmaWVkIHNuYXBzaG90cyBvZiB0aGUgRXh0ZXJuYWwgU2tpbGxzIHVzZWQgYnkKdGhlIFNCVEQgT25ib2FyZCB3b3JrZmxvdy4gYE1BTklGRVNULmpzb25gIHJlY29yZHMgdGhlIGV4YWN0IHVwc3RyZWFtIGNvbW1pdCwKc291cmNlIHN1YnBhdGgsIGNvbnRlbnQgZGlnZXN0LCBhbmQgbGljZW5zZSBmaWxlcyBmb3IgZXZlcnkgc25hcHNob3QuCgpUaGUgc25hcHNob3RzIGFyZSBpbnN0YWxsYXRpb24gZmFsbGJhY2tzLCBub3QgbG9jYWwgZm9ya3MuIFVwZGF0ZSB0aGVtIG9ubHkKdGhyb3VnaCBhbiBleHBsaWNpdCBzdGFibGUgcHJvbW90aW9uIHRoYXQgcHJlc2VydmVzIHVwc3RyZWFtIGNvbnRlbnQgYW5kCnJlZnJlc2hlcyB0aGUgbWFuaWZlc3QgZGlnZXN0cyBhbmQgdGhpcmQtcGFydHkgbm90aWNlcy4KCnwgUmVwb3NpdG9yeSB8IExpY2Vuc2UgfCBJbmNsdWRlZCBub3RpY2VzIHwKfC0tLXwtLS18LS0tfAp8IGBtYXR0cG9jb2NrL3NraWxsc2AgfCBNSVQgfCBgbGljZW5zZXMvbWF0dHBvY29jay1za2lsbHMtTElDRU5TRWAgfAp8IGBuZXh0bGV2ZWxidWlsZGVyL3VpLXV4LXByby1tYXgtc2tpbGxgIHwgTUlUIHwgYGxpY2Vuc2VzL3VpLXV4LXByby1tYXgtc2tpbGwtTElDRU5TRWAgfAp8IGBEaWV0cmljaEdlYmVydC9wb255dGFpbGAgfCBNSVQgfCBgbGljZW5zZXMvcG9ueXRhaWwtTElDRU5TRWAgfAo=",
+    "base64",
+  ),
+  mixed: Buffer.from(
+    "IyBTdGFibGUgRXh0ZXJuYWwgU2tpbGxzCgpUaGlzIGRpcmVjdG9yeSBjb250YWlucyB1bm1vZGlmaWVkIHNuYXBzaG90cyBvZiB0aGUgRXh0ZXJuYWwgU2tpbGxzIHVzZWQgYnkKdGhlIFNCVEQgT25ib2FyZCB3b3JrZmxvdy4gYE1BTklGRVNULmpzb25gIHJlY29yZHMgdGhlIGV4YWN0IHVwc3RyZWFtIGNvbW1pdCwKc291cmNlIHN1YnBhdGgsIGNvbnRlbnQgZGlnZXN0LCBhbmQgbGljZW5zZSBmaWxlcyBmb3IgZXZlcnkgc25hcHNob3QuCgpUaGUgc25hcHNob3RzIGFyZSBpbnN0YWxsYXRpb24gZmFsbGJhY2tzLCBub3QgbG9jYWwgZm9ya3MuIFVwZGF0ZSB0aGVtIG9ubHkKdGhyb3VnaCBhbiBleHBsaWNpdCBzdGFibGUgcHJvbW90aW9uIHRoYXQgcHJlc2VydmVzIHVwc3RyZWFtIGNvbnRlbnQgYW5kCnJlZnJlc2hlcyB0aGUgbWFuaWZlc3QgZGlnZXN0cyBhbmQgdGhpcmQtcGFydHkgbm90aWNlcy4KCnwgUmVwb3NpdG9yeSB8IExpY2Vuc2UgfCBJbmNsdWRlZCBub3RpY2VzIHwKfC0tLXwtLS18LS0tfAp8IGBtYXR0cG9jb2NrL3NraWxsc2AgfCBNSVQgfCBgbGljZW5zZXMvbWF0dHBvY29jay1za2lsbHMtTElDRU5TRWAgfAp8IGBuZXh0bGV2ZWxidWlsZGVyL3VpLXV4LXByby1tYXgtc2tpbGxgIHwgTUlUIHwgYGxpY2Vuc2VzL3VpLXV4LXByby1tYXgtc2tpbGwtTElDRU5TRWAgfAp8IGBEaWV0cmljaEdlYmVydC9wb255dGFpbGAgfCBNSVQgfCBgbGljZW5zZXMvcG9ueXRhaWwtTElDRU5TRWAgfAp8IGBtYXR0cG9jb2NrL3NraWxsc2AgfCBNSVQgfCBgbGljZW5zZXMvbWF0dHBvY29jay1za2lsbHMtTElDRU5TRWAgfAo=",
+    "base64",
+  ),
+};
 const _AGENTS_TARGET_PATHS = [
   "AGENTS.global.md",
   "AGENTS.project-root.md",
@@ -277,6 +289,9 @@ function assertPhosphorAttribution(
     topLevelNotices.slice(licenseStart, licenseStart + 1092),
     "utf8",
   );
+  expect(licenseBytes).toEqual(Buffer.from(EXPECTED_PHOSPHOR_LICENSE, "utf8"));
+  expect(licenseBytes).toHaveLength(1092);
+  expect(licenseBytes.toString("utf8").split("\r\n")).toHaveLength(22);
   expect(createHash("sha256").update(licenseBytes).digest("hex")).toBe(
     "ddbe6082ec3cf979db47e5af549d2849c5d6182b3e005ef91ce1dbb9eb122f11",
   );
@@ -890,49 +905,100 @@ describe("OMP Distribution Projection", () => {
       join(outputDirectory, PHOSPHOR_METADATA_ASSET),
     );
     assertPhosphorAttribution(topLevelNotices, metadataBytes);
+    assertPhosphorAttribution(stableNotices, metadataBytes);
   });
 
   it.each([
     {
-      name: "缺失完整许可",
-      corrupt: (text: string) => text.replace(EXPECTED_PHOSPHOR_LICENSE, ""),
+      name: "old",
+      sourceSelection: undefined,
+      prefix: EXPECTED_STABLE_NOTICE_PREFIXES.old,
     },
     {
-      name: "许可截断",
-      corrupt: (text: string) =>
-        text.replace(
-          EXPECTED_PHOSPHOR_LICENSE,
-          EXPECTED_PHOSPHOR_LICENSE.slice(0, 128),
-        ),
+      name: "domain-only",
+      sourceSelection: "domain-modeling" as const,
+      prefix: EXPECTED_STABLE_NOTICE_PREFIXES.mixed,
     },
-    {
-      name: "错误版权主体",
-      corrupt: (text: string) =>
-        text.replace(
-          "Copyright (c) 2023 Phosphor Icons",
-          "Copyright (c) 2024 Next Level Builder",
-        ),
-    },
-    {
-      name: "错误适用成员",
-      corrupt: (text: string) =>
-        text.replace(
-          EXPECTED_PHOSPHOR_SCOPE,
-          EXPECTED_PHOSPHOR_SCOPE.replace(
-            "phosphor-icons-upstream.json",
-            "google-fonts.csv",
+  ])("Scenario: 两通知保留同一官方原文且原stable前缀不变：$name", async ({
+    sourceSelection,
+    prefix,
+  }) => {
+    const root = await fixtureRoot();
+    const options = {
+      packageRoot,
+      canonicalDirectory: join(packageRoot, "generated"),
+      outputDirectory: join(root, "generated-omp"),
+      ...(sourceSelection === undefined ? {} : { sourceSelection }),
+    };
+    await generateOmpProjection(options);
+    const [top, stable, metadata] = await Promise.all([
+      readFile(join(options.outputDirectory, "THIRD_PARTY_NOTICES.md")),
+      readFile(join(options.outputDirectory, STABLE_NOTICES_ASSET)),
+      readFile(join(options.outputDirectory, PHOSPHOR_METADATA_ASSET)),
+    ]);
+    assertPhosphorAttribution(top.toString("utf8"), metadata);
+    assertPhosphorAttribution(stable.toString("utf8"), metadata);
+    const marker = Buffer.from("\n## Retained metadata attribution\n");
+    const topStart = top.indexOf(marker);
+    const stableStart = stable.indexOf(marker);
+    expect(topStart).toBeGreaterThanOrEqual(0);
+    expect(stableStart).toBe(prefix.length);
+    expect(stable.subarray(0, stableStart)).toEqual(prefix);
+    expect(stable.subarray(stableStart)).toEqual(top.subarray(topStart));
+    await checkOmpProjection(options);
+  });
+
+  it.each(
+    [
+      {
+        name: "缺失完整许可",
+        corrupt: (text: string) => text.replace(EXPECTED_PHOSPHOR_LICENSE, ""),
+      },
+      {
+        name: "许可截断",
+        corrupt: (text: string) =>
+          text.replace(
+            EXPECTED_PHOSPHOR_LICENSE,
+            EXPECTED_PHOSPHOR_LICENSE.slice(0, 128),
           ),
-        ),
-    },
-    {
-      name: "原文CRLF被归一化",
-      corrupt: (text: string) =>
-        text.replace(
-          EXPECTED_PHOSPHOR_LICENSE,
-          EXPECTED_PHOSPHOR_LICENSE.replaceAll("\r\n", "\n"),
-        ),
-    },
-  ])("Scenario: Phosphor通知损坏时check失败：$name", async ({ corrupt }) => {
+      },
+      {
+        name: "错误版权主体",
+        corrupt: (text: string) =>
+          text.replace(
+            "Copyright (c) 2023 Phosphor Icons",
+            "Copyright (c) 2024 Next Level Builder",
+          ),
+      },
+      {
+        name: "错误适用成员",
+        corrupt: (text: string) =>
+          text.replace(
+            EXPECTED_PHOSPHOR_SCOPE,
+            EXPECTED_PHOSPHOR_SCOPE.replace(
+              "phosphor-icons-upstream.json",
+              "google-fonts.csv",
+            ),
+          ),
+      },
+      {
+        name: "原文CRLF被归一化",
+        corrupt: (text: string) =>
+          text.replace(
+            EXPECTED_PHOSPHOR_LICENSE,
+            EXPECTED_PHOSPHOR_LICENSE.replaceAll("\r\n", "\n"),
+          ),
+      },
+    ].flatMap((testCase) =>
+      ["THIRD_PARTY_NOTICES.md", STABLE_NOTICES_ASSET].map((noticeAsset) => ({
+        ...testCase,
+        noticeAsset,
+      })),
+    ),
+  )("Scenario: Phosphor通知损坏时check失败：$noticeAsset/$name", async ({
+    corrupt,
+    noticeAsset,
+  }) => {
     const root = await fixtureRoot();
     const options = {
       packageRoot,
@@ -940,19 +1006,35 @@ describe("OMP Distribution Projection", () => {
       outputDirectory: join(root, "generated-omp"),
     };
     await generateOmpProjection(options);
-    const noticePath = join(options.outputDirectory, "THIRD_PARTY_NOTICES.md");
+    const noticePath = join(options.outputDirectory, noticeAsset);
     const notice = await readFile(noticePath, "utf8");
     const corrupted = corrupt(notice);
     expect(corrupted).not.toBe(notice);
     await writeFile(noticePath, corrupted);
+    const otherAsset =
+      noticeAsset === STABLE_NOTICES_ASSET
+        ? "THIRD_PARTY_NOTICES.md"
+        : STABLE_NOTICES_ASSET;
+    const otherBefore = await readFile(
+      join(options.outputDirectory, otherAsset),
+    );
+    const parentBefore = (await readdir(root)).sort();
     const error = await expectKitError(
       () => checkOmpProjection(options),
       "GENERATED_DRIFT",
     );
-    expect(error.details).toMatchObject({ target: "THIRD_PARTY_NOTICES.md" });
+    expect(error.details).toMatchObject({ target: noticeAsset });
+    await expect(readFile(noticePath, "utf8")).resolves.toBe(corrupted);
+    await expect(
+      readFile(join(options.outputDirectory, otherAsset)),
+    ).resolves.toEqual(otherBefore);
+    expect((await readdir(root)).sort()).toEqual(parentBefore);
   });
 
-  it("Scenario: 通知与manifest/report摘要同步篡改仍不满足独立归属验收", async () => {
+  it.each([
+    "THIRD_PARTY_NOTICES.md",
+    STABLE_NOTICES_ASSET,
+  ])("Scenario: 通知与manifest/report摘要同步篡改仍不满足独立归属验收：%s", async (noticeAsset) => {
     const root = await fixtureRoot();
     const outputDirectory = join(root, "generated-omp");
     await generateOmpProjection({
@@ -960,7 +1042,7 @@ describe("OMP Distribution Projection", () => {
       canonicalDirectory: join(packageRoot, "generated"),
       outputDirectory,
     });
-    const noticePath = join(outputDirectory, "THIRD_PARTY_NOTICES.md");
+    const noticePath = join(outputDirectory, noticeAsset);
     const manifestPath = join(outputDirectory, "manifest.json");
     const reportPath = join(outputDirectory, "projection-report.json");
     const notice = await readFile(noticePath, "utf8");
@@ -991,7 +1073,7 @@ describe("OMP Distribution Projection", () => {
       expect(corruptedNotice).not.toBe(notice);
       const assets = {
         ...manifest.assets,
-        "THIRD_PARTY_NOTICES.md": createHash("sha256")
+        [noticeAsset]: createHash("sha256")
           .update(corruptedNotice)
           .digest("hex"),
       };
@@ -1033,7 +1115,7 @@ describe("OMP Distribution Projection", () => {
       const storedReport = JSON.parse(await readFile(reportPath, "utf8")) as {
         generatedSha256: string;
       };
-      expect(storedManifest.assets["THIRD_PARTY_NOTICES.md"]).toBe(
+      expect(storedManifest.assets[noticeAsset]).toBe(
         createHash("sha256").update(storedNotice).digest("hex"),
       );
       expect(storedManifest.projection.generatedSha256).toBe(generatedSha256);
@@ -1052,12 +1134,14 @@ describe("OMP Distribution Projection", () => {
       canonicalDirectory,
       outputDirectory,
     });
-    const notice = await readFile(
-      join(outputDirectory, "THIRD_PARTY_NOTICES.md"),
-      "utf8",
-    );
-    expect(notice).not.toContain("@phosphor-icons/core");
-    expect(notice).not.toContain("Copyright (c) 2023 Phosphor Icons");
+    for (const noticeAsset of [
+      "THIRD_PARTY_NOTICES.md",
+      STABLE_NOTICES_ASSET,
+    ]) {
+      const notice = await readFile(join(outputDirectory, noticeAsset), "utf8");
+      expect(notice).not.toContain("@phosphor-icons/core");
+      expect(notice).not.toContain("Copyright (c) 2023 Phosphor Icons");
+    }
   });
 
   it("Scenario: 未核实的Phosphor数据字节不能复用固定归属", async () => {
@@ -1086,6 +1170,54 @@ describe("OMP Distribution Projection", () => {
       expectedSha256:
         "2399325233b277b5c97a80e6a5e8941154f5d057beee4e7613db87c87d700236",
     });
+  });
+
+  it.each([
+    "missing",
+    "wrong",
+  ] as const)("Scenario: 声明保留的Phosphor输入失败时不替换已有输出：%s", async (failure) => {
+    const metadata =
+      failure === "missing"
+        ? await readFile(
+            join(packageRoot, "generated", PHOSPHOR_METADATA_ASSET),
+            "utf8",
+          )
+        : "{}\n";
+    const { root, kitRoot, canonicalDirectory, outputDirectory } =
+      await syntheticFixture({
+        extraAssets: { [PHOSPHOR_METADATA_ASSET]: metadata },
+        extraDecisions: [
+          {
+            path: PHOSPHOR_METADATA_ASSET,
+            owner: "third-party",
+            policy: "include",
+          },
+        ],
+      });
+    const live = {
+      "THIRD_PARTY_NOTICES.md": "existing top notice\n",
+      [STABLE_NOTICES_ASSET]: "existing stable notice\n",
+      "manifest.json": "existing manifest\n",
+      "projection-report.json": "existing report\n",
+    };
+    await writeTree(outputDirectory, live);
+    if (failure === "missing")
+      await rm(join(canonicalDirectory, PHOSPHOR_METADATA_ASSET));
+    const parentBefore = (await readdir(root)).sort();
+    await expect(
+      generateOmpProjection({
+        packageRoot: kitRoot,
+        canonicalDirectory,
+        outputDirectory,
+      }),
+    ).rejects.toMatchObject({
+      code: failure === "missing" ? "ENOENT" : "PROJECTION_LEGAL_INVENTORY",
+    });
+    for (const [path, bytes] of Object.entries(live))
+      await expect(readFile(join(outputDirectory, path))).resolves.toEqual(
+        Buffer.from(bytes),
+      );
+    expect((await readdir(root)).sort()).toEqual(parentBefore);
   });
 
   it("Scenario: stable Skill 部分保留或孤儿 license 阻断 projection", async () => {
@@ -1344,18 +1476,47 @@ describe("domain-only third-party source selection", () => {
 
   it("keeps the old default output even when an unused capsule is invalid", async () => {
     const fixture = await selectedFixture();
-    await changeRecord(fixture.kitRoot, (record) => {
-      record.owner = "kpi";
-    });
-    await generateOmpProjection({
+    const defaultOptions = {
       packageRoot: fixture.kitRoot,
       canonicalDirectory: fixture.options.canonicalDirectory,
       outputDirectory: fixture.options.outputDirectory,
+    };
+    const baselineDirectory = join(await fixtureRoot(), "default");
+    const baseline = await generateOmpProjection({
+      ...defaultOptions,
+      outputDirectory: baselineDirectory,
     });
+    expect(baseline.report.sourceSelection).toBeUndefined();
+    expect(
+      baseline.manifest.assets[`${prefix}GLOSSARY-FORMAT.md`],
+    ).toBeUndefined();
+    expect(baseline.manifest.assets[`${prefix}CONTEXT-FORMAT.md`]).toBe(
+      "17ab16ce783e4d2801ee52fd9acdf550cbf44de65ae76797a93943bbedf22a13",
+    );
+    expect(
+      baseline.manifest.retainedProvenance.skills["domain-modeling"],
+    ).toMatchObject({
+      repository: "mattpocock-skills",
+      treeSha256:
+        "731ecd11825453ec3d813ac26e7a082bb458bc332781c6dba18d7004468139d7",
+    });
+    expect(
+      baseline.manifest.retainedProvenance.repositories["mattpocock-skills"],
+    ).toMatchObject({
+      revision: "3cca18b368ae95cdbdebbff572ccafa662551015",
+      license: "MIT",
+    });
+    expect(
+      baseline.manifest.retainedProvenance.repositories[newRepository],
+    ).toBeUndefined();
+    await changeRecord(fixture.kitRoot, (record) => {
+      record.owner = "kpi";
+    });
+    await generateOmpProjection(defaultOptions);
     for (const filename of ["manifest.json", "projection-report.json"]) {
       expect(
         await readFile(join(fixture.options.outputDirectory, filename)),
-      ).toEqual(await readFile(join(packageRoot, "generated-omp", filename)));
+      ).toEqual(await readFile(join(baselineDirectory, filename)));
     }
   });
 
@@ -1382,13 +1543,12 @@ describe("domain-only third-party source selection", () => {
     );
     const stableBytes = await readFile(join(root, STABLE_MANIFEST_ASSET));
     const stable = JSON.parse(stableBytes.toString("utf8"));
+    const baseline = await readReleaseFixture("domain");
+    const baselineManifest = baseline.get("manifest.json");
+    if (baselineManifest === undefined)
+      throw new Error("Missing sealed domain baseline manifest");
     const old = ompProjectionManifestSchema.parse(
-      JSON.parse(
-        await readFile(
-          join(packageRoot, "generated-omp", "manifest.json"),
-          "utf8",
-        ),
-      ),
+      JSON.parse(baselineManifest.toString("utf8")),
     );
     expect(manifest.canonical).toEqual(old.canonical);
     expect(stable.stableSet).toBe("2026-09-14.6");

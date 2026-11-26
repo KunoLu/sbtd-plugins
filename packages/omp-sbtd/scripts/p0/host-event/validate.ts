@@ -807,7 +807,9 @@ export function recomputeHostIdentity(ompBin: string): {
       if (parsed?.name === "@oh-my-pi/pi-coding-agent")
         return {
           entrypointSha256,
-          packageVersion: parsed.version,
+          ...(parsed.version === undefined
+            ? {}
+            : { packageVersion: parsed.version }),
           packageJsonSha256: sha256(readFileSync(candidate)),
         };
     } catch {
@@ -854,9 +856,20 @@ export const hostEventEvidenceBundleSchema = z.strictObject({
   }),
 });
 
-export type HostEventEvidenceBundle = z.infer<
-  typeof hostEventEvidenceBundleSchema
->;
+export type HostEventEvidenceBundle = Omit<
+  z.infer<typeof hostEventEvidenceBundleSchema>,
+  | "requiredEventsObserved"
+  | "optionalEventsObserved"
+  | "reasonCodes"
+  | "diagnostics"
+> &
+  Pick<
+    HostEventVerdict,
+    | "requiredEventsObserved"
+    | "optionalEventsObserved"
+    | "reasonCodes"
+    | "diagnostics"
+  >;
 
 export function buildLocalObservationBundle(input: {
   readonly verdict: HostEventVerdict;

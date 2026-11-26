@@ -99,6 +99,11 @@ export interface UpstreamSyncResult {
     readonly policy: "include" | "omit" | "replace-with-overlay";
   }[];
   readonly destinationSha256: string;
+  /**
+   * Stage integrity and fixed legal-profile validation succeeded.
+   * This is not final release identity approval; the default release verifier
+   * still requires its reviewed complete source/ledger/projection pairing.
+   */
   readonly stagedPluginValidated: true;
   readonly changedInputPaths: readonly string[];
   readonly planDigest: string;
